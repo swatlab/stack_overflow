@@ -14,11 +14,11 @@
 - **data_mining_scripts** folder contains the scripts to mine raw data.
 	- **extract2json.py**: extract Java and Android related code snippets from the Stack Exchange dump (please set Posts.xml's path in line 45).
     - **write_snippets.py**: extract the results of **extract2json.py** (in JSON) into separate Java files (please set the input path in line 10).
-    - **run_nicad**: run NiCad clone detection tool between Stack Overflow snippets and the inconsistent files [1].
+    - **run_nicad**: run NiCad clone detection tool between Stack Overflow snippets and the _Android inconsistent files_ [1].
 
 - **analytic_scripts** folder contains the scripts to analyze the clone detection results and to answer the research questions.
   - **case_study.py**: compute code reuse occurrences for the researh questions.
-  - **overlap.py**: compute the overlap proportion (rate) between a code reuse snippet and a license inconsistent snippet for RQ1.
+  - **overlap.py**: compute the _overlap rate (proportion)_ between a code reuse snippet and a license inconsistent snippet for RQ1.
   - **migrating**: identify the "migrated code snippets" (in RQ3) in which the 1st app's file and the 2nd app's file are released under different licenses.
   - **evolution_snippet.py**: extract input files for RQ4.
   - **RQ4_analysis** folder contains scripts and data to compute code reuse snippets' lifespan.
