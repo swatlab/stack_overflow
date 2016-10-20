@@ -32,7 +32,7 @@
 - NiCad tool: http://www.txl.ca/nicaddownload.html
 
 ###How to user the analytic scripts
-1. Download Stack Exchange data dump and inconsistent files.
+1. Download the Stack Exchange data dump and inconsistent files.
 2. Run **extract2json.py**, **write_snippets.py**, and **run_nicad** consecutively to obtain the clone code pairs between Stack Overflow posts and Android inconsistent files.
 3. Use the scripts in **analytic_scripts** and **match_names** to obtain results of the four research questions.
 
