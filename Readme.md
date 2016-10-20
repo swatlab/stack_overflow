@@ -19,7 +19,7 @@
 - **analytic_scripts** folder contains the scripts to analyze the clone detection results and to answer the research questions.
   - **case_study.py**: compute code reuse occurrences for the researh questions.
   - **overlap.py**: compute the _overlap rate (proportion)_ between a code reuse snippet and a license inconsistent snippet for RQ1.
-  - **migrating**: identify the "migrated code snippets" (in RQ3) in which the 1st app's file and the 2nd app's file are released under different licenses.
+  - **migrating.py**: identify the "migrated code snippets" (in RQ3) in which the 1st app's file and the 2nd app's file are released under different licenses.
   - **evolution_snippet.py**: extract input files for RQ4.
   - **RQ4_analysis** folder contains scripts and data to compute code reuse snippets' lifespan.
 - **match_names** folder cotains scripts and data for matching developer names between the studied Android apps and Stack Overflow posts.
