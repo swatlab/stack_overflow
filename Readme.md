@@ -26,22 +26,15 @@
 - **raw_data** folder contains Android snippets' creation date and raw data of RQ2 & RQ3.
 - **data** folder contains clone detection results and some intermediate data for analyses.
 
-###How to user the analytic scripts
-1. Clone a project's Git repository. For systems originally managed by SVN, please follow this tutorial to clone the repository as Git:
-   https://www.atlassian.com/git/tutorials/migrating-convert/.
-2. Use the following command to extract the project's commit logs:
-	```git log --pretty=format:"%H,%ae,%ai,%s"```.
-3. Uncompress the folder ```output_data.zip```.
-4. Run **detect_clones.py** and **extract_clone_results.py** to detect clone classes for a subject system using a clone detection tool.
-6. Run **build_genealogies.py** to extract clone pairs from the JSON file, then build clone genealogies for each clone pair.
-7. Run **commit_bug_mapping.py** and **fault_inducing.py** to identify bug-inducing commits.
-8. Run **analyse_genealogies.py** to perform Fisher's exact test for RQ1 and RQ2.
-9. Run **independant_variables.py** to extract explanatory variables for RQ3.
-10. Build __GLM__ models with the R script in the **statistics/modelling** folder for RQ3.
-
 ###Data source
 - Inconsistent files: http://swat.polymtl.ca/data/SANER16/AndroidAppsDataONF-DroidJanv2015.7z
 - Stack Exchange data dump: https://archive.org/details/stackexchange
+- NiCad tool: http://www.txl.ca/nicaddownload.html
+
+###How to user the analytic scripts
+1. Download Stack Exchange data dump and inconsistent files.
+2. Run **extract2json.py**, **write_snippets.py**, and **run_nicad** consecutively to obtain the clone code pairs between Stack Overflow posts and Android inconsistent files.
+3. Use the scripts in **analytic_scripts** and **match_names** to obtain results of the four research questions.
 
 ###Reference
 1. Ons Mlouki, Foutse Khomh and Giuliano Antoniol, On the Detection of Licenses Violations in Android Ecosystem, in _Proceedings of the 23rd IEEE International Conference on Software Analysis, Evolution, and Reengineering (SANER)_.
