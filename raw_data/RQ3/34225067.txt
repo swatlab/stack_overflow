@@ -1,0 +1,33 @@
+<p>I have a parent Activity which starts a child activity.</p>
+
+<p>In the child activity, I do:</p>
+
+<pre><code>toolbar = (Toolbar) findViewById(R.id.app_bar);
+setSupportActionBar(toolbar);
+getSupportActionBar().setTitle("Ride");
+getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+</code></pre>
+
+<p>When I click the Home/Up button, I <code>finish</code> the activity.</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        finish();
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>And in addition, I do <code>finish</code> In one more place in the <strong>Child Activity</strong>, and in both places where I have the <code>finish</code>,  it goes back to the <strong>Parent Activity</strong>.</p>
+
+<p><strong>My question:</strong></p>
+
+<p>My problem is that I want to refresh the <strong>Parent Activity</strong> only in the case of <strong>one</strong> of the <code>finishes</code>. </p>
+
+<p>When I do the finish <strong>not from the Up button</strong> - the data in the Parent Activity <strong>changes</strong>, so - When I press the Back/Up button, there is no need to refresh the <strong>Parent</strong>, but when I do the other <code>finish</code>, I want to refresh the <strong>Parent</strong>.</p>
+
+<p>How can I detect that?</p>

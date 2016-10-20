@@ -1,0 +1,40 @@
+<p>I am trying to implement FragmentTabs as illiustrated in <a href="http://developer.android.com/resources/samples/Support4Demos/src/com/example/android/supportv4/app/FragmentTabs.html" rel="nofollow">http://developer.android.com/resources/samples/Support4Demos/src/com/example/android/supportv4/app/FragmentTabs.html</a>. Everything went well until i did this:</p>
+
+<p>I started lots of different fragments from one tab like:</p>
+
+<p>tab1-->fragment1--->fragment2--->fragment3</p>
+
+<p>tab2</p>
+
+<p>But when i switched to tab2  and again came back to tab1, I got fragment1 screen not fragment3(i.e. I have 3 fragments in first tab and while i am on 3rd fragment and I come again on first tab after switching to second tab, I am taken to 1st fragment not 3rd)..Can anyone tell what might be the prob?</p>
+
+<pre><code>        @Override
+        public void onTabChanged(String tabId) {
+            TabInfo newTab = mTabs.get(tabId);
+            if (mLastTab != newTab) {
+                FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+                if (mLastTab != null) {
+                    if (mLastTab.fragment != null) {
+                        ft.detach(mLastTab.fragment);
+                    }
+                }
+                if (newTab != null) {
+                    if (newTab.fragment == null) {
+                        newTab.fragment = Fragment.instantiate(mActivity,
+                                newTab.clss.getName(), newTab.args);
+                        ft.add(mContainerId, newTab.fragment, newTab.tag);
+                    } else {
+                        ft.attach(newTab.fragment);
+                    }
+                }
+
+                mLastTab = newTab;
+                ft.commit();
+                mActivity.getSupportFragmentManager().executePendingTransactions();
+            }
+        }
+</code></pre>
+
+<p>When i comment attach() and detatch(), I get this :</p>
+
+<p><img src="http://i.stack.imgur.com/bfeSg.png" alt="enter image description here"></p>

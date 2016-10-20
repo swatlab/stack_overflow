@@ -1,0 +1,179 @@
+<p>meanwhile I have no idea why my navigation is not working.
+In my mainmenu there are 2 icons in order to switch to different activities: searching and settings.
+But everytime I am clicking on search, settingsActivity is opened. I checked the IDs of search, activities are entered in the Manifest ... </p>
+
+<p>If I am adding an additional button to a view and trying to start the searchActivity, everything works fine. But even if I am  commenting out the case R.id.settingsMenu-thing, the settingsActivity is opened if I am clicking on the search symbol ... Any ideas? :( Thanks in advance!</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.mainmenu, menu);
+    return super.onCreateOptionsMenu(menu);
+     }
+
+public boolean onOptionsItemSelected(MenuItem item){
+        Intent intent = null;
+
+        switch(item.getItemId()){
+
+        case android.R.id.home:
+            intent = new Intent(this,MainActivity.class);
+            startActivity(intent);
+            break;
+
+        case R.id.searchMenu:
+            intent = new Intent(this,SearchActivity.class);
+            startActivity(intent);
+            break;
+
+        case R.id.settingsMenu:
+            intent = new Intent(this,SettingsActivity.class);
+            startActivity(intent);
+            break;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+        return true;
+    }
+</code></pre>
+
+<p>Manifest.xml</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.anothertest"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="17" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:debuggable="true">
+        <activity
+            android:name="android.app.ui.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="android.app.ui.SearchActivity" android:label="@string/search"></activity>
+        <activity android:name="android.app.ui.SettingsActivity" android:label="@string/settings"></activity>
+        <activity android:name="android.app.ui.NoArticleInListActivity"></activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>mainmenu.xml</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item 
+        android:id="@+id/searchMenu"
+        android:title="@string/search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:orderInCategory="1"
+        android:showAsAction="always">
+        </item>
+
+    <item
+        android:id="@+id/settingsMenu"
+        android:orderInCategory="2"
+        android:showAsAction="always"
+        android:title="@string/action_settings"
+        android:icon="@android:drawable/ic_menu_preferences">
+        </item>
+
+</menu>
+</code></pre>
+
+<p><strong>EDIT</strong></p>
+
+<p>SettingsFragment</p>
+
+<pre><code>public class SettingsFragment extends PreferenceFragment{
+
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.preferences);
+    }
+}
+</code></pre>
+
+<p>SettingsActivity</p>
+
+<pre><code>public class SettingsActivity extends Activity{
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        getFragmentManager().beginTransaction().replace(android.R.id.content, new SettingsFragment()).commit();
+    }
+
+    protected void onStart(){
+        super.onStart();
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch(item.getItemId()){
+        case android.R.id.home:
+            Intent intent = new Intent(this,MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>
+
+<p>preferences.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory 
+        android:title="@string/settingsSummaryCalendar">
+        android:key="pref_calendar_settings">
+        <CheckBoxPreference
+            android:key="prefArticleAsCalendarEntry"
+            android:summary="@string/settingsSummaryCalendarEntry"
+            android:title="@string/settingCreateEntryForEach"
+            android:defaultValue="true"/>
+        <CheckBoxPreference 
+            android:key="prefCreateOwnCalendar"
+            android:summary="@string/settingsSummaryCalendar"
+            android:title="@string/settingCreateOwnCalendar"
+            android:defaultValue="true"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory 
+        android:title="@string/settingsSummaryNotification">
+        android:key="pref_notification_settings">
+        <CheckBoxPreference
+            android:key="prefNotification"
+            android:summary="@string/settingsSummaryNotification"
+            android:title="@string/settingsNotification"
+            android:defaultValue="true" >
+        </CheckBoxPreference>
+        <ListPreference 
+            android:key="prefNotificationTime"
+            android:entries="@array/notificationTime"
+            android:entryValues="@array/notificationTimeValues"
+            android:summary="@string/settingsSummaryNotificationTime"
+            android:title="@string/settingsNotificationTime"
+            android:defaultValue="@string/settingsNotificationTime_default" 
+            android:dependency="prefNotification">
+        </ListPreference>
+    </PreferenceCategory>
+</PreferenceScreen>
+</code></pre>

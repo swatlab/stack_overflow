@@ -1,0 +1,381 @@
+<p>I am currently creating an app wich is supposed to collect JSONObjects (or Groups) from a server and then print them in a ListView. I've succeded to parse the JSONObjects and can iterate through and print all the groupnames in the LogCat but when i try to populate my ListView it always come out empty.</p>
+
+<p>This is my TCPConnection class where i connect to server:</p>
+
+<pre><code>public class TCPConnection {
+
+private Controller controller;
+
+private RunOnThread thread;
+private Receive receive;
+private Socket socket;
+private DataInputStream input;
+private DataOutputStream output;
+private InetAddress address;
+private int connectionPort;
+private String ip;
+private Exception exception;
+private MainActivity main;
+
+private static String id;
+
+public TCPConnection(String ip, int connectionPort, MainActivity main) {
+    this.ip = ip;
+    this.connectionPort = connectionPort;
+    this.main = main;
+    thread = new RunOnThread();
+
+}
+
+public void setController(Controller controller) {
+    this.controller = controller;
+}
+
+
+public void connect() {
+    thread.start();
+    thread.execute(new Connect());
+}
+
+public void disconnect() {
+    thread.execute(new Disconnect());
+}
+
+
+public void newMessage(final String answer) {
+    main.runOnUiThread(new Runnable() {
+        public void run() {
+            String message = answer;
+            String type;
+            JSONObject jObj = null;
+
+            try {
+                jObj = new JSONObject(message);
+                type = jObj.getString("type");
+
+                if(type.equals("register")){
+                    recieveID(jObj);
+
+                } else if(type.equals("groups")){
+                    getAllGroups(jObj);
+
+                }else{
+                    Log.i("TCPConnection", "Type does not exist");
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    });
+}
+
+
+//SENDING JOBJ to CONTROLLER
+public void getAllGroups(JSONObject jObj){
+    Log.i("GRUPPER", "Jobj sent to controller");
+    controller.setAllGroups(jObj);
+}
+
+
+private class Receive extends Thread {
+    public void run() {
+        String result;
+        try {
+            while (receive != null) {
+                result = input.readUTF();
+                newMessage(result);
+            }
+
+        } catch (Exception e) { // IOException, ClassNotFoundException
+            receive = null;
+        }
+    }
+}
+
+
+private class Connect implements Runnable {
+    public void run() {
+        try {
+            Log.d("TCPConnection","Connect-run");
+            address = InetAddress.getByName(ip);
+            Log.d("TCPConnection-Connect","Skapar socket");
+            socket = new Socket(address, connectionPort);
+            Log.d("TCP-CONNECT", "SOCKET INITIALIZED");
+            input = new DataInputStream(socket.getInputStream());
+            Log.d("TCP-CONNECT", "INPUTSTREAM INITIALIZED");
+            output = new DataOutputStream(socket.getOutputStream());
+            output.flush();
+            Log.d("TCPConnection-Connect","Strömmar klara");
+            receive = new Receive();
+            receive.start();
+        } catch (Exception e) { // SocketException, UnknownHostException
+            Log.d("TCPConnection-Connect",e.toString());
+            exception = e;
+        }
+    }
+}
+
+public class Disconnect implements Runnable {
+    public void run() {
+        try {
+            if (socket != null)
+                socket.close();
+            if (input != null)
+                input.close();
+            if (output != null)
+                output.close();
+            thread.stop();
+            socket.close();
+        } catch(IOException e) {
+            exception = e;
+        }
+    }
+}
+
+
+public void send(String JSONQuery) {
+    thread.execute(new Send(JSONQuery));
+}
+
+
+public class Send implements Runnable {
+    final String JSONQuery;
+
+    public Send(String JSONQuery) {
+        this.JSONQuery = JSONQuery;
+    }
+
+    public void run() {
+        try {
+            output.writeUTF(JSONQuery);
+            output.flush();
+
+        } catch (IOException e) {
+            exception = e;
+            newMessage("EXCEPTION");
+        }
+    }
+}
+</code></pre>
+
+<p>Then i have my controller:</p>
+
+<pre><code>public class Controller {
+
+private MainActivity activity;
+private CommunityFragment communityFragment;
+private TCPConnection connection;
+private boolean connected = false;
+
+ArrayList<String> groupList = new ArrayList<String>();
+
+public Controller() {
+}
+
+public Controller(MainActivity activity, CommunityFragment communityFragment, TCPConnection connection) {
+    this.activity = activity;
+    this.communityFragment = communityFragment;
+    communityFragment.setController(this);
+    this.connection = connection;
+    connection.setController(this);
+    connect();
+}
+
+
+public void allGroups() {
+    StringWriter stringWriter = new StringWriter();
+    JsonWriter jsonWriter = new JsonWriter(stringWriter);
+    Log.i("MyConnectService", "setAllGroups() kördes");
+    try {
+        jsonWriter.beginObject().name("type").value("groups").endObject();
+    } catch (IOException e) {
+        e.printStackTrace();
+        Log.e("MyConnectService", "setAllGroups fail");
+    }
+    connection.send( stringWriter.toString());
+}
+
+public void setAllGroups(JSONObject jObj) {
+
+Log.i("GRUPPER", "groupList iteration start");
+    groupList.add("TEST");
+
+    try {
+        JSONArray jsonArr = jObj.getJSONArray("groups");
+
+        for (int i = 0; i < jsonArr.length(); i++) {
+            Log.d("GRUPPER", "RECIEVED IN LOOP: " + jsonArr.getJSONObject(i).getString("group"));
+            groupList.add(jsonArr.getJSONObject(i).getString("group").toString());
+        }
+    } catch (Exception e) {
+        Log.i("GRUPPER", "error in getMembers() for " + e);
+    }
+    Log.i("GRUPPER", "groupList iteration - Done!");
+}
+
+public ArrayList<String> getGroupList(){
+    Log.i("GRUPPER", "groupList collected by communityFrag");
+    return groupList;
+}
+
+}
+</code></pre>
+
+<p>And this is my CommunityFragment who contain the listView and also this is where you create groups</p>
+
+<pre><code>public class CommunityFragment extends Fragment {
+
+private Controller controller = new Controller();
+
+private EditText etGroup;
+private EditText etMember;
+private Button btnSave;
+private ListView lvGroups;
+
+private String groupName, userName;
+private ArrayAdapter<String> mArrayAdapter;
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.fragment_community, container, false);
+
+    initializeComponents(rootView);
+   // controller.allGroups();
+    initializeAdapter();
+
+    return rootView;
+}
+
+
+public void setController(Controller controller) {
+    this.controller = controller;
+}
+
+
+private void initializeComponents(View rootView) {
+  .
+  .
+  .
+        }
+    });
+}
+
+
+public void initializeAdapter() {
+    ArrayList<String> groupList = controller.getGroupList();
+    //Adapter definierad och sätts till list fragmentet
+
+    mArrayAdapter = new GroupAdapter(getActivity(), R.id.lv_groups, groupList);
+    lvGroups.setAdapter(mArrayAdapter);
+    Log.i("GRUPPER", "Adapter created");
+}
+
+}
+</code></pre>
+
+<p>Here is the GroupAdapter:</p>
+
+<pre><code>public class GroupAdapter extends ArrayAdapter<String> {
+
+private ArrayList<String> ArrayListGroups;
+private int Resource;
+private Context context;
+private LayoutInflater vi;
+
+public GroupAdapter(Context context, int resource, ArrayList<String> objects) {
+    super(context, resource, objects);
+
+    ArrayListGroups = objects;
+    Resource = resource;
+    this.context = context;
+
+    vi = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+
+    ViewHolder holder;
+    if(convertView==null){
+        convertView = vi.inflate(Resource, null);
+        //recycling views using viewholder (items getting offscreen)
+        holder = new ViewHolder();
+
+        holder.groupName = (TextView) convertView.findViewById(R.id.tv_list_title);
+
+        convertView.setTag(holder);
+    }else{
+        holder = (ViewHolder)convertView.getTag();
+    }
+    //setting text in each item based on the position in the list
+    holder.groupName.setText(ArrayListGroups.get(position));
+    return convertView;
+}
+
+static class ViewHolder{
+    public TextView groupName;
+}
+public void updateList(){
+    notifyDataSetChanged();
+}
+}
+</code></pre>
+
+<p>Here is the LogCat:</p>
+
+<pre><code>10-29 13:34:32.962  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ onVisibilityChanged() is called, visibility : 4
+10-29 13:34:32.962  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:33.002  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ onVisibilityChanged() is called, visibility : 0
+10-29 13:34:33.002  31680-31699/se.mah.sofand.mapapplication D/TCP-CONNECT﹕ SOCKET INITIALIZED
+10-29 13:34:33.002  31680-31699/se.mah.sofand.mapapplication D/TCP-CONNECT﹕ INPUTSTREAM INITIALIZED
+10-29 13:34:33.002  31680-31699/se.mah.sofand.mapapplication D/TCPConnection-Connect﹕ Strömmar klara
+10-29 13:34:33.002  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:33.122  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:33.142  31680-31680/se.mah.sofand.mapapplication I/Adreno-EGL﹕ <qeglDrvAPI_eglInitialize:410>: EGL 1.4  QUALCOMM build:  ()
+    OpenGL ES Shader Compiler Version: E031.24.00.08+13
+    Build Date: 03/20/14 Thu
+    Local Branch: 0320_AU200_patches
+    Remote Branch:
+    Local Patches:
+        Reconstruct Branch:
+10-29 13:34:33.182  31680-31680/se.mah.sofand.mapapplication D/OpenGLRenderer﹕ Enabling debug mode 0
+10-29 13:34:33.202  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:144 height:144 bitmap id is 199
+10-29 13:34:33.202  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:144 height:144 bitmap id is 200
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ onVisibilityChanged() is called, visibility : 4
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+**10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication I/GRUPPER﹕ Jobj sent to controller
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication I/GRUPPER﹕ groupList iteration start
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication D/GRUPPER﹕ RECIEVED IN LOOP: blajje
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication I/GRUPPER﹕ groupList iteration - Done!**
+10-29 13:34:33.212  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:96 height:96 bitmap id is 201
+10-29 13:34:33.312  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:33.322  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:35.162  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ onVisibilityChanged() is called, visibility : 0
+10-29 13:34:35.162  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:35.992  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:36.022  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 203
+10-29 13:34:36.022  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 204
+10-29 13:34:36.022  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 205
+10-29 13:34:36.032  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 206
+10-29 13:34:36.032  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 207
+10-29 13:34:36.032  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 208
+10-29 13:34:36.032  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 209
+10-29 13:34:36.042  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 210
+10-29 13:34:36.042  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 211
+10-29 13:34:36.042  31680-31680/se.mah.sofand.mapapplication D/skia﹕ GFXPNG PNG bitmap created width:78 height:96 bitmap id is 212
+10-29 13:34:36.062  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ Get MotionRecognitionManager
+**10-29 13:34:36.062  31680-31680/se.mah.sofand.mapapplication I/GRUPPER﹕ groupList collected by communityFrag
+10-29 13:34:36.062  31680-31680/se.mah.sofand.mapapplication I/GRUPPER﹕ Adapter created**
+10-29 13:34:36.062  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:36.082  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+10-29 13:34:36.382  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ onVisibilityChanged() is called, visibility : 4
+10-29 13:34:36.382  31680-31680/se.mah.sofand.mapapplication D/AbsListView﹕ unregisterIRListener() is called
+</code></pre>
+
+<p>NOTE there is only one group created so that's why only 'blajje' is visible.</p>
+
+<p>As you can see the list is defined before the adapter is created, still i can't display it. No Nullpointer or other exception occur. Any ideas why?</p>

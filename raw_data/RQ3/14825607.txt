@@ -1,0 +1,65 @@
+<p>In my app I am getting database is locked.</p>
+
+<p>I tried using solutions provided in other posts but could not found suitable solution this is why I am posting this question.</p>
+
+<p>Here is the onCreate</p>
+
+<pre><code>DBAdapter db = new DBAdapter(this.getApplicationContext());
+        dialoge = new Progress_Dialog(this);
+        dialoge.setCancelable(false);
+        try {
+            db.createDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+</code></pre>
+
+<p>and here is the create database method</p>
+
+<pre><code>public void createDataBase() throws IOException{     
+            boolean dbExist = checkDataBase();     
+            if(!dbExist){
+                this.getReadableDatabase();     
+                try {     
+                    copyDataBase();
+                } catch (IOException e) {     
+                    e.printStackTrace();
+                    throw new Error("Error copying database");     
+                }
+            }
+        }
+</code></pre>
+
+<p>and below is the checkdatabase method</p>
+
+<pre><code> private boolean checkDataBase(){     
+            SQLiteDatabase checkDB = null;
+            try{
+                String myPath = DB_PATH + DB_NAME;
+
+                String myPath2 = DB_PATH + DB_NAME2;
+
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, 
+                        SQLiteDatabase.OPEN_READWRITE);
+
+                if(checkDB != null){
+                    checkDB.close();
+
+                }
+                checkDB = SQLiteDatabase.openDatabase(myPath2, null, 
+                        SQLiteDatabase.OPEN_READWRITE);
+
+            }catch(SQLiteException e){
+        //      e.printStackTrace();
+                //database does't exist yet.
+                System.out.print("SQLiteException   "+e.toString());
+            }
+            if(checkDB != null){
+                checkDB.close();
+
+            }
+            return checkDB != null ? true : false;
+        }
+</code></pre>
+
+<p>Please help me in this.</p>

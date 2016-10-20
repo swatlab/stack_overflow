@@ -1,0 +1,97 @@
+<p>My application is about loading the images from a specific folder in the phone and then display it as GridView.</p>
+
+<p>So far everything is ok but when I run the application it takes too much from the RAM and work and have some lag to scroll down to see the other images in the GridView </p>
+
+<p>I want to make it smooth and not taking too much from the RAM so I don't get lag when I scroll down
+this is the output in my log and as you see it takes too much bytes and work </p>
+
+<pre><code>09-16 12:57:17.458  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 37.655MB for 16343056-byte allocation
+09-16 12:57:17.708  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 37.661MB for 16343056-byte allocation
+09-16 12:57:17.868  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 53.252MB for 16343056-byte allocation
+09-16 12:57:17.979  14067-14067/com.b3du.test2 I/Choreographer﹕ Skipped 63 frames!  The application may be doing too much work on its main thread.
+09-16 12:57:18.029  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 68.853MB for 16343056-byte allocation
+09-16 12:57:18.249  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 84.440MB for 16343056-byte allocation
+09-16 12:57:19.020  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 84.448MB for 16343056-byte allocation
+09-16 12:57:19.240  14067-14067/com.b3du.test2 I/dalvikvm-heap﹕ Grow heap (frag case) to 84.447MB for 16343056-byte allocation
+</code></pre>
+
+<p>My Code: </p>
+
+<p>main.java</p>
+
+<pre><code>public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        imageAdapter = new ImageAdapter(this);
+        imageAdapter.getFromSdcard();
+        GridView imagegrid = (GridView) findViewById(R.id.PhoneImageGrid);
+        imagegrid.setAdapter(imageAdapter);
+</code></pre>
+
+<p>adapter.java</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+    ArrayList<String> f = new ArrayList<String>();// list of file paths
+    File[] listFile;
+
+
+    public ImageAdapter(Context context) {
+        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public int getCount() {
+        return f.size();
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(
+                    R.layout.galleryitem, null);
+            holder.imageview = (ImageView) convertView.findViewById(R.id.thumbImage);
+
+            convertView.setTag(holder);
+        }
+        else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+
+        Bitmap myBitmap = BitmapFactory.decodeFile(f.get(position));
+        holder.imageview.setImageBitmap(myBitmap);
+        return convertView;
+    }
+
+
+    public void getFromSdcard()
+    {
+        File file= new File(android.os.Environment.getExternalStorageDirectory(),"/InstaDownloader-");
+
+        if (file.isDirectory())
+        {
+            listFile = file.listFiles();
+
+
+            for (int i = 0; i < listFile.length; i++)
+            {
+                f.add(listFile[i].getAbsolutePath());
+            }
+        }
+    }
+}
+class ViewHolder {
+    ImageView imageview;
+
+
+}
+</code></pre>

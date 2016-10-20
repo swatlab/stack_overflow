@@ -1,0 +1,59 @@
+<p>I am creating an Android Application and I am using sqlite database in it. for that I have placed a sqlite file in assets folder of project and I am copying this file to phone while my first execution of application using code below.</p>
+
+<pre><code> private void copyDataBase() throws IOException {
+    new File(DB_PATH).mkdirs();
+    InputStream myInput = appContext.getAssets().open(DB_NAME);
+    String outFileName = DB_PATH + DB_NAME;
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    byte[] buffer = new byte[1024];
+    int length;
+
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+</code></pre>
+
+<p>but I am getting this errors.</p>
+
+<pre><code> 09-21 18:03:56.841: E/SQLiteLog(7850): (1) no such table: tbl_player
+</code></pre>
+
+<p>but this table is exists in assets file. so I fetched database file from phone using this method.</p>
+
+<pre><code>public static void exportDB(String databaseName, Context context) {
+    try {
+        File sd = Environment.getExternalStorageDirectory();
+        File data = Environment.getDataDirectory();
+
+        if (sd.canWrite()) {
+            String currentDBPath = "//data//" + context.getPackageName()
+                    + "//databases//" + databaseName + "";
+            String backupDBPath = "sensor_game.db";
+            File currentDB = new File(data, currentDBPath);
+            File backupDB = new File(sd, backupDBPath);
+
+            if (currentDB.exists()) {
+                FileChannel src = new FileInputStream(currentDB)
+                        .getChannel();
+                FileChannel dst = new FileOutputStream(backupDB)
+                        .getChannel();
+                dst.transferFrom(src, 0, src.size());
+                src.close();
+                dst.close();
+            }
+        }
+
+    } catch (Exception e) {
+
+    }
+}
+</code></pre>
+
+<p>and I found that there is no table in fetched database file.</p>
+
+<p>Note: This issue is occurs only in <code>OnePlus Two</code> and working fine in <code>Nexus 4</code>, <code>Htc 820</code>,<code>Moto E</code>,<code>Galxy S3</code>and <code>Galaxy Quottro</code></p>

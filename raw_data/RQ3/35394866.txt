@@ -1,0 +1,108 @@
+<p>I was wondering if it is possible to apply two different Adapters (ArrayAdapter for a String array, and ImageAdapter for the background of each value in the array) for a certain 4X4 dimension grid… I ask this because my actual (the code below is just a sample) program contains user-inputted values for height and width (<a href="http://stackoverflow.com/questions/35382979/android-auto-fitting-row-height-of-gridview-based-on-user-inputted-values">Android: Auto-fitting row height of GridView based on user-inputted values</a>) as opposed to hardcoding. Say, if I wanted to assign the brown blocks as a background for the odd numbers, and the gray blocks for the even numbers using grid.setAdapter() for both Adapters... How would I code that using Android Studio?</p>
+
+<p>Here's the following Java code for the grid:</p>
+
+<pre><code>package dpark.sample;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class MainActivity extends AppCompatActivity {
+    private int height, width;
+    String[] list;
+    GridView grid;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        height = 4;
+        width = 4;
+
+        buildList();
+
+        grid = (GridView)findViewById(R.id.gridView);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, list);
+        grid.setAdapter(adapter);
+        grid.setNumColumns(width);
+
+        //***TEMPORARILY COMMENTING THE FOLLOWING OUT SINCE THIS WILL JUST OVERWRITE THE
+        // ARRAYADAPTER***
+        //grid.setAdapter(new ImageAdapter(getApplicationContext()));
+    }
+
+    private void buildList() {
+        int tempIncrementor = 1;
+        int dimensions = height * width;
+
+        list = new String[dimensions];
+
+        for (int i = 0; i < dimensions; i++) {
+            list[i] = String.valueOf(tempIncrementor);
+
+            tempIncrementor++;
+        }
+    }
+
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {
+                // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        // references to our images
+        private Integer[] mThumbIds = {
+                R.drawable.brownblock,
+                R.drawable.grayblock
+        };
+    }
+}
+</code></pre>
+
+<p>... Which outputs in the virtual emulator:</p>
+
+<p><a href="http://i.stack.imgur.com/9gHAQ.png" rel="nofollow"><img src="http://i.stack.imgur.com/9gHAQ.png" alt="enter image description here"></a></p>
+
+<p>... As for outputting the color block images, I temporarily commented out the ArrayAdapter blocks in my code so I could output the following:</p>
+
+<p><a href="http://i.stack.imgur.com/vMokE.png" rel="nofollow"><img src="http://i.stack.imgur.com/vMokE.png" alt="enter image description here"></a></p>

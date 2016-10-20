@@ -1,0 +1,170 @@
+<p>I have made a custom theme for my action bar so that it displays three buttons on the top of the screen. With the click of the leftmost button, I want to start a new activity. However, I am unable to do so. I have used the correct method to start an activity and I am still getting an error. I don't know what the problem is.</p>
+
+<p>The code I have written so far.</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>package com.example.contactmanager1;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+
+
+public class MainActivity extends Activity {
+
+    private ListView listView;
+    private ImageButton button1;
+    private ImageButton button2;
+    private ImageButton button3;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        getActionBar().setDisplayShowTitleEnabled(false);
+        getActionBar().setHomeButtonEnabled(false); 
+        getActionBar().setDisplayShowCustomEnabled(true); 
+        getActionBar().setCustomView(R.layout.button_layout);
+
+        getActionBar().setDisplayShowHomeEnabled(false);
+
+        listView = (ListView)findViewById(R.id.main_contact_listview);
+        button1= (ImageButton)findViewById(R.id.button_search);
+        button2= (ImageButton)findViewById(R.id.button_addcontact);
+        button3= (ImageButton)findViewById(R.id.button_options);
+
+
+
+        setUpListView();
+
+    }
+
+    private void setUpListView(){
+        List <String> displayList = new ArrayList<String>();
+        displayList.add("Display Item 1");
+        displayList.add("Display Item 2");
+        displayList.add("Display Item 3");
+
+
+        ListAdapter listAdapter = new ArrayAdapter<String>(MainActivity.this,
+                android.R.layout.simple_list_item_1,displayList);
+        listView.setAdapter(listAdapter);
+
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+
+        return true;
+    }
+
+
+
+    public boolean onOptionsItemSelected(MenuItem item){
+        //Handle presses on the action bar items
+        switch(item.getItemId()){
+        case R.id.action_button_groups:
+            Intent intent = new Intent(this,Groups.class);
+            startActivity(intent);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void addContact(View view){
+        Intent intent = new Intent(this,AddContact.class);
+        startActivity(intent);
+
+    }
+    public void groupPage(View view){
+        Intent intent = new Intent(this,Groups.class);
+        startActivity(intent);
+    }
+
+}
+</code></pre>
+
+<p>button_layout.xml </p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:background="@android:color/holo_blue_dark"
+            android:padding="5dp"
+            android:layout_weight="1">
+
+            <ImageButton
+                android:id="@+id/action_button_groups"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/groups"
+                android:onClick="groupPage" />
+
+        </LinearLayout>
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/white"/>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:background="@android:color/holo_blue_dark"
+            android:padding="5dp"
+            android:layout_weight="1">
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/contactlist" />
+
+        </LinearLayout>
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/white"/>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:background="@android:color/holo_blue_dark"
+            android:padding="5dp"
+            android:layout_weight="1">
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/favourites" />
+
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
+</code></pre>
+
+<p>For the first image button in button_layout.xml I have added a onClick attribute to which points to the method groupPage. I have defined this method in MainActivity.java.</p>

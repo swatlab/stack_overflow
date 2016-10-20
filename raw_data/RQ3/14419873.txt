@@ -1,0 +1,374 @@
+<p>For a while now I keep getting an error with an Android app I'm writing. (I'm new to Android and relatively to Java.) I can't figure out when I'm getting this error when I feel like I've covered all my bases with creating a simple table and adding data to it. For every other table in my app, I have no trouble. However, my "settings" database keeps giving me trouble. (Using Android's Preferences classes aren't an option.)</p>
+
+<p>Here is the <strong>stack trace</strong> from my testing AVD which uses Google APIs 8.</p>
+
+<pre><code>01-19 16:51:43.848: W/ActivityThread(388): Application com.lakesidebaptist.lakesidelife is waiting for the debugger on port 8100...
+01-19 16:51:43.897: I/System.out(388): Sending WAIT chunk
+01-19 16:51:44.107: I/dalvikvm(388): Debugger is active
+01-19 16:51:44.107: I/System.out(388): Debugger has connected
+01-19 16:51:44.107: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:44.307: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:44.507: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:44.738: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:44.937: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:45.137: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:45.337: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:45.537: I/System.out(388): waiting for debugger to settle...
+01-19 16:51:45.737: I/System.out(388): debugger has settled (1321)
+01-19 16:51:46.867: I/dalvikvm(388): Could not find method com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout.onHoverEvent, referenced from method com.actionbarsherlock.internal.widget.ActionBarContainer.onHoverEvent
+01-19 16:51:46.867: W/dalvikvm(388): VFY: unable to resolve virtual method 5075: Lcom/actionbarsherlock/internal/nineoldandroids/widget/NineFrameLayout;.onHoverEvent (Landroid/view/MotionEvent;)Z
+01-19 16:51:46.867: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x0000
+01-19 16:51:46.878: D/dalvikvm(388): VFY: dead code 0x0003-0004 in Lcom/actionbarsherlock/internal/widget/ActionBarContainer;.onHoverEvent (Landroid/view/MotionEvent;)Z
+01-19 16:51:46.897: I/dalvikvm(388): Could not find method android.widget.FrameLayout.getAlpha, referenced from method com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout.getAlpha
+01-19 16:51:46.897: W/dalvikvm(388): VFY: unable to resolve virtual method 3801: Landroid/widget/FrameLayout;.getAlpha ()F
+01-19 16:51:46.897: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000b
+01-19 16:51:46.897: D/dalvikvm(388): VFY: dead code 0x000e-000f in Lcom/actionbarsherlock/internal/nineoldandroids/widget/NineFrameLayout;.getAlpha ()F
+01-19 16:51:46.897: I/dalvikvm(388): Could not find method android.widget.FrameLayout.getTranslationY, referenced from method com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout.getTranslationY
+01-19 16:51:46.897: W/dalvikvm(388): VFY: unable to resolve virtual method 3802: Landroid/widget/FrameLayout;.getTranslationY ()F
+01-19 16:51:46.897: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000b
+01-19 16:51:46.897: D/dalvikvm(388): VFY: dead code 0x000e-000f in Lcom/actionbarsherlock/internal/nineoldandroids/widget/NineFrameLayout;.getTranslationY ()F
+01-19 16:51:46.897: I/dalvikvm(388): Could not find method android.widget.FrameLayout.setAlpha, referenced from method com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout.setAlpha
+01-19 16:51:46.897: W/dalvikvm(388): VFY: unable to resolve virtual method 3805: Landroid/widget/FrameLayout;.setAlpha (F)V
+01-19 16:51:46.897: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000a
+01-19 16:51:46.897: D/dalvikvm(388): VFY: dead code 0x000d-000d in Lcom/actionbarsherlock/internal/nineoldandroids/widget/NineFrameLayout;.setAlpha (F)V
+01-19 16:51:46.897: I/dalvikvm(388): Could not find method android.widget.FrameLayout.setTranslationY, referenced from method com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout.setTranslationY
+01-19 16:51:46.897: W/dalvikvm(388): VFY: unable to resolve virtual method 3813: Landroid/widget/FrameLayout;.setTranslationY (F)V
+01-19 16:51:46.897: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000a
+01-19 16:51:46.907: D/dalvikvm(388): VFY: dead code 0x000d-000d in Lcom/actionbarsherlock/internal/nineoldandroids/widget/NineFrameLayout;.setTranslationY (F)V
+01-19 16:51:46.947: I/dalvikvm(388): Could not find method android.content.pm.PackageManager.getActivityLogo, referenced from method com.actionbarsherlock.internal.widget.ActionBarView.<init>
+01-19 16:51:46.947: W/dalvikvm(388): VFY: unable to resolve virtual method 326: Landroid/content/pm/PackageManager;.getActivityLogo (Landroid/content/ComponentName;)Landroid/graphics/drawable/Drawable;
+01-19 16:51:46.947: D/dalvikvm(388): VFY: replacing opcode 0x6e at 0x01d1
+01-19 16:51:46.947: I/dalvikvm(388): Could not find method android.content.pm.ApplicationInfo.loadLogo, referenced from method com.actionbarsherlock.internal.widget.ActionBarView.<init>
+01-19 16:51:46.947: W/dalvikvm(388): VFY: unable to resolve virtual method 322: Landroid/content/pm/ApplicationInfo;.loadLogo (Landroid/content/pm/PackageManager;)Landroid/graphics/drawable/Drawable;
+01-19 16:51:46.947: D/dalvikvm(388): VFY: replacing opcode 0x6e at 0x01df
+01-19 16:51:46.947: D/dalvikvm(388): VFY: dead code 0x01d4-01d8 in Lcom/actionbarsherlock/internal/widget/ActionBarView;.<init> (Landroid/content/Context;Landroid/util/AttributeSet;)V
+01-19 16:51:46.957: D/dalvikvm(388): VFY: dead code 0x01e2-01e8 in Lcom/actionbarsherlock/internal/widget/ActionBarView;.<init> (Landroid/content/Context;Landroid/util/AttributeSet;)V
+01-19 16:51:47.047: I/dalvikvm(388): Could not find method android.view.ViewGroup.getAlpha, referenced from method com.actionbarsherlock.internal.nineoldandroids.view.NineViewGroup.getAlpha
+01-19 16:51:47.047: W/dalvikvm(388): VFY: unable to resolve virtual method 3546: Landroid/view/ViewGroup;.getAlpha ()F
+01-19 16:51:47.047: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000b
+01-19 16:51:47.047: D/dalvikvm(388): VFY: dead code 0x000e-000f in Lcom/actionbarsherlock/internal/nineoldandroids/view/NineViewGroup;.getAlpha ()F
+01-19 16:51:47.047: I/dalvikvm(388): Could not find method android.view.ViewGroup.getTranslationX, referenced from method com.actionbarsherlock.internal.nineoldandroids.view.NineViewGroup.getTranslationX
+01-19 16:51:47.047: W/dalvikvm(388): VFY: unable to resolve virtual method 3556: Landroid/view/ViewGroup;.getTranslationX ()F
+01-19 16:51:47.047: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000b
+01-19 16:51:47.057: D/dalvikvm(388): VFY: dead code 0x000e-000f in Lcom/actionbarsherlock/internal/nineoldandroids/view/NineViewGroup;.getTranslationX ()F
+01-19 16:51:47.057: I/dalvikvm(388): Could not find method android.view.ViewGroup.getTranslationY, referenced from method com.actionbarsherlock.internal.nineoldandroids.view.NineViewGroup.getTranslationY
+01-19 16:51:47.057: W/dalvikvm(388): VFY: unable to resolve virtual method 3557: Landroid/view/ViewGroup;.getTranslationY ()F
+01-19 16:51:47.057: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000b
+01-19 16:51:47.057: D/dalvikvm(388): VFY: dead code 0x000e-000f in Lcom/actionbarsherlock/internal/nineoldandroids/view/NineViewGroup;.getTranslationY ()F
+01-19 16:51:47.057: I/dalvikvm(388): Could not find method android.view.ViewGroup.setAlpha, referenced from method com.actionbarsherlock.internal.nineoldandroids.view.NineViewGroup.setAlpha
+01-19 16:51:47.057: W/dalvikvm(388): VFY: unable to resolve virtual method 3572: Landroid/view/ViewGroup;.setAlpha (F)V
+01-19 16:51:47.057: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000a
+01-19 16:51:47.057: D/dalvikvm(388): VFY: dead code 0x000d-000d in Lcom/actionbarsherlock/internal/nineoldandroids/view/NineViewGroup;.setAlpha (F)V
+01-19 16:51:47.057: I/dalvikvm(388): Could not find method android.view.ViewGroup.setTranslationX, referenced from method com.actionbarsherlock.internal.nineoldandroids.view.NineViewGroup.setTranslationX
+01-19 16:51:47.057: W/dalvikvm(388): VFY: unable to resolve virtual method 3576: Landroid/view/ViewGroup;.setTranslationX (F)V
+01-19 16:51:47.057: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000a
+01-19 16:51:47.057: D/dalvikvm(388): VFY: dead code 0x000d-000d in Lcom/actionbarsherlock/internal/nineoldandroids/view/NineViewGroup;.setTranslationX (F)V
+01-19 16:51:47.067: I/dalvikvm(388): Could not find method android.view.ViewGroup.setTranslationY, referenced from method com.actionbarsherlock.internal.nineoldandroids.view.NineViewGroup.setTranslationY
+01-19 16:51:47.067: W/dalvikvm(388): VFY: unable to resolve virtual method 3577: Landroid/view/ViewGroup;.setTranslationY (F)V
+01-19 16:51:47.067: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x000a
+01-19 16:51:47.067: D/dalvikvm(388): VFY: dead code 0x000d-000d in Lcom/actionbarsherlock/internal/nineoldandroids/view/NineViewGroup;.setTranslationY (F)V
+01-19 16:51:47.127: I/dalvikvm(388): Could not find method com.actionbarsherlock.internal.widget.ActionBarView$HomeView.onHoverEvent, referenced from method com.actionbarsherlock.internal.widget.ActionBarView$HomeView.dispatchHoverEvent
+01-19 16:51:47.127: W/dalvikvm(388): VFY: unable to resolve virtual method 5936: Lcom/actionbarsherlock/internal/widget/ActionBarView$HomeView;.onHoverEvent (Landroid/view/MotionEvent;)Z
+01-19 16:51:47.127: D/dalvikvm(388): VFY: replacing opcode 0x6e at 0x0000
+01-19 16:51:47.127: D/dalvikvm(388): VFY: dead code 0x0003-0004 in Lcom/actionbarsherlock/internal/widget/ActionBarView$HomeView;.dispatchHoverEvent (Landroid/view/MotionEvent;)Z
+01-19 16:51:47.137: I/dalvikvm(388): Could not find method android.widget.FrameLayout.onPopulateAccessibilityEvent, referenced from method com.actionbarsherlock.internal.widget.ActionBarView$HomeView.onPopulateAccessibilityEvent
+01-19 16:51:47.137: W/dalvikvm(388): VFY: unable to resolve virtual method 3804: Landroid/widget/FrameLayout;.onPopulateAccessibilityEvent (Landroid/view/accessibility/AccessibilityEvent;)V
+01-19 16:51:47.137: D/dalvikvm(388): VFY: replacing opcode 0x6f at 0x0006
+01-19 16:51:47.537: D/AndroidRuntime(388): Shutting down VM
+01-19 16:51:47.537: W/dalvikvm(388): threadid=1: thread exiting with uncaught exception (group=0x4001d800)
+01-19 16:51:47.597: E/AndroidRuntime(388): FATAL EXCEPTION: main
+01-19 16:51:47.597: E/AndroidRuntime(388): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.lakesidebaptist.lakesidelife/com.lakesidebaptist.lakesidelife.MainActivity}: java.lang.NullPointerException
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2663)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2679)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.ActivityThread.access$2300(ActivityThread.java:125)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2033)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.os.Handler.dispatchMessage(Handler.java:99)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.os.Looper.loop(Looper.java:123)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.ActivityThread.main(ActivityThread.java:4627)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at java.lang.reflect.Method.invokeNative(Native Method)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at java.lang.reflect.Method.invoke(Method.java:521)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at dalvik.system.NativeStart.main(Native Method)
+01-19 16:51:47.597: E/AndroidRuntime(388): Caused by: java.lang.NullPointerException
+01-19 16:51:47.597: E/AndroidRuntime(388):  at com.lakesidebaptist.lakesidelife.update.database.dbAdapter.doOnFirstRun(dbAdapter.java:118)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at com.lakesidebaptist.lakesidelife.update.database.dbAdapter$DatabaseHelper.onCreate(dbAdapter.java:139)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:106)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at com.lakesidebaptist.lakesidelife.update.database.dbAdapter.open(dbAdapter.java:38)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at com.lakesidebaptist.lakesidelife.MainActivity.onCreate(MainActivity.java:54)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+01-19 16:51:47.597: E/AndroidRuntime(388):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2627)
+01-19 16:51:47.597: E/AndroidRuntime(388):  ... 11 more
+</code></pre>
+
+<p>From what I understand, the ABS stuff in the log has nothing to do with the actual problem.</p>
+
+<p><strong>MainActivity.class</strong></p>
+
+<pre><code>    package com.lakesidebaptist.lakesidelife;
+
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
+
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.ActionBar.Tab;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.lakesidebaptist.lakesidelife.ui.PagerAdapter;
+import com.lakesidebaptist.lakesidelife.update.Updater;
+import com.lakesidebaptist.lakesidelife.update.UpdaterTask;
+import com.lakesidebaptist.lakesidelife.update.database.dbAdapter;
+
+public class MainActivity extends SherlockFragmentActivity implements
+        ActionBar.TabListener {
+
+    // The context used for the Updater class
+    public static Context context;
+
+    PagerAdapter pagerAdapter;
+
+    /*
+     * I'm not entirely sure what this does, but it's key in implementing the
+     * tab/swiping navigation. See documentation here:
+     * http://developer.android.com
+     * /reference/android/support/v4/view/ViewPager.html
+     */
+    ViewPager viewPager;
+
+    // The AsyncTask class Updater
+    public static Updater updater;
+
+    private static ProgressDialog pd = null;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        context = this;
+
+        // Perform initial update
+        dbAdapter dba = new dbAdapter(this);
+        dba.open();
+
+        String doesDBexist = dba.getSetting("firstRun");
+
+        if(doesDBexist == null) {
+            dba.doOnFirstRun();
+        }
+
+        if (dba.getSetting("firstRun").equals("true")) {
+
+            /*
+             * Checks if network connection is available and if so, starts the
+             * updater
+             */
+            NetworkInfo ni = ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE))
+                    .getActiveNetworkInfo();
+
+            if (ni != null) {
+                // Updates if there is a connection
+                new UpdaterTask().execute();
+                pd = new ProgressDialog(this, ProgressDialog.STYLE_SPINNER)
+                        .show(this, "@string/progress_dialog_updating_title",
+                                "@string/progress_dialog_updating_body");
+                dba.addSetting("firstRun", "false");
+            } else {
+                // Tells user there's no connection and closes activity
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("@string/no_internet_dialog_title")
+                        .setMessage("@string/no_internet_dialog_body")
+                        .setCancelable(false)
+                        .setPositiveButton("OK",
+                                new DialogInterface.OnClickListener() {
+
+                                    @Override
+                                    public void onClick(DialogInterface dialog,
+                                            int which) {
+                                        finish();
+                                    }
+                                });
+            }
+        }
+
+        dba.close();
+
+        // Sets up tabs
+        pagerAdapter = new PagerAdapter(getSupportFragmentManager());
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setHomeButtonEnabled(false);
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        viewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager.setAdapter(pagerAdapter);
+
+        // The method is called when a tab is clicked or the user swipes.
+        viewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // Creates "Life" tab
+        actionBar.addTab(actionBar.newTab().setText("Life")
+                .setTabListener(this));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getSupportMenuInflater();
+        menuInflater.inflate(R.menu.activity_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+        case R.id.menu_settings:
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Called when a tab is selected.
+    @Override
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        viewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p><strong>dbAdapter.class</strong></p>
+
+<pre><code>package com.lakesidebaptist.lakesidelife.update.database;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+/**
+ * The database adapter for the application database.
+ * 
+ * @author andrew
+ */
+public class dbAdapter {
+    private static final String DATABASE_NAME = "lakeside";
+    /**
+     * This should be changed whenever the format of the application database
+     * changes in such a way that the onUpgrade() method must be called.
+     */
+    private static final int VERSION = 1;
+
+    private DatabaseHelper dbHelper;
+    private SQLiteDatabase db;
+
+    private final Context context;
+
+    public dbAdapter(Context context) {
+        this.context = context;
+    }
+
+    /**
+     * Opens the database.
+     * 
+     * @return
+     */
+    public dbAdapter open() {
+        dbHelper = new DatabaseHelper(context);
+        db = dbHelper.getWritableDatabase();
+        return this;
+    }
+
+    /**
+     * Sumbits query to database. Note this function does NOT return anything.
+     * You must use the read() function to read from the database.
+     * 
+     * @param command
+     */
+    public void query(String command) {
+        db.execSQL(command);
+    }
+
+    /**
+     * This function should be used to read from a database. Notice "table" is
+     * the only required parameter.
+                + setting + "', '" + value + "');";
+        query(command);
+    }
+
+    public void changeSetting(String setting, String value) {
+        String command = "UPDATE 'settings' SET 'value'='" + value + "' WHERE '" + setting + "'='" + value + "';";
+        query(command);
+    }
+
+    public String getSetting(String setting) {
+        Cursor cursor = db.rawQuery(
+                "SELECT 'value' FROM 'settings' WHERE 'setting'='" + setting
+                        + "';", null);
+        cursor.moveToFirst();
+        return cursor.getString(cursor.getColumnIndex("value"));
+    }
+
+    public void doOnFirstRun() {
+        db.execSQL("CREATE TABLE IF NOT EXISTS 'settings' ('setting' text, 'value' text);");
+        addSetting("firstRun", "true");
+        addSetting("updateServiceTimout", "60");
+        addSetting("updateTimeUnit", "minute");
+    }
+
+    /**
+     * I don't normally use nested classes due to my OCD, but I caved with this,
+     * because all the online examples did it, and I didn't have time to figure
+     * out how to make this class in its own file.
+     * 
+     * @author andrew
+     * 
+     */
+    public class DatabaseHelper extends SQLiteOpenHelper {
+        DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            doOnFirstRun();
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+}
+</code></pre>

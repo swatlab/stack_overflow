@@ -1,0 +1,485 @@
+<p>I followed <a href="http://blog.char95.com/importing-sqlite-database-in-android-applications/" rel="nofollow">this tutorial</a> to import database. Then I try to read the data using ArrayList to display them in listview. But I got nullpointer exception on my rawQuery saying it is invoking a null object reference.</p>
+
+<p>DB.java</p>
+
+<pre><code>public class DB extends SQLiteOpenHelper {
+
+//The Android's default system path of your application database.
+private static String DB_PATH           = "data/data/hairulhazri.malayforyou/databases/";
+private static String DB_NAME           = "malayforyou";
+private static String TABLE_LOCATION    = "Frasa";
+
+private final Context context;
+private SQLiteDatabase db;
+
+
+// constructor
+public DB(Context context) {
+
+    super( context , DB_NAME , null , 1);
+    this.context = context;
+
+}
+
+
+// Creates a empty database on the system and rewrites it with your own database.
+public void create() throws IOException {
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }else{
+
+        // By calling this method and empty database will be created into the default system path
+        // of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+// Check if the database exist to avoid re-copy the data
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String path = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        // database don't exist yet.
+        e.printStackTrace();
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+// copy your assets db to the new system DB
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = context.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+//Open the database
+public boolean open() {
+
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+        return true;
+
+    } catch(SQLException sqle) {
+        db = null;
+        return false;
+    }
+}
+
+@Override
+public synchronized void close() {
+
+    if(db != null)
+        db.close();
+
+    super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+
+// PUBLIC METHODS TO ACCESS DB CONTENT
+// -----------------------------------------------------------------------------------------------------------------
+
+
+public ArrayList<Frasa> getFrasa(String situation) {
+
+    //ArrayList of Frasa class objects
+    ArrayList<Frasa> arrFrasa = null;
+    //String query = "SELECT * FROM Frasa WHERE Situation = " + situation;
+
+    String selectQuery =  "SELECT  " +
+            Frasa.KEY_ID + "," +
+            Frasa.KEY_PHRASE + "," +
+            Frasa.KEY_TRANSLATE + "," +
+            Frasa.KEY_PRONOUNCE +
+            " FROM " + TABLE_LOCATION + " WHERE situation = " +situation;
+
+
+    db = SQLiteDatabase.openDatabase( DB_PATH + DB_NAME , null, SQLiteDatabase.OPEN_READWRITE);
+    Cursor curFrasa = db.rawQuery(selectQuery, null);
+
+    if (curFrasa != null && curFrasa.moveToFirst()) {
+        arrFrasa = new ArrayList<Frasa>();
+        while (curFrasa.isAfterLast() == false) {
+            //Frasa is a class with list of fields
+            Frasa fra = new Frasa();
+            fra.setId(curFrasa.getInt(curFrasa.getColumnIndex(Frasa.KEY_ID)));
+            fra.setPhrase(curFrasa.getString(curFrasa.getColumnIndex(Frasa.KEY_PHRASE)));
+            fra.setTranslate(curFrasa.getString(curFrasa.getColumnIndex(Frasa.KEY_TRANSLATE)));
+            fra.setPronounce(curFrasa.getString(curFrasa.getColumnIndex(Frasa.KEY_PRONOUNCE)));
+            arrFrasa.add(fra);
+            curFrasa.moveToNext();
+        }
+    }
+    curFrasa.close();
+    db.close();
+    return arrFrasa;
+  }
+}
+</code></pre>
+
+<p>Frasa.java (Database table and columns)</p>
+
+<pre><code>public class Frasa {
+
+
+
+// Labels Table Columns names
+public static final String KEY_ID = "id";
+public static final String KEY_PHRASE = "phrase";
+public static final String KEY_TRANSLATE = "translate";
+public static final String KEY_PRONOUNCE = "pronounce";
+
+
+// property help us to keep data
+public int id;
+public String situation;
+public String phrase;
+public String translate;
+public String pronounce;
+
+
+public Frasa() {
+}
+
+public Frasa(int id, String situation, String phrase, String translate, String pronounce) {
+    this.id = id;
+    this.situation = situation;
+    this.phrase = phrase;
+    this.translate = translate;
+    this.pronounce = pronounce;
+}
+
+
+public int getId() {
+    return id;
+}
+
+public void setId(int id) {
+    this.id = id;
+}
+
+public String getPhrase() {
+    return phrase;
+}
+
+public void setPhrase(String phrase) {
+    this.phrase = phrase;
+}
+
+public String getTranslate() {
+    return translate;
+}
+
+public void setTranslate(String translate) {
+    this.translate = translate;
+}
+
+public String getPronounce() {
+    return pronounce;
+}
+
+public void setPronounce(String pronounce) {
+    this.pronounce = pronounce;
+}
+}
+
+
+
+public class GreetingAdapter extends ArrayAdapter<Frasa> {
+Context context;
+int layoutResourceId;
+ArrayList<Frasa> data = new ArrayList<Frasa>();
+
+public GreetingAdapter(Context context, int layoutResourceId, ArrayList<Frasa> data)
+{
+    super(context, layoutResourceId, data);
+    this.layoutResourceId = layoutResourceId;
+    this.context = context;
+    this.data = data;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    View row = convertView;
+    UserHolder holder = null;
+
+    if (row == null) {
+        LayoutInflater inflater = ((Activity) context).getLayoutInflater();
+        row = inflater.inflate(layoutResourceId, parent, false);
+        holder = new UserHolder();
+        holder.textPhrase = (TextView) row.findViewById(R.id.textViewPhrase);
+        holder.textTranslate = (TextView) row.findViewById(R.id.textViewTranslate);
+        holder.btnSpeak = (Button) row.findViewById(R.id.buttonSpeak);
+        holder.btnRecord = (Button) row.findViewById(R.id.buttonRecord);
+        holder.btnPlay = (Button) row.findViewById(R.id.buttonPlay);
+        row.setTag(holder);
+    } else {
+        holder = (UserHolder) row.getTag();
+    }
+    Frasa frasa = data.get(position);
+    holder.textPhrase.setText(frasa.getPhrase());
+    holder.textTranslate.setText(frasa.getTranslate());
+    holder.btnSpeak.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+            Log.i("Edit Button Clicked", "**********");
+            Toast.makeText(context, "Speak button Clicked",
+                    Toast.LENGTH_LONG).show();
+        }
+    });
+    holder.btnRecord.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+            Log.i("Delete Button Clicked", "**********");
+            Toast.makeText(context, "Delete button Clicked",
+                    Toast.LENGTH_LONG).show();
+        }
+    });
+    holder.btnPlay.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+            Log.i("Play Button Clicked", "**********");
+            Toast.makeText(context, "Playing recorded audio",
+                    Toast.LENGTH_LONG).show();
+        }
+    });
+    return row;
+
+}
+
+static class UserHolder {
+    TextView textPhrase;
+    TextView textTranslate;
+    Button btnSpeak;
+    Button btnRecord;
+    Button btnPlay;
+}
+}
+</code></pre>
+
+<p>activity_list_greetings.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+android:orientation="vertical"
+
+android:layout_width="match_parent"
+
+android:layout_height="match_parent">
+
+<TextView
+    android:id="@+id/txt_header"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:layout_centerHorizontal="true"
+    android:gravity="center"
+    android:text="Greetings"
+    android:textAppearance="?android:attr/textAppearanceLarge"
+    android:textColor="@android:color/black" />
+
+<ListView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/listGreetings"
+    android:layout_alignParentRight="true"
+    android:layout_alignParentEnd="true"
+    android:layout_below="@+id/txt_header" />
+</code></pre>
+
+<p></p>
+
+<p>list_item_greet.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical" android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+<TextView
+    android:id="@+id/textViewPhrase"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Phrase"
+    android:textAppearance="?android:attr/textAppearanceLarge"
+    android:layout_above="@+id/buttonRecord"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentStart="true" />
+
+
+<Button
+    android:id="@+id/buttonSpeak"
+    android:layout_width="80dp"
+    android:layout_height="40dp"
+    android:layout_alignParentRight="true"
+    android:layout_alignParentTop="true"
+    android:background="#FFFFFF"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:text="Speak"
+    android:textColor="#0099CC" />
+
+<Button
+    android:id="@+id/buttonRecord"
+    android:layout_width="80dp"
+    android:layout_height="40dp"
+    android:layout_alignParentRight="true"
+    android:layout_below="@+id/buttonSpeak"
+    android:layout_marginTop="3dp"
+    android:background="#FFFFFF"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:text="Record"
+    android:textColor="#0099CC" />
+
+<Button
+    android:id="@+id/buttonPlay"
+    android:layout_width="80dp"
+    android:layout_height="40dp"
+    android:layout_alignParentRight="true"
+    android:layout_below="@+id/buttonRecord"
+    android:layout_marginTop="3dp"
+    android:background="#FFFFFF"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:text="Play"
+    android:textColor="#0099CC" />
+
+<TextView
+    android:id="@+id/textViewTranslate"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Translate"
+    android:textSize="20sp"
+    android:textColor="@color/background_material_dark"
+    android:layout_below="@+id/buttonRecord"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentStart="true" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>ListGreetings.java</p>
+
+<pre><code>public class ListGreetings extends ActionBarActivity {
+
+TextView txtPhrase, txtTranslate;
+Button speakButton;
+MediaPlayer pronounce;
+
+ListView userList;
+GreetingAdapter greetAdapter;
+
+//ArrayList<Frasa> frasaArray = new ArrayList<Frasa>();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_list_greetings);
+
+
+    DB db = new DB(this);
+    db.open();
+
+
+    //get Frasa data
+        ArrayList<Frasa> frasaArray = db.getFrasa("Greetings");
+
+
+        /**
+         * set item into adapter
+         */
+        greetAdapter = new GreetingAdapter(ListGreetings.this, R.layout.list_item_greet, frasaArray);
+        userList = (ListView) findViewById(R.id.listGreetings);
+        userList.setItemsCanFocus(false);
+        userList.setAdapter(greetAdapter);
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_list_greetings, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+  }
+}
+</code></pre>
+
+<p>Is it my way of calling <code>getFrasa</code> wrong? Or the database cannot be detected? I'm sure I already pushed the database file to both assets folder & inside the package. Sorry, if I'm not formatting the codes correctly. Thanks in advance for any help.</p>

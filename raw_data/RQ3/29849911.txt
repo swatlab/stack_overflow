@@ -1,0 +1,236 @@
+<p>i'm using this code to have a circle imageview :</p>
+
+<pre><code>public class CircularImageView extends ImageView{
+    private int borderWidth = 4;
+    private int viewWidth;
+    private int viewHeight;
+    private Bitmap image;
+    private Paint paint;
+    private Paint paintBorder;
+    private BitmapShader shader;
+
+    public CircularImageView(Context context)
+    {
+        super(context);
+        setup();
+    }
+
+    public CircularImageView(Context context, AttributeSet attrs)
+    {
+        super(context, attrs);
+        setup();
+    }
+
+    public CircularImageView(Context context, AttributeSet attrs, int defStyle)
+    {
+        super(context, attrs, defStyle);
+        setup();
+    }
+
+    private void setup()
+    {
+        // init paint
+        paint = new Paint();
+        paint.setAntiAlias(true);
+
+        paintBorder = new Paint();
+        setBorderColor(Color.WHITE);
+        paintBorder.setAntiAlias(true);
+        this.setLayerType(LAYER_TYPE_SOFTWARE, paintBorder);
+        paintBorder.setShadowLayer(4.0f, 0.0f, 2.0f, Color.BLACK);
+    }
+
+    public void setBorderWidth(int borderWidth)
+    {
+        this.borderWidth = borderWidth;
+        this.invalidate();
+    }
+
+    public void setBorderColor(int borderColor)
+    {
+        if (paintBorder != null)
+            paintBorder.setColor(borderColor);
+
+        this.invalidate();
+    }
+
+    private void loadBitmap()
+    {
+        BitmapDrawable bitmapDrawable = (BitmapDrawable) this.getDrawable();
+
+        if (bitmapDrawable != null)
+            image = bitmapDrawable.getBitmap();
+    }
+
+    @SuppressLint("DrawAllocation")
+    @Override
+    public void onDraw(Canvas canvas)
+    {
+        // load the bitmap
+        loadBitmap();
+
+        // init shader
+        if (image != null)
+        {
+            shader = new BitmapShader(Bitmap.createScaledBitmap(image, canvas.getWidth(), canvas.getHeight(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            paint.setShader(shader);
+            int circleCenter = viewWidth / 2;
+
+            // circleCenter is the x or y of the view's center
+            // radius is the radius in pixels of the cirle to be drawn
+            // paint contains the shader that will texture the shape
+            canvas.drawCircle(circleCenter + borderWidth, circleCenter + borderWidth, circleCenter + borderWidth - 4.0f, paintBorder);
+            canvas.drawCircle(circleCenter + borderWidth, circleCenter + borderWidth, circleCenter - 4.0f, paint);
+        }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+    {
+        int width = measureWidth(widthMeasureSpec);
+        int height = measureHeight(heightMeasureSpec, widthMeasureSpec);
+
+        viewWidth = width - (borderWidth * 2);
+        viewHeight = height - (borderWidth * 2);
+
+        setMeasuredDimension(width, height);
+    }
+
+    private int measureWidth(int measureSpec)
+    {
+        int result = 0;
+        int specMode = MeasureSpec.getMode(measureSpec);
+        int specSize = MeasureSpec.getSize(measureSpec);
+
+        if (specMode == MeasureSpec.EXACTLY)
+        {
+            // We were told how big to be
+            result = specSize;
+        }
+        else
+        {
+            // Measure the text
+            result = viewWidth;
+        }
+
+        return result;
+    }
+
+    private int measureHeight(int measureSpecHeight, int measureSpecWidth)
+    {
+        int result = 0;
+        int specMode = MeasureSpec.getMode(measureSpecHeight);
+        int specSize = MeasureSpec.getSize(measureSpecHeight);
+
+        if (specMode == MeasureSpec.EXACTLY)
+        {
+            // We were told how big to be
+            result = specSize;
+        }
+        else
+        {
+// Measure the text (beware: ascent is a negative number)
+result = viewHeight;
+}
+return (result + 2);
+}
+}
+</code></pre>
+
+<p>and in xml :</p>
+
+<pre><code><com.milionbor.srp.adapter.CircularImageView
+        android:id="@+id/img_goroh"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="5dp"
+        android:padding="5dp"
+        android:src="@drawable/varzeshi" />
+</code></pre>
+
+<p>it's working perfect, also i use this code to show a image from the web :</p>
+
+<pre><code>public class DrawableManager {
+   private final Map<String, Drawable> drawableMap;
+
+   public DrawableManager() {
+       drawableMap = new HashMap<String, Drawable>();
+   }
+
+   public Drawable fetchDrawable(String urlString) {
+       if (drawableMap.containsKey(urlString)) {
+           return drawableMap.get(urlString);
+       }
+
+       Log.d(this.getClass().getSimpleName(), "image url:" + urlString);
+       try {
+           InputStream is = fetch(urlString);
+           Drawable drawable = Drawable.createFromStream(is, "src");
+
+
+           if (drawable != null) {
+               drawableMap.put(urlString, drawable);
+               Log.d(this.getClass().getSimpleName(), "got a thumbnail drawable: " + drawable.getBounds() + ", "
+                       + drawable.getIntrinsicHeight() + "," + drawable.getIntrinsicWidth() + ", "
+                       + drawable.getMinimumHeight() + "," + drawable.getMinimumWidth());
+           } else {
+             Log.w(this.getClass().getSimpleName(), "could not get thumbnail");
+           }
+
+           return drawable;
+       } catch (MalformedURLException e) {
+           Log.e(this.getClass().getSimpleName(), "fetchDrawable failed", e);
+           return null;
+       } catch (IOException e) {
+           Log.e(this.getClass().getSimpleName(), "fetchDrawable failed", e);
+           return null;
+       }
+   }
+
+   public void fetchDrawableOnThread(final String urlString, final ImageView imageView) {
+       if (drawableMap.containsKey(urlString)) {
+           imageView.setImageDrawable(drawableMap.get(urlString));
+       }
+
+       final Handler handler = new Handler() {
+           @SuppressWarnings("deprecation")
+        @Override
+           public void handleMessage(Message message) {
+               // imageView.setImageDrawable((Drawable) message.obj);
+               imageView.setBackgroundDrawable((Drawable) message.obj);
+           }
+       };
+
+       Thread thread = new Thread() {
+           @Override
+           public void run() {
+               //TODO : set imageView to a "pending" image
+               Drawable drawable = fetchDrawable(urlString);
+               Message message = handler.obtainMessage(1, drawable);
+               handler.sendMessage(message);
+           }
+       };
+       thread.start();
+   }
+
+   private InputStream fetch(String urlString) throws MalformedURLException, IOException {
+       DefaultHttpClient httpClient = new DefaultHttpClient();
+       HttpGet request = new HttpGet(urlString);
+       HttpResponse response = httpClient.execute(request);
+       return response.getEntity().getContent();
+   }
+}
+</code></pre>
+
+<p>and in my activity :</p>
+
+<pre><code>tasvir = my url...
+ImageView iv = (ImageView) findViewById(R.id.imageView1);
+DrawableManager dm = new DrawableManager();
+dm.fetchDrawableOnThread(tasvir,iv);
+</code></pre>
+
+<p>it is working perfect too, but when i want to show the image that i get from the web in circle, it is not working (not showing in circle).
+so how can i fix it?</p>

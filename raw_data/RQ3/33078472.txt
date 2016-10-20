@@ -1,0 +1,288 @@
+<p>I want to hide a groupPosition in my expandableListView, when my textView has value "2" or "3" in SliderMenu.java in if() statements... The code is here:</p>
+
+<p>ExpandableListAdapter.java</p>
+
+<pre><code>public class ExpandableListAdapter extends BaseExpandableListAdapter {
+
+private Context _context;
+private String[] osArray;
+private Integer[] imgid;
+private String[][] childList;
+
+public ExpandableListAdapter(SliderMenu mainActivity, String[] osArray, Integer[] imgid, String[][] childList) {
+    this._context = mainActivity;
+    this.osArray = osArray;
+    this.imgid = imgid;
+    this.childList = childList;
+}
+
+@Override
+public View getChildView(int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+
+    if (convertView == null) {
+        LayoutInflater inflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        convertView = inflater.inflate(R.layout.list_item, null);
+    }
+
+    TextView txtListChild = (TextView) convertView.findViewById(R.id.lblListItem);
+    txtListChild.setText(childList[groupPosition][childPosition]);
+    return convertView;
+}
+
+@Override
+public boolean isChildSelectable(int groupPosition, int childPosition) {
+    return true;
+}
+
+@Override
+public int getGroupCount() {
+    return osArray.length;
+}
+
+@Override
+public int getChildrenCount(int groupPosition) {
+    return childList[groupPosition].length;
+}
+
+@Override
+public Object getGroup(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public Object getChild(int groupPosition, int childPosition) {
+    return null;
+}
+
+@Override
+public long getGroupId(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public long getChildId(int groupPosition, int childPosition) {
+    return 0;
+}
+
+@Override
+public boolean hasStableIds() {
+    return false;
+}
+
+@Override
+public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+
+    if (convertView == null) {
+        LayoutInflater infalInflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        convertView = infalInflater.inflate(R.layout.textview, parent, false);
+    }
+
+
+    TextView tv = (TextView) convertView.findViewById(R.id.tv);
+    ImageView imageView = (ImageView) convertView.findViewById(R.id.icon);
+    // Populate the data into the template view using the data object
+    tv.setText(osArray[groupPosition]);
+    imageView.setImageResource(imgid[groupPosition]);
+
+    return convertView;
+}
+</code></pre>
+
+<p>SliderMenu.java</p>
+
+<pre><code>public class SliderMenu extends ActionBarActivity {
+
+private ExpandableListView mDrawerList;
+private DrawerLayout mDrawerLayout;
+private ActionBarDrawerToggle mDrawerToggle;
+private String mActivityTitle;
+Button bLogout;
+private SQLiteHandler db;
+private SessionManager session;
+ExpandableListAdapter adapter;
+TextView textView;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_slider_menu);
+    bLogout = (Button) findViewById(R.id.bLogout);
+    textView = (TextView) findViewById(R.id.checklevel);
+
+    SharedPreferences settings = getSharedPreferences(LoginActivity.PREFS_NAME, Context.MODE_PRIVATE);
+    String a = settings.getString("level", "");
+    Log.d("Level", a);
+    textView.setText(a);
+
+
+    // SqLite database handler
+    db = new SQLiteHandler(getApplicationContext());
+
+    // session manager
+    session = new SessionManager(getApplicationContext());
+
+    mDrawerList = (ExpandableListView) findViewById(R.id.navList);
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    mActivityTitle = getTitle().toString();
+
+    LayoutInflater inflater = getLayoutInflater();
+    ViewGroup mTop = (ViewGroup)inflater.inflate(R.layout.header, mDrawerList, false);
+    mDrawerList.addHeaderView(mTop, null, false);
+
+    addDrawerItems();
+    setupDrawer();
+
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setHomeButtonEnabled(true);
+
+    // Logout button click event
+    bLogout.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            logoutUser();
+        }
+    });
+}
+
+private void addDrawerItems() {
+    final String[] osArray = {"Students                                         ❯",
+            "Class                                               ❯",
+            "Payment                                         ❯",
+            "Message                                         ❯"
+    };
+    Integer[] imgid={
+            R.drawable.students,
+            R.drawable.cls,
+            R.drawable.payment,
+            R.drawable.msg
+    };
+    String [][]childList = {
+            {"           •   Students' List"},
+            {"           •   Attendance",
+             "           •   Subjects",
+             "           •   Monthly Reports",
+             "           •   Activities"
+            },
+            {"           •   Online Payment"},
+            {"           •   Send a reminder",
+             "           •   Send a note"}
+    };
+
+    adapter = new ExpandableListAdapter(this, osArray, imgid, childList);
+    mDrawerList.setAdapter(adapter);
+
+
+    mDrawerList.setOnChildClickListener(new ExpandableListView.OnChildClickListener()
+    {
+        @Override
+        public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+            if (textView.getText().toString().equals("2")) {
+
+            }else if(textView.getText().toString().equals("3")){
+
+            }
+
+                switch (groupPosition) {
+                    case 0:
+                        startActivity(new Intent(SliderMenu.this, StudentActivity.class));
+                    break;
+                    case 1:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, AttendanceActivity.class));
+                        else if (childPosition == 1)
+                            startActivity(new Intent(SliderMenu.this, SubjectsActivity.class));
+                        else if (childPosition == 2)
+                            startActivity(new Intent(SliderMenu.this, MonthlyReportsActivity.class));
+                        else if (childPosition == 3)
+                            startActivity(new Intent(SliderMenu.this, Activities.class));
+                    break;
+                    case 2:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, PaymentActivity.class));
+                    break;
+                    case 3:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, SendReminderActivity.class));
+                        else if (childPosition == 1)
+                            startActivity(new Intent(SliderMenu.this, SendNoteActivity.class));
+                    break;
+                }
+
+                return false;
+        }
+    });
+}
+
+private void setupDrawer() {
+    mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+        /** Called when a drawer has settled in a completely open state. */
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            getSupportActionBar().setTitle("Dashboard");
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+
+        /** Called when a drawer has settled in a completely closed state. */
+        public void onDrawerClosed(View view) {
+            super.onDrawerClosed(view);
+            getSupportActionBar().setTitle(mActivityTitle);
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+    };
+
+    mDrawerToggle.setDrawerIndicatorEnabled(true);
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    // Sync the toggle state after onRestoreInstanceState has occurred.
+    mDrawerToggle.syncState();
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    // Activate the navigation drawer toggle
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+/**
+ * Logging out the user. Will set isLoggedIn flag to false in shared
+ * preferences Clears the user data from sqlite users table
+ * */
+private void logoutUser() {
+    session.setLogin(false);
+    db.deleteUsers();
+    // Launching the login activity
+    Intent intent = new Intent(SliderMenu.this, LoginActivity.class);
+    startActivity(intent);
+    finish();
+}
+}
+</code></pre>
+
+<p>Please suggest some code...</p>

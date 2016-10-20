@@ -1,0 +1,139 @@
+<p>In my application, I create a database by copying over an existing sqlite database that is saved in my assets folder. </p>
+
+<p>In the code I also check the database version, so if a newer version of the application is installed with a higher database version, then the database is recreated (in the onUpgrade method).</p>
+
+<p>The problem I am experiencing, is that the upgrading process functioned perfectly on previous Android versions, but since installing Jelly Bean, I have been getting an error that the database is corrupted. If I clean install the application (so no database upgrade, just create), then the application also functions normally.</p>
+
+<p>The two devices that I tested it on is an S3 with 4.1.1, and a Nexus 4 with 4.2.1.</p>
+
+<p>Any ideas why it would start failing on the latest Android versions? Thanks!</p>
+
+<p>The error is as follows:</p>
+
+<pre><code>01-09 09:59:50.941: E/SQLiteLog(15915): (11) database corruption at line 51776 of [00bb9c9ce4]
+01-09 09:59:50.941: E/SQLiteLog(15915): (11) database disk image is malformed
+01-09 09:59:50.941: E/DefaultDatabaseErrorHandler(15915): Corruption reported by sqlite on database: /data/data/myapp/databases/services.sqlite
+01-09 09:59:50.941: E/DefaultDatabaseErrorHandler(15915): deleting the database file: /data/data/myapp/databases/services.sqlite
+01-09 09:59:50.991: E/SQLiteLog(15915): (1) no such table: services
+01-09 09:59:50.991: D/AndroidRuntime(15915): Shutting down VM
+01-09 09:59:50.991: W/dalvikvm(15915): threadid=1: thread exiting with uncaught exception (group=0x40c3c930)
+01-09 09:59:50.991: E/AndroidRuntime(15915): FATAL EXCEPTION: main
+01-09 09:59:50.991: E/AndroidRuntime(15915): java.lang.RuntimeException: Unable to start activity ComponentInfo{myapp/myapp.MainActivity}: android.database.sqlite.SQLiteException: no such table: services (code 1): , while compiling: (my query)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.ActivityThread.access$600(ActivityThread.java:141)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.os.Handler.dispatchMessage(Handler.java:99)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.os.Looper.loop(Looper.java:137)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.ActivityThread.main(ActivityThread.java:5039)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at java.lang.reflect.Method.invokeNative(Native Method)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at java.lang.reflect.Method.invoke(Method.java:511)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at dalvik.system.NativeStart.main(Native Method)
+01-09 09:59:50.991: E/AndroidRuntime(15915): Caused by: android.database.sqlite.SQLiteException: no such table: services (code 1): , while compiling: (my query)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:882)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:493)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1161)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1032)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1200)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at myapp.c.f(Unknown Source)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at myapp.bk.a(Unknown Source)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at myapp.MainActivity.onCreate(Unknown Source)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.Activity.performCreate(Activity.java:5104)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+01-09 09:59:50.991: E/AndroidRuntime(15915):    ... 11 more
+</code></pre>
+
+<p>The code to create, and upgrade the database is as follows:</p>
+
+<pre><code>public void createDatabase() throws IOException {
+    boolean dbExist = checkDatabase();
+
+    if(dbExist) {
+        this.getWritableDatabase();
+    }
+
+    dbExist = checkDatabase();
+    SQLiteDatabase db_Read = null;
+
+    if(!dbExist) {
+        db_Read = this.getReadableDatabase();
+        try {
+            copyDatabase();
+        } catch(IOException e) {
+            throw new Error ("Error copying database");
+        }
+    }
+}
+
+private boolean checkDatabase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }catch(SQLiteException e){
+        //database does't exist yet.
+    }
+
+    if(checkDB != null){
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDatabase() throws IOException {
+
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    String outFileName = DB_PATH + DB_NAME;
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while((length = myInput.read(buffer))>0) {
+        myOutput.write(buffer, 0, length);
+    }
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+
+public SQLiteDatabase openDatabase() throws SQLException {
+    String myPath = DB_PATH + DB_NAME;
+    myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    return myDatabase;
+}
+
+
+@Override
+public synchronized void close() {
+    if(myDatabase != null) {
+        myDatabase.close();
+    }
+    super.close();
+}
+
+@Override
+public void onUpgrade (SQLiteDatabase db, int oldVersion, int newVersion) {
+    sc.updatedDB = true;
+    if (newVersion > oldVersion) {
+        try { 
+            copyDatabase(); 
+        } catch (IOException e) { 
+            throw new Error("Error upgrading database"); 
+        } 
+    }   
+}
+</code></pre>

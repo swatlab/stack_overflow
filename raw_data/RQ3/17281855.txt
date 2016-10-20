@@ -1,0 +1,164 @@
+<p>I am trying to ship an SQL file with my Android application and have the app use it. I have the file in the assets folder and I check for it and copy it if necessary when the app is created. I followed this blog post: <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<p>The sql file is in the assets directory when it is installed and it does perform write operations that seem correct, but the file doesn't appear anywhere on the filesystem.</p>
+
+<p>Here's the code for my database helper:</p>
+
+<pre><code>package com.example.myapp;
+
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class DataBaseHelper extends SQLiteOpenHelper {
+private static String DB_PATH;
+private static String DB_NAME = "myapp.sql";
+private SQLiteDatabase myDataBase;
+private final Context myContext;
+
+public DataBaseHelper(Context context){
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+    DB_PATH = myContext.getFilesDir().getPath();
+}
+
+public void createDatabase() throws IOException {
+    boolean dbExist = checkDataBase();
+    if (dbExist) {
+        // do nothing, db exists
+    } else {
+        this.getReadableDatabase();
+
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DB_PATH + "/" + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    } catch (SQLiteException e) {
+        // database doesn't exist yet
+    }
+
+    if (checkDB != null) {
+        checkDB.close();
+    }
+
+    if (checkDB != null) {
+        Log.e("myapp", "Database exists");
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException {
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + "/" + DB_NAME;
+    Log.e("myapp", outFileName);
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    BufferedOutputStream os = new BufferedOutputStream(myOutput);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        Log.e("myapp", "writing buffer");
+        os.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + "/" + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+}
+</code></pre>
+
+<p>And for my main activity:</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    DataBaseHelper dbHelper = new DataBaseHelper(this);
+
+    try {
+        dbHelper.createDatabase();
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        //e.printStackTrace();
+        Log.e("myapp", "ERROR in creating database");
+    }
+
+    try {
+        dbHelper.openDataBase();
+    } catch (SQLException sqle) {
+        Log.e("myapp", "ERROR in opening database");
+        throw sqle;
+    }
+
+    SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+    String sortOrder =
+            MyApp.COLUMN_NAME_NAME + " DESC";
+
+    Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+    if (c.moveToFirst()) {
+        while (!c.isAfterLast()) {
+            Log.e("myapp", c.getString(c.getColumnIndex("name")));
+            c.moveToNext();
+        }
+    }
+}
+</code></pre>

@@ -1,0 +1,76 @@
+<p>How can I creat a graph with lines that have more than 1 colour, using AChartEngine.
+This is how I tried to do this, following the SalesBarChart from the example:</p>
+
+<pre><code> @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_herd_overview);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    TextView herdoverview = (TextView) findViewById(R.id.herdoverview);
+    EditText edit_herdinfo = (EditText) findViewById(R.id.edit_herdinfo);
+    Button button = (Button) findViewById(R.id.confirmherdinfo);
+    button.setVisibility(View.GONE);
+    chartLayout = findViewById(R.id.chartHorizontalEvolution);
+    chartLayout.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            LogService.log(TAG, "It has entered on Click");
+            Intent myIntent = null;
+            myIntent = new Intent(HerdOverview.this, HerdAnalysis.class);
+            startActivity(myIntent);
+        }
+    });
+    createGraph();
+
+}
+
+
+protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) {
+    LogService.log(TAG, "titles.size : " + titles.length);
+    LogService.log(TAG, "values.size : " + values.size());
+    XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+    int length = titles.length;
+    for (int i = 0; i < length; i++) {
+        LogService.log(TAG, "I : " + i + " | titles: " + titles[i] + " | values: " + values.get(i));
+        CategorySeries series = new CategorySeries(titles[i]);
+        double[] v = values.get(i);
+        int seriesLength = v.length;
+        for (int k = 0; k < seriesLength; k++) {
+            series.add(v[k]);
+            LogService.log(TAG, "K : " + k + " | values: " + v[k]);
+        }
+        dataset.addSeries(series.toXYSeries());
+    }
+    return dataset;
+}
+
+protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle, String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor, int labelsColor) {
+    renderer.setChartTitle(title);
+    renderer.setXTitle(xTitle);
+    renderer.setYTitle(yTitle);
+    renderer.setXAxisMin(xMin);
+    renderer.setXAxisMax(xMax);
+    renderer.setYAxisMin(yMin);
+    renderer.setYAxisMax(yMax);
+    renderer.setAxesColor(axesColor);
+    renderer.setLabelsColor(labelsColor);
+}
+
+protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+    XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+    renderer.setAxisTitleTextSize(16);
+    renderer.setChartTitleTextSize(20);
+    renderer.setLabelsTextSize(15);
+    renderer.setLegendTextSize(15);
+    int length = colors.length;
+    for (int i = 0; i < length; i++) {
+        SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+        r.setColor(colors[i]);
+        renderer.addSeriesRenderer(r);
+    }
+    return renderer;
+}
+</code></pre>
+
+<p>Now every time i do a new dataset.addSeries, it adds the second line, with the second color, bellow the first one, how can I make so that for every title to put the lines directly on the previous placed lines?</p>

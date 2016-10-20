@@ -1,0 +1,194 @@
+<p>Am a beginner in android When a button is pressed in my MainActivity it showed load up my second activity but its not instead my application just says it "Unfortunately has stopped working"? I ran a debugger but still can't figure out what wrong?? any help would be appreciated.</p>
+
+<p>My main activity Class:</p>
+
+<pre><code>public class MainActivity extends Activity {
+/**
+ * Called when the activity is first created.
+ */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+         //start second activity when play button pressed
+    Button myButton = (Button) findViewById(R.id.play_button);
+    myButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            startActivity(new Intent(MainActivity.this, Second.class));
+
+
+        }
+    });
+}
+}
+</code></pre>
+
+<p>My main activiy XML:</p>
+
+<pre><code>    ?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:background="@drawable/woood_back"
+
+
+        >
+
+
+
+   <Button
+           android:layout_height="wrap_content"
+           android:layout_width="wrap_content"
+           android:drawableRight="@drawable/wood_backnw"
+           android:layout_centerHorizontal="true"
+           android:enabled="false"
+           android:id="@+id/button"/>
+
+
+    <Button
+        android:id="@+id/play_button"
+        android:layout_height="50dp"
+        android:layout_width="220dp"
+        android:text="@string/play_button"
+
+        android:textSize="22dp"
+        android:textStyle="bold"
+        android:background="@color/MediumPurple"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="200dp"
+        android:layout_marginBottom="10dp"
+
+        />
+    <Button
+   </RelativeLayout>
+</code></pre>
+
+<p>My Second activity Class:</p>
+
+<pre><code>    public class Second extends MainActivity{
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.second);
+
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this));
+
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                Toast.makeText(Second.this, "" + position, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+   }
+</code></pre>
+
+<p>My second Activity XML:</p>
+
+<pre><code>   <?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+          android:id="@+id/gridview"
+          android:background="@color/silver"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"
+          android:columnWidth="90dp"
+          android:numColumns="auto_fit"
+          android:verticalSpacing="10dp"
+          android:horizontalSpacing="10dp"
+          android:stretchMode="columnWidth"
+          android:gravity="center"
+        />
+</code></pre>
+
+<p>And My Image Adapter Class:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(200, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+
+};
+}
+</code></pre>
+
+<p>and my androidManifest:</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.twekstr.stateFlags"
+          android:versionCode="1"
+          android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="10" android:targetSdkVersion="17"/>
+    <application android:label="@string/app_name" android:icon="@drawable/icon_america">
+        <activity android:name="MainActivity"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <activity android:name="Second"></activity>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+</code></pre>

@@ -1,0 +1,281 @@
+<p>I've just wrote my first android application, but I got a so sneaky problem :D.
+The application is so simple, it has just one text box, one button and one web view.
+The web view is invisible, when the button is clicked it will be visible and go to the url written in the text box
+the application is full screen. 
+The problem is that when I click the button it does nothing at first, the second time it works.
+So as I know there is a focus problem, I think, i just themed it with</p>
+
+<pre><code>android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+</code></pre>
+
+<p>so there is no title bar at top. I remember that when I had title bar these acts took place</p>
+
+<p>1 - I click on button
+2 - the title bar appears
+3 - I click on button
+4 - it took affect</p>
+
+<p>I can say that when I make title bar invisible, steps are the same as top.</p>
+
+<p>So i need help to solve this problem, any ideas?</p>
+
+<p>activity_fullscreen.xml</p>
+
+<pre><code><FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="#0099cc"
+tools:context=".FullscreenActivity">
+
+<!-- The primary full-screen view. This can be replaced with whatever view
+     is needed to present your content, e.g. VideoView, SurfaceView,
+     TextureView, etc. -->
+
+
+<!-- This FrameLayout insets its children based on system windows using
+     android:fitsSystemWindows. -->
+<FrameLayout android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="#ff3191ff">
+    <LinearLayout android:id="@+id/fullscreen_content_controls"
+        style="?metaButtonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:background="@color/black_overlay"
+        android:orientation="horizontal"
+        tools:ignore="UselessParent">
+    </LinearLayout>
+</FrameLayout>
+<AutoCompleteTextView android:id="@+id/iptxt"
+    android:layout_width="272dp" android:layout_height="59dp"
+    android:nextFocusUp="@id/iptxt" android:nextFocusLeft="@id/iptxt"
+    android:layout_gravity="center"
+    android:textColor="#ff26b9ff"
+    android:textSize="10pt"
+    android:text="192.168.1.104"
+    android:textAlignment="center"
+    android:textStyle="bold"
+    android:singleLine="true"
+    android:typeface="normal"
+    android:inputType="text" />
+<Button
+    android:layout_width="fill_parent"
+    android:layout_height="59dp"
+    android:id="@+id/ConnectBTN"
+    android:layout_gravity="bottom"
+    android:background="#ff3191ff"
+    android:text="Connect"
+    android:textColor="#ffffffff"
+    android:textSize="12pt"
+    android:textStyle="bold" />
+    <WebView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/Mainwbv"
+        android:visibility="invisible"></WebView>
+</FrameLayout>
+</code></pre>
+
+<p>androidmanifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="ir.proapp.share" >
+<uses-permission android:name="android.permission.INTERNET" />
+<application
+    android:allowBackup="true"
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+    <activity
+        android:name=".FullscreenActivity"
+        android:configChanges="orientation|keyboardHidden|screenSize"
+        android:screenOrientation="portrait"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+</application>
+</manifest>
+</code></pre>
+
+<p>fullscreenactivity.java</p>
+
+<pre><code>package ir.proapp.share;
+import ir.proapp.share.util.SystemUiHider;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.pm.ActivityInfo;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.EditText;
+import org.apache.http.protocol.RequestUserAgent;
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ *
+ * @see SystemUiHider
+ */
+public class FullscreenActivity extends Activity {
+/**
+ * Whether or not the system UI should be auto-hidden after
+ * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+ */
+private static final boolean AUTO_HIDE = true;
+/**
+ * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+ * user interaction before hiding the system UI.
+ */
+private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+/**
+ * If set, will toggle the system UI visibility upon interaction. Otherwise,
+ * will show the system UI visibility upon interaction.
+ */
+private static final boolean TOGGLE_ON_CLICK = true;
+/**
+ * The flags to pass to {@link SystemUiHider#getInstance}.
+ */
+private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+/**
+ * The instance of the {@link SystemUiHider} for this activity.
+ */
+private SystemUiHider mSystemUiHider;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.activity_fullscreen);
+
+    final View controlsView = findViewById(R.id.fullscreen_content_controls);
+    final View contentView = findViewById(R.id.fullscreen_content_controls);
+
+
+    // Set up an instance of SystemUiHider to control the system UI for
+    // this activity.
+    mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+    mSystemUiHider.setup();
+    mSystemUiHider
+            .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                // Cached values.
+                int mControlsHeight;
+                int mShortAnimTime;
+
+                @Override
+                @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                public void onVisibilityChange(boolean visible) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                        // If the ViewPropertyAnimator API is available
+                        // (Honeycomb MR2 and later), use it to animate the
+                        // in-layout UI controls at the bottom of the
+                        // screen.
+                        if (mControlsHeight == 0) {
+                            mControlsHeight = controlsView.getHeight();
+                        }
+                        if (mShortAnimTime == 0) {
+                            mShortAnimTime = getResources().getInteger(
+                                    android.R.integer.config_shortAnimTime);
+                        }
+                        controlsView.animate()
+                                .translationY(visible ? 0 : mControlsHeight)
+                                .setDuration(mShortAnimTime);
+                    } else {
+                        // If the ViewPropertyAnimator APIs aren't
+                        // available, simply show or hide the in-layout UI
+                        // controls.
+                        controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                    }
+
+                    if (visible && AUTO_HIDE) {
+                        // Schedule a hide().
+                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                    }
+                }
+            });
+
+    // Set up the user interaction to manually show or hide the system UI.
+    contentView.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            if (TOGGLE_ON_CLICK) {
+                mSystemUiHider.toggle();
+            } else {
+                mSystemUiHider.show();
+            }
+        }
+    });
+    Button connectbtn=(Button)findViewById(R.id.ConnectBTN);
+    connectbtn.setOnClickListener(new Button.OnClickListener()
+    {
+        public void onClick(View v)
+        {
+            EditText iptetx=(EditText)findViewById(R.id.iptxt);
+            WebView maniWV=(WebView)findViewById(R.id.Mainwbv);
+            WebSettings mainSettings=maniWV.getSettings();
+            mainSettings.setJavaScriptEnabled(true);
+            mainSettings.setUserAgentString("Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.31
+ (KHTML, like Gecko) Chrome/26.0.1410.63 Safari/537.31");
+            maniWV.setVisibility(View.VISIBLE);
+            maniWV.setWebViewClient(new Ac1());
+            maniWV.loadUrl("http://"+iptetx.getText()+":9999");
+        }
+    });
+    // Upon interacting with UI controls, delay any scheduled hide()
+    // operations to prevent the jarring behavior of controls going away
+    // while interacting with the UI.
+  /*  findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);  */
+}
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+
+    // Trigger the initial hide() shortly after the activity has been
+    // created, to briefly hint to the user that UI controls
+    // are available.
+    delayedHide(100);
+}
+/**
+ * Touch listener to use for in-layout UI controls to delay hiding the
+ * system UI. This is to prevent the jarring behavior of controls going away
+ * while interacting with activity UI.
+ */
+View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        if (AUTO_HIDE) {
+            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+        }
+        return false;
+    }
+};
+Handler mHideHandler = new Handler();
+Runnable mHideRunnable = new Runnable() {
+    @Override
+    public void run() {
+        mSystemUiHider.hide();
+    }
+};
+/**
+ * Schedules a call to hide() in [delay] milliseconds, canceling any
+ * previously scheduled calls.
+ */
+private void delayedHide(int delayMillis) {
+    mHideHandler.removeCallbacks(mHideRunnable);
+    mHideHandler.postDelayed(mHideRunnable, delayMillis);
+}
+}
+</code></pre>

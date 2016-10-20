@@ -1,0 +1,74 @@
+<p>I would simply like to add photos from a predetermined file to a <code>GridView</code> and I can't figure out how to do this. I have an <code>Adapter</code> that handles the <code>GridView</code> that I learned from  <a href="http://developer.android.com/guide/topics/ui/layout/gridview.html" rel="nofollow"> this example</a> and I haven't been able to figure out how to set the mThumbIds array to images from a file. I think I have to use something like: <code>ImageView.setImageUri(Uri.fromFile(new File("myPath")));</code> instead of <code>setImageResource</code> but I could be wrong. This is my first time doing something like this and any help would really be appreciated! </p>
+
+<p><strong>EDIT:</strong></p>
+
+<p>Current Code: (with this I'm getting a NullPointer on: <code>for(File f : dir.listFiles()){</code> which in the doc it says it returns null if it is not a directory. The code in new File(...) is the same I use to create the directory so I know the path is correct, when the application starts it creates the directory with no pictures in the folder until the user takes one. I thought then that this was the issue however it still closes when there is a photo in the directory.)</p>
+
+<pre><code>public static class HomeFragment extends Fragment{
+
+    public HomeFragment(){
+
+    }
+    View rootView;
+    GridView gridView;
+    List<Drawable> list;
+    File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "MyAppFolder");
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup contatiner,
+            Bundle savedInstanceState){
+
+        for(File f : dir.listFiles()){
+            Bitmap original = BitmapFactory.decodeFile(f.getAbsolutePath());
+            Drawable drawable = new BitmapDrawable(getResources(), original);
+            list.add(drawable);
+        }
+        rootView = inflater.inflate(R.layout.home_layout,
+                contatiner, false);
+        gridView = (GridView) rootView.findViewById(R.id.homeGridView);
+        gridView.setAdapter(new HomeAdapter(getActivity(), list));
+
+
+        return rootView;
+    }
+
+}
+
+
+public class HomeAdapter extends BaseAdapter {
+private Context mContext;
+private List<Drawable> mPictures;
+
+public HomeAdapter(Context c, List<Drawable> list) {
+    mContext = c;
+    mPictures = list;
+}
+
+public int getCount() {
+    return mPictures.size();
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) { 
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(110, 110));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageDrawable(mPictures.get(position));
+    return imageView;
+}
+}
+</code></pre>

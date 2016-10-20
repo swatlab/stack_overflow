@@ -1,0 +1,232 @@
+<p><Br>
+I want to use code from :
+<a href="http://developer.android.com/resources/samples/Support4Demos/src/com/example/android/supportv4/app/FragmentTabs.html" rel="nofollow">http://developer.android.com/resources/samples/Support4Demos/src/com/example/android/supportv4/app/FragmentTabs.html</a> , but I see that it's creating&deleting fragments between every switch. <br>Could you tell me how to change it, so every fragment would be created only once at beginning or after first enter into it? <br>Thanks! </p>
+
+<p>P.S. I am using Fragment with TabHost which is used to display one of other Fragments placed inside it. </p>
+
+<p>Update:
+I am getting <code>onCreateView</code> and <code>onActivityCreated</code> methods in (sub)Fragments every time after switching from one tab to another. Isn't it caused by this lines?</p>
+
+<pre><code>if (mLastTab != null)
+{
+ if (mLastTab.fragment != null)
+ {
+  ft.detach(mLastTab.fragment);
+ }
+}
+</code></pre>
+
+<p>Whole source code for TabManager (placed inside Fragment subclass) :</p>
+
+<pre><code>public class TabManager implements TabHost.OnTabChangeListener
+  {
+    private final TabHost mTabHost;
+    private final int mContainerId;
+    private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+    TabInfo mLastTab;
+
+    final class TabInfo
+    {
+      private final String tag;
+      private final Class<?> clss;
+      private final Bundle args;
+      private Fragment fragment;
+
+      TabInfo(String _tag, Class<?> _class, Bundle _args)
+      {
+        tag = _tag;
+        clss = _class;
+        args = _args;
+      }
+    }
+
+    class DummyTabFactory implements TabHost.TabContentFactory
+    {
+      private final Context mContext;
+
+      public DummyTabFactory(Context context)
+      {
+        mContext = context;
+      }
+
+      @Override
+      public View createTabContent(String tag)
+      {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+      }
+    }
+
+    public TabManager(TabHost tabHost, int containerId)
+    {
+      mTabHost = tabHost;
+      mContainerId = containerId;
+      mTabHost.setOnTabChangedListener(this);
+    }
+
+    public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args)
+    {
+      tabSpec.setContent(new DummyTabFactory(getActivity()));
+      String tag = tabSpec.getTag();
+
+      TabInfo info = new TabInfo(tag, clss, args);
+
+      // Check to see if we already have a fragment for this tab, probably
+      // from a previously saved state. If so, deactivate it, because our
+      // initial state is that a tab isn't shown.
+      info.fragment = getFragmentManager().findFragmentByTag(tag);
+      if (info.fragment != null && !info.fragment.isDetached())
+      {
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.detach(info.fragment);
+        ft.commit();
+      }
+
+      mTabs.put(tag, info);
+      mTabHost.addTab(tabSpec);
+    }
+
+    @Override
+    public void onTabChanged(String tabId)
+    {
+      TabInfo newTab = mTabs.get(tabId);
+      if (mLastTab != newTab)
+      {
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        if (mLastTab != null)
+        {
+          if (mLastTab.fragment != null)
+          {
+            ft.detach(mLastTab.fragment);
+          }
+        }
+        if (newTab != null)
+        {
+          if (newTab.fragment == null)
+          {
+            newTab.fragment = Fragment.instantiate(getActivity(), newTab.clss.getName(), newTab.args);
+            ft.add(mContainerId, newTab.fragment, newTab.tag);
+          } else
+          {
+            ft.attach(newTab.fragment);
+          }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        getFragmentManager().executePendingTransactions();
+      }
+    }
+  }
+</code></pre>
+
+<p><strong>EDIT:</strong>
+I'm showing/hiding fragment after clicking on tab instead of attaching/detaching. Don't know if this is correct though. 
+Solution:</p>
+
+<pre><code>public class TabManager implements TabHost.OnTabChangeListener
+    {
+        private final TabHost mTabHost;
+        private final int mContainerId;
+        private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+        TabInfo mLastTab;
+
+        final class TabInfo
+        {
+            private final String tag;
+            private final Class<?> clss;
+            private final Bundle args;
+            private Fragment fragment;
+
+            TabInfo(String _tag, Class<?> _class, Bundle _args)
+            {
+                tag = _tag;
+                clss = _class;
+                args = _args;
+            }
+        }
+
+        class DummyTabFactory implements TabHost.TabContentFactory
+        {
+            private final Context mContext;
+
+            public DummyTabFactory(Context context)
+            {
+                mContext = context;
+            }
+
+            @Override
+            public View createTabContent(String tag)
+            {
+                View v = new View(mContext);
+                v.setMinimumWidth(0);
+                v.setMinimumHeight(0);
+                return v;
+            }
+        }
+
+        public TabManager(TabHost tabHost, int containerId)
+        {
+            mTabHost = tabHost;
+            mContainerId = containerId;
+            mTabHost.setOnTabChangedListener(this);
+        }
+
+        public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args)
+        {
+            tabSpec.setContent(new DummyTabFactory(getActivity()));
+            String tag = tabSpec.getTag();
+
+            TabInfo info = new TabInfo(tag, clss, args);
+
+            // Check to see if we already have a fragment for this tab, probably
+            // from a previously saved state. If so, deactivate it, because our
+            // initial state is that a tab isn't shown.
+            info.fragment = getFragmentManager().findFragmentByTag(tag);
+            if (info.fragment != null && !info.fragment.isDetached())
+            {
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                ft.detach(info.fragment);
+                ft.commit();
+            }
+
+            mTabs.put(tag, info);
+            mTabHost.addTab(tabSpec);
+        }
+
+        @Override
+        public void onTabChanged(String tabId)
+        {
+            TabInfo newTab = mTabs.get(tabId);
+            if (mLastTab != newTab)
+            {
+                android.support.v4.app.FragmentTransaction ft = ((FragmentActivity) getActivity()).getSupportFragmentManager().beginTransaction();
+                if (mLastTab != null)
+                {
+                    if (mLastTab.fragment != null)
+                    {
+                        ft.hide(mLastTab.fragment);
+
+                    }
+                }
+                if (newTab != null)
+                {
+                    if (newTab.fragment == null)
+                    {
+                        newTab.fragment = Fragment.instantiate(getActivity(), newTab.clss.getName(), newTab.args);
+                        ft.add(mContainerId, newTab.fragment, newTab.tag);
+                    } else
+                    {
+                        ft.show(newTab.fragment);
+                    }
+                }
+
+                mLastTab = newTab;
+                ft.commit();
+                getFragmentManager().executePendingTransactions();
+            }
+        }
+    }
+</code></pre>

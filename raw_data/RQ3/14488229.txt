@@ -1,0 +1,41 @@
+<p>Using the developers guide found <a href="http://developer.android.com/guide/topics/ui/actionbar.html#Home"><code>here</code></a>, I am trying to make my icon navigate back to my home screen. I currently have a button which does this, and have copy and pasted the code in the <code>onOptionsItemSelected()</code> method. However tapping the icon never does anything. Is this a difference in ActionBar and ActionBarSherlock?</p>
+
+<p>This is the code given as an example:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+switch (item.getItemId()) {
+    case android.R.id.home:
+        // app icon in action bar clicked; go home
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p>This is the code that I am using:</p>
+
+<pre><code>public boolean onOptionsItemSelected( MenuItem item ) {
+    switch( item.getItemId() ) {
+    case R.id.mainTopBluetoothState:
+        Toast.makeText( this, "BluetoothState", Toast.LENGTH_SHORT ).show();
+        return true;
+    case R.id.mainTopAppState:
+        Toast.makeText( this,  "BluetoothState",  Toast.LENGTH_SHORT ).show();
+        return true;
+    case android.R.id.home:
+        Log.i( "In Home", "In Home" );
+        killToasts();
+        dispatchKeyEvent(new KeyEvent( KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK ));
+        finish();
+        return true;
+    }
+    return super.onOptionsItemSelected( item );
+}
+</code></pre>
+
+<p>When I tap the icon, nothing happens. The <code>Log</code> call in the code isn't ever shown in my <code>LogCat</code> either.</p>

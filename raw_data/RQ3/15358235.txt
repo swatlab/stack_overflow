@@ -1,0 +1,245 @@
+<p>I have a very annoying problem and I can't seem to find a way to fix it. I made a first application (a beta version just to test my methods) in which I defined everything, so my application could communicate with a database. It worked perfectly.  </p>
+
+<p>I started my new application on the very same model, keeping the same classes and everything but it doesn't work anymore. For example, I am supposed to open a listview which has to display some content from database : I can open the listview (there is no crash of my app when I do so) but it's just empty.  </p>
+
+<p>One of the difference with my beta application is the size of the database : it's now 4 mo instead of a few ko. I have read some things about the size of databases stored in assets file, but one previous version I could make my application work with the same database.<br>
+Also, my logcat doesn't tell me anything : I just have my app working fine but not displaying any of the things it's supposed to.  </p>
+
+<p>Here is my code (if I may, I feel like my code is very light compared to what I usually read on internet with loads of catch/try/exception/various classes, etc. so maybe it's juts the strictly required code with no extra but it was working for my beta version):  </p>
+
+<p><strong>A/ DatabaseAdapter</strong> (my method getting data from the database is defined at the end and called findPoiInTable):  </p>
+
+<pre><code>public class DatabaseAdapter {
+
+public static final String DATABASE_TABLE = "tblpoisurvey";
+
+public static final String KEY_ROWID = "_id";
+public static final String COL_NAME = "name";
+public static final String COL_CAT1 = "cat1";
+public static final String COL_CAT2 = "cat2";
+public static final String COL_CAT3 = "cat3";
+public static final String COL_SUBCAT = "subcat";
+public static final String COL_STREET = "street";
+
+private Context myContext;
+private SQLiteDatabase myDatabase;
+private DatabaseHelper dbHelper;
+private Cursor c;
+
+// Constructor
+public DatabaseAdapter(Context context) {
+    this.myContext = context;
+}
+
+public DatabaseAdapter open() throws SQLException {
+    dbHelper = new DatabaseHelper(myContext);
+    try {
+        dbHelper.createDatabase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    myDatabase = dbHelper.getReadableDatabase();
+    return this;
+}
+
+
+public void close() {
+    if (c != null) {
+        c.close();
+    }
+    try {
+        dbHelper.close();
+        myDatabase.close();
+    } catch (SQLException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+}
+
+
+public Cursor findPoiInTable(String inInterval) {
+    String where = COL_CAT1 + " IN " + inInterval + " OR " + COL_CAT2
+            + " IN " + inInterval + " OR " + COL_CAT3 + " IN " + inInterval;
+
+    Cursor c = myDatabase.query(DATABASE_TABLE, new String[] { KEY_ROWID,
+            COL_NAME, COL_STREET }, where, null, null, null, null);
+    return c;
+} }
+</code></pre>
+
+<p><strong>B/ My ResultListViewActivity</strong>, the one calling the method, getting the input for this method from another activity via getExtra and displaying the result in a listview.   </p>
+
+<pre><code>public class ResultListViewActivity extends Base_Activity {
+
+private SimpleCursorAdapter cursorAdapter;
+private DatabaseAdapter dbHelper;
+ListView listView;
+TextView poititle; 
+private static String TAG = ResultListViewActivity.class.getSimpleName();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_result_list_view);
+
+    poititle = (TextView) findViewById(R.id.poititle);
+    dbHelper = new DatabaseAdapter(this);
+    dbHelper.open();
+
+    displayListView();
+}
+
+private void displayListView() {
+
+    Bundle bundle = getIntent().getExtras();
+    String title = bundle.getString("title", "Choose here :");  
+    String inInterval = bundle.getString("inInterval");
+
+    poititle.setText(title); // FYI: the title is displayed properly so the problem is not from the putExtra / getExtra
+
+    Cursor c = dbHelper.findPoiInTable(inInterval);
+    String[] columns = new String[] {DatabaseAdapter.COL_NAME,
+            DatabaseAdapter.COL_STREET };
+
+    int[] to = new int[] {R.id.name, R.id.street};
+
+    cursorAdapter = new SimpleCursorAdapter(this, R.layout.poi_info, c, columns, to, 0);
+    ListView listView = (ListView) findViewById(R.id.poilistview);
+    listView.setAdapter(cursorAdapter);         
+    }
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getSupportMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}  } 
+</code></pre>
+
+<p><strong>C/</strong> I don't think this is gonna be useful but in case of, my <strong>DatabaseHelper class</strong> :  </p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+private static String DB_NAME = "POIfinal";
+private static int DB_VERSION = 1;
+private static String DB_PATH = "/data/data/com.example.asiatypeapplicationbeta/databases/";
+private static String TAG = DatabaseHelper.class.getSimpleName();
+
+private SQLiteDatabase myDatabase;
+private Context myContext;
+
+public DatabaseHelper(Context context){
+    super(context, DB_NAME, null, DB_VERSION);
+    this.myContext = context ;
+}
+
+public void createDatabase() throws IOException {
+    boolean dbExist = checkDatabase();
+    if (!dbExist) {
+
+        // By calling this method and empty database will be created into
+        // the default system path
+        // of your application so we are gonna be able to overwrite that
+        // database with our database.
+        this.getReadableDatabase();
+        try {
+            copyDatabase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+/**
+ * Check if the database already exists to avoid re-copying the file each
+ * time you open the application.
+ * 
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDatabase() {
+    SQLiteDatabase checkDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+    } catch (SQLiteException e) {
+        final String message = e.getMessage();
+        return false;
+    }
+    checkDB.close();
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created
+ * empty database in the system folder, from where it can be accessed and
+ * handled. This is done by transfering bytestream.
+ * */
+
+private void copyDatabase() throws IOException {
+    // open the LOCAL DATABASE as the INPUT stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+    // path to the just created empty db
+    String outfilename = DB_PATH + DB_NAME;
+    // open the EMPTY DATABASE as the OUTPUT stream
+    OutputStream myOutput = new FileOutputStream(outfilename);
+
+    // transfer bytes from the INPUTfile to the OUTPUTfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public void openDatabase() throws SQLException {
+    String myPath = DB_PATH + DB_NAME;
+    try {
+        myDatabase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+    } catch (SQLiteException e) {
+        final String message = e.getMessage();
+        if (message == null) {
+            throw e;
+        }
+        if (!message.contains("attempt to write a readonly database")) {
+            throw e;
+        }
+    }
+}
+
+@Override
+public synchronized void close() throws SQLException {
+
+    if (myDatabase != null)
+        try {
+            myDatabase.close();
+            super.close();
+        } catch (SQLException e) {
+
+        }
+
+}
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+       Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+               + newVersion + ", which will destroy all old data");
+       db.execSQL("DROP TABLE IF EXISTS notes");
+       onCreate(db);
+}  }
+</code></pre>
+
+<p>Edit: picture of my logcat with an error message, only the first time I run my application (after uninstalling it for example).<br>
+<img src="http://i.stack.imgur.com/yISa2.jpg" alt="enter image description here"></p>

@@ -1,0 +1,374 @@
+<p>I'm studying Android development. I have a problem in LogCat, it seems like it is unable to start settings activity:</p>
+
+<pre><code>05-06 09:40:37.323: E/AndroidRuntime(945): FATAL EXCEPTION: main
+05-06 09:40:37.323: E/AndroidRuntime(945): Process: com.androiddevbook.onyourbike_chapter4, PID: 945
+05-06 09:40:37.323: E/AndroidRuntime(945): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.androiddevbook.onyourbike_chapter4/com.androiddevbook.onyourbike_chapter5.activities.SettingsActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.app.ActionBar.setDisplayHomeAsUpEnabled(boolean)' on a null object reference
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2298)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.ActivityThread.access$800(ActivityThread.java:144)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.os.Handler.dispatchMessage(Handler.java:102)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.os.Looper.loop(Looper.java:135)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.ActivityThread.main(ActivityThread.java:5221)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at java.lang.reflect.Method.invoke(Native Method)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at java.lang.reflect.Method.invoke(Method.java:372)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+05-06 09:40:37.323: E/AndroidRuntime(945): Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.app.ActionBar.setDisplayHomeAsUpEnabled(boolean)' on a null object reference
+05-06 09:40:37.323: E/AndroidRuntime(945):  at com.androiddevbook.onyourbike_chapter5.activities.SettingsActivity.setupActionBar(SettingsActivity.java:48)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at com.androiddevbook.onyourbike_chapter5.activities.SettingsActivity.onCreate(SettingsActivity.java:40)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.Activity.performCreate(Activity.java:5933)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+05-06 09:40:37.323: E/AndroidRuntime(945):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2251)
+05-06 09:40:37.323: E/AndroidRuntime(945):  ... 10 more
+</code></pre>
+
+<p>Here is class where make intent with function clickedSettings for calling SettingsActivity.class Activity ( in runtime when is clicked Settings on the actionBar on top of the screen) :</p>
+
+<pre><code>package com.androiddevbook.onyourbike_chapter5.activities;
+
+
+import com.androiddevbook.onyourbike_chapter4.BuildConfig;
+import com.androiddevbook.onyourbike_chapter4.R;
+import com.androiddevbook.onyourbike_chapter5.model.TimerState;
+
+import android.support.v7.app.ActionBarActivity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.StrictMode;
+import android.os.Vibrator;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+
+public class TimerActivity extends ActionBarActivity {
+
+    private static String CLASS_NAME;
+    protected TextView counter;
+    protected Button start;
+    protected Button stop;
+
+    protected Handler handler;
+    protected UpdateTimer updateTimer;
+    private static long UPDATE_EVERY = 200;
+
+    protected Vibrator vibrate;
+    protected long lastSeconds;
+
+    private TimerState timer;
+
+    public TimerActivity(){
+        CLASS_NAME = getClass().getName();
+        timer = new TimerState();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_timer);
+
+        counter = (TextView) findViewById(R.id.timer);
+        start   = (Button) findViewById(R.id.start_button);
+        stop    = (Button) findViewById(R.id.stop_button);
+
+        Log.d(CLASS_NAME, "Setting text.");
+
+        if (BuildConfig.DEBUG){
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build());
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().penaltyLog().penaltyDeath().build());
+        }
+
+        timer.reset();
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(CLASS_NAME, "Showing menu.");
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Log.d(CLASS_NAME, "SETTINGS PRESSED.");
+            System.out.println("Settings pressed.");
+            clickedSettings(null);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void clickedStart(View view){
+        Log.d(CLASS_NAME, "Clicked start button.");
+
+
+        timer.start();
+        enableButtons();
+
+        handler = new Handler();
+        updateTimer = new UpdateTimer();
+        handler.postDelayed(updateTimer, UPDATE_EVERY);
+    }
+
+    public void clickedStop(View view){
+        Log.d(CLASS_NAME, "Clicked stop button.");
+
+
+        timer.stop();
+        enableButtons();
+
+        handler.removeCallbacks(updateTimer);
+        updateTimer = null;
+        handler = null;
+    }
+
+    public void enableButtons(){
+
+        Log.d(CLASS_NAME, "Set buttons enabled/disabled.");
+        start.setEnabled(!timer.isRunning());
+        stop.setEnabled(timer.isRunning());
+    }
+
+
+
+    public class UpdateTimer implements Runnable {
+
+        public void run(){
+            Log.d(CLASS_NAME, "run");
+
+            setTimeDisplay();
+            if ( handler != null){
+                handler.postDelayed(this, UPDATE_EVERY);
+            }
+
+            if ( timer.isRunning() ){
+                vibrateCheck();
+            }
+        }
+
+    }
+
+    public void onStart(){
+        super.onStart();
+        Log.d(CLASS_NAME, "onStart");
+
+        if ( timer.isRunning() ){
+            handler = new Handler();
+            updateTimer = new UpdateTimer();
+            handler.postDelayed(updateTimer, UPDATE_EVERY);
+        }
+
+        vibrate = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+
+        if (vibrate == null){
+            Log.w(CLASS_NAME, "No vibrate service exists.");
+        }
+
+    }
+
+    public void onPause(){
+        super.onPause();
+        Log.d(CLASS_NAME, "onPause");
+    }
+
+    public void onResume(){
+        super.onResume();
+        Log.d(CLASS_NAME, "onResume");
+    }
+
+    public void onStop(){
+        super.onStop();
+        Log.d(CLASS_NAME, "onSop");
+
+        if ( timer.isRunning() ){
+            handler.removeCallbacks(updateTimer);
+            handler = null;
+            updateTimer = null;
+        }
+
+    }
+
+    public void onDestroy(){
+        super.onDestroy();
+        Log.d(CLASS_NAME, "onDestroy");
+    }
+
+    public void onRestart(){
+        super.onRestart();
+        Log.d(CLASS_NAME, "onRestart");
+    }
+
+    protected void vibrateCheck(){
+
+        long diff = timer.elapsedTime();
+        long seconds = diff / 1000;
+        long minutes = seconds / 60;
+        seconds = seconds % 60;
+        minutes = minutes % 60;
+
+        Log.d(CLASS_NAME, "vibrateCheck");
+
+        if ( vibrate != null && seconds == 0 && seconds != lastSeconds){
+            long[] once = { 0, 100 };
+            long[] twice= { 0, 100, 400, 100};
+            long[] thrice = { 0, 100, 400, 100, 400, 100 };
+
+            // every hour
+            if ( minutes == 0){
+                Log.d(CLASS_NAME, "Vibrate 3 times");
+                vibrate.vibrate(thrice, -1);
+            } 
+            // every 15 minutes
+            else if ( minutes % 15 == 0 ){
+                Log.d(CLASS_NAME, "Vibrate 2 times");
+                vibrate.vibrate(twice, -1);
+            }
+            // every 1 minute
+            else if ( minutes == 1 ){
+                Log.d(CLASS_NAME, "Vibrate 1 time");
+                vibrate.vibrate(once, -1);
+            }
+        }
+
+        lastSeconds = seconds;
+    }
+
+    public void clickedSettings(View view){
+        Log.d(CLASS_NAME, "clickedSettings.");
+
+        Intent settingsIntent = new Intent(this, SettingsActivity.class);
+
+        startActivity(settingsIntent);
+    }
+
+    public void setTimeDisplay(){
+        Log.d(CLASS_NAME, "setTimeDisplay");
+        counter.setText(timer.display());
+    }
+}
+</code></pre>
+
+<p>And here is SettingsActivity class, where keep options for vibrate:</p>
+
+<pre><code>package com.androiddevbook.onyourbike_chapter5.activities;
+
+import com.androiddevbook.onyourbike.chapter5.helpers.Toaster;
+import com.androiddevbook.onyourbike_chapter4.R;
+import com.androiddevbook.onyourbike_chapter5.OnYourBike;
+import com.androiddevbook.onyourbike_chapter5.model.Settings;
+import android.support.v7.app.ActionBarActivity;
+import android.annotation.TargetApi;
+import android.app.ActionBar;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.CheckBox;
+
+public class SettingsActivity extends ActionBarActivity {
+
+    private CheckBox vibrate;
+    private String CLASS_NAME = "dada";
+
+    public SettingsActivity(){
+        Log.d(CLASS_NAME, "SettingsActivity.class....");
+        CLASS_NAME = getClass().getName();
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB) 
+    private void setupActionBar() {
+
+        if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+            ActionBar actionBar = getActionBar();
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
+
+        vibrate = (CheckBox)
+                findViewById(R.id.vibrate_checkbox);
+
+        Settings settings = ((OnYourBike)getApplication()).getSettings();
+        vibrate.setChecked(settings.isVibrateOn(this));
+
+        setupActionBar();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.settings, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.home) {
+            goHome();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void goHome() {
+        Log.d(CLASS_NAME, "gotoHome");
+
+        Intent timer =
+                new Intent(this, TimerActivity.class);
+        timer.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        startActivity(timer);
+    }
+
+    public void onStop(){
+        super.onStop();
+        Settings settings = ((OnYourBike)getApplication()).getSettings();
+        settings.setVibrate(this, vibrate.isChecked());
+    }
+
+    public void vibrateChanged(View view){
+        Toaster toast = new Toaster(getApplicationContext());
+
+        if(vibrate.isChecked())
+            toast.make(R.string.vibrate_on);
+        else
+            toast.make(R.string.vibrate_off);
+    }
+
+    public void goBack(View view){
+        finish();
+    }
+}
+</code></pre>
+
+<p>And finnaly, spec about my virtual telephone:</p>
+
+<p>CPU/ABI: ARM (armeabi-v7a)</p>
+
+<p>Target: Android 5.0.1 ( API level 21) </p>

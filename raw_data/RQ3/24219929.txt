@@ -1,0 +1,78 @@
+<p>How i can have a <code>listView</code> with constant item position ?</p>
+
+<p>Suppose you have a <code>listview</code> with a <code>searchbox</code> on <code>actionbar</code>. Now you want to filter the results and also want the <code>position</code> number of the item to be constant even after filtering.</p>
+
+<p>The below code give me different position when i am searching on <code>listView</code>:</p>
+
+<pre><code>public class About extends ActionBarActivity {
+      private ListView mainListView ;  
+      private ArrayAdapter<String> listAdapter ;
+      SearchView searchview;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.about);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        //searchview = new SearchView(getSupportActionBar().getThemedContext());
+
+        mainListView = (ListView) findViewById( R.id.mainListView );
+        String[] mTitles = getResources().getStringArray(R.array.lstview_Content);
+        String[] values= new String[5];
+        for(int i=0;i<values.length;i++){
+            values[i] = mTitles[i];
+        }
+        ArrayList<String> planetList = new ArrayList<String>();
+        planetList.addAll( Arrays.asList(values) );
+        listAdapter = new ArrayAdapter<String>(About.this, R.layout.lstview_layout,R.id.rowTextView, planetList);
+         mainListView.setAdapter( listAdapter );
+         mainListView.setOnItemClickListener(new OnItemClickListener() {
+             @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int position,long arg3) {
+                int itemposition = position;
+                String itemvalue = (String) mainListView.getItemAtPosition(position);
+                Toast.makeText(getApplicationContext(),
+                        "Position :"+itemposition+"  ListItem : " +itemvalue , Toast.LENGTH_LONG).show();
+            }
+        });
+         mainListView.setTextFilterEnabled(true);
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            finish();
+            break;
+        default:
+            break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.about, menu);
+        MenuItem searcehItem = menu.findItem(R.id.action_search);
+        searchview = (SearchView) MenuItemCompat.getActionView(searcehItem);
+        searchview.setQueryHint("ُُSearch");
+        searchview.setOnQueryTextListener(new OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String arg0) {
+
+                return false;
+            }
+            @Override
+            public boolean onQueryTextChange(String arg0) {
+                mainListView.setFilterText(arg0);
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+}
+</code></pre>

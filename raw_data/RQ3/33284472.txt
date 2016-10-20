@@ -1,0 +1,417 @@
+<p>I want a picture on top of my <code>NavigationDrawer</code> and below a <code>ListView</code> which contains the navigation items. So i set up a <code>LinearLayout</code> for the <code>NavigationDrawer</code> which contains an <code>ImageView</code> and the <code>ListView</code>. Unfortunately it doesnt work and i get the error:</p>
+
+<pre><code>10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime: FATAL EXCEPTION: main
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime: java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.pymdev.pym_app/com.example.pymdev.pym_app.MenuActivity}: java.lang.IllegalStateException: The specified child already has a parent. You must call removeView() on the child's parent first.
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2114)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2139)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.access$700(ActivityThread.java:143)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1241)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.os.Handler.dispatchMessage(Handler.java:99)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.os.Looper.loop(Looper.java:137)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.main(ActivityThread.java:4960)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at java.lang.reflect.Method.invokeNative(Native Method)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at java.lang.reflect.Method.invoke(Method.java:511)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1038)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:805)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at dalvik.system.NativeStart.main(Native Method)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:  Caused by: java.lang.IllegalStateException: The specified child already has a parent. You must call removeView() on the child's parent first.
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.ViewGroup.addViewInner(ViewGroup.java:3439)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.ViewGroup.addView(ViewGroup.java:3310)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.support.v4.widget.DrawerLayout.addView(DrawerLayout.java:1730)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.ViewGroup.addView(ViewGroup.java:3286)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.LayoutInflater.rInflate(LayoutInflater.java:761)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.LayoutInflater.inflate(LayoutInflater.java:495)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.LayoutInflater.inflate(LayoutInflater.java:397)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.view.LayoutInflater.inflate(LayoutInflater.java:353)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.support.v7.app.AppCompatDelegateImplV7.setContentView(AppCompatDelegateImplV7.java:255)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.support.v7.app.AppCompatActivity.setContentView(AppCompatActivity.java:109)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at com.example.pymdev.pym_app.MenuActivity.onCreate(MenuActivity.java:51)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.Activity.performCreate(Activity.java:5203)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1094)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2078)
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2139) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.access$700(ActivityThread.java:143) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1241) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.os.Handler.dispatchMessage(Handler.java:99) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.os.Looper.loop(Looper.java:137) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at android.app.ActivityThread.main(ActivityThread.java:4960) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at java.lang.reflect.Method.invokeNative(Native Method) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at java.lang.reflect.Method.invoke(Method.java:511) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1038) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:805) 
+10-22 16:39:00.609 6555-6555/com.example.pymdev.pym_app E/AndroidRuntime:     at dalvik.system.NativeStart.main(Native Method) 
+</code></pre>
+
+<p>My fragment_navigation_drawer.xml:</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.pymdev.pym_app.NavigationDrawerFragment"
+    android:id="@+id/navDrawerLinearLayout"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <ImageView
+        android:id="@+id/navDrawerImageView"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:src="@drawable/pym_cooler_drawer"/>
+    <ListView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+        android:id="@+id/navDrawerListView"
+        android:layout_height="match_parent" android:choiceMode="singleChoice"
+        android:divider="@color/dark_divider" android:dividerHeight="1dp"
+        android:background="@android:color/black"
+        android:listSelector="@drawable/drawer_selection"
+        tools:context="com.example.pymdev.pym_app.NavigationDrawerFragment" />
+</LinearLayout>
+</code></pre>
+
+<p>My activity_menu.xml:</p>
+
+<pre><code><!-- A DrawerLayout is intended to be used as the top-level content view using match_parent for both width and height to consume the full space available. -->
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/drawer_layout"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    tools:context="com.example.pymdev.pym_app.MenuActivity">
+
+    <!-- As the main content view, the view below consumes the entire
+         space available using match_parent in both dimensions. -->
+    <FrameLayout android:id="@+id/container" android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- android:layout_gravity="start" tells DrawerLayout to treat
+         this as a sliding drawer on the left side for left-to-right
+         languages and on the right side for right-to-left languages.
+         If you're not building against API 17 or higher, use
+         android:layout_gravity="left" instead. -->
+    <!-- The drawer is given a fixed width in dp and extends the full height of
+         the container. -->
+    <fragment android:id="@+id/navigation_drawer"
+        android:layout_width="@dimen/navigation_drawer_width" android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:name="com.example.pymdev.pym_app.NavigationDrawerFragment"
+        tools:layout="@layout/fragment_navigation_drawer" />
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>NavigationDrawerFragment class:</p>
+
+<pre><code>public class NavigationDrawerFragment extends Fragment {
+
+    /**
+     * Remember the position of the selected item.
+     */
+    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+
+    /**
+     * Per the design guidelines, you should show the drawer on launch until the user manually
+     * expands it. This shared preference tracks this.
+     */
+    private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+    /**
+     * A pointer to the current callbacks instance (the Activity).
+     */
+    private NavigationDrawerCallbacks mCallbacks;
+
+    /**
+     * Helper component that ties the action bar to the navigation drawer.
+     */
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerListView;
+    /* For top pic we need a linear layout wrapper */
+
+    private LinearLayout mDrawerLinearLayout;
+
+    private View mFragmentContainerView;
+
+    private int mCurrentSelectedPosition = 0;
+    private boolean mFromSavedInstanceState;
+    private boolean mUserLearnedDrawer;
+
+    public NavigationDrawerFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Read in the flag indicating whether or not the user has demonstrated awareness of the
+        // drawer. See PREF_USER_LEARNED_DRAWER for details.
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+        if (savedInstanceState != null) {
+            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+            mFromSavedInstanceState = true;
+        }
+
+        // Select either the default item (0) or the last selected item.
+        selectItem(mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        // Indicate that this fragment would like to influence the set of actions in the action bar.
+        setHasOptionsMenu(true);
+    }
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        /* Inflate the whole Linear Layout for the drawer */
+        mDrawerLinearLayout = (LinearLayout) inflater.inflate(
+                R.layout.fragment_navigation_drawer, container, false);
+         /* Find the encapsulated listView */
+        mDrawerListView = (ListView) mDrawerLinearLayout.findViewById(R.id.navDrawerListView);
+        /*
+        mDrawerListView = (ListView) inflater.inflate(
+                R.layout.fragment_navigation_drawer, container, false);
+        */
+
+        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItem(position);
+            }
+        });
+
+
+        //Use Custom Adapter instead:
+        mDrawerListView.setAdapter(new CustomNavAdapter(
+                NavigationDrawerFragment.this.getActivity(),
+                getResources().getStringArray(R.array.section_titles),
+                new Integer[]{
+                        R.mipmap.ic_launcher,
+                        R.mipmap.ic_launcher,
+                        R.mipmap.ic_launcher,
+                        R.mipmap.ic_launcher,
+                        R.mipmap.ic_launcher,
+                        R.mipmap.ic_launcher,
+                }));
+
+        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+        return mDrawerListView;
+    }
+
+    /* Custom array adapter tu support Images and Pictures combined */
+    public class CustomNavAdapter extends ArrayAdapter<String> {
+        private final Activity _context;
+        private final String[] _text;
+        private final Integer[] _imageId;
+
+        public CustomNavAdapter(Activity context, String[] text, Integer[] imageId) {
+            super(context, R.layout.navigation_drawer_textview, text);
+            this._context = context;
+            this._text = text;
+            this._imageId = imageId;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            LayoutInflater inflater = _context.getLayoutInflater();
+            View rowView = inflater.inflate(R.layout.navigation_drawer_textview, null, true);
+            TextView txtTitle = (TextView) rowView.findViewById(R.id.text);
+            ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
+            txtTitle.setText(_text[position]);
+            imageView.setImageResource(_imageId[position]);
+
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            int selectedPosition = sharedPreferences.getInt("SELECTED_POSITION_KEY", -1);
+            /*
+            if (selectedPosition == position) {
+                reviewImageView.setImageResource(yourSelectedImageResource);
+            }
+            */
+            return rowView;
+        }
+
+
+
+    }
+
+    public boolean isDrawerOpen() {
+        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+    }
+
+    /**
+     * Users of this fragment must call this method to set up the navigation drawer interactions.
+     *
+     * @param fragmentId   The android:id of this fragment in its activity's layout.
+     * @param drawerLayout The DrawerLayout containing this fragment's UI.
+     */
+    public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        // set up the drawer's list view with items and click listener
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the navigation drawer and the action bar app icon.
+        mDrawerToggle = new ActionBarDrawerToggle(
+                getActivity(),                    /* host Activity */
+                mDrawerLayout,                    /* DrawerLayout object */
+                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+        ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (!mUserLearnedDrawer) {
+                    // The user manually opened the drawer; store this flag to prevent auto-showing
+                    // the navigation drawer automatically in the future.
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager
+                            .getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
+
+                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+        // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+        // per the navigation drawer design guidelines.
+        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(mFragmentContainerView);
+        }
+
+        // Defer code dependent on restoration of previous instance state.
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    private void selectItem(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerListView != null) {
+            mDrawerListView.setItemChecked(position, true);
+        }
+        if (mDrawerLayout != null) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+        if (mCallbacks != null) {
+            mCallbacks.onNavigationDrawerItemSelected(position);
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mCallbacks = (NavigationDrawerCallbacks) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Forward the new configuration the drawer toggle component.
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // If the drawer is open, show the global app actions in the action bar. See also
+        // showGlobalContextActionBar, which controls the top-left area of the action bar.
+        if (mDrawerLayout != null && isDrawerOpen()) {
+            inflater.inflate(R.menu.global, menu);
+            showGlobalContextActionBar();
+        }
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        if (item.getItemId() == R.id.action_logout) {
+            /* Logout from facebook */
+            LoginManager.getInstance().logOut();
+            /* Switch back to login screen */
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            startActivity(intent);
+
+
+            Toast.makeText(getActivity(), "Logout!", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Per the navigation drawer design guidelines, updates the action bar to show the global app
+     * 'context', rather than just what's in the current screen.
+     */
+    private void showGlobalContextActionBar() {
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setTitle(R.string.app_name);
+    }
+
+    private ActionBar getActionBar() {
+        return ((AppCompatActivity) getActivity()).getSupportActionBar();
+    }
+
+    /**
+     * Callbacks interface that all activities using this fragment must implement.
+     */
+    public static interface NavigationDrawerCallbacks {
+        /**
+         * Called when an item in the navigation drawer is selected.
+         */
+        void onNavigationDrawerItemSelected(int position);
+    }
+}
+</code></pre>
+
+<p>Can you please help? Thanks a lot.</p>

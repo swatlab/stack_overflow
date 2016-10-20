@@ -1,0 +1,77 @@
+<pre><code>01-23 05:32:26.747: E/AndroidRuntime(14589): java.lang.NullPointerException
+01-23 05:32:26.747: E/AndroidRuntime(14589):    at com.azeandroid.sudokufree.util.IabHelper.launchPurchaseFlow(IabHelper.java:401)
+01-23 05:32:26.747: E/AndroidRuntime(14589):    at com.azeandroid.sudokufree.util.IabHelper.launchPurchaseFlow(IabHelper.java:338)
+</code></pre>
+
+<p>I saw the same problem with "return" in forums after the code</p>
+
+<pre><code>if (listener != null) listener.onIabPurchaseFinished(r, null);
+</code></pre>
+
+<p>but I have "return" statement in my code, but still giving the same error. </p>
+
+<p>The code with error:</p>
+
+<pre><code>act.startIntentSenderForResult(pendingIntent.getIntentSender(),
+                                       requestCode, new Intent(),
+                                       Integer.valueOf(0), Integer.valueOf(0),
+                                       Integer.valueOf(0));
+</code></pre>
+
+<p>full launchPurchaseFlow method:</p>
+
+<pre><code>public void launchPurchaseFlow(Activity act, String sku, String itemType, int requestCode,
+                    OnIabPurchaseFinishedListener listener, String extraData) {
+    checkNotDisposed();
+    checkSetupDone("launchPurchaseFlow");
+    flagStartAsync("launchPurchaseFlow");
+    IabResult result;
+
+    if (itemType.equals(ITEM_TYPE_SUBS) && !mSubscriptionsSupported) {
+        IabResult r = new IabResult(IABHELPER_SUBSCRIPTIONS_NOT_AVAILABLE,
+                "Subscriptions are not available.");
+        flagEndAsync();
+        if (listener != null) listener.onIabPurchaseFinished(r, null);
+        return;
+    }
+
+    try {
+        logDebug("Constructing buy intent for " + sku + ", item type: " + itemType);
+        Bundle buyIntentBundle = mService.getBuyIntent(3, mContext.getPackageName(), sku, itemType, extraData);
+        int response = getResponseCodeFromBundle(buyIntentBundle);
+        if (response != BILLING_RESPONSE_RESULT_OK) {
+            logError("Unable to buy item, Error response: " + getResponseDesc(response));
+            flagEndAsync();
+            result = new IabResult(response, "Unable to buy item");
+            if (listener != null) listener.onIabPurchaseFinished(result, null);
+            return;
+        }
+
+        PendingIntent pendingIntent = buyIntentBundle.getParcelable(RESPONSE_BUY_INTENT);
+        logDebug("Launching buy intent for " + sku + ". Request code: " + requestCode);
+        mRequestCode = requestCode;
+        mPurchaseListener = listener;
+        mPurchasingItemType = itemType;
+        act.startIntentSenderForResult(pendingIntent.getIntentSender(),
+                                       requestCode, new Intent(),
+                                       Integer.valueOf(0), Integer.valueOf(0),
+                                       Integer.valueOf(0));
+    }
+    catch (SendIntentException e) {
+        logError("SendIntentException while launching purchase flow for sku " + sku);
+        e.printStackTrace();
+        flagEndAsync();
+
+        result = new IabResult(IABHELPER_SEND_INTENT_FAILED, "Failed to send intent.");
+        if (listener != null) listener.onIabPurchaseFinished(result, null);
+    }
+    catch (RemoteException e) {
+        logError("RemoteException while launching purchase flow for sku " + sku);
+        e.printStackTrace();
+        flagEndAsync();
+
+        result = new IabResult(IABHELPER_REMOTE_EXCEPTION, "Remote exception while starting purchase flow");
+        if (listener != null) listener.onIabPurchaseFinished(result, null);
+    }
+}
+</code></pre>

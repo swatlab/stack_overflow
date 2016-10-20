@@ -1,0 +1,288 @@
+<p>I am developing an application that I have to capture videos using custom camera and saving the video as .mp4 video</p>
+
+<p>I am encoding it using these methods</p>
+
+<pre><code>private String encodeVideoTobase64(Uri uri , int index)
+{
+    String videodata     = "";
+    String[] filePathColumn = { MediaStore.Video.Media.DATA };
+
+    Cursor cursor = this.getContentResolver().query(uri,filePathColumn, null, null, null);
+    String videoPath;
+    try{
+        cursor.moveToFirst();
+
+        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+        videoPath       = cursor.getString(columnIndex);
+    }
+    catch(Exception e)
+    {
+        videoPath = PathsOfVideos.get(index);
+    }
+    try {
+        @SuppressWarnings("resource")
+        FileInputStream v_input = new FileInputStream(videoPath);
+        ByteArrayOutputStream objByteArrayOS = new ByteArrayOutputStream();
+        byte[] byteBufferString = new byte[8192];
+        for (int readNum; (readNum = v_input.read(byteBufferString)) != -1;) 
+        {
+            objByteArrayOS.write(byteBufferString, 0, readNum);
+            System.out.println("read " + readNum + " bytes,");
+        }
+
+       videodata = encodeBytes(byteBufferString);//Base64.encodeToString(objByteArrayOS.toByteArray(), Base64.DEFAULT);
+
+    } catch (FileNotFoundException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+
+    return videodata;
+}
+
+public static String encodeBytes( byte[] source ) {
+    // Since we're not going to have the GZIP encoding turned on,
+    // we're not going to have an java.io.IOException thrown, so
+    // we should not force the user to have to catch it.
+    String encoded = null;
+    try {
+        encoded = encodeBytes(source, 0, source.length, NO_OPTIONS);
+    } catch (java.io.IOException ex) {
+        assert false : ex.getMessage();
+    }   // end catch
+    assert encoded != null;
+    return encoded;
+} 
+
+ public static String encodeBytes( byte[] source, int off, int len, int options ) throws java.io.IOException {
+    byte[] encoded = encodeBytesToBytes( source, off, len, options );
+
+    // Return value according to relevant encoding.
+    try {
+        return new String( encoded, "US-ASCII");
+    }   // end try
+    catch (java.io.UnsupportedEncodingException uue) {
+        return new String( encoded );
+    }   // end catch
+
+}
+</code></pre>
+
+<p>The encoding is done and the encoded video is delivered to the my database successfully.
+My Problem is when I am trying to get the video again and trying to decode it to display it to the user. The video doesn't play.</p>
+
+<p>This is how I am trying to decode the video using <code>decodeFast</code> method in <code>MiGBas64</code> library</p>
+
+<pre><code>protected void showInstVideo(int pos) {
+// TODO Auto-generated method stub
+final Dialog dialog = new Dialog(this);
+dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); 
+dialog.setContentView(R.layout.dialog_video);
+
+//Decode String To Video With mig Base64.
+String encodedString = r.getRecipeInstructions().get(pos).getVideoStr();
+if (encodedString.compareTo("")!=0) {
+    byte[] decodedBytes = MiGBase64.decodeFast(encodedString.getBytes());
+
+    try {
+        Date date=new Date();
+        String filename="/rec"+ date.toString().replace(" ", "_").replace(":", "_")+".mp4";
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir  = new File(root+"/MyAppName");
+        if (!myDir.exists())
+            myDir.mkdir();
+        File file = new File (myDir, filename);
+
+        FileOutputStream out = new FileOutputStream(file);
+        out.write(decodedBytes);
+        out.close();
+
+        VideoView instvideo     = (VideoView) dialog.findViewById(R.id.vvdetails);
+        MediaController mediaController = new MediaController(this);
+        mediaController.setAnchorView(instvideo);
+        Uri video = Uri.parse(file.getPath());
+        instvideo.setVideoURI(video);
+
+        if (video != null )
+        {
+            dialog.show();
+            instvideo.start();
+        }
+    } catch (Exception e) {
+        // TODO: handle exception
+        Log.e("Error", e.toString()); 
+    }
+}
+</code></pre>
+
+<p>}</p>
+
+<p>Now I am very confused. I don't know which method is wrong to use . the encoding methods or the decoding methods ?</p>
+
+<p>Could you please help me to figure out the problem in my code.</p>
+
+<p>Any help will be appreciated. 
+Thanks in advance</p>
+
+<p>Edit:</p>
+
+<pre><code> public static byte[] encodeBytesToBytes( byte[] source, int off, int len, int options ) throws java.io.IOException {
+
+    if( source == null ){
+        throw new NullPointerException( "Cannot serialize a null array." );
+    }   // end if: null
+
+    if( off < 0 ){
+        throw new IllegalArgumentException( "Cannot have negative offset: " + off );
+    }   // end if: off < 0
+
+    if( len < 0 ){
+        throw new IllegalArgumentException( "Cannot have length offset: " + len );
+    }   // end if: len < 0
+
+    if( off + len > source.length  ){
+        throw new IllegalArgumentException(
+        String.format( "Cannot have offset of %d and length of %d with array of length %d", off,len,source.length));
+    }   // end if: off < 0
+
+
+
+    // Compress?
+    if( (options & GZIP) != 0 ) {
+        java.io.ByteArrayOutputStream  baos  = null;
+        java.util.zip.GZIPOutputStream gzos  = null;
+        MyBase64.OutputStream            b64os = null;
+
+        try {
+            // GZip -> Base64 -> ByteArray
+            baos = new java.io.ByteArrayOutputStream();
+            b64os = new MyBase64.OutputStream( baos, ENCODE | options );
+            gzos  = new java.util.zip.GZIPOutputStream( b64os );
+
+            gzos.write( source, off, len );
+            gzos.close();
+        }   // end try
+        catch( java.io.IOException e ) {
+            // Catch it and then throw it immediately so that
+            // the finally{} block is called for cleanup.
+            throw e;
+        }   // end catch
+        finally {
+            try{ gzos.close();  } catch( Exception e ){}
+            try{ b64os.close(); } catch( Exception e ){}
+            try{ baos.close();  } catch( Exception e ){}
+        }   // end finally
+
+        return baos.toByteArray();
+    }   // end if: compress
+
+    // Else, don't compress. Better not to use streams at all then.
+    else {
+        boolean breakLines = (options & DO_BREAK_LINES) != 0;
+
+        //int    len43   = len * 4 / 3;
+        //byte[] outBuff = new byte[   ( len43 )                      // Main 4:3
+        //                           + ( (len % 3) > 0 ? 4 : 0 )      // Account for padding
+        //                           + (breakLines ? ( len43 / MAX_LINE_LENGTH ) : 0) ]; // New lines
+        // Try to determine more precisely how big the array needs to be.
+        // If we get it right, we don't have to do an array copy, and
+        // we save a bunch of memory.
+        int encLen = ( len / 3 ) * 4 + ( len % 3 > 0 ? 4 : 0 ); // Bytes needed for actual encoding
+        if( breakLines ){
+            encLen += encLen / MAX_LINE_LENGTH; // Plus extra newline characters
+        }
+        byte[] outBuff = new byte[ encLen ];
+
+
+        int d = 0;
+        int e = 0;
+        int len2 = len - 2;
+        int lineLength = 0;
+        for( ; d < len2; d+=3, e+=4 ) {
+            encode3to4( source, d+off, 3, outBuff, e, options );
+
+            lineLength += 4;
+            if( breakLines && lineLength >= MAX_LINE_LENGTH )
+            {
+                outBuff[e+4] = NEW_LINE;
+                e++;
+                lineLength = 0;
+            }   // end if: end of line
+        }   // en dfor: each piece of array
+
+        if( d < len ) {
+            encode3to4( source, d+off, len - d, outBuff, e, options );
+            e += 4;
+        }   // end if: some padding needed
+
+
+        // Only resize array if we didn't guess it right.
+        if( e <= outBuff.length - 1 ){
+            // If breaking lines and the last byte falls right at
+            // the line length (76 bytes per line), there will be
+            // one extra byte, and the array will need to be resized.
+            // Not too bad of an estimate on array size, I'd say.
+            byte[] finalOut = new byte[e];
+            System.arraycopy(outBuff,0, finalOut,0,e);
+            //System.err.println("Having to resize array from " + outBuff.length + " to " + e );
+            return finalOut;
+        } else {
+            //System.err.println("No need to resize array.");
+            return outBuff;
+        }
+
+    }   // end else: don't compress
+
+}   // end encodeBytesToBytes
+
+private static byte[] encode3to4( 
+byte[] source, int srcOffset, int numSigBytes,
+byte[] destination, int destOffset, int options ) {
+
+byte[] ALPHABET = getAlphabet( options ); 
+
+
+    int inBuff =   ( numSigBytes > 0 ? ((source[ srcOffset     ] << 24) >>>  8) : 0 )
+                 | ( numSigBytes > 1 ? ((source[ srcOffset + 1 ] << 24) >>> 16) : 0 )
+                 | ( numSigBytes > 2 ? ((source[ srcOffset + 2 ] << 24) >>> 24) : 0 );
+
+    switch( numSigBytes )
+    {
+        case 3:
+            destination[ destOffset     ] = ALPHABET[ (inBuff >>> 18)        ];
+            destination[ destOffset + 1 ] = ALPHABET[ (inBuff >>> 12) & 0x3f ];
+            destination[ destOffset + 2 ] = ALPHABET[ (inBuff >>>  6) & 0x3f ];
+            destination[ destOffset + 3 ] = ALPHABET[ (inBuff       ) & 0x3f ];
+            return destination;
+
+        case 2:
+            destination[ destOffset     ] = ALPHABET[ (inBuff >>> 18)        ];
+            destination[ destOffset + 1 ] = ALPHABET[ (inBuff >>> 12) & 0x3f ];
+            destination[ destOffset + 2 ] = ALPHABET[ (inBuff >>>  6) & 0x3f ];
+            destination[ destOffset + 3 ] = EQUALS_SIGN;
+            return destination;
+
+        case 1:
+            destination[ destOffset     ] = ALPHABET[ (inBuff >>> 18)        ];
+            destination[ destOffset + 1 ] = ALPHABET[ (inBuff >>> 12) & 0x3f ];
+            destination[ destOffset + 2 ] = EQUALS_SIGN;
+            destination[ destOffset + 3 ] = EQUALS_SIGN;
+            return destination;
+
+        default:
+            return destination;
+    }   // end switch
+}
+private final static byte[] getAlphabet( int options ) {
+    if ((options & URL_SAFE) == URL_SAFE) {
+        return _URL_SAFE_ALPHABET;
+    } else if ((options & ORDERED) == ORDERED) {
+        return _ORDERED_ALPHABET;
+    } else {
+        return _STANDARD_ALPHABET;
+    }
+}
+</code></pre>

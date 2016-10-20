@@ -1,0 +1,199 @@
+<p>I'm create an app which contain three activity and database and two table , first table fixed in listview , but how set second table in activity showdb, when click item listview show detaile itme in showdb activity</p>
+
+<p>for example | first table ID (1,2,3) , nameitem(US,AU,IQ).</p>
+
+<p>second table ID (1,2,3) , infoNI(US : detaile ..., AU : detaile ..., IQ : detaile ...).</p>
+
+<p>when click US , in showdb activity show info US , how do that ?!!! </p>
+
+<h2>SQLiteOpenHelper</h2>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+public static String DB_PATH = "/data/data/com.example.dbtest/databases/";
+public static String DB_NAME = "ex4.sqlite"; 
+public static final int DB_VERSION = 1;
+
+public static final String TB_USER = "Users";
+
+private SQLiteDatabase myDB;
+private Context context;
+
+public DatabaseHelper(Context context) {
+    super(context, DB_NAME, null, DB_VERSION);  
+    this.context = context;
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public synchronized void close(){
+    if(myDB!=null){
+        myDB.close();
+    }
+    super.close();
+}
+
+public List<String> getAllUsers(){
+    List<String> listUsers = new ArrayList<String>();
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor c;
+
+    try {
+        c = db.rawQuery("SELECT * FROM " + TB_USER , null);
+        if(c == null) return null;
+
+        String name;
+        c.moveToFirst();
+        do {            
+            name = c.getString(1);          
+            listUsers.add(name);
+        } while (c.moveToNext()); 
+        c.close();
+    } catch (Exception e) {
+        Log.e("tle99", e.getMessage());
+    }
+
+
+    db.close();     
+
+    return listUsers;
+}
+
+
+
+public void openDataBase() throws SQLException{
+    String myPath = DB_PATH + DB_NAME;
+    myDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+}
+
+
+public void copyDataBase() throws IOException{
+    try {
+        InputStream myInput = context.getAssets().open(DB_NAME);
+        String outputFileName = DB_PATH + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outputFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+
+        while((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    } catch (Exception e) {
+        Log.e("tle99 - copyDatabase", e.getMessage());
+    }
+
+}
+
+public void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();      
+
+    if (dbExist) {
+
+    } else {
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            Log.e("tle99 - create", e.getMessage());
+        }
+    }
+}
+
+
+private boolean checkDataBase() {
+    SQLiteDatabase tempDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        tempDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+    } catch (SQLiteException e) {
+        Log.e("tle99 - check", e.getMessage());
+    }
+    if (tempDB != null)
+        tempDB.close();
+    return tempDB != null ? true : false;
+}}
+</code></pre>
+
+<h2>MainActivity</h2>
+
+<pre><code>public class MainActivity extends Activity {
+
+DatabaseHelper dbHeplper;
+ListView lvUsers;
+ListAdapter adapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    dbHeplper = new DatabaseHelper(getApplicationContext());
+    try {
+        dbHeplper.createDataBase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+    lvUsers = (ListView)findViewById(id.lvUsers);
+    List<String> listUsers = dbHeplper.getAllUsers();
+
+    if(listUsers != null){
+        adapter = new ArrayAdapter<String>(getApplicationContext(),
+                R.layout.row,R.id.textView1,
+                listUsers);
+        lvUsers.setAdapter(adapter);
+    }
+    lvUsers.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View view,
+                            int position,long id) {
+             Intent intent = new Intent(MainActivity.this, showdb.class);
+                intent.putExtra("position",position);    
+                startActivity(intent);
+        }
+    });
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}}
+</code></pre>
+
+<h2>showdbActivity</h2>
+
+<p>activity three showdb (in this activity , show data which in file database).</p>
+
+<pre><code>public class showdbActivity extends Activity {
+
+TextView tv;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_showdb);
+
+tv1 = (TextView) findViewById(R.id.title);
+tv2= (TextView) findViewById(R.id.detaile);
+
+ }}
+</code></pre>

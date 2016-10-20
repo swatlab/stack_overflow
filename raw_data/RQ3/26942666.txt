@@ -1,0 +1,98 @@
+<p>I am trying to write my own version of an open source program that my friend asked me if I could re-write, as it is very out of date. The program is written in python, a language which I have not used much. Although I can read what is going on in the python code, I am not sure how to replicate some of it it exactly in Java. The main issue I am having at the moment is connecting to the server. The program allows you to play a mobile game on the computer. Although I could probably run an emulator, I want to make this as standalone as possible. I also would like to be able to inject my own data into the server requests. The web server will only send back useful data if it thinks that you are using a valid mobile device. As far as I can tell, that information is stored in the URL that you use to access the page. The URL contains your device UDID, and an MD5 encrypted UDID along with a few other things. If anyone could help me to replicate this in java, I would be most happy. </p>
+
+<p>Here is the python code I am trying to reconstruct. (The Data variable, as far as I can tell, is a device UDID)</p>
+
+<pre><code>    conn = httplib.HTTPConnection('im.storm8.com:80')
+    if iDevice:
+        Pf = hashlib.md5(Data + ':UltraDoux174i').hexdigest()
+        Pf = Pf.upper()
+        URL = '/index.php?version=1.74&premium=true&udid=' + Data + '&pf=' + Pf + '&model=iPod%20touch&sv=3.1.2'
+        model = 'iPhone'
+        sv = '3_1_2'
+    if Droid:
+        Pf = hashlib.md5(Data + ':pr3m1umWat3r154i:12').hexdigest()
+        Pf = Pf.upper()
+        URL = '/apoints.php?fpts=12&version=a1.54&udid=' + Data + '&pf=' + Pf + '&model=Droid&sv=2.2'
+        model = 'Droid'
+        sv = '2_2'
+    params = str()
+    headers = {'User-agent': 'Mozilla/5.0 (%s; U; CPU iPhone OS %s like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Mobile/7D11' % (model, sv),
+     'Accept': 'application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5',
+     'Accept-Language': 'en-us',
+     'Accept-Encoding': 'gzip, deflate',
+     'Connection': 'keep-alive'}
+    conn.request('GET', URL, params, headers)
+    response = conn.getresponse()
+    Cookie = response.getheader('set-cookie')
+    conn.close()
+</code></pre>
+
+<p>Here is what I have done with my Java. Although, I think I may have taken the wrong approach.</p>
+
+<p>In the sendLoginConnection method, the string that is sent to it, is an android udid. I haven't bothered to set it up for apple devices yet.</p>
+
+<pre><code>public String sendLoginConnection(String data){
+
+        String hexdigest = md5(data + ":pr3m1umWat3r154i:12").toUpperCase();
+        return Connection("/apoints.php?fpts=12&version=a1.54&udid=" + data + "&pf=" + hexdigest + "&model=Droid&sv=2.2");
+    }
+
+
+    public String Connection(String page){
+        try {
+            String address = "http://im.storm8.com" + page;
+            URL url = new URL(address);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Droid; U; CPU iPhone OS 2_2 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Mobile/7D11");
+            conn.setRequestProperty("Accept", "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5");
+            conn.setRequestProperty("Accept-Language", "en-us");
+            conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+            conn.setRequestProperty("Connection", "keep-alive");
+            conn.connect();
+
+            GZIPInputStream gzipin = new GZIPInputStream(conn.getInputStream());
+            byte[] buff = new byte[1024];
+            byte[] emptyBuff = new byte[1024];
+                                        StringBuffer unGzipRes = new StringBuffer();
+
+                                        int byteCount = 0;
+                                        while ((byteCount = gzipin.read(buff, 0, 1024)) > 0) {
+
+                                            unGzipRes.append(new String(Arrays.copyOf(buff, byteCount), "utf-8"));
+
+
+                                            System.arraycopy(emptyBuff, 0, buff, 0, 1024);
+                                        }
+
+
+                                        String content = unGzipRes.toString();
+                                        return content;
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public String md5(String s) {
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+            digest.update(s.getBytes());
+            byte messageDigest[] = digest.digest();
+
+            // Create Hex String
+            StringBuffer hexString = new StringBuffer();
+            for (int i=0; i<messageDigest.length; i++)
+                hexString.append(Integer.toHexString(0xFF & messageDigest[i]));
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+</code></pre>
+
+<p>Sorry about the ridiculous amounts of code to read through here. But if anyone could help me out here, I would be so grateful. Thanks.</p>

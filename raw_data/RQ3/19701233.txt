@@ -1,0 +1,165 @@
+<p>precondition：Don't use ViewPager, save fragment state after switch tab
+I have a problem, init fragmentOne first, check button2, then will create fragmentTwo, check button3, then will create fragmentThree. I create three fragments in memory, and now I want to press button2 or button1, but the page is still fragmentThree. I can't find the reason why?
+here is the code, thanks!</p>
+
+<pre><code>package com.example.FragmentSaveStatus;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.*;
+
+public class MyActivity extends FragmentActivity{
+    private FragmentManager mFragmentManager;
+    private FragmentTransaction mCurTransaction;
+    private FrameLayout mContainer;
+    private Fragment mCurrentPrimaryItem;
+    private RadioButton mButtonOne, mButtonTwo, mButtonThree;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        initViews();
+    }
+
+    private void initViews() {
+        mContainer = (FrameLayout) findViewById(R.id.container);
+        mButtonOne = (RadioButton) findViewById(R.id.radio_button0);
+        mButtonTwo = (RadioButton) findViewById(R.id.radio_button1);
+        mButtonThree = (RadioButton) findViewById(R.id.radio_button2);
+        mFragmentManager = getSupportFragmentManager();
+        Fragment fragment = (Fragment) mPagerAdapter.instantiateItem(mContainer, mButtonOne.getId());
+        mPagerAdapter.setPrimaryItem(mContainer, mButtonOne.getId(), fragment);
+        mPagerAdapter.finishUpdate(mContainer);
+        mButtonOne.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Fragment fragment = (Fragment) mPagerAdapter.instantiateItem(mContainer, buttonView.getId());
+                    Toast.makeText(MyActivity.this, "one:"+buttonView.getId() +"  "+fragment.getClass().getName(), Toast.LENGTH_SHORT).show();
+                    mPagerAdapter.setPrimaryItem(mContainer, buttonView.getId(), fragment);
+                    mPagerAdapter.finishUpdate(mContainer);
+                }
+            }
+        });
+
+        mButtonTwo.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Fragment fragment = (Fragment) mPagerAdapter.instantiateItem(mContainer, buttonView.getId());
+                    Toast.makeText(MyActivity.this, "two:"+buttonView.getId() +"  "+fragment.getClass().getName(), Toast.LENGTH_SHORT).show();
+                    mPagerAdapter.setPrimaryItem(mContainer, buttonView.getId(), fragment);
+                    mPagerAdapter.finishUpdate(mContainer);
+                }
+            }
+        });
+
+        mButtonThree.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Fragment fragment = (Fragment) mPagerAdapter.instantiateItem(mContainer, buttonView.getId());
+                    Toast.makeText(MyActivity.this, "three:"+buttonView.getId() +"  "+fragment.getClass().getName(), Toast.LENGTH_SHORT).show();
+                    mPagerAdapter.setPrimaryItem(mContainer, buttonView.getId(), fragment);
+                    mPagerAdapter.finishUpdate(mContainer);
+                }
+            }
+        });
+    }
+
+
+    private FragmentPagerAdapter mPagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager()) {
+        @Override
+        public Fragment getItem(int i) {
+            switch (i) {
+                case R.id.radio_button0:
+                    return new FragmentOne();
+                case R.id.radio_button1:
+                    return new FragmentTwo();
+                case R.id.radio_button2:
+                    return new FragmentThree();
+                default:
+                   return new FragmentOne();
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return 3;
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            if (mCurTransaction == null) {
+                mCurTransaction = mFragmentManager.beginTransaction();
+            }
+
+            //Do we already have thei fragment
+            String name = makeFragmentName(container.getId(), position);
+            Fragment fragment = mFragmentManager.findFragmentByTag(name);
+            if (fragment != null) {
+                mCurTransaction.attach(fragment);
+            } else {
+                fragment = getItem(position);
+                mCurTransaction.add(container.getId(), fragment,
+                        makeFragmentName(container.getId(), position));
+            }
+
+            if (fragment != mCurrentPrimaryItem) {
+                fragment.setMenuVisibility(false);
+                fragment.setUserVisibleHint(false);
+            }
+            return fragment;
+        }
+
+        @Override
+        public void setPrimaryItem(ViewGroup container, int position, Object object) {
+            Fragment fragment = (Fragment)object;
+            if (fragment != mCurrentPrimaryItem) {
+                if (mCurrentPrimaryItem != null) {
+                      mCurrentPrimaryItem.setMenuVisibility(false);
+                      mCurrentPrimaryItem.setUserVisibleHint(false);
+                }
+
+                if (fragment != null) {
+                    fragment.setMenuVisibility(true);
+                    fragment.setUserVisibleHint(true);
+                }
+
+                mCurrentPrimaryItem = fragment;
+            }
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            if (mCurTransaction == null) {
+                mCurTransaction = mFragmentManager.beginTransaction();
+            }
+            Log.v("fragment", "detach item #"+getItemId(position)+ ": f="+object
+                + " v="+((Fragment)object).getView());
+            mCurTransaction.detach((Fragment)object);
+        }
+
+        @Override
+        public void finishUpdate(ViewGroup container) {
+            if (mCurTransaction != null) {
+                mCurTransaction.commitAllowingStateLoss();
+                mCurTransaction = null;
+                mFragmentManager.executePendingTransactions();
+            }
+        }
+    };
+
+
+    private static String makeFragmentName(int viewId, int index) {
+        return "android:switcher:" + viewId + ":" + index;
+    }
+
+}
+</code></pre>

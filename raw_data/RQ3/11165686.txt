@@ -1,0 +1,264 @@
+<p>This is the class Db.java    </p>
+
+<pre><code>package calc.three;
+
+import java.io.IOException;
+
+import android.app.Activity;
+import android.app.ListActivity;
+import android.content.ContentValues;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.database.sqlite.SQLiteDatabase;
+import android.widget.AdapterView;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class Db extends ListActivity {
+private SQLiteDatabase newDb;
+DataBaseHelper myDbHelper = new DataBaseHelper(this);
+public ListAdapter adapter;
+
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+setContentView(R.layout.main);
+    openDatabase();
+
+    Cursor c = newDb.rawQuery("SELECT _id, organisation FROM shoplist", null);
+    adapter = new SimpleCursorAdapter(this, R.layout.main, c, new String[] { "organisation" },  new int[] { android.R.id.list });
+    setListAdapter(adapter);
+    //inserttodata();
+    myDbHelper.close();
+}
+
+private long inserttodata() {
+    // TODO Auto-generated method stub
+    ContentValues cv = new ContentValues();
+    cv.put("id", "112");
+    cv.put("organisation","test" );
+     return newDb.insert("shoplist", null, cv);
+}
+
+private void openDatabase() {
+
+    try {
+
+        myDbHelper.createDataBase();
+
+    } catch (IOException ioe) {
+
+        throw new Error("Unable to create database");
+
+    }
+
+    try {
+
+        myDbHelper.openDataBase();
+
+
+    } catch (SQLException sqle) {
+System.out.println("failed to open");
+        throw sqle;
+
+    }
+    //String[] columns= new String[]{"_id", "Organisation"};
+    //cursor = newDb.query("Shop", columns, null, null, null, null, null);
+
+}
+
+}  
+</code></pre>
+
+<p>This the DataBaseHelper class</p>
+
+<pre><code>package calc.three;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+//The Android's default system path of your application database.
+private static String DB_PATH = "/data/data/calc.three/databases/";
+
+private static String DB_NAME = "charity.db";
+
+private SQLiteDatabase myDataBase; 
+
+private final Context myContext;
+
+/**
+ * Constructor
+ * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+ * @param context
+ */
+public DataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }else{
+
+        //By calling this method and empty database will be created into the default system path
+           //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each time you open the application.
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[2048];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    SQLiteDatabase.CursorFactory c = null;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, c , SQLiteDatabase.OPEN_READWRITE);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+
+    // Add your public helper methods to access and get content from the database.
+   // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+   // to you to create adapters for your views.
+
+}
+</code></pre>
+
+<p>The XMl layout </p>
+
+<pre><code>  <?xml version="1.0" encoding="utf-8"?>
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="match_parent"
+android:orientation="vertical" >
+
+<ListView
+    android:id="@android:id/list"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:padding="3dip" >
+</ListView>
+
+  </LinearLayout>
+</code></pre>
+
+<p>I am not trying to do much here. I shipped a .db file in the assets folder coppying it which happens successfully...after the copy is created, i opened the .db file from data/data/calc.three/database in the sqlite browser and i have the table there.</p>
+
+<p>but i cant seem to run the application it force closes and gives me a nullPointerException at the line where a pass a rawQuery to the Cursor i run the program without that line and there is no error but i cant display the data in the list view . Please help i have been stuck on this one for past 3 days.</p>
+
+<p>Thank You</p>

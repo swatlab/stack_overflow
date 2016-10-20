@@ -1,0 +1,552 @@
+<p>I am using the <a href="https://developers.google.com/youtube/android/player/downloads/" rel="nofollow">YouTube API v3</a> and have the thumbnail videos for a <code>List</code> working nicely, and when you click a video in the list, it pops open a video box over the list that plays the video. This part works. But the video box was created as part of the <code>API</code> library (I'm assuming) and so its fullscreen button in the box itself is clicked to get it into fullscreen. However, when I go to fullscreen, the video disappears and it is blank. No crash or anything, just blank. My initialization works fine. I get the <code>errorReason</code> value of <code>SUCCESS</code> when I log it. So I don't know what else could be causing this blank.</p>
+
+<p>In some other <code>YouTube API</code> code I find online, they use an <code>Intent</code> to go into fullscreen mode, but this is not what the video list class from the <code>YouTube</code> sample uses, so I don't know if that's needed somehow or not. The <code>YouTube</code> sample works perfectly as a list, it shows the video list and then seamlessly goes into fullscreen (landscape) mode when you click that tiny expand button on the video box. </p>
+
+<p><img src="http://i.stack.imgur.com/UJa5G.jpg" alt="Video box over list items"></p>
+
+<p>Does it seem like I am missing anything? Keep in mind, the video box and the fullscreen mode are both fragments, and are created programmatically, not in the <code>UI</code>. In my xml, you will just see fragment placeholders with a reference to the class where their <code>UI</code> is created.</p>
+
+<p>Thanks for your help.</p>
+
+<p><strong>VideosActivity.java</strong></p>
+
+<pre><code>package org.azurespot.cutelinks.cutevideos;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.app.ListFragment;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.youtube.player.YouTubeApiServiceUtil;
+import com.google.android.youtube.player.YouTubeInitializationResult;
+import com.google.android.youtube.player.YouTubePlayer;
+import com.google.android.youtube.player.YouTubePlayer.OnFullscreenListener;
+import com.google.android.youtube.player.YouTubePlayer.Provider;
+import com.google.android.youtube.player.YouTubePlayerFragment;
+import com.google.android.youtube.player.YouTubeThumbnailLoader;
+import com.google.android.youtube.player.YouTubeThumbnailView;
+
+import org.azurespot.R;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+
+
+public class VideosActivity extends ActionBarActivity implements
+        OnFullscreenListener {
+
+    /** The duration of the animation sliding up the video in portrait. */
+    private static final int ANIMATION_DURATION_MILLIS = 300;
+    /** The padding between the video list and the video in landscape orientation. */
+    private static final int LANDSCAPE_VIDEO_PADDING_DP = 5;
+    protected static final int RECOVERY_DIALOG_REQUEST = 1;
+    /** The padding between the video list and the video in landscape orientation. */
+    private VideoListFragment listFragment;
+    private VideoFragment videoFragment;
+    private View videoBox;
+    private View closeButton;
+    private boolean isFullscreen;
+    private boolean isPortrait;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_videos);
+
+        getSupportActionBar().setDisplayUseLogoEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        listFragment = (VideoListFragment) getFragmentManager().
+                findFragmentById(R.id.list_fragment);
+        videoFragment = (VideoFragment) getFragmentManager().findFragmentById
+                        (R.id.video_fragment_container);
+
+        videoBox = findViewById(R.id.video_box);
+        closeButton = findViewById(R.id.close_button);
+
+        videoBox.setVisibility(View.INVISIBLE);
+
+        layout();
+
+        checkYouTubeApi();
+
+    }
+
+    private void checkYouTubeApi() {
+        YouTubeInitializationResult errorReason =
+                YouTubeApiServiceUtil.isYouTubeApiServiceAvailable(this);
+        Log.e("ERROR RESULT", "Error initialization result is " + errorReason);
+        if (errorReason.isUserRecoverableError()) {
+            errorReason.getErrorDialog(this, RECOVERY_DIALOG_REQUEST).show();
+        } else if (errorReason != YouTubeInitializationResult.SUCCESS){
+            String errorMessage = String.format(getString(R.string.error_player),
+                    errorReason.toString());
+            Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == RECOVERY_DIALOG_REQUEST) {
+            // Recreate the activity if user performed a recovery action
+            recreate();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        layout();
+    }
+
+    @Override
+    public void onFullscreen(boolean isFullscreen) {
+        this.isFullscreen = isFullscreen;
+
+        layout();
+    }
+
+    /**
+     * Sets up the layout programatically for the three different states. Portrait, landscape or
+     * fullscreen+landscape. This has to be done programmatically because we handle the orientation
+     * changes ourselves in order to get fluent fullscreen transitions, so the xml layout resources
+     * do not get reloaded.
+     */
+    private void layout() {
+        isPortrait =
+                getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+        listFragment.getView().setVisibility(isFullscreen ? View.GONE : View.VISIBLE);
+        listFragment.setLabelVisibility(isPortrait);
+        closeButton.setVisibility(isPortrait ? View.VISIBLE : View.GONE);
+
+        if (isFullscreen) {
+            videoBox.setTranslationY(0); // Reset any translation that was applied in portrait.
+            setLayoutSize(videoFragment.getView(), MATCH_PARENT, MATCH_PARENT);
+            setLayoutSizeAndGravity(videoBox, MATCH_PARENT, MATCH_PARENT, Gravity.TOP | Gravity.START);
+        } else if (isPortrait) {
+            setLayoutSize(listFragment.getView(), MATCH_PARENT, MATCH_PARENT);
+            setLayoutSize(videoFragment.getView(), MATCH_PARENT, WRAP_CONTENT);
+            setLayoutSizeAndGravity(videoBox, MATCH_PARENT, WRAP_CONTENT, Gravity.BOTTOM);
+        } else {
+            videoBox.setTranslationY(0); // Reset any translation that was applied in portrait.
+            int screenWidth = dpToPx(getResources().getConfiguration().screenWidthDp);
+            setLayoutSize(listFragment.getView(), screenWidth / 4, MATCH_PARENT);
+            int videoWidth = screenWidth - screenWidth / 4 - dpToPx(LANDSCAPE_VIDEO_PADDING_DP);
+            setLayoutSize(videoFragment.getView(), videoWidth, WRAP_CONTENT);
+            setLayoutSizeAndGravity(videoBox, videoWidth, WRAP_CONTENT,
+                    Gravity.END | Gravity.CENTER_VERTICAL);
+        }
+    }
+
+    public void onClickClose(@SuppressWarnings("unused") View view) {
+        listFragment.getListView().clearChoices();
+        listFragment.getListView().requestLayout();
+        videoFragment.pause();
+        ViewPropertyAnimator animator = videoBox.animate()
+                .translationYBy(videoBox.getHeight())
+                .setDuration(ANIMATION_DURATION_MILLIS);
+        runOnAnimationEnd(animator, new Runnable() {
+            @Override
+            public void run() {
+                videoBox.setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    private void runOnAnimationEnd(ViewPropertyAnimator animator, final Runnable runnable) {
+        if (Build.VERSION.SDK_INT >= 21) {
+            animator.withEndAction(runnable);
+        } else {
+            animator.setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    runnable.run();
+                }
+            });
+        }
+    }
+
+    /**
+     * A fragment that shows a static list of videos.
+     */
+    public static class VideoListFragment extends ListFragment{
+        private static final List<VideoEntry> VIDEO_LIST;
+        static {
+            List<VideoEntry> list = new ArrayList<VideoEntry>();
+            list.add(new VideoEntry("Corgi Puppy Cam", "kvxJNEl6OD4"));
+            list.add(new VideoEntry("Husky Puppy Cam", "wo04ZWLAnvo"));
+            list.add(new VideoEntry("Yorkie Puppy Cam", "Fen9ZXNS2Ug"));
+            list.add(new VideoEntry("Schnauzer Puppy Live Cam", "i2-MnWWoL6M"));
+            list.add(new VideoEntry("Relaxing Bird Feeder", "jMbtQLQoWZ8"));
+            list.add(new VideoEntry("Guy Gets Smothered by Bunnies on Japan's Rabbit Island!", "pY-GncsZ-UE"));
+            list.add(new VideoEntry("キツネ100匹！ - Fox Village", "tMo9FWwKoiA"));
+            list.add(new VideoEntry("Cute Alpacas!", "bwL7xUC6LqQ"));
+            list.add(new VideoEntry("Cute Pygmy Goats!", "ScCa7fZ-xPA"));
+            list.add(new VideoEntry("Cute Peruvian Hairless Dogs!", "le8yAr7PlSE"));
+            list.add(new VideoEntry("Cute Baby Boar Piglets!", "Ww9zBgvxt80"));
+            list.add(new VideoEntry("The Red Pandas of Darjeeling District, India.", "Cn3tk-rUl5Q"));
+            list.add(new VideoEntry("Smart and Clever Animals", "V7BVUjB93ew"));
+            list.add(new VideoEntry("Animal Odd Couples 1of2", "k9pzi8W8At0"));
+            list.add(new VideoEntry("Pets Interrupting Yoga", "QQYK5vT9TBI"));
+            list.add(new VideoEntry("Two Chinchillas, One Sock!", "e56I_syIMwk"));
+            VIDEO_LIST = Collections.unmodifiableList(list);
+        }
+
+        private PageAdapter adapter;
+        private View videoBox;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            adapter = new PageAdapter(getActivity(), VIDEO_LIST);
+        }
+
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+            super.onActivityCreated(savedInstanceState);
+
+            videoBox = getActivity().findViewById(R.id.video_box);
+            getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+            setListAdapter(adapter);
+        }
+
+        @Override
+        public void onListItemClick(ListView l, View v, int position, long id) {
+            String videoId = VIDEO_LIST.get(position).videoId;
+
+            VideoFragment videoFragment =
+                    (VideoFragment) getFragmentManager().findFragmentById(R.id.video_fragment_container);
+            videoFragment.setVideoId(videoId);
+
+            // The videoBox is INVISIBLE if no video was previously selected, so we need to show it now.
+            if (videoBox.getVisibility() != View.VISIBLE) {
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    // Initially translate off the screen so that it can be animated in from below.
+                    videoBox.setTranslationY(videoBox.getHeight());
+                }
+                videoBox.setVisibility(View.VISIBLE);
+            }
+
+            // If the fragment is off the screen, we animate it in.
+            if (videoBox.getTranslationY() > 0) {
+                videoBox.animate().translationY(0).setDuration(ANIMATION_DURATION_MILLIS);
+            }
+        }
+
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+
+            adapter.releaseLoaders();
+        }
+
+        public void setLabelVisibility(boolean visible) {
+            adapter.setLabelVisibility(visible);
+        }
+
+    }
+
+
+    private static final class PageAdapter extends BaseAdapter {
+
+        private final List<VideoEntry> entries;
+        private final List<View> entryViews;
+        private final Map<YouTubeThumbnailView, YouTubeThumbnailLoader> thumbnailViewToLoaderMap;
+        private final LayoutInflater inflater;
+        private final ThumbnailListener thumbnailListener;
+
+        private boolean labelsVisible;
+
+        public PageAdapter(Context context, List<VideoEntry> entries) {
+            this.entries = entries;
+
+            entryViews = new ArrayList<>();
+            thumbnailViewToLoaderMap = new HashMap<>();
+            inflater = LayoutInflater.from(context);
+            thumbnailListener = new ThumbnailListener();
+
+            labelsVisible = true;
+        }
+
+        public void releaseLoaders() {
+            for (YouTubeThumbnailLoader loader : thumbnailViewToLoaderMap.values()) {
+                loader.release();
+            }
+        }
+
+        public void setLabelVisibility(boolean visible) {
+            labelsVisible = visible;
+            for (View view : entryViews) {
+                view.findViewById(R.id.text).setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return entries.size();
+        }
+
+        @Override
+        public VideoEntry getItem(int position) {
+            return entries.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = convertView;
+            VideoEntry entry = entries.get(position);
+
+            // There are three cases here
+            if (view == null) {
+                // 1) The view has not yet been created - we need to initialize the YouTubeThumbnailView.
+                view = inflater.inflate(R.layout.you_tube_row_item, parent, false);
+                YouTubeThumbnailView thumbnail = (YouTubeThumbnailView) view.findViewById(R.id.thumbnail);
+                thumbnail.setTag(entry.videoId);
+                thumbnail.initialize(DeveloperKey.DEVELOPER_KEY, thumbnailListener);
+            } else {
+                YouTubeThumbnailView thumbnail = (YouTubeThumbnailView) view.findViewById(R.id.thumbnail);
+                YouTubeThumbnailLoader loader = thumbnailViewToLoaderMap.get(thumbnail);
+                if (loader == null) {
+                    // 2) The view is already created, and is currently being initialized. We store the
+                    //    current videoId in the tag.
+                    thumbnail.setTag(entry.videoId);
+                } else {
+                    // 3) The view is already created and already initialized. Simply set the right videoId
+                    //    on the loader.
+                    thumbnail.setImageResource(R.drawable.loading_thumbnail);
+                    loader.setVideo(entry.videoId);
+                }
+            }
+            TextView label = ((TextView) view.findViewById(R.id.text));
+            label.setText(entry.text);
+            label.setVisibility(labelsVisible ? View.VISIBLE : View.GONE);
+            return view;
+        }
+
+        private final class ThumbnailListener implements
+                YouTubeThumbnailView.OnInitializedListener,
+                YouTubeThumbnailLoader.OnThumbnailLoadedListener {
+
+            @Override
+            public void onInitializationSuccess(
+                    YouTubeThumbnailView view, YouTubeThumbnailLoader loader) {
+                loader.setOnThumbnailLoadedListener(this);
+                thumbnailViewToLoaderMap.put(view, loader);
+                view.setImageResource(R.drawable.loading_thumbnail);
+                String videoId = (String) view.getTag();
+                loader.setVideo(videoId);
+            }
+
+            @Override
+            public void onInitializationFailure(
+                    YouTubeThumbnailView view, YouTubeInitializationResult loader) {
+                view.setImageResource(R.drawable.no_thumbnail);
+            }
+
+            @Override
+            public void onThumbnailLoaded(YouTubeThumbnailView view, String videoId) {
+            }
+
+            @Override
+            public void onThumbnailError(YouTubeThumbnailView view, YouTubeThumbnailLoader.ErrorReason errorReason) {
+                view.setImageResource(R.drawable.no_thumbnail);
+            }
+        }
+
+    }
+
+
+    public static class VideoFragment extends YouTubePlayerFragment
+            implements YouTubePlayer.OnInitializedListener {
+
+        YouTubePlayer player;
+        private String videoId;
+
+        public static VideoFragment newInstance() {
+            return new VideoFragment();
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            initialize(DeveloperKey.DEVELOPER_KEY, this);
+            newInstance();
+        }
+
+        @Override
+        public void onDestroy() {
+            if (player != null) {
+                player.release();
+            }
+            super.onDestroy();
+        }
+
+        public void setVideoId(String videoId) {
+            if (videoId != null && !videoId.equals(this.videoId)) {
+                this.videoId = videoId;
+                if (player != null) {
+                    player.cueVideo(videoId);
+                }
+            }
+        }
+
+        public void pause() {
+            if (player != null) {
+                player.pause();
+            }
+        }
+
+        @Override
+        public void onInitializationSuccess(Provider provider,
+                                      YouTubePlayer player, boolean restored) {
+            this.player = player;
+            player.addFullscreenControlFlag(YouTubePlayer.
+                    FULLSCREEN_FLAG_CUSTOM_LAYOUT);
+            player.setOnFullscreenListener((VideosActivity) getActivity());
+            if (!restored && videoId != null) {
+                player.cueVideo(videoId);
+            }
+        }
+
+        @Override
+        public void onInitializationFailure(Provider provider,
+                                            YouTubeInitializationResult result) {
+            this.player = null;
+        }
+    }
+
+    private static final class VideoEntry {
+        private final String text;
+        private final String videoId;
+
+        public VideoEntry(String text, String videoId) {
+            this.text = text;
+            this.videoId = videoId;
+        }
+    }
+
+    // Utility methods for layouting.
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private static void setLayoutSize(View view, int width, int height) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        view.setLayoutParams(params);
+    }
+
+    private static void setLayoutSizeAndGravity(View view, int width, int height, int gravity) {
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) view.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        view.setLayoutParams(params);
+    }
+
+
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.menu_webcams, menu);
+//        return true;
+//    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Makes the UP caret go back to the previous fragment MakeCuteFragment
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                android.app.FragmentManager fm = getFragmentManager();
+                fm.popBackStack();
+                finish();
+
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>
+
+<p><strong>activity_videos.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#2198bb">
+
+        <fragment
+            class="org.azurespot.cutelinks.cutevideos.VideosActivity$VideoListFragment"
+            android:id="@+id/list_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="15dp"
+            android:background="@drawable/button_border"/>
+
+        <LinearLayout
+            android:id="@+id/video_box"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="15dp"
+            android:orientation="vertical"
+            android:background="@drawable/button_border">
+
+            <ImageButton
+                android:id="@+id/close_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:src="@android:drawable/btn_dialog"
+                android:onClick="onClickClose"/>
+
+            <fragment
+                class="org.azurespot.cutelinks.cutevideos.VideosActivity$VideoFragment"
+                android:id="@+id/video_fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        </LinearLayout>
+    </RelativeLayout>
+</merge>
+</code></pre>

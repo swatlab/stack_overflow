@@ -1,0 +1,67 @@
+<p>I`m trying to build a application using the  Fragment/Tabs and Pager from the android support v4 library. I want to make my application android 2.3 compatible but i have problem. It is visible on the screenshot: the tab name does wrap. I want to have around 20-40 tabs and to be able to navigate with swipe (as seen in the market application).</p>
+
+<p>Screenshot:
+<a href="http://imageshack.us/photo/my-images/17/device20120207161609.png/" rel="nofollow">http://imageshack.us/photo/my-images/17/device20120207161609.png/</a></p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.fragment_tabs_pager);
+    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+
+    mViewPager = (ViewPager)findViewById(R.id.pager);
+
+    mTabsAdapter = new TabsAdapter(this, mTabHost, mViewPager);
+
+    mTabsAdapter.addTab(mTabHost.newTabSpec("simple").setIndicator("Simple"),
+            FragmentStackSupport.CountingFragment.class, null);
+    mTabsAdapter.addTab(mTabHost.newTabSpec("contacts").setIndicator("Contacts"),
+            LoaderCursorSupport.CursorLoaderListFragment.class, null);
+    mTabsAdapter.addTab(mTabHost.newTabSpec("custom").setIndicator("Custom"),
+            LoaderCustomSupport.AppListFragment.class, null);
+    mTabsAdapter.addTab(mTabHost.newTabSpec("throttle").setIndicator("Throttle"),
+            LoaderThrottleSupport.ThrottledLoaderListFragment.class, null);
+
+    if (savedInstanceState != null) {
+        mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+    }
+}
+</code></pre>
+
+<p>xml</p>
+
+<pre><code><TabHost
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/tabhost"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"/>
+
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0"/>
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+</TabHost>
+</code></pre>

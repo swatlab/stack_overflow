@@ -1,0 +1,54 @@
+<p>I have encrypted my password(Password1234$) using <code>SecureSHA1</code>and got the following </p>
+
+<p><strong>Output</strong>: <code>SHA1 hash for Password1234$ is 12a00057ae853a05601d5fafb7bc8141c37eaabe.</code></p>
+
+<p>I want to write a Decryption Method for the same so that if i pass my encrypted string <code>12a00057ae853a05601d5fafb7bc8141c37eaabe.</code> i need to get my password <code>Password1234$</code></p>
+
+<p>Below is my code which i used to Encrypt the Password.</p>
+
+<p><strong>SecureSHA1.java</strong></p>
+
+<pre><code>import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+public class SecureSHA1 {
+    private static String convertToHex(byte[] data) { 
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < data.length; i++) { 
+            int halfbyte = (data[i] >>> 4) & 0x0F;
+            int two_halfs = 0;
+            do { 
+                if ((0 <= halfbyte) && (halfbyte <= 9)) 
+                    buf.append((char) ('0' + halfbyte));
+                else 
+                    buf.append((char) ('a' + (halfbyte - 10)));
+                halfbyte = data[i] & 0x0F;
+            } while(two_halfs++ < 1);
+        } 
+        return buf.toString();
+    }
+
+
+    public static String getSHA1(String text) 
+                throws NoSuchAlgorithmException, UnsupportedEncodingException  { 
+        MessageDigest md;
+        md = MessageDigest.getInstance("SHA-1");
+        byte[] sha1hash = new byte[40];
+        md.update(text.getBytes("iso-8859-1"), 0, text.length());
+        sha1hash = md.digest();
+        return convertToHex(sha1hash);
+    } 
+
+    public static void main(String args[]){
+        try {
+            String s = "Password1234$";
+            String sha1S = getSHA1(s);
+            System.out.print("SHA1 hash for "+ s+ " is "+ sha1S);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+    }
+}
+</code></pre>

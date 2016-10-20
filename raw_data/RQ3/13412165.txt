@@ -1,0 +1,29 @@
+<p>I have 20 URL of different images. I need to download the 20 images from the URL and display it in Grid view. For me its taking much time to download the image content. Following is the code i'm using in Image Adapter class.  </p>
+
+<pre><code>    public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(220, 200));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(1, 1, 1,0);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+    imageView.setImageDrawable(GetDrawableImage(url));
+    return imageView;
+}
+private Drawable GetDrawableImage(String zurlP)
+{   InputStream InputStreamL = null;
+    Drawable DrawableImageL = null;  
+try {
+        InputStreamL = (InputStream) new URL(zurlP).getContent();
+        DrawableImageL = Drawable.createFromStream(InputStreamL, "src");
+    } catch (MalformedURLException e) {          
+    } catch (IOException e) {           
+    }  
+    return DrawableImageL;
+}  
+</code></pre>
+
+<p>Is there any easiest way(Less Time Consuming) to perform the same task? </p>

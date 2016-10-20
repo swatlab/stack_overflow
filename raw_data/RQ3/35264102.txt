@@ -1,0 +1,177 @@
+<p>I'm implementing the following code in my <code>adapter</code> when i faced the problem of <code>OutofMemory Error</code>.But problem here is i am able to load only the first enter code here image that is 0th position in the <code>gridview</code>. Below is my code, Please suggest the changes.</p>
+
+<pre><code>public class GridAdapter extends BaseAdapter {
+
+    String[] names;
+    int[] images;
+    Context context;
+    private static LayoutInflater inflater=null;
+
+    //private LruCache<String bitmap="",> memorucache;
+    private LruCache<String, Bitmap> mMemoryCache;
+
+
+    public  GridAdapter(Context mainActivity,String[] _names,int[] _images){
+
+        names=_names;
+        images=_images;
+        context=mainActivity;
+        inflater= (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        final int maxMemory= (int) (Runtime.getRuntime().maxMemory() / 1024);
+        final int cacheSize=maxMemory/8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+
+    }
+
+    @Override
+    public int getCount() {
+        return names.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return position;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        Holder holder=new Holder();
+        View rowView;
+
+        rowView=inflater.inflate(R.layout.gridlist,null);
+        holder.txtview= (TextView) rowView.findViewById(R.id.textView1);
+        holder.imageview= (ImageView) rowView.findViewById(R.id.imageView1);
+
+        holder.txtview.setText(names[position]);
+        loadBitmap(images[position], holder.imageview);
+        //holder.imageview.setImageResource(images[position]);
+        //rowView.setBackgroundColor(Color.parseColor(getColorCode()));
+
+        return rowView;
+    }
+
+    private void loadBitmap(int image, ImageView mimageview) {
+
+        final String imagekey=String.valueOf(image);
+
+        final Bitmap bitmap=getBitmapFromMemCache(imagekey);
+
+        if(bitmap != null){
+
+            mimageview.setImageBitmap(bitmap);
+        }else{
+            mimageview.setImageResource(R.drawable.ic_launcher);
+            final BitmapWorkerTask task=new BitmapWorkerTask(mimageview);
+            task.execute(image);
+        }
+
+
+    }
+
+    public class Holder{
+
+        TextView txtview;
+        ImageView imageview;
+
+    }
+    public String getColorCode(){
+        String[] colors = {"#6600CC","#3399FF","#FF9900","#003399","#CC6600"
+                ,"#336600","#339933","#009999","#99CC00","#666633"
+                ,"#666699","#333399","#003399","#993399","#990033"};
+
+        int random = (int)(Math.random()*14+1);
+        return colors[random];
+    }
+
+    class  BitmapWorkerTask extends AsyncTask<Integer,Void,Bitmap>{
+
+        private final WeakReference<ImageView> imageViewReference;
+        public BitmapWorkerTask(ImageView mimageview) {
+
+            imageViewReference = new WeakReference<ImageView>(mimageview);;
+        }
+
+        @Override
+        protected Bitmap doInBackground(Integer... params) {
+
+            final Bitmap bitmap = decodeSampledBitmapFromResource(
+                    context.getResources(), params[0], 100, 100);
+
+            addBitmapToMemoryCache(String.valueOf(params[0]), bitmap);
+            return bitmap;
+
+            //return null;
+        }
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res,
+                                                         int resId, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+                                            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio;
+
+        }
+        return inSampleSize;
+    }
+
+
+}
+</code></pre>

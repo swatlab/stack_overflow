@@ -1,0 +1,46 @@
+<p>I want to make a GridView that contains 75dp width and 75dp height imageView. And also i want this square fill the screen size, with no space in between. Right now i am just using 500 count. So its randomly printing 500 square images. Its not filling up the space. Please check the image below for tablet version. </p>
+
+<p><img src="http://i.stack.imgur.com/HGjjU.png" alt="enter image description here"></p>
+
+<p>Here is my Adapter: </p>
+
+<pre><code>    public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return 500;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+
+        ImageView imageView;
+        if (convertView == null) { // if it's not recycled, initialize some
+            // attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(75, 75));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(0, 0, 0, 0);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(R.drawable.sample_0);
+        return imageView;
+    }
+
+}
+</code></pre>

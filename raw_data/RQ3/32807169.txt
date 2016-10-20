@@ -1,0 +1,339 @@
+<p>I am developing an app which has a home screen consisting of list view(Home Activity).User clicks on list item and new activity is started named as Topic.This activity also consist of list view. Home is set as parent activity for Topic.</p>
+
+<p>Now in Topic class i am again calling Topic class using intent.</p>
+
+<p>So a user clicks on a list item in Home activity,which opens a new Topic activity.User again clicks on list item ,and another new activity Topic is created,so we are at rd level. My app is working fine till here, but as Parent for Topic is Home,so as soon as i press back or up button,irrespective of where i am in my app,it is always the Home class which opens. </p>
+
+<p>How to handle this so that all user can traverse back to each activity.</p>
+
+<p>The code is given below:</p>
+
+<p>Home.java</p>
+
+<pre><code>package com.example.guninder.home;
+
+ import android.app.ListActivity;
+ import android.app.ProgressDialog;
+ import android.content.Intent;
+ import android.support.v4.widget.DrawerLayout;
+ import android.support.v7.app.ActionBar;
+ import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
+
+import java.util.List;
+
+import static android.widget.AdapterView.*;
+
+
+public class Home extends AppCompatActivity implements FetchDataListener {
+private ProgressDialog dialog;
+private ListView HomeListview;
+private DrawerLayout home_drawer_layout;
+private ListView Menu_option_list;
+private String[] Menu_list;
+private ActionBarDrawerToggle drawerToggle;
+private ApplicationAdaptor adapter;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_home);
+    HomeListview = (ListView) findViewById(R.id.listView1);
+    itemClickListener(HomeListview);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setHomeButtonEnabled(true);
+
+    Menu_list = getResources().getStringArray(R.array.Menu_options);
+    home_drawer_layout = (DrawerLayout) findViewById(R.id.home_drawable);
+    Menu_option_list = (ListView) findViewById(R.id.home_menu_option);
+    Menu_option_list.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_expandable_list_item_1, Menu_list));
+    // home_Toolbar.setNavigationIcon(R.drawable.ic_drawer);
+    drawerToggle = new ActionBarDrawerToggle(this, home_drawer_layout, R.string.drawer_open, R.string.drawer_close) {
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+        }
+
+    };
+    drawerToggle.setDrawerIndicatorEnabled(true);
+    home_drawer_layout.setDrawerListener(drawerToggle);
+    initView();
+
+
+}
+
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main_activity_actions, menu);
+    return true;
+}
+
+private void initView() {
+    // show progress dialog
+    dialog = ProgressDialog.show(this, "", "Loading...");
+
+  // String url = "http://dexterous.comuv.com/connect.php";
+    String url = "http://192.168.0.25/connect.php";
+
+    FetchDataTask task = new FetchDataTask(this);
+    task.execute(url,null);
+}
+
+@Override
+public void onFetchComplete(List<Application> data) {
+    // dismiss the progress dialog
+    if (dialog != null) dialog.dismiss();
+    // create new adapter
+    adapter = new ApplicationAdaptor(this, data);
+    HomeListview.setAdapter(adapter);
+    // set the adapter to list
+    //setListAdapter(adapter);
+}
+
+public void onPostCreate(Bundle savedInstanceState){
+    super.onPostCreate(savedInstanceState);
+    drawerToggle.syncState();
+}
+
+@Override
+public void onFetchFailure(String msg) {
+    // dismiss the progress dialog
+    if (dialog != null) dialog.dismiss();
+    // show failure message
+    Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+}
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    if(drawerToggle.onOptionsItemSelected(item)){
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+public void itemClickListener(final ListView HomeListview) {
+    HomeListview.setOnItemClickListener(new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            Application app = adapter.getItem(position);
+
+            Intent intent = new Intent(Home.this, Topic.class);
+            intent.putExtra("topic_name",app.getTitle());
+            intent.putExtra("topic_id", app.getTopic_id());
+            intent.putExtra("Content", app.getParentContent());
+            Toast toast=Toast.makeText(Home.this,app.getParentContent(),Toast.LENGTH_LONG);
+            startActivity(intent);
+        }
+    });
+}
+
+
+}
+</code></pre>
+
+<p>Topic.java</p>
+
+<pre><code> package com.example.guninder.home;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.List;
+
+public class Topic extends AppCompatActivity implements FetchDataListener {
+String topicName, ParentContent;
+int topic_id;
+//TextView txv;
+ProgressDialog Topicdialog;
+ListView topiclistView;
+ApplicationAdaptor tAdaptor;
+TextView txv;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_topic);
+    Bundle extras = getIntent().getExtras();
+    if (extras == null) {
+        topicName = null;
+    }
+    topicName = extras.getString("topic_name");
+    topic_id = extras.getInt("topic_id");
+    ParentContent = extras.getString("Content");
+    txv = (TextView) findViewById(R.id.content);
+    txv.setMovementMethod(ScrollingMovementMethod.getInstance());
+    if (ParentContent.isEmpty()) {
+        txv.setVisibility(txv.GONE);
+    } else {
+        txv.setText(ParentContent);
+    }
+
+    setTitle(topicName);
+    topiclistView = (ListView) findViewById(R.id.topiclistView1);
+    itemClickListener(topiclistView);
+    topicinitView();
+
+
+}
+@Override
+public void onPause(){
+    super.onPause();
+}
+
+public void onResume(){
+    super.onResume();
+}
+
+private void topicinitView() {
+    // show progress dialog
+    Topicdialog = ProgressDialog.show(this, "", "Loading...");
+
+   // String url = "http://dexterous.comuv.com/Topic.php";
+    String url = "http://192.168.0.25/Topic.php";
+
+    FetchDataTask task = new FetchDataTask(this);
+    task.execute(url, String.valueOf(topic_id));
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_topic, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+@Override
+public void onFetchComplete(List<Application> data) {
+    if (Topicdialog != null) Topicdialog.dismiss();
+    // create new adapter
+    tAdaptor = new ApplicationAdaptor(this, data);
+    topiclistView.setAdapter(tAdaptor);
+    // set the adapter to list
+    //setListAdapter(adapter);
+
+}
+
+@Override
+public void onFetchFailure(String msg) {
+    // dismiss the progress dialog
+    if (Topicdialog != null) Topicdialog.dismiss();
+    // show failure message
+    Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+}
+
+
+public void itemClickListener(final ListView TopicListview) {
+    TopicListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            Application app = tAdaptor.getItem(position);
+            if (app.getChildExist()) {
+                Intent intent = new Intent(Topic.this, Topic.class);
+                intent.putExtra("topic_name", app.getTitle());
+                intent.putExtra("topic_id", app.getTopic_id());
+                intent.putExtra("Content", app.getParentContent());
+               // Toast toast = Toast.makeText(Topic.this,    app.getTopic_id(), Toast.LENGTH_LONG);
+                //toast.show();
+                startActivity(intent);
+                finish();
+            }
+
+
+        }
+    });
+}
+}
+</code></pre>
+
+<p>AndroidManifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.guninder.home" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".Home"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Topic"
+            android:label="@string/title_activity_topic"
+            android:parentActivityName=".Home" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.guninder.home.Home" />
+        </activity>
+        <activity
+            android:name=".SetNotification"
+            android:label="@string/title_activity_set_notification"
+            android:theme="@android:style/Theme.Dialog" >
+        </activity>
+    </application>
+
+    </manifest>
+</code></pre>
+
+<p>Please help.Thanks in advance</p>

@@ -1,0 +1,386 @@
+<p>Ok I have an app that implements tabs in the action bar using fragments.  each of those tabs have their own views with buttons in them each.  I want to be able to launch either an activity or another fragment view from those buttons to do various other things.  An example of what i'm trying to do would be as follows.
+I have my main activity which looks like this:</p>
+
+<pre><code> public class MainActivity extends SherlockFragmentActivity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    ActionBar bar = getSupportActionBar();
+    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+    bar.setDisplayHomeAsUpEnabled(true);
+    bar.setDisplayShowTitleEnabled(true);
+    bar.setTitle("Newalla Church of Christ");
+
+    bar.addTab(bar.newTab()
+            .setText("Home")
+            .setTabListener(new TabListener<HomeFragment>(
+                    this, "Home", HomeFragment.class, null)));
+
+    bar.addTab(bar.newTab()
+            .setText("Feeds")
+            .setTabListener(new TabListener<FeedsFragment>(
+                    this, "Feeds", FeedsFragment.class, null)));
+
+    bar.addTab(bar.newTab()
+            .setText("Leadership")
+            .setTabListener(new TabListener<LeadershipFragment>(
+                    this, "Leadership", LeadershipFragment.class, null)));
+
+    bar.addTab(bar.newTab()
+            .setText("Bulletin")
+            .setTabListener(new TabListener<BulletinFragment>(
+                    this, "Bulletin", BulletinFragment.class, null)));
+
+    bar.addTab(bar.newTab()
+            .setText("Directory")
+            .setTabListener(new TabListener<DirectoryFragment>(
+                    this, "Directory", DirectoryFragment.class, null)));
+
+if (savedInstanceState != null) {
+
+        bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
+    }
+
+
+}
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        // app icon in action bar clicked; go home
+                    Intent intent = new Intent(this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt("tab", getSupportActionBar()
+            .getSelectedNavigationIndex());
+}
+
+public class TabListener<T extends Fragment> implements
+        ActionBar.TabListener {
+    private final FragmentActivity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+    private final Bundle mArgs;
+    private Fragment mFragment;
+
+    public TabListener(FragmentActivity activity, String tag, Class<T> clz,
+            Bundle args) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+        mArgs = args;
+        FragmentTransaction ft = mActivity.getSupportFragmentManager()
+                .beginTransaction();
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state. If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        mFragment = mActivity.getSupportFragmentManager()
+                .findFragmentByTag(mTag);
+        if (mFragment != null && !mFragment.isDetached()) {
+            ft.detach(mFragment);
+        }
+    }
+
+
+    @Override
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        ft = mActivity.getSupportFragmentManager()
+                .beginTransaction();
+
+        if (mFragment == null) {
+            mFragment = Fragment.instantiate(mActivity, mClass.getName(),
+                    mArgs);
+            ft.add(android.R.id.content, mFragment, mTag);
+            ft.commit();
+        } else {
+            ft.attach(mFragment);
+            ft.commit();
+        }
+
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        ft = mActivity.getSupportFragmentManager()
+                .beginTransaction();
+
+        if (mFragment != null) {
+            ft.detach(mFragment);
+            ft.commitAllowingStateLoss();
+        }
+
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+    }
+}
+ }
+</code></pre>
+
+<p>One of the tabs is leadership.  In this tab i need to load three different list views from the buttons.  Here is an example of the list view and viewers that i have made.</p>
+
+<p>List Activity</p>
+
+<pre><code> public class EldersListActivity extends SherlockFragmentActivity implements EldersListFragment.ListItemSelectedListener {
+
+ /** Called when the activity is first created. */
+ @Override
+ public void onCreate(Bundle savedInstanceState) {
+ super.onCreate(savedInstanceState);
+ setContentView(R.layout.listview);
+ }
+
+ @Override
+ public void onListItemSelected(int index) {
+EldersListFragment imageViewer = (EldersListFragment) getSupportFragmentManager()
+    .findFragmentById(R.id.viewer_fragment);
+
+ if (imageViewer == null || !imageViewer.isInLayout()) {
+Intent showImage = new Intent(getApplicationContext(),
+        ViewerActivity.class);
+showImage.putExtra("index", index);
+startActivity(showImage);
+ } 
+}
+
+ }
+</code></pre>
+
+<p>List Fragment</p>
+
+<pre><code> public class EldersListFragment extends SherlockListFragment{
+private int index = 0;
+private ListItemSelectedListener selectedListener;
+
+@Override
+public void onListItemClick(ListView l, View v, int position, long id) {
+    index = position;
+    selectedListener.onListItemSelected(position);
+}
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    setListAdapter(ArrayAdapter.createFromResource(getActivity(),
+            R.array.elders, android.R.layout.simple_list_item_1));
+
+    if (savedInstanceState != null) {
+        index = savedInstanceState.getInt("index", 0);
+        selectedListener.onListItemSelected(index);
+    }
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt("index", index);
+}
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        selectedListener = (ListItemSelectedListener) activity;
+    } catch (ClassCastException e) {
+        throw new ClassCastException(activity.toString()
+                + " must implement ListItemSelectedListener in Activity");
+    }
+}
+
+public interface ListItemSelectedListener {
+    public void onListItemSelected(int index);
+}
+ }
+</code></pre>
+
+<p>Viewer Activity</p>
+
+<pre><code> public class ViewerActivity extends SherlockFragmentActivity {
+ public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            finish();
+            return;
+        }
+
+        setContentView(R.layout.viewer_activity);
+        Intent launchingIntent = getIntent();
+        int index = launchingIntent.getIntExtra("index", 0);
+        ViewerFragment viewer = (ViewerFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.viewer_fragment);
+        viewer.update(index);
+    }
+}
+</code></pre>
+
+<p>Viewer Fragment</p>
+
+<pre><code> public class ViewerFragment extends SherlockFragment {
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    return inflater.inflate(R.layout.viewer_fragment, container, false);
+}
+
+public void update(int index) {
+    TextView title = (TextView) getView().findViewById(R.id.title);
+    ImageView image = (ImageView) getView().findViewById(R.id.image);
+
+    String[] imageTitles = getResources().getStringArray(R.array.elders);
+    String[] imageLocations = getResources().getStringArray(R.array.elder_images);
+
+    title.setText(imageTitles[index]);
+    InputStream is;
+    try {
+        is = getActivity().getAssets().open(imageLocations[index]);
+        Bitmap bitmap = BitmapFactory.decodeStream(is);
+        image.setImageBitmap(bitmap);
+    } catch (IOException e) {
+        Log.e("ViewerFragment", "Failed to decode image");
+    }
+}
+ }
+</code></pre>
+
+<p>and Finally The leadership tab that in the view has three buttons.  Each button needs to call a different list view.  Here is the code and xml file for those.</p>
+
+<p>Leadership Fragment</p>
+
+<pre><code> import android.content.Intent;
+ import android.os.Bundle;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.View.OnClickListener;
+ import android.view.ViewGroup;
+ import android.widget.Button;
+
+ import com.actionbarsherlock.app.SherlockFragment;
+
+ public class LeadershipFragment extends SherlockFragment {
+
+Button mButton8;
+Button mButton9;
+Button mButton10;
+
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+
+        Bundle savedInstanceState) {
+
+    View view = inflater.inflate(R.layout.tab_leadership_layout, container, false);
+    return view;
+
+}
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //get the button view
+        mButton8 = (Button) getView().findViewById(R.id.button8);
+        //set a onclick listener for when the button gets clicked
+        mButton8.setOnClickListener(new OnClickListener() {
+            //Start new list activity
+            @Override
+            public void onClick(View v) {
+                Intent mainIntent = new Intent(getActivity(), EldersListActivity.class);
+                startActivity(mainIntent);
+            }
+        });
+
+    }
+
+}
+</code></pre>
+
+<p>Leadership XML FILE</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent">
+
+
+<RelativeLayout 
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:background="@drawable/background" >
+
+<ImageView
+    android:id="@+id/imageView3"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="31dp"
+    android:src="@drawable/lead" 
+    android:contentDescription="@string/lead"/>
+
+
+
+<Button
+    android:id="@+id/button8"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerHorizontal="true"
+    android:layout_centerVertical="true"
+    android:background="@drawable/ministers" />
+
+
+<Button
+    android:id="@+id/button10"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerVertical="true"
+    android:layout_marginLeft="30dp"
+    android:layout_toRightOf="@+id/button8"
+    android:background="@drawable/deacons" />
+
+<Button
+    android:id="@+id/button9"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerVertical="true"
+    android:layout_marginRight="30dp"
+    android:layout_toLeftOf="@+id/button8"
+    android:background="@drawable/elders" />
+
+ </RelativeLayout>
+ </LinearLayout> 
+</code></pre>
+
+<p>I hope this makes since on what i'm trying to do.  Thank you in advance for any help you can offer.  I've tried researching this a lot and can't seem to find anything that explains what i'm trying to do and i'm just starting learning fragments as well so bare with me if you need me to answer any questions i will do my best to answer them.  Thank you again</p>
+
+<p>LOG CAT FOR FORCE CLOSE </p>
+
+<pre><code> 10-18 23:39:34.196: E/AndroidRuntime(9601): FATAL EXCEPTION: main
+ 10-18 23:39:34.196: E/AndroidRuntime(9601): java.lang.NullPointerException
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at com.threesixteenapps.newalla.LeadershipFragment.onCreate(LeadershipFragment.java:31)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:835)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1083)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:635)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1431)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.support.v4.app.FragmentManagerImpl$1.run(FragmentManager.java:420)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.os.Handler.handleCallback(Handler.java:587)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.os.Handler.dispatchMessage(Handler.java:92)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.os.Looper.loop(Looper.java:150)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at android.app.ActivityThread.main(ActivityThread.java:4263)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at java.lang.reflect.Method.invokeNative(Native Method)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at java.lang.reflect.Method.invoke(Method.java:507)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+ 10-18 23:39:34.196: E/AndroidRuntime(9601):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

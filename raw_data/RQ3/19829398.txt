@@ -1,0 +1,398 @@
+<p>I am getting data into ListView using JSON, but for the first Level List, i am using static code, in short first level list not getting using JSON, see below code using to show first level List.</p>
+
+<p><em>Category Screen</em> <strong>(showing data in a Static way)</strong></p>
+
+<p><img src="http://i.stack.imgur.com/dFZlQ.png" alt="enter image description here"></p>
+
+<p><em>Product Screen</em> <strong>(getting data using JSON)</strong></p>
+
+<p><img src="http://i.stack.imgur.com/CSS73.png" alt="enter image description here"></p>
+
+<p><strong>CategoryActivity.java:</strong></p>
+
+<pre><code>public class CategoriesActivity extends Activity implements OnItemClickListener {
+
+ListView lview3;
+ListViewCustomAdapter adapter;
+
+private ArrayList<Object> itemList;
+private ItemBean bean;
+
+ImageButton checkOut;
+ImageButton back;
+
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_menus);    
+
+    prepareArrayLits();
+    lview3 = (ListView) findViewById(R.id.listView1);
+    adapter = new ListViewCustomAdapter(this, itemList);
+    lview3.setAdapter(adapter);
+    lview3.setOnItemClickListener(this);  
+
+}
+private static final int Sony = 0;
+private static final int Panasonic = 1;
+
+public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
+
+         // Set up different intents based on the item clicked: 
+         switch (position)
+         {
+             case Sony:
+                 Intent intent1 = new Intent(CategoriesActivity.this, ProductsActivity.class);
+                 intent1.putExtra("category", "Sony");
+                    startActivity(intent1); 
+                 break;
+             case Panasonic:
+                 Intent intent2 = new Intent(CategoriesActivity.this, ProductsActivity.class);
+                 intent2.putExtra("category", "Panasonic");
+                    startActivity(intent2); 
+                 break;
+
+             default:
+                 break;
+         }
+
+     }
+
+public void prepareArrayLits()
+{
+    itemList = new ArrayList<Object>();
+
+    AddObjectToList( "Sony" );
+    AddObjectToList( "Panasonic" );
+
+}
+
+// Add one item into the Array List
+public void AddObjectToList(String title)
+{
+    bean = new ItemBean();
+    bean.setTitle(title);
+    itemList.add(bean);
+}
+
+}
+</code></pre>
+
+<p><strong>ItemBean.java:</strong></p>
+
+<pre><code>public class ItemBean 
+{
+    String title;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+}
+</code></pre>
+
+<p><strong>ListViewCustomAdapter.java:</strong></p>
+
+<pre><code>public class ListViewCustomAdapter extends BaseAdapter{
+
+    ArrayList<Object> itemList;
+
+    public Activity context;
+    public LayoutInflater inflater;
+
+    public ListViewCustomAdapter(Activity context,ArrayList<Object> itemList) {
+        super();
+
+        this.context = context;
+        this.itemList = itemList;     
+        this.inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return itemList.size();
+    }
+
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return itemList.get(position);
+    }
+
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public static class ViewHolder
+    {
+        TextView txtViewTitle;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+
+        ViewHolder holder;
+        if(convertView==null)
+        {
+            holder = new ViewHolder();
+            convertView = inflater.inflate(R.layout.listrow_categories, null);
+            holder.txtViewTitle = (TextView) convertView.findViewById(R.id.title);
+            convertView.setTag(holder);
+        }
+        else
+            holder=(ViewHolder)convertView.getTag();
+
+        ItemBean bean = (ItemBean) itemList.get(position);
+        holder.txtViewTitle.setText(bean.getTitle());
+
+        return convertView;
+    }
+
+}
+</code></pre>
+
+<p>and to get data into Second Level List (i.e: Products List), using below code,</p>
+
+<p><strong>ProductsActivity.java:-</strong></p>
+
+<pre><code>public class ProductsActivity extends Activity {
+
+
+    static String URL = "http://10.0.2.2/android/test.json";
+
+    static String KEY_CATEGORY = "item";
+    static final String KEY_TITLE = "ProductName";
+
+    ListView list;
+    LazyAdapter adapter;
+
+
+
+    /** Called when the activity is first created. */
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_menus);
+
+        final ArrayList<HashMap<String, String>> itemsList = new ArrayList<HashMap<String, String>>();
+        list = (ListView) findViewById(R.id.listView1);
+        adapter = new LazyAdapter(this, itemsList);
+        list.setAdapter(adapter);
+
+        if (isNetworkAvailable()) {
+            new MyAsyncTask().execute();
+        } else {
+
+            AlertDialog alertDialog = new AlertDialog.Builder(ProductsActivity.this).create();
+            alertDialog.setMessage("The Internet connection appears to be offline.");
+            alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            alertDialog.show();
+        }
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return (info != null);
+    }
+
+    class MyAsyncTask extends
+            AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
+        private ProgressDialog progressDialog = new ProgressDialog(
+                ProductsActivity.this);
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.setMessage("Loading, Please wait.....");
+            progressDialog.show();
+        }
+
+        final ArrayList<HashMap<String, String>> itemsList = new ArrayList<HashMap<String, String>>();
+
+        @Override
+        protected ArrayList<HashMap<String, String>> doInBackground(
+                String... params) {
+            HttpClient client = new DefaultHttpClient();
+            // Perform a GET request for a JSON list
+            HttpUriRequest request = new HttpGet(URL);
+            // Get the response that sends back
+            HttpResponse response = null;
+            try {
+                response = client.execute(request);
+            } catch (ClientProtocolException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            // Convert this response into a readable string
+            String jsonString = null;
+            try {
+                jsonString = StreamUtils.convertToString(response.getEntity()
+                        .getContent());
+            } catch (IllegalStateException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            // Create a JSON object that we can use from the String
+            JSONObject json = null;
+            try {
+                json = new JSONObject(jsonString);
+            } catch (JSONException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+
+            try {
+
+                JSONArray jsonArray = json.getJSONArray(KEY_CATEGORY);
+
+                for (int i = 0; i < jsonArray.length(); i++) {
+
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                    map.put("KEY", String.valueOf(i));
+                    map.put(KEY_TITLE, jsonObject.getString(KEY_TITLE));
+
+                    itemsList.add(map);
+
+                }
+                return itemsList;
+            } catch (JSONException e) {
+                Log.e("log_tag", "Error parsing data " + e.toString());
+            }
+            return null;
+        }
+
+
+        @Override
+        protected void onPostExecute(ArrayList<HashMap<String, String>> result) {
+            list = (ListView) findViewById(R.id.listView1);
+            adapter = new LazyAdapter(ProductsActivity.this, itemsList);
+            list.setAdapter(adapter);
+
+            this.progressDialog.dismiss();
+            list.setOnItemClickListener(new OnItemClickListener() {
+
+                public void onItemClick(AdapterView<?> parent, View view,
+                        int position, long id) {
+
+                }
+
+            });
+        }
+    }
+}
+</code></pre>
+
+<p><strong>LazyAdapter.java:</strong></p>
+
+<pre><code>public class LazyAdapter extends BaseAdapter {
+
+    private Activity activity;
+    private ArrayList<HashMap<String, String>> data;
+    private static LayoutInflater inflater=null;
+
+    public LazyAdapter(Activity a, ArrayList<HashMap<String, String>> d) {
+        activity = a;
+        data=d;
+        inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+    }
+
+    public int getCount() {
+        return data.size();
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View vi=convertView;
+        if(convertView==null)
+            vi = inflater.inflate(R.layout.listrow_products, null);
+
+        TextView title = (TextView)vi.findViewById(R.id.title); 
+
+        HashMap<String, String> item = new HashMap<String, String>();
+        item = data.get(position);
+
+        // Setting all values in listview
+        title.setText(item.get(ProductsActivity.KEY_TITLE));
+
+        return vi;
+    }
+}
+</code></pre>
+
+<p><strong>StreamUtils.java:-</strong></p>
+
+<pre><code>public class StreamUtils {
+
+    public static String convertToString(InputStream inputStream) throws IOException {
+        if (inputStream != null) {
+            Writer writer = new StringWriter();
+
+            char[] buffer = new char[1024];
+            try {
+                Reader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 1024);
+                int n;
+                while ((n = reader.read(buffer)) != -1) {
+                    writer.write(buffer, 0, n);
+                }
+            } finally {
+                inputStream.close();
+            }
+            return writer.toString();
+        } else {
+            return "";
+        }
+    }
+}
+</code></pre>
+
+<p><strong>Question:</strong></p>
+
+<p>How to get First Level List by using JSON, not by writing static code like i have written in my existing program?</p>
+
+<p><strong>test.json:</strong></p>
+
+<pre><code>{
+    "Sony": [{
+        "ProductID": "1",
+        "ProductName": "Sony - LED TV"
+    }, {
+        "ProductID": "2",
+        "ProductName": "Sony - Laptop"
+    }],
+
+    "Panasonic": [{
+        "ProductID": "1",
+        "ProductName": "Panasonic - LED TV"
+    }, {
+        "ProductID": "2",
+        "ProductName": "Panasonic - Laptop"
+    }]
+}
+</code></pre>

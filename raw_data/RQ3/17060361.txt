@@ -1,0 +1,130 @@
+<p>I'm developing image loader related application.I want to load bulk of images.So I using <strong>android Universal Image Loader</strong>
+The problem is first time loading taking too much time.After that perform fast..</p>
+
+<p>I want to perform very fast as application loading time itself.Any one have idea please post..</p>
+
+<p>Imageloader class  code look like this</p>
+
+<pre><code>    package com.primus.exploretaukymodule;
+
+import java.util.ArrayList;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+
+public class Imageadapter extends BaseAdapter {
+
+    ArrayList<String> image_path;
+
+    Context mcontext;
+
+    LayoutInflater inflater;
+
+    ImageLoader load;
+
+
+
+
+     static ImageLoaderConfiguration config ;
+
+
+
+     static DisplayImageOptions imgDisplayOptions = new DisplayImageOptions.Builder()
+     //.showStubImage(R.drawable.stub_image)
+     .cacheInMemory() 
+     .cacheOnDisc() 
+     //.imageScaleType(ImageScaleType.EXACT) 
+     .build();
+
+     static ImageLoader imageLoader = ImageLoader.getInstance();
+
+    public Imageadapter(Context c, ArrayList<String> imageUrls, ImageLoader loader, DisplayImageOptions options) {
+        // TODO Auto-generated constructor stub
+
+        image_path=new ArrayList<String>();
+
+        image_path=imageUrls;
+
+        mcontext=c;
+
+        inflater=(LayoutInflater) mcontext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        load=loader;
+
+        config = new ImageLoaderConfiguration.Builder(c)
+         .enableLogging()
+         .memoryCacheSize(41943040)
+         .discCacheSize(104857600)
+         .threadPoolSize(10)
+         .build();
+
+         imageLoader.init(config);           
+
+
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return image_path.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+
+        ViewHolder holder;
+
+         if (convertView == null) {
+
+             holder=new ViewHolder();
+
+             convertView= inflater.inflate(R.layout.explore_gridview_layout, parent, false);
+
+             holder.imageView=(ImageView) convertView.findViewById(R.id.taukytab_grid_image);
+
+             convertView.setTag(holder);
+
+
+         } 
+         else {
+
+             holder=(ViewHolder) convertView.getTag();
+         }
+
+
+         holder.imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+         imageLoader.displayImage(image_path.get(position),holder.imageView, imgDisplayOptions);
+
+         return convertView;
+    }
+
+    class ViewHolder
+    {
+        ImageView imageView;
+    }
+
+}
+</code></pre>
+
+<p>Thank you..</p>

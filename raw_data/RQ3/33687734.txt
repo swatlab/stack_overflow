@@ -1,0 +1,285 @@
+<p>I have a Navigation Drawer with Navigation View, there are four tabs, one of them is a fragment, which includes ViewPager, ie is a host for the other fragments. Everything works fine, but when switched from fragment with ViewPager any other fragment of NavigationDrawer shows nothing. Checked logs, onCreate, onCreateView these fragments are called, but why does not display... Who knows why?</p>
+
+<p>NavigationDrawer</p>
+
+<pre><code>public class NavigationDrawerHost extends AppCompatActivity implements
+        NavigationView.OnNavigationItemSelectedListener {
+//буду использовать эту активность как хост под все фрагменты, чтобы верно работал мой drawer!
+
+    public static String WHERE_FROM = NavigationDrawerHost.class.getSimpleName();
+
+    public static Toolbar toolbar;
+    public static ProgressBar progressBar;
+    private DrawerLayout drawer;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle drawerToggle;
+    private int navItemId;
+    private static final String NAV_ITEM_ID = "NAV_ITEM_ID";
+
+    private TextView userFirstNameTextView, userLastNameTextView;
+    private ImageView userPhotoImageView;
+
+    private VKAccessToken access_token; //токен это информация о правах доступа
+    private VKApiUser user; //текущий пользователь
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.navigation_drawer_host);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        // Find the toolbar view inside the activity layout
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        // Set a Toolbar to replace the ActionBar.
+        setSupportActionBar(toolbar);
+
+        //setTitle(R.string.drawer_menu_posts);
+
+        // load saved navigation state if present
+        if (null == savedInstanceState) {
+            navItemId = R.id.posts_fragment;
+        } else {
+            navItemId = savedInstanceState.getInt(NAV_ITEM_ID);
+        }
+
+        // Find our drawer view
+        navigationView = (NavigationView) findViewById(R.id.nvView);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // select the correct nav menu item
+        navigationView.getMenu().findItem(navItemId).setChecked(true);
+
+        // если хотим добавить какие-то элементы в наш header,
+        // то нужно добавить их в layout, а затем инициализировать нижеприведенным способом
+        // Inflate the header view at runtime
+        View headerLayout = navigationView.inflateHeaderView(R.layout.nav_header);
+        // We can now look up items within the header if needed
+        userFirstNameTextView = (TextView) headerLayout.findViewById(R.id.user_first_name);
+        userLastNameTextView = (TextView) headerLayout.findViewById(R.id.user_last_name);
+        userPhotoImageView = (ImageView) headerLayout.findViewById(R.id.user_photo);
+
+        drawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.drawer_open, R.string.drawer_close);
+
+        // Tie DrawerLayout events to the ActionBarToggle
+        drawer.setDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+
+        selectItem(navItemId);
+    }
+
+    @Override
+    protected void onSaveInstanceState(final Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(NAV_ITEM_ID, navItemId);
+    }
+
+    // Menu icons are inflated just as they were with actionbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_exit:
+                //quitDialog();
+                VKSdk.logout();
+                finish();
+                return true;
+
+            default:
+                return drawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Make sure this is the method with just `Bundle` as the signature
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        drawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggles
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    private void selectItem(final int itemId) {
+        // perform the actual navigation logic, updating the main content fragment etc
+        // Create a new fragment and specify the planet to show based on position
+        Fragment fragment = null;
+        Class fragmentClass = null;
+
+        switch (itemId) {
+            case R.id.posts_fragment:
+                fragmentClass = PostsFragment.class;
+                fragment = new PostsFragment();
+                break;
+            case R.id.albums_fragment:
+                fragmentClass = FragmentTest.class;
+                fragment = new FragmentTest();
+                break;
+            case R.id.friends_fragment:
+                fragmentClass = FragmentTest.class;
+                fragment = new FragmentTest();
+                break;
+            case R.id.likes_fragment:
+                fragmentClass = LikesFragment.class;
+                fragment = new LikesFragment();
+                break;
+            /*default:
+                fragmentClass = PostsFragment.class;*/
+        }
+
+        /*try {
+            fragment = (Fragment) fragmentClass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.fragment_container, fragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+
+        drawer.closeDrawers();
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(final MenuItem item) {
+        // update highlighted item in the navigation menu
+        item.setChecked(true);
+        setTitle(item.getTitle());
+        navItemId = item.getItemId();
+
+        // allow some time after closing the drawer before performing real navigation
+        // so the user can see what is happening
+        drawer.closeDrawer(GravityCompat.START);
+        selectItem(item.getItemId());
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+            quitDialog();
+        } else {
+            getSupportFragmentManager().popBackStack();
+        }
+    }
+
+    private void quitDialog() {
+        AlertDialog.Builder quitDialog = new AlertDialog.Builder(this);
+        quitDialog.setTitle("Вы хотите выйти?");
+
+        quitDialog.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //стираем БД
+                Delete.tables(PostTable.class, PictureTable.class, PostTableMyLikes.class, PictureTableMyLikes.class);
+
+                FlowManager.getDatabase(WallDatabase.DB_NAME).reset(NavigationDrawerHost.this);
+                FlowManager.getDatabase(WallDatabaseMyLikes.DB_NAME).reset(NavigationDrawerHost.this);
+
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+
+        quitDialog.setNegativeButton("Нет",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // TODO Auto-generated method stub
+                    }
+                });
+
+        quitDialog.show();
+    }
+
+
+}
+</code></pre>
+
+<p>ViewPager host for fragments, which needs to display through ViewPager</p>
+
+<pre><code>//этот фрагмент является хостом для MyLikesFragment и FriendLikesFragment, так же тут содержатся табы
+public class LikesFragment extends Fragment {
+
+    public static String WHERE_FROM_FRIENDS_LIKES = LikesFragment.class.getSimpleName() + "_FRIENDSLIKES";
+
+    private ViewPager viewPager;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.likes_fragment, container, false);
+
+        TabLayout tabLayout = (TabLayout) v.findViewById(R.id.tab_layout);
+        tabLayout.addTab(tabLayout.newTab().setText("Мои лайки"));
+        tabLayout.addTab(tabLayout.newTab().setText("Лайки друзей"));
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+        viewPager = (ViewPager) v.findViewById(R.id.view_pager);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        viewPager.setAdapter(new LikesPagerAdapter(getChildFragmentManager()));
+
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
+        return v;
+    }
+
+    public static class LikesPagerAdapter extends FragmentPagerAdapter {
+        public LikesPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        //сделано так, чтобы передавать те аргументы, от которых будет зависеть функционал фрагмента
+        @Override
+        public Fragment getItem(int position) {
+            return (position == 0) ? new MyLikesPostsFragment() : new PostsFragment();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return (position == 0) ? "Мои лайки" : "Лайки друзей";
+        }
+
+    }
+
+}
+</code></pre>
+
+<p>P.S. And after going to the same fragment ViewPager select several items in drawer, this should not be</p>

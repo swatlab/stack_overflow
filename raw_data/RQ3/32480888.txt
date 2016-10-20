@@ -1,0 +1,332 @@
+<p>Anybody to know something about this kind of queries:</p>
+
+<pre><code>@Entity
+@Table(name="ACCOUNT")
+@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@NamedQueries({
+  @NamedQuery(name = Account.GET_EXPIRATION_DATE, query="SELECT account.expirationDate FROM " +
+        "Domain domain JOIN domain.account WHERE domain.id = :domainId"),
+  @NamedQuery(name = Account.GET_BALANCE, query="SELECT account.balance FROM " +
+  "Domain domain JOIN domain.account WHERE domain.id = :domainId")
+})
+</code></pre>
+
+<p>I dont understand what is this "Domain domain JOIN domain.account" we can join one table with another but it seams we join table with column .. ?</p>
+
+<p>these are the related classes:</p>
+
+<pre><code>package com.smsoffice.admin;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+
+import static javax.persistence.CascadeType.*;
+
+import com.smsoffice.billing.Account;
+import com.smsoffice.billing.PrepaidAccount;
+
+
+@Entity
+@Table(name="DOMAIN")
+@NamedQueries({
+  @NamedQuery(name=Domain.GET_ALL_DOMAINS, query="SELECT d FROM Domain d ORDER BY d.name"),
+  @NamedQuery(name=Domain.GET_ACCOUNT, query="SELECT d.account FROM Domain d WHERE d.id = :id"),
+  @NamedQuery(name=Domain.GET_DOMAIN_BY_STATUS, query="SELECT d FROM Domain d WHERE d.enabled = :enabled ORDER BY d.name"),
+  @NamedQuery(name=Domain.GET_DOMAIN_BY_NAME, query="SELECT d FROM Domain d WHERE d.name = :name")
+})
+public class Domain implements Serializable {
+
+  private static final long serialVersionUID = 1L;
+
+  public final static String GET_ALL_DOMAINS = "Domain.getAllDomains";
+  public final static String GET_ACCOUNT = "Domain.getAccount";
+
+  public final static String GET_DOMAIN_BY_STATUS = "Domain.getAllDomainsByStatus";
+  public final static String GET_DOMAIN_BY_NAME = "Domain.getDomainByName";
+
+  public final static transient Domain ROOT = new Domain("ROOT");
+
+  public static Domain SYSTEM_DOMAIN = new Domain("SYSTEM");
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
+
+  @Column(unique = true, length = 96)
+  private String name;
+
+  //unique id of the service - one per domain
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int serviceId;
+
+  //indicates whether the domain is enabled
+  private Boolean enabled = true;
+
+  //short code for the domain sms events
+  private int shortCode;
+
+  //prefix for parsing 
+  private String prefix;
+
+  private String clientPrefix = "";
+
+  //bank account
+  @OneToOne(cascade = {PERSIST, REFRESH, REMOVE})
+  private Account account = new PrepaidAccount();
+
+  @OneToMany
+  private Set<User> users = new HashSet<User>();
+
+  public Domain() {}
+
+  public Domain(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public int getServiceId() {
+    return serviceId;
+  }
+
+  public void setServiceId(int serviceId) {
+    this.serviceId = serviceId;
+  }
+
+  public int getShortCode() {
+    return shortCode;
+  }
+
+  public void setShortCode(int shortCode) {
+    this.shortCode = shortCode;
+  }
+
+  public String getPrefix() {
+    return prefix;
+  }
+
+  public void setPrefix(String prefix) {
+    this.prefix = prefix;
+  }
+
+  public Account getAccount() {
+    return account;
+  }
+
+  public void setAccount(Account account) {
+    this.account = account;
+  }
+
+  public Set<User> getUsers() {
+    return users;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (!(obj instanceof Domain)) {
+      return false;
+    }
+
+    Domain domain = (Domain) obj;
+
+    return getName().toUpperCase().equals(domain.getName().toUpperCase()); 
+  }
+
+  @Override
+  public int hashCode() {
+      return getName().toUpperCase().hashCode();
+  }
+
+  @Override
+  public String toString() {
+      return "[" + name + "("+ account + ")]";
+  }
+
+  public int getId() {
+    return id;
+  }
+
+  public void setClientPrefix(String clientPrefix) {
+    this.clientPrefix = clientPrefix != null ? clientPrefix : "";
+  }
+
+  public String getClientPrefix() {
+    return clientPrefix;
+  }
+}
+</code></pre>
+
+<p>and this one:</p>
+
+<pre><code>package com.smsoffice.billing;
+
+import static javax.persistence.CascadeType.ALL;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.util.Calendar;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+
+@Entity
+@Table(name="ACCOUNT")
+@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@NamedQueries({
+  @NamedQuery(name = Account.GET_EXPIRATION_DATE, query="SELECT account.expirationDate FROM " +
+        "Domain domain JOIN domain.account account WHERE domain.id = :domainId"),
+  @NamedQuery(name = Account.GET_BALANCE, query="SELECT account.balance FROM " +
+  "Domain domain JOIN domain.account account WHERE domain.id = :domainId")
+})      
+public abstract class Account {
+
+  public static final MathContext MATH_CONTEXT = new MathContext(9, RoundingMode.HALF_UP);
+  public static final int SCALE = 3;
+  public static final int PRECISION = 9;
+
+  public static final String GET_BALANCE = "Account.getBalance";
+
+  public static final String GET_EXPIRATION_DATE = "Account.getExpirationDate";
+
+  @Id
+  @GeneratedValue(strategy=GenerationType.AUTO)
+  private int id;
+
+  @Column(precision = PRECISION, scale = SCALE)
+  protected BigDecimal balance = BigDecimal.ZERO;
+
+  @OneToOne(cascade = ALL)
+  protected Tariff tariff;
+
+  private Date activationDate = new Date();
+
+  private Date expirationDate;
+
+  public Account() {
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.MONTH, 1);
+    setExpirationDate(calendar.getTime());
+  }
+
+  public BigDecimal getBalance() {
+    return balance;
+  }
+
+  public Tariff getTariff() {
+    return tariff;
+  }
+
+  public void setTariff(Tariff tariff) {
+      this.tariff = tariff;
+  }
+
+  void deposit(BigDecimal amount) {
+    balance = balance.add(amount).setScale(SCALE, MATH_CONTEXT.getRoundingMode());
+  }
+
+  abstract boolean hasCredit(int eventCount);
+
+  abstract void makePayment(int eventCount) throws PaymentException;
+
+  public int getId() {
+    return id;
+  }
+
+  public Date getActivationDate() {
+    return activationDate;
+  }
+
+  public void setActivationDate(Date activationDate) {
+    this.activationDate = normalizeActivationDate(activationDate);
+  }
+
+  void setExpirationDate(Date expirationDate) {
+    this.expirationDate = normalizeExpirationDate(expirationDate);
+  }
+
+  public Date getExpirationDate() {
+    return expirationDate;
+  }
+
+  public boolean isExpired() {
+
+    Date now = new Date();
+
+    return now.after(expirationDate);
+  }
+
+  @Override
+  public String toString() {
+      return "[balance: " + balance + "; tariff: " + (tariff != null ? tariff.getPrice() : "no tariff") + "; expiration date: " + expirationDate.toString() + "]"; 
+  }
+
+  public void setBalance(BigDecimal newBalance) {
+    this.balance = newBalance;
+  }
+
+  private static final Date normalizeActivationDate(Date date) {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    cal.set(Calendar.HOUR_OF_DAY, 0);
+    cal.set(Calendar.MINUTE, 0);
+    cal.set(Calendar.SECOND, 0);
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime();
+  }
+
+  private static final Date normalizeExpirationDate(Date date) {
+
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+
+    cal.set(Calendar.HOUR_OF_DAY, 23);
+    cal.set(Calendar.MINUTE, 59);
+    cal.set(Calendar.SECOND, 59);    
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime();
+  }
+
+}
+</code></pre>

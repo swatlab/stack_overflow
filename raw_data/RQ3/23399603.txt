@@ -1,0 +1,502 @@
+<p>My JAX-RS Resource is successfully getting a JPA/JAXB entity and a list of JPA/JAXB entities from a db.</p>
+
+<p>One entity serves as a parent entity.  The list of entities is a field in the parent entity.  I can't set the parent entity's list to the returned list of entities.  The parent entity is returned in a JAXB parent entity, but that doesn't affect the situation.</p>
+
+<p>Here's the code:</p>
+
+<pre><code>@Inject
+InventoryService inventoryService;
+@Inject
+HcUser user;
+@Inject
+InventoryResponse inventoryResponse;
+
+@GET
+@Produces(MediaType.APPLICATION_JSON)
+public InventoryResponse getInventory(@Context HttpServletRequest request, 
+                                      @HeaderParam(IDENTITY_URL) String identityURL, 
+                                      @HeaderParam(ACCESS_TOKEN) String accessToken) {
+
+    String username = (String) request.getAttribute("username");
+    user = inventoryService.getUserById(username);
+    user.setHcCounts(inventoryService.getCountsForUserId(username));
+    inventoryResponse.setUser(user);
+
+    return inventoryResponse;
+}
+</code></pre>
+
+<p>The returned JSON is only returning the user object.  I've tried manually instantiating a user object and setting it to the return value of the getUserById method and then calling setHcCounts with the returned list.  However, the setter is still ignored.</p>
+
+<p>What am I doing wrong?</p>
+
+<p>I'm using WAS v8.0.0.8.  The stack is:</p>
+
+<p><code>JAX-RS</code> - Apache Wink v1.1.1 (supplied by WAS 8)</p>
+
+<p><code>OpenJPA</code> - Apache v2.1.2-SNAPSHOT (supplied by WAS 8)</p>
+
+<p><code>JAXB</code> - MOXy v2.7</p>
+
+<p><code>CDI</code> - Apache OpenWebBeans 1.0 (supplied by WAS 8)</p>
+
+<p><code>EJB</code> - Apache OpenEJB (supplied by WAS 8)</p>
+
+<p><strong>Update 1</strong>
+Here's the InventoryResponse class as requested, however I don't think that it's necessary.  Upon inspecting the user object, on the line before <code>inventoryResonse.setUser(user)</code>, during debugging, hcCounts is null.</p>
+
+<pre><code>@Named
+@RequestScoped
+@XmlRootElement
+public class InventoryResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private HcUser user;
+
+    private List<HcLocation> locations;
+
+    public HcUser getUser() {
+        return user;
+    }
+
+    public void setUser(HcUser user) {
+        this.user = user;
+    }
+
+    public List<HcLocation> getLocations() {
+        return locations;
+    }
+
+    public void setLocations(List<HcLocation> locations) {
+        this.locations = locations;
+    }
+}
+</code></pre>
+
+<p><strong>Update 2</strong>
+As requested, HcUser:</p>
+
+<pre><code>import java.io.Serializable;
+
+import javax.inject.Named;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import java.util.Date;
+import java.util.List;
+
+
+@Entity
+@Table(schema="<ommitted>", name="<ommitted>")
+@Named
+@XmlRootElement
+public class HcUser implements Serializable {
+private static final long serialVersionUID = 1L;
+
+@Id
+@GeneratedValue(strategy=GenerationType.AUTO)
+@Column(unique=true, nullable=false, length=100)
+private String id;
+
+@Column(nullable=false, length=1)
+private boolean active;
+
+@Temporal(TemporalType.DATE)
+@Column(name="CREATE_DATE")
+private Date createDate;
+
+@Column(name="FIRST_NAME", length=100)
+private String firstName;
+
+@Column(name="LAST_NAME", length=100)
+private String lastName;
+
+@Temporal(TemporalType.DATE)
+@Column(name="UPDATE_DATE")
+private Date updateDate;
+
+//bi-directional many-to-one association to HcAssignment
+@OneToMany(mappedBy="hcUser")
+@XmlElement
+private List<HcAssignment> hcAssignments;
+
+//bi-directional many-to-one association to HcCount
+@OneToMany(mappedBy="hcUser")
+@XmlElement
+private List<HcCount> hcCounts;
+
+public HcUser() {
+}
+
+public String getId() {
+    return this.id;
+}
+
+public void setId(String id) {
+    this.id = id;
+}
+
+public boolean getActive() {
+    return this.active;
+}
+
+public void setActive(boolean active) {
+    this.active = active;
+}
+
+public Date getCreateDate() {
+    return this.createDate;
+}
+
+public void setCreateDate(Date createDate) {
+    this.createDate = createDate;
+}
+
+public String getFirstName() {
+    return this.firstName;
+}
+
+public void setFirstName(String firstName) {
+    this.firstName = firstName;
+}
+
+public String getLastName() {
+    return this.lastName;
+}
+
+public void setLastName(String lastName) {
+    this.lastName = lastName;
+}
+
+public Date getUpdateDate() {
+    return this.updateDate;
+}
+
+public void setUpdateDate(Date updateDate) {
+    this.updateDate = updateDate;
+}
+
+public List<HcAssignment> getHcAssignments() {
+    return this.hcAssignments;
+}
+
+public void setHcAssignments(List<HcAssignment> hcAssignments) {
+    this.hcAssignments = hcAssignments;
+}
+
+public HcAssignment addHcAssignment(HcAssignment hcAssignment) {
+    getHcAssignments().add(hcAssignment);
+    hcAssignment.setHcUser(this);
+
+    return hcAssignment;
+}
+
+public HcAssignment removeHcAssignment(HcAssignment hcAssignment) {
+    getHcAssignments().remove(hcAssignment);
+    hcAssignment.setHcUser(null);
+
+    return hcAssignment;
+}
+
+public List<HcCount> getHcCounts() {
+    return this.hcCounts;
+}
+
+public void setHcCounts(List<HcCount> hcCounts) {
+    this.hcCounts = hcCounts;
+}
+
+public HcCount addHcCount(HcCount hcCount) {
+    getHcCounts().add(hcCount);
+    hcCount.setHcUser(this);
+
+    return hcCount;
+}
+
+public HcCount removeHcCount(HcCount hcCount) {
+    getHcCounts().remove(hcCount);
+    hcCount.setHcUser(null);
+
+    return hcCount;
+}
+
+/* (non-Javadoc)
+ * @see java.lang.Object#hashCode()
+ */
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    return result;
+}
+
+/* (non-Javadoc)
+ * @see java.lang.Object#equals(java.lang.Object)
+ */
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (!(obj instanceof HcUser)) {
+        return false;
+    }
+    HcUser other = (HcUser) obj;
+    if (id == null) {
+        if (other.id != null) {
+            return false;
+        }
+    } else if (!id.equals(other.id)) {
+        return false;
+    }
+    return true;
+}
+}
+</code></pre>
+
+<p><strong>Update 3</strong>
+Here's the code for HcCount:</p>
+
+<pre><code>import java.io.Serializable;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import org.eclipse.persistence.oxm.annotations.XmlInverseReference;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Entity
+@Table(schema="<omitted>", name="<omitted>")
+@Named
+@XmlRootElement
+public class HcCount implements Serializable {
+private static final long serialVersionUID = 1L;
+
+@Id
+@SequenceGenerator(name="HC_COUNT_ID_GENERATOR", sequenceName="COUNT_SEQ")
+@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="HC_COUNT_ID_GENERATOR")
+@Column(unique=true, nullable=false)
+private long id;
+
+@Column(name = "LOCATION_NUM", nullable = false, length = 100)
+private String locationNum;
+
+@Column(name = "PRODUCT_CODE", nullable = false, length = 100)
+private String productCode;
+
+@Column(name = "USER_ID", nullable = false, length = 100)
+private String userId;
+
+@Column(name = "LOT_CODE", nullable = false, length = 100)
+private String lotCode;
+
+@Column(name="\"COUNT\"")
+private BigDecimal count;
+
+@Temporal(TemporalType.DATE)
+@Column(name="COUNT_DATE", unique=true, nullable=false)
+private Date countDate;
+
+@Temporal(TemporalType.DATE)
+@Column(name="CREATE_DATE")
+private Date createDate;
+
+@Temporal(TemporalType.DATE)
+@Column(name="UPDATE_DATE")
+private Date updateDate;
+
+//bi-directional many-to-one association to HcUser
+@ManyToOne(fetch=FetchType.LAZY)
+@JoinColumn(name="USER_ID", unique=true, nullable=false)
+@XmlElement
+@XmlInverseReference(mappedBy="hcCounts")
+@Inject private HcUser hcUser;
+
+//bi-directional many-to-one association to HcLocation
+@ManyToOne(fetch=FetchType.LAZY)
+@JoinColumn(name="LOCATION_NUM", referencedColumnName="NUM", unique=true, nullable=false)
+@XmlElement
+@XmlInverseReference(mappedBy="hcCounts")
+@Inject private HcLocation hcLocation;
+
+//bi-directional many-to-one association to HcProduct
+@ManyToOne(fetch=FetchType.LAZY)
+@JoinColumn(name="PRODUCT_CODE", referencedColumnName="CODE_ID", unique=true, nullable=false)
+@XmlElement
+@XmlInverseReference(mappedBy="hcCounts")
+@Inject private HcProduct hcProduct;
+
+//bi-directional many-to-one association to HcLot
+@ManyToOne(fetch=FetchType.LAZY)
+@JoinColumn(name="LOT_CODE", referencedColumnName="CODE_ID", unique=true, nullable=false)
+@XmlElement
+@XmlInverseReference(mappedBy="hcCounts")
+@Inject private HcLot hcLot;
+
+public HcCount() {
+}
+
+public long getId() {
+    return this.id;
+}
+
+public void setId(long id) {
+    this.id = id;
+}
+
+public String getLocationNum() {
+    return locationNum;
+}
+
+public void setLocationNum(String locationNum) {
+    this.locationNum = locationNum;
+}
+
+public String getProductCode() {
+    return productCode;
+}
+
+public void setProductCode(String productCode) {
+    this.productCode = productCode;
+}
+
+public String getUserId() {
+    return userId;
+}
+
+public void setUserId(String userId) {
+    this.userId = userId;
+}
+
+public String getLotCode() {
+    return lotCode;
+}
+
+public void setLotCode(String lotCode) {
+    this.lotCode = lotCode;
+}
+
+public BigDecimal getCount() {
+    return this.count;
+}
+
+public void setCount(BigDecimal count) {
+    this.count = count;
+}
+
+public Date getCountDate() {
+    return this.countDate;
+}
+
+public void setCountDate(Date countDate) {
+    this.countDate = countDate;
+}
+
+public Date getCreateDate() {
+    return this.createDate;
+}
+
+public void setCreateDate(Date createDate) {
+    this.createDate = createDate;
+}
+
+public Date getUpdateDate() {
+    return this.updateDate;
+}
+
+public void setUpdateDate(Date updateDate) {
+    this.updateDate = updateDate;
+}
+
+public HcUser getHcUser() {
+    return this.hcUser;
+}
+
+public void setHcUser(HcUser hcUser) {
+    this.hcUser = hcUser;
+}
+
+public HcLocation getHcLocation() {
+    return this.hcLocation;
+}
+
+public void setHcLocation(HcLocation hcLocation) {
+    this.hcLocation = hcLocation;
+}
+
+public HcProduct getHcProduct() {
+    return this.hcProduct;
+}
+
+public void setHcProduct(HcProduct hcProduct) {
+    this.hcProduct = hcProduct;
+}
+
+public HcLot getHcLot() {
+    return this.hcLot;
+}
+
+public void setHcLot(HcLot hcLot) {
+    this.hcLot = hcLot;
+}
+
+/* (non-Javadoc)
+ * @see java.lang.Object#hashCode()
+ */
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (int) (id ^ (id >>> 32));
+    return result;
+}
+
+/* (non-Javadoc)
+ * @see java.lang.Object#equals(java.lang.Object)
+ */
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (!(obj instanceof HcCount)) {
+        return false;
+    }
+    HcCount other = (HcCount) obj;
+    if (id != other.id) {
+        return false;
+    }
+    return true;
+}
+}
+</code></pre>
+
+<p><strong>Update 4</strong>
+I've figured out a workaround...</p>
+
+<pre><code>public InventoryResponse getInventory(@Context HttpServletRequest request, @HeaderParam(IDENTITY_URL) String identityURL, @HeaderParam(ACCESS_TOKEN) String accessToken) {
+    String username = (String) request.getAttribute("username");
+    user = inventoryService.getUserById(username);
+    List<HcCount> counts = inventoryService.getCountsForUserId(username);
+    HcUser newUser = new HcUser();
+    newUser.setHcCounts(counts);
+    inventoryResponse.setUser(newUser);
+
+    return inventoryResponse;
+}
+</code></pre>

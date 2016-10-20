@@ -1,0 +1,37 @@
+<p>I have to do simple file operations code based,including copy/delete operations.The problem is if i declare the file location as a path</p>
+
+<p><code>File remotefile = new File("//mypc/myfolder/myjar.JAR");</code></p>
+
+<p>Windows finds the file in the network and does the operations.How ever Linux machines can not find the file.If i were to use:</p>
+
+<p><code>File remotefile = new File("file://mypc/myfolder/myjar.JAR");</code> </p>
+
+<p>Both platforms find the file.Now i have a method to copy the files which is:</p>
+
+<pre><code>public static void copyFile(File sourceFile, File destFile) throws IOException {
+    if(!destFile.exists()) {
+        destFile.createNewFile();
+    }
+
+    FileChannel source = null;
+    FileChannel destination = null;
+
+    try {
+        source = new FileInputStream(sourceFile).getChannel();
+        destination = new FileOutputStream(destFile).getChannel();
+        destination.transferFrom(source, 0, source.size());
+    }
+    finally {
+        if(source != null) {
+            source.close();
+        }
+        if(destination != null) {
+            destination.close();
+        }
+    }
+}
+</code></pre>
+
+<p>If I were to send the file URI to this method, both platforms can not find the file. But if I send it as a path, windows machines work properly but linux machines can not find the file. </p>
+
+<p>What could be the problem here?</p>

@@ -1,0 +1,74 @@
+<p>currently im doint something like a facebook "pinboard" so i made ActionBarActivity with some tabs to seperate stuff. I used a ListFragment to show the posts. Everything is working fine. Now i want a actionBar(or just tabs) on the bottom part of the app. i found that splitActionBarWhenNarrow could solve it...but it doesnt. It just wont split even if i put 20 tabs into the bar... it just gets smth. like a slide/swipe option. Anyone of you knows how to solve it or is there a different way then splitActionBarWhenNarrow ?
+Im not adding my tabs via the menu.xml btw. Here are my files:</p>
+
+<p><strong>Manifest.xml:</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.forbiddencodex.customlistview" >
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:uiOptions="splitActionBarWhenNarrow">
+
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p><strong>MainActivity:</strong></p>
+
+<pre><code>    @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    // Set up the action bar.
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    actionBar.setDisplayShowHomeEnabled(false);  // hides action bar icon
+    actionBar.setDisplayShowTitleEnabled(false); // hides action bar title
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    // When swiping between different sections, select the corresponding
+    // tab. We can also use ActionBar.Tab#select() to do this if we have
+    // a reference to the Tab.
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        // Create a tab with text corresponding to the page title defined by
+        // the adapter. Also specify this Activity object, which implements
+        // the TabListener interface, as the callback (listener) for when
+        // this tab is selected.
+        actionBar.addTab(
+                actionBar.newTab()
+                        .setText(mSectionsPagerAdapter.getPageTitle(i))
+                        .setTabListener(this));
+    }
+}
+</code></pre>

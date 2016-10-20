@@ -1,0 +1,189 @@
+<p>I have some code wich is about copying a filled database into a sqlite database in android.
+I have tested all my codes with android API version 4.1. But now all other versions crash when I'm trying to take a query from db. Here is the code of the dbHelper :</p>
+
+<pre><code>package com.rasta.ghavanin;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+    public class DatabaseHelper extends SQLiteOpenHelper{
+
+    //The Androids default system path of your application database.
+    private static String DB_PATH = "/data/data/com.rasta.ghavanin/databases/";
+
+    private static String DB_NAME;
+    private static String CULOMN_ID_NAME = "_id";
+    private static String CULOMN_DESC_NAME = "Description";
+
+    private SQLiteDatabase DataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DatabaseHelper(Context context , String DBName) {
+
+        super(context, DBName, null, 1);
+        DB_NAME = DBName;
+        this.myContext = context;
+    }   
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        //By calling this method and empty database will be created into the default system path
+        //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try 
+        {
+            copyDataBase();
+        }
+        catch (IOException e) 
+        {
+            throw new Error("Error copying database");
+        }
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    // this method simply open the database
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        DataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(DataBase != null)
+                DataBase.close();
+
+            super.close();
+
+    }
+
+    public String getLaw(int lawID)
+    {
+        String[] culumnNames = {CULOMN_ID_NAME , CULOMN_DESC_NAME};
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query("Laws", culumnNames , CULOMN_ID_NAME + "=?",
+                new String[] { String.valueOf(lawID) }, null, null, null, null);
+
+        if (cursor != null)
+        {
+            cursor.moveToFirst();
+            return cursor.getString(1);
+        }
+        else
+        {
+            return "salam :D";
+        }
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    // Add your public helper methods to access and get content from the database.
+    // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+    // to you to create adapters for your views.
+
+}
+</code></pre>
+
+<p>here is the logcat , all of it :D</p>
+
+<pre><code>01-06 15:10:39.554: D/dalvikvm(562): Not late-enabling CheckJNI (already on)
+01-06 15:10:40.254: I/dalvikvm(562): Turning on JNI app bug workarounds for target SDK version 8...
+01-06 15:10:42.214: D/gralloc_goldfish(562): Emulator without GPU emulation detected.
+01-06 15:10:46.974: D/dalvikvm(562): GC_CONCURRENT freed 160K, 3% free 10163K/10439K, paused 7ms+8ms
+01-06 15:10:47.304: I/SqliteDatabaseCpp(562): sqlite returned: error code = 1, msg = no such table: Laws, db=/data/data/com.rasta.ghavanin/databases/Constitution
+01-06 15:10:47.316: D/AndroidRuntime(562): Shutting down VM
+01-06 15:10:47.324: W/dalvikvm(562): threadid=1: thread exiting with uncaught exception (group=0x409961f8)
+01-06 15:10:47.384: E/AndroidRuntime(562): FATAL EXCEPTION: main
+01-06 15:10:47.384: E/AndroidRuntime(562): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.rasta.ghavanin/com.rasta.ghavanin.ViewActivity}: android.database.sqlite.SQLiteException: no such table: Laws: , while compiling: SELECT _id, Description FROM Laws WHERE _id=?
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1955)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1980)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.ActivityThread.access$600(ActivityThread.java:122)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1146)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.os.Handler.dispatchMessage(Handler.java:99)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.os.Looper.loop(Looper.java:137)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.ActivityThread.main(ActivityThread.java:4340)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at java.lang.reflect.Method.invokeNative(Native Method)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at java.lang.reflect.Method.invoke(Method.java:511)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at dalvik.system.NativeStart.main(Native Method)
+01-06 15:10:47.384: E/AndroidRuntime(562): Caused by: android.database.sqlite.SQLiteException: no such table: Laws: , while compiling: SELECT _id, Description FROM Laws WHERE _id=?
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:64)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteProgram.compileSql(SQLiteProgram.java:143)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteProgram.compileAndbindAllArgs(SQLiteProgram.java:361)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:127)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:94)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:53)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:47)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1564)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1449)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1405)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1523)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at com.rasta.ghavanin.DatabaseHelper.getLaw(DatabaseHelper.java:111)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at com.rasta.ghavanin.ViewActivity.updateDescription(ViewActivity.java:110)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at com.rasta.ghavanin.ViewActivity.onCreate(ViewActivity.java:82)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.Activity.performCreate(Activity.java:4465)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+01-06 15:10:47.384: E/AndroidRuntime(562):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1919)
+01-06 15:10:47.384: E/AndroidRuntime(562):  ... 11 more
+01-06 15:10:50.554: I/Process(562): Sending signal. PID: 562 SIG: 9
+</code></pre>

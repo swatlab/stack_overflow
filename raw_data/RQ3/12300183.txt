@@ -1,0 +1,200 @@
+<p>For my application, I already have a readymade database (i.e. it's stored in the assets folder named example.sqlite with value inserted into it.)</p>
+
+<p>This is the my class Database Helper :: </p>
+
+<pre><code>package com.huskerit.util;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import com.huskerit.model.AllSportData;
+
+public class DatabaseHelper extends SQLiteOpenHelper  {
+//private static final int DATABASE_VERSION = 1;
+
+// Table name
+public static final String TABLE = "all_team";
+public static final String TABLE_SELECTED = "selected_team";
+// Columns
+public static final String ID = "id";
+public static final String NAME = "name";
+public static final String CATEGORY1 = "category1";
+public static final String CATEGORY2 = "category2";
+
+public static SQLiteDatabase database;
+private final Context myContext;
+
+public DatabaseHelper(Context context) 
+{
+    super(context, Constant.DB_NAME, null, 1);
+    this.myContext = context;
+}
+
+public void onCreate(SQLiteDatabase db) 
+{
+}
+
+public void createDataBase() throws IOException
+{
+    boolean dbExist = checkDataBase();
+    System.out.println("~~~~~~~~"+dbExist);
+    if(dbExist)
+    {
+        //do nothing - database already exist
+    }
+    else
+    {
+        //By calling this method and empty database will be created into the default system path
+        //of your application so we are gonna be able to overwrite that database with our database.
+        DatabaseHelper.this.getReadableDatabase();
+        try 
+        {
+            this.close();   
+            copyDataBase();
+        } 
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+        }
+    }
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file
+ * each time you open the application.
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase()
+{
+    SQLiteDatabase checkDB = null;
+
+    try
+    {
+        String myPath = Constant.DB_PATH + Constant.DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+    }
+    catch(SQLiteException e)
+    {
+        //database does't exist yet.
+        e.printStackTrace();
+    }
+
+    if(checkDB != null)
+    {
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException{
+    //Open your local db as the input stream
+
+    // Path to the just created empty db
+    String outFileName = Constant.DB_PATH + Constant.DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    InputStream myInput = myContext.getAssets().open(Constant.DB_NAME);
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+    myInput.close();
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+}
+
+public void openDataBase() throws SQLException
+{
+    //Open the database
+    String myPath = Constant.DB_PATH + Constant.DB_NAME;
+    database = SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READWRITE);
+}
+
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) 
+{
+}
+}
+</code></pre>
+
+<p>Now I am calling the database in my activity like this ::</p>
+
+<pre><code>public class TeamSelectActivity extends Activity
+{
+
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+     setContentView(R.layout.activity_teamselect);
+
+    if(Constant.mDatabase == null)
+    {
+        Constant.mDatabase = new DatabaseHelper(TeamSelectActivity.this);
+    }
+
+
+    try 
+    {
+        //Constant.mDatabase.createDataBase(); //DataBase();
+        Constant.mDatabase.openDataBase();
+    } 
+    catch (SQLException e) 
+    {
+        e.printStackTrace();
+    }
+}
+}
+</code></pre>
+
+<p>This is the my log trace ::</p>
+
+<pre><code>I/Database(13203): sqlite returned: error code = 14, msg = cannot open file at source line 25467
+E/Database(13203): sqlite3_open_v2("/data/data/com.huskerit.login/databases/wimbim.sqlite",  &handle, 2, NULL) failed
+W/System.err(13203): android.database.sqlite.SQLiteException: unable to open database file
+at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java:1849)
+at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:820)
+at com.huskerit.util.DatabaseHelper.openDataBase(DatabaseHelper.java:130)
+at com.huskerit.login.TeamSelectActivity.onCreate(TeamSelectActivity.java:93)
+at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1615)
+at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1667)
+at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+at android.app.ActivityThread$H.handleMessage(ActivityThread.java:935)
+at android.os.Handler.dispatchMessage(Handler.java:99)
+at android.os.Looper.loop(Looper.java:123)
+at android.app.ActivityThread.main(ActivityThread.java:3687)
+at java.lang.reflect.Method.invokeNative(Native Method)
+at java.lang.reflect.Method.invoke(Method.java:507)
+at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:842)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:600)
+at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>I am unable to figure it out where i am doing wrong ..
+Any help would be appreciated ..</p>
+
+<p>Thanks in Advance...</p>

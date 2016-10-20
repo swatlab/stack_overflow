@@ -1,0 +1,206 @@
+<p>I think my code is correct (mostly), as I have followed the <a href="https://developers.facebook.com/docs/sharing/android" rel="nofollow">Facebook SDK guide</a> as closely as I could. But when I click the spinner in my ActionBar, I do not see the share dialog appear from the Facebook SDK. Nothing happens, no errors, just nothing.</p>
+
+<p>I have everything required in my Manifest (the provider and the Facebook activity with my special number, also internet permissions). Also I read you do not need wall-access permissions anymore with the newer SDK, so I didn't include that in my code (nor did the guide mention it). I definitely must use the Facebook SDK though, and not an image-sharing-to-Facebook hack, as it's important for my resume. I simply want to share a bitmap photo to my wall in Facebook. Every similar problem on Stack has not helped.</p>
+
+<p>Does anyone with experience with the current Facebook SDK see anything wrong in my code? Thanks.</p>
+
+<pre><code>package org.azure_simbiosys.cutecollection.phototab;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.facebook.CallbackManager;
+import com.facebook.FacebookSdk;
+import com.facebook.share.model.SharePhoto;
+import com.facebook.share.model.SharePhotoContent;
+import com.facebook.share.widget.ShareDialog;
+
+import org.azure_simbiosys.R;
+
+public class PhotoViewerActivity extends ActionBarActivity {
+
+    Spinner shareSpinner;
+    String[] shareList = {"Share", "Facebook", "Twitter", "SMS"};
+    Bitmap bm;
+    CallbackManager callbackManager;
+    ShareDialog shareDialog;
+
+    Integer[] iconList = {R.drawable.ic_action_social_share, R.drawable.ic_facebook,
+            R.drawable.ic_twitter, R.drawable.ic_sms};
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_photo_viewer);
+
+        // Shows the up carat near app icon in ActionBar
+        getSupportActionBar().setDisplayUseLogoEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        ImageView photoView = (ImageView)findViewById(R.id.photo_display);
+
+        // gets the single bitmap image from the array of bytes
+        Bundle extras = getIntent().getExtras();
+        byte[] byteArray = extras.getByteArray("photo");
+        bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+
+        // sets device orientation based on the image orientation
+        if (bm.getWidth() > bm.getHeight()){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        // sets bitmap into your ImageView
+        photoView.setImageBitmap(bm);
+
+        // set up Facebook photo sharing
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        callbackManager = CallbackManager.Factory.create();
+        shareDialog = new ShareDialog(PhotoViewerActivity.this);
+
+    }
+
+    static class ViewHolder {
+        TextView iconTitle;
+        ImageView iconImage;
+    }
+
+
+    public class SpinnerAdapter extends ArrayAdapter<String> {
+        int groupId;
+        String[] textData;
+        Activity context;
+        LayoutInflater inflater;
+
+        public SpinnerAdapter(Activity context, int vg, int id, String[] textData) {
+            super(context, id, textData);
+            this.context = context;
+            groupId = vg;
+            this.textData = textData;
+            inflater = (LayoutInflater) context.getSystemService
+                    (Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            return getView(position, convertView, parent);
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            View itemView = convertView;
+            ViewHolder viewHolder;
+
+            if(convertView == null) {
+                itemView = inflater.inflate(groupId, parent, false);
+
+                viewHolder = new ViewHolder();
+
+                viewHolder.iconImage = (ImageView) itemView.findViewById(R.id.spinnerImage);
+
+                viewHolder.iconTitle = (TextView) itemView.findViewById(R.id.textview);
+
+                itemView.setTag(viewHolder);
+
+            } else {
+                viewHolder = (ViewHolder) itemView.getTag();
+            }
+
+            viewHolder.iconImage.setImageResource(iconList[position]);
+            viewHolder.iconTitle.setText(textData[position]);
+
+            return itemView;
+        }
+    }
+
+    // callback for facebook sharing
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_share, menu);
+
+        shareSpinner = (Spinner) menu.findItem(R.id.action_social_share).getActionView();
+        SpinnerAdapter adapter = new SpinnerAdapter(this, R.layout.share_spinner_row,
+                                                                R.id.textview, shareList);
+        shareSpinner.setAdapter(adapter);
+
+        // when share icon is clicked, set listener for the rows in the spinner
+        shareSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                switch (position) {
+                    case 1: // Facebook
+                        Bitmap image = bm;
+                        ShareDialog shareDialog = new ShareDialog(PhotoViewerActivity.this);
+                        SharePhoto photo = new SharePhoto.Builder()
+                                .setBitmap(image)
+                                .build();
+                        SharePhotoContent content = new SharePhotoContent.Builder()
+                                .addPhoto(photo)
+                                .build();
+
+                        shareDialog.show(content, ShareDialog.Mode.AUTOMATIC);
+
+                        break;
+                    case 2: // Twitter
+                        Toast.makeText(parent.getContext(), "Twitter!", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 3: // SMS
+                        Toast.makeText(parent.getContext(), "SMS!", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+               // don't need anything here for purposes of this app
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Makes the UP caret go back to the previous fragment MakeCuteHome
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                android.app.FragmentManager fm = getFragmentManager();
+                fm.popBackStack();
+                finish();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>

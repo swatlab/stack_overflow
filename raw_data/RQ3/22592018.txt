@@ -1,0 +1,279 @@
+<p><em>Updated #1: more info added to the end of this post</em></p>
+
+<p>I'm new to Android development and testing.</p>
+
+<p>I have three Espresso tests. First test passes, but the second one will not run because the call to getActivity() in setUp() method before the second test always fails:</p>
+
+<blockquote>
+  <p>Blockquote
+  java.lang.RuntimeException: Could not launch intent Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=my.packagename/.ActivityMain } within 45 seconds. ...</p>
+</blockquote>
+
+<p>The third test passes.</p>
+
+<p>I don't have any long running operations, animations or network calls on creation. I can click through all menu items in my app manually repeating the test flow without issues.</p>
+
+<p>For some reason the first test "breaks" next getActivity() call in setUp() before the second test. All following tests (after the second test) will run OK.</p>
+
+<p>I found <a href="http://stackoverflow.com/questions/21406246/google-espresso-java-lang-runtimeexception-could-not-launch-intent-intent-act">similar</a> question but it looks like it wasn't resolved and it has a little bit different problem.</p>
+
+<p>Test code:</p>
+
+<pre><code>import static com.google.android.apps.common.testing.ui.espresso.Espresso.onData;
+import static com.google.android.apps.common.testing.ui.espresso.Espresso.onView;
+import static com.google.android.apps.common.testing.ui.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
+import static com.google.android.apps.common.testing.ui.espresso.action.ViewActions.click;
+import static com.google.android.apps.common.testing.ui.espresso.assertion.ViewAssertions.matches;
+import static com.google.android.apps.common.testing.ui.espresso.matcher.ViewMatchers.isDisplayed;
+import static com.google.android.apps.common.testing.ui.espresso.matcher.ViewMatchers.withId;
+import static com.google.android.apps.common.testing.ui.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import net.humblegames.bodylasticscalculator.ActivityMain;
+import net.humblegames.bodylasticscalculator.R;
+import net.humblegames.bodylasticscalculator.applogic.BandSystem;
+
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.After;
+import org.junit.Before;
+
+import android.app.Activity;
+import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
+
+public class MenuNavigationTestExperiment extends
+        ActivityInstrumentationTestCase2<ActivityMain> {
+
+    private String TAG = getClass().getSimpleName();
+    private Activity activity;
+
+    public MenuNavigationTestExperiment() {
+        super(ActivityMain.class);
+    }
+
+
+    @Before
+    public void setUp() throws Exception {
+        Log.d(TAG, "SETUP");
+        activity = getActivity();
+
+        super.setUp();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Log.d(TAG, "TEARDOWN");
+
+        super.tearDown();
+    }
+
+
+    public void testFirst() {
+        Log.d(TAG, "testFirst");
+
+        clickMenuItem("Select band system");
+        onData(allOf(is(instanceOf(BandSystem.class)), hasName("MMA Training")))
+        .onChildView(withId(R.id.label)).perform(click());
+
+        clickMenuItem("About");
+        onView(withId(R.id.about_webview)).check(matches(isDisplayed()));
+    }
+
+    public void testSecond() {
+        Log.d(TAG, "testSecond");
+        // this test will not run
+    }
+
+
+    public void testThird() {
+        Log.d(TAG, "testThird");
+        // this test will pass
+    }
+
+    // ------------------ HELPER METHODS ---------------------------------------
+
+    private void clickMenuItem(String menuItem) {
+        Log.d(TAG, "clickMenuItem");
+
+        openActionBarOverflowOrOptionsMenu(getInstrumentation()
+                .getTargetContext());
+
+        onView(withText(menuItem)).perform(click());
+    }
+
+    private Matcher<BandSystem> hasName(final String name) {
+        Log.d(TAG, "hasName");
+
+        return new BaseMatcher<BandSystem>() {
+            @Override
+            public boolean matches(final Object item) {
+                final BandSystem foo = (BandSystem) item;
+                return name == foo.getName();
+            }
+
+            @Override
+            public void describeTo(final Description description) {
+                description.appendText("getName should return ").appendValue(
+                        name);
+            }
+        };
+    }
+
+}
+</code></pre>
+
+<p>Error trace:</p>
+
+<pre><code>java.lang.RuntimeException: Could not launch intent Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=net.humblegames.bodylasticscalculator/.ActivityMain } within 45 seconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1395582828351 and and now the last time the queue went idle was: 1395582830169. If these numbers are the same your activity might be hogging the event queue.
+at com.google.android.apps.common.testing.testrunner.GoogleInstrumentation.startActivitySync(GoogleInstrumentation.java:277)
+at android.test.InstrumentationTestCase.launchActivityWithIntent(InstrumentationTestCase.java:119)
+at android.test.InstrumentationTestCase.launchActivity(InstrumentationTestCase.java:97)
+at android.test.ActivityInstrumentationTestCase2.getActivity(ActivityInstrumentationTestCase2.java:104)
+at net.humblegames.bodylasticscalculator.test.MenuNavigationTestExperiment.setUp(MenuNavigationTestExperiment.java:42)
+at android.test.AndroidTestRunner.runTest(AndroidTestRunner.java:191)
+at android.test.AndroidTestRunner.runTest(AndroidTestRunner.java:176)
+at android.test.InstrumentationTestRunner.onStart(InstrumentationTestRunner.java:554)
+at com.google.android.apps.common.testing.testrunner.GoogleInstrumentationTestRunner.onStart(GoogleInstrumentationTestRunner.java:167)
+at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:1701)
+</code></pre>
+
+<p><br /><hr /></p>
+
+<p><strong>Update #1</strong></p>
+
+<p>I created a clean eclipse project and a clean Espresso test for that project. I was able to reproduce the same error during Espresso test run (but I'm still unsure if the cause of this error is the same in my real app):</p>
+
+<p>Target app has 3 activities (main, second, third). User navigates between them by clicking menu items: main activity starts the second, the second activity starts the third.</p>
+
+<p>I found that if I call clickMenuItem() (see below) AND Thread.sleep(500) in the first test this causes crash in setUp() in getActivity() call before the second test. If timeout in sleep is less than 0.5 sec there is no crash. </p>
+
+<p>At the same time if call Thread.sleep(10000) and don't call clickMenuItem() there is no crash also. It will successfully sleep for 10 seconds in the first test and will also pass the second one.</p>
+
+<p><br /><hr />
+Test code:</p>
+
+<pre><code>public class MainActivityTest extends
+        ActivityInstrumentationTestCase2<MainActivity> {
+
+    private String TAG = getClass().getSimpleName();
+    private Activity activity;
+
+    public MainActivityTest() {
+        super(MainActivity.class);    }
+
+    public void setUp() throws Exception {
+        Log.d(TAG, "SETUP");
+        activity = getActivity();
+
+        super.setUp();       }
+
+    public void tearDown() throws Exception {
+        Log.d(TAG, "TEARDOWN");
+
+        super.tearDown();    }
+
+
+    public void testFirst() throws InterruptedException {
+        Log.d(TAG, "testFirst");
+
+        clickMenuItem("Start second activity");
+
+        clickMenuItem("Start third activity");
+
+        Thread.sleep(500);
+    }
+
+    public void testSecond() {
+        Log.d(TAG, "testSecond");
+        // this test will not run     }
+
+
+    private void clickMenuItem(String menuItem) {
+        Log.d(TAG, "clickMenuItem");
+
+        openActionBarOverflowOrOptionsMenu(getInstrumentation()
+                .getTargetContext());
+
+        onView(withText(menuItem)).perform(click());      }    }
+</code></pre>
+
+<p><br /><hr />
+Target code:</p>
+
+<p>Main Activity:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);         }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;        }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.action_start_second_activity:
+            Intent intent = new Intent(this, SecondActivity.class);
+            startActivity(intent);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }       }        }
+</code></pre>
+
+<p>Second Activity:</p>
+
+<pre><code>public class SecondActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_second);       }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.second, menu);
+        return true;        }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.action_start_third_activity:
+            Intent intent = new Intent(this, ThirdActivity.class);
+            startActivity(intent);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }       }   }
+</code></pre>
+
+<p>Third Activity:</p>
+
+<pre><code>public class ThirdActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_third);    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.third, menu);
+        return true;    }
+}
+</code></pre>

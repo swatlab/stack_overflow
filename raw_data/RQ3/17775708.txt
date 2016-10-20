@@ -1,0 +1,267 @@
+<p>I have searched many hours and days to find the answer to this, but still cannot. I am using Android Studio (latest ver) IDE</p>
+
+<p>I am trying to create a map view (using Google Maps API) into a Fragment that is part of a FragmentActivity.</p>
+
+<p>AndroidManifest was updated with necessary permissions and Google Key.</p>
+
+<p>As you can see at the output, LatLng class from Google Map API is working well as I am creating an instance.  Lib was imported on libs folder </p>
+
+<p>Please help !!</p>
+
+<p><em><strong>EDIT:</em></strong> Found this instructions
+<a href="http://www.orangedesk.info/blog/2013/06/08/how-to-build-google-play-services-google-maps-under-android-studio/" rel="nofollow">How to build Google Play services (google maps) under Android Studio</a></p>
+
+<p><strong>fragment_mapview_gmaps.xml</strong></p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context=".ShowActivity" >
+
+    <fragment
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="com.google.android.gms.maps.SupportMapFragment"/>
+</RelativeLayout>
+</code></pre>
+
+<p><strong>MapViewFragment</strong></p>
+
+<pre><code>public class MapViewFragment extends Fragment {
+
+    private static View view;
+    private Context context;
+    public static GoogleMap map = null;
+
+    public MapViewFragment() {
+        this.context = getActivity();
+        loadMapFragment();
+    }
+    private void loadMapFragment()
+    {
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        if (view != null) {
+            ViewGroup parent = (ViewGroup) view.getParent();
+            if (parent != null)
+                parent.removeView(view);
+        }
+        try {
+            LatLng sLatLng = new LatLng(37.857236, -122.486916);
+            System.out.println("DEBUG: "+ sLatLng.toString());
+            view = inflater.inflate(R.layout.fragment_mapview_gmaps, container, false);
+        } catch (InflateException e) {
+            System.out.println("ERROR: " + e.getMessage());
+            /* map is already there, just return view as it is */
+        }
+        return view;
+    }
+}
+</code></pre>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            /*Fragment fragment = new DummySectionFragment();
+            Bundle args = new Bundle();
+            args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+            fragment.setArguments(args);
+            return fragment;*/
+
+            Fragment fragment;
+
+            switch (position) {
+                case 0: //List View
+                    fragment = new ListViewFragment();
+                    break;
+                default: //Map View
+                    fragment = new MapViewFragment();
+                    break;
+            }
+
+            return fragment;
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section0).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section1).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>This is my output</strong></p>
+
+<pre><code>07-21 12:27:15.581    8768-8768/com.xxxx.cs.csitsclocator I/System.out: ListViewFragment.onActivityCreated
+    07-21 12:27:15.581    8768-8768/com.xxxx.cs.csitsclocator I/System.out: ListViewFragment.onCreateLoader
+    07-21 12:27:15.591    8768-8768/com.xxxx.cs.csitsclocator I/System.out: DEBUG: lat/lng: (37.857236,-122.486916)
+    07-21 12:27:15.591    8768-8768/com.xxxx.cs.csitsclocator W/dalvikvm: VFY: unable to resolve static field 1062 (MapAttrs) in Lcom/google/android/gms/R$styleable;
+    07-21 12:27:15.591    8768-8768/com.xxxx.cs.csitsclocator D/dalvikvm: VFY: replacing opcode 0x62 at 0x000e
+    07-21 12:27:15.601    8768-8768/com.xxxx.cs.csitsclocator D/AndroidRuntime: Shutting down VM
+    07-21 12:27:15.601    8768-8768/com.xxxx.cs.csitsclocator W/dalvikvm: threadid=1: thread exiting with uncaught exception (group=0x41003930)
+    07-21 12:27:15.601    8768-8786/com.xxxx.cs.csitsclocator I/System.out: ListVewLoaderAsyncTask.loadInBackground
+    07-21 12:27:15.601    8768-8768/com.xxxx.cs.csitsclocator E/AndroidRuntime: FATAL EXCEPTION: main
+            java.lang.NoClassDefFoundError: com.google.android.gms.R$styleable
+            at com.google.android.gms.maps.GoogleMapOptions.createFromAttributes(Unknown Source)
+            at com.google.android.gms.maps.SupportMapFragment.onInflate(Unknown Source)
+            at android.support.v4.app.FragmentActivity.onCreateView(FragmentActivity.java:279)
+            at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:676)
+            at android.view.LayoutInflater.rInflate(LayoutInflater.java:746)
+            at android.view.LayoutInflater.inflate(LayoutInflater.java:489)
+            at android.view.LayoutInflater.inflate(LayoutInflater.java:396)
+            at com.xxxx.cs.csitsclocator.TabMapView.MapViewFragment.onCreateView(MapViewFragment.java:59)
+            at android.support.v4.app.Fragment.performCreateView(Fragment.java:1460)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:911)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1088)
+            at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+            at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1444)
+            at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:461)
+            at android.support.v4.app.FragmentPagerAdapter.finishUpdate(FragmentPagerAdapter.java:141)
+            at android.support.v4.view.ViewPager.populate(ViewPager.java:1064)
+            at android.support.v4.view.ViewPager.populate(ViewPager.java:911)
+            at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1432)
+            at android.view.View.measure(View.java:15518)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4825)
+            at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+            at android.view.View.measure(View.java:15518)
+            at android.widget.LinearLayout.measureVertical(LinearLayout.java:847)
+            at android.widget.LinearLayout.onMeasure(LinearLayout.java:588)
+            at android.view.View.measure(View.java:15518)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4825)
+            at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+            at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2176)
+            at android.view.View.measure(View.java:15518)
+            at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1874)
+            at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1089)
+            at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1265)
+            at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:989)
+            at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:4351)
+            at android.view.Choreographer$CallbackRecord.run(Choreographer.java:749)
+            at android.view.Choreographer.doCallbacks(Choreographer.java:562)
+            at android.view.Choreographer.doFrame(Choreographer.java:532)
+            at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:735)
+            at android.os.Handler.handleCallback(Handler.java:725)
+            at android.os.Handler.dispatchMessage(Handler.java:92)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:5041)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+            at dalvik.system.NativeStart.main(Native Method)
+    07-21 12:27:15.621    1208-1208/? W/ActivityManager: Force finishing activity com.xxxx.cs.csitsclocator/.MainActivity
+</code></pre>

@@ -1,0 +1,167 @@
+<p>I build a custom property and add it to a observable list. But no listener is called if property content is changed. The following code snippets shows you the 'building':</p>
+
+<pre><code>public static final class TestObject {
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper();
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
+
+    public TestObject(String title) {
+        this.title.set(title);
+    }
+
+    public String getTitle() {
+        return title.get();
+    }
+
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
+    }
+
+    public boolean getSelected() {
+        return selected.get();
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected.set(selected);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(title.get());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final TestObject other = (TestObject) obj;
+        return Objects.equals(this.title.get(), other.title.get());
+    }
+
+    @Override
+    public String toString() {
+        return "TestObject{" +
+                "title=" + title.get() +
+                ", selected=" + selected.get() +
+                '}';
+    }
+}
+</code></pre>
+
+<p>This is my POJO class with my internal property values like name and selected.</p>
+
+<pre><code>public static final class TestProperty extends SimpleObjectProperty<TestObject> {
+    public TestProperty(String name) {
+        super(new TestObject(name));
+        init();
+    }
+
+    public TestProperty(TestObject testObject) {
+        super(testObject);
+        init();
+    }
+
+    public String getTitle() {
+        return getValue().getTitle();
+    }
+
+    public void setSelected(boolean selected) {
+        getValue().setSelected(selected);
+    }
+
+    public boolean getSelected() {
+        return getValue().getSelected();
+    }
+
+    public BooleanProperty selectedProperty() {
+        return getValue().selectedProperty();
+    }
+
+    public ReadOnlyStringProperty titleProperty() {
+        return getValue().titleProperty();
+    }
+
+    @Override
+    public void set(TestObject testObject) {
+        super.set(testObject);
+        init();
+    }
+
+    @Override
+    public void setValue(TestObject testObject) {
+        super.setValue(testObject);
+        init();
+    }
+
+    private void init() {
+        if (get() == null)
+            return;
+
+        get().titleProperty().addListener((v, o, n) -> fireValueChangedEvent());
+        get().selectedProperty().addListener((v, o, n) -> {
+            fireValueChangedEvent();
+        });
+    }
+}
+</code></pre>
+
+<p>This is my custom property based on the POJO. All property changes will fire a change event for my custom property.</p>
+
+<pre><code>@Test
+public void testSimple() {
+    final AtomicInteger counter = new AtomicInteger(0);
+    final TestProperty testProperty = new TestProperty("Test");
+    testProperty.addListener(observable -> {
+        System.out.println("New state: " + testProperty.get().toString());
+        counter.incrementAndGet();
+    });
+
+    testProperty.setSelected(true);
+    testProperty.setSelected(false);
+
+    Assert.assertEquals(2, counter.intValue());
+}
+</code></pre>
+
+<p>In this test you can see that the property change event works fine.</p>
+
+<pre><code>@Test
+public void testList() {
+    final AtomicInteger counter = new AtomicInteger(0);
+    final ObservableList<TestProperty> observableList = new ObservableListWrapper<>(new ArrayList<>());
+    observableList.add(new TestProperty("Test 1"));
+    observableList.add(new TestProperty("Test 2"));
+    observableList.add(new TestProperty("Test 3"));
+
+    observableList.addListener(new ListChangeListener<TestProperty>() {
+        @Override
+        public void onChanged(Change<? extends TestProperty> change) {
+            System.out.println("**************");
+        }
+    });
+    observableList.addListener((Observable observable) -> {
+        System.out.println("New state: " + ((TestProperty) observable).get().toString());
+        counter.incrementAndGet();
+    });
+
+    observableList.get(1).setSelected(true);
+    observableList.get(2).setSelected(true);
+    observableList.get(1).setSelected(false);
+    observableList.get(2).setSelected(false);
+
+    Assert.assertEquals(4, counter.intValue());
+}
+</code></pre>
+
+<p>But in this code you see that the observable list not called the invalidation listener nor the change listener if a property value has changed in list.</p>
+
+<p>What is wrong?</p>
+
+<p>Thanks.</p>

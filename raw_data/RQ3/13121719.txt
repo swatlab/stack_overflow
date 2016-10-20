@@ -1,0 +1,70 @@
+<p>I'd like to make an app that let the user decide what time everyday wants him to remind something with notification...</p>
+
+<p>I'd like to know how am i supposed to trigger a notification in secific time the user wants e.x 7:00am and make him tap on the notification and enter the application in specific activity. But when the user doesn't want to get any more notifications (with a button click) how am i cancel all the notifications...?</p>
+
+<p>I made something like</p>
+
+<pre><code>Intent intent = new Intent(this, main.class);
+Bundle bundle = new Bundle();
+bundle.putString("title", "Some Title");\
+intent.putExtras(bundle);   
+PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
+String body = "Tap to see the Activity"; 
+String title = "Title of notification"; 
+Notification n = new Notification(R.drawable.ic_launcher, body, System.currentTimeMillis());
+n.setLatestEventInfo(this, title, body, pi);
+n.defaults = Notification.DEFAULT_ALL;
+nm.notify(uniqueID, n);
+</code></pre>
+
+<p>but no luck until now....</p>
+
+<p>Thanks...</p>
+
+<p><<>></p>
+
+<p>i'm doing this </p>
+
+<pre><code>        String ns = Context.NOTIFICATION_SERVICE;
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+
+        int icon = R.drawable.notification_icon;
+        CharSequence tickerText = "Ome TickerText"; 
+        long when = System.currentTimeMillis();
+        Context context = getApplicationContext();
+        CharSequence contentTitle = "Some Title"; 
+        CharSequence contentText = "Some Text"; 
+
+        Intent notificationIntent = new Intent(context, LandingActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString("title", "a title");
+        bundle.putString("title2", "title number 2");
+        bundle.putString("action", "tip");
+        bundle.putString("greek", "somehting else");
+        bundle.putInt("action_num", 2);
+        notificationIntent.putExtras(bundle);
+        alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+        contentIntent = PendingIntent.getActivity(Notifications.this, 0, notificationIntent, 0);
+
+        Notification notification = new Notification(icon, tickerText, when);
+        notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+        notification.defaults = Notification.DEFAULT_ALL;
+
+        mNotificationManager.notify(UniqueID, notification);
+
+        int hour = tp.getCurrentHour();
+        int minutes = tp.getCurrentMinute();
+
+        contentIntent = PendingIntent.getService(Notifications.this, 0, notificationIntent, 0);
+        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minutes);
+        calendar.set(Calendar.SECOND, 00);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), contentIntent);
+</code></pre>
+
+<p>but no luckk...</p>
+
+<p>any help please?</p>

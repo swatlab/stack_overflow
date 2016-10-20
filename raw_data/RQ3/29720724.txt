@@ -1,0 +1,601 @@
+<p>I am creating basically a shopping cart app and I am trying to populate a listView with images of the items. So currently everything else is displayed just fine like the size, store, description, price, etc. All this information is being retrieved from my existing database and put into the listView. For the images, I have put the names of the images into a column in my database called ID and I have put the actual images into my drawable folder. To make the images show up with their respective item, I am using the getResources method, but for some reason, it isn't working, it won't show the image. I have posted the code below, and you'll see the getResources method in my ListItemAdapter.java. If someone could figure this out and fix it, that would be great.</p>
+
+<p><strong>DatabaseHelper.java</strong></p>
+
+<pre><code>package ankitkaushal.app.healthysizing;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import junit.framework.Assert;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+    public static String DB_PATH = "/data/data/ankitkaushal.app.healthysizing/databases/";
+    public static String DB_NAME = "healthysizing";
+    public static final int DB_VERSION = 1;
+    public static final String TB_USER = "Shirts";
+    private SQLiteDatabase myDB;
+    private Context context;
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        this.context = context;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public synchronized void close(){
+        if(myDB!=null){
+            myDB.close();
+        }
+        super.close();
+    }
+
+    /*public List<String> getAllUsers() {
+        List<String> listUsers = new ArrayList<String>();
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor c;
+
+        try {
+            c = db.rawQuery("SELECT * FROM " + TB_USER , null);
+            if(c == null) return null;
+
+            String name;
+            c.moveToFirst();
+            do {
+                name = c.getString(5);
+                listUsers.add(name);
+            } while (c.moveToNext());
+            c.close();
+        } catch (Exception e) {
+            Log.e("tle99", e.getMessage());
+        }
+
+
+        db.close();
+
+        return listUsers;
+    } */
+
+    /*public List<Item> getAllShirts() {
+
+        List<Item> shirtList = new ArrayList<Item>();
+        String query = "SELECT * FROM " + TB_USER; //query to get all the shirts
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()){
+            do {
+                Item item = new Item();
+                item.setPrice(cursor.getString(2));
+                item.setBrand(cursor.getString(1));
+                item.setStore(cursor.getString(3));
+                item.setDescription(cursor.getString(5));
+                shirtList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        return shirtList;
+
+    }*/
+
+    public ArrayList<Item> getAllSearchedShirts(String brand) {
+
+        ArrayList<Item> shirtList = new ArrayList<Item>();
+        String query = "SELECT * FROM " + TB_USER + " WHERE Brand LIKE '" + brand + "' ORDER BY Price ASC"; //query to get all the shirts for brand typed in
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()){
+            do {
+                Item item = new Item();
+                item.setBrand(cursor.getString(0));
+                item.setStore(cursor.getString(1));
+                item.setPrice(cursor.getString(2));
+                item.setDescription(cursor.getString(3));
+                item.setSize(cursor.getString(4));
+                item.setID(cursor.getString(6));
+                shirtList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        return shirtList;
+
+    }
+
+    public ArrayList<Item> getAllShirts() {
+
+        ArrayList<Item> shirtList = new ArrayList<Item>();
+        String query = "SELECT * FROM " + TB_USER + " ORDER BY Price ASC"; //query to get all the shirts
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()){
+            do {
+                Item item = new Item();
+                item.setBrand(cursor.getString(0));
+                item.setStore(cursor.getString(1));
+                item.setPrice(cursor.getString(2));
+                item.setDescription(cursor.getString(3));
+                item.setSize(cursor.getString(4));
+                item.setID(cursor.getString(6));
+                shirtList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        return shirtList;
+
+    }
+
+    /*public Cursor getShirtsData() {
+        String SQLQuery = "SELECT * FROM" + TB_USER;
+        return myDB.rawQuery(SQLQuery, null);
+    } */
+
+
+    /***
+     * Open database
+     * @throws android.database.SQLException
+     */
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        myDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+    }
+
+    /**
+     * Copy database from source code assets to device
+     * @throws java.io.IOException
+     */
+    public void copyDataBase() throws IOException {
+        try {
+            InputStream myInput = context.getAssets().open(DB_NAME);
+            String outputFileName = DB_PATH + DB_NAME;
+            OutputStream myOutput = new FileOutputStream(outputFileName);
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while((length = myInput.read(buffer))>0){
+                myOutput.write(buffer, 0, length);
+            }
+
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        } catch (Exception e) {
+            Log.e("tle99 - copyDatabase", e.getMessage());
+        }
+
+    }
+
+    /***
+     * Check if the database doesn't exist on device, create new one
+     * @throws IOException
+     */
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+
+        } else {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                Log.e("tle99 - create", e.getMessage());
+            }
+        }
+    }
+
+    // ---------------------------------------------
+    // PRIVATE METHODS
+    // ---------------------------------------------
+
+    /***
+     * Check if the database is exist on device or not
+     * @return
+     */
+    private boolean checkDataBase() {
+        SQLiteDatabase tempDB = null;
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            tempDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READWRITE);
+        } catch (SQLiteException e) {
+            Log.e("tle99 - check", e.getMessage());
+        }
+        if (tempDB != null)
+            tempDB.close();
+        return tempDB != null ? true : false;
+    }
+
+}
+</code></pre>
+
+<p><strong>ListItemAdapter.java</strong></p>
+
+<pre><code>package ankitkaushal.app.healthysizing;
+
+import java.util.ArrayList;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+public final class ListItemAdapter extends ArrayAdapter<Item> implements View.OnClickListener{
+
+    public ListItemAdapter(Context context, ArrayList<Item> shirtItems) {
+        super(context, 0, shirtItems);
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        // Get the data item for this position
+        Item item = getItem(position);
+
+        // Check if an existing view is being reused, otherwise inflate the view
+        if (convertView == null) {
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_layout_shirts, parent, false);
+        }
+
+        // Lookup view for data population
+        TextView brand = (TextView) convertView.findViewById(R.id.txt_shirt_brand);
+        TextView price = (TextView) convertView.findViewById(R.id.txt_shirt_price);
+        TextView store = (TextView) convertView.findViewById(R.id.txt_shirt_store);
+        TextView size = (TextView) convertView.findViewById(R.id.txt_shirt_size);
+        TextView description = (TextView) convertView.findViewById(R.id.txt_shirt_description);
+        ImageView shirtsImage = (ImageView) convertView.findViewById(R.id.image_view_shirts);
+
+        // Populate the data into the template view using the data object
+        brand.setText("Brand:" + "  " + item.getBrand());
+        price.setText("Price:" + "  $" + item.getPrice());
+        store.setText("Store:" + "  " + item.getStore());
+        size.setText("Size:" + "  " + item.getSize());
+        description.setText("Description:" + "  " + item.getDescription());
+
+        Context context = parent.getContext();
+        int shirtsID = context.getResources().getIdentifier(item.getID(), "drawable", ListItemAdapter.class.getPackage().getName());
+        //int shirtsID = context.getResources().getIdentifier("packagename:drawable/" + item.getID(), null, null);
+        shirtsImage.setImageResource(shirtsID);
+
+        // Return the completed view to render on screen
+        return convertView;
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p><strong>shirtsActivity.java</strong></p>
+
+<pre><code>package ankitkaushal.app.healthysizing;
+
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SearchView;
+import java.io.IOException;
+import java.util.ArrayList;
+import android.content.res.Resources;
+
+public class shirtsActivity extends ActionBarActivity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_shirts);
+
+        final SearchView shirtViewShirts = (SearchView) findViewById(R.id.searchView3);
+        final DatabaseHelper dbhelper;
+        final ListView listView;
+        final ListAdapter shirtsAdapter;
+
+        dbhelper = new DatabaseHelper(getApplicationContext());
+        try {
+            dbhelper.createDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        listView = (ListView) findViewById(R.id.listViewShirts);
+        //List<Item> shirtsList = dbhelper.getAllShirts();
+        ArrayList<Item> shirtsList = dbhelper.getAllShirts();
+
+        if (shirtsList != null) {
+            //shirtsAdapter = new ArrayAdapter<Item>(getApplicationContext(), android.R.layout.simple_list_item_1, android.R.id.text1, shirtsList);
+            shirtsAdapter = new ListItemAdapter(getApplicationContext(), shirtsList);
+            listView.setAdapter(shirtsAdapter);
+        }
+
+        shirtViewShirts.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+
+                //query = query.toLowerCase();
+                //query = Character.toString(query.charAt(0)).toUpperCase()+query.substring(1);
+
+                ListAdapter searchedShirtsAdapter;
+                Log.e("Brand: ", query);
+                ArrayList<Item> searchedShirtsList = dbhelper.getAllSearchedShirts(query);
+
+                if (searchedShirtsList != null) {
+                    searchedShirtsAdapter = new ListItemAdapter(getApplicationContext(), searchedShirtsList);
+                    listView.setAdapter(searchedShirtsAdapter);
+                }
+
+                listView.setEmptyView(findViewById(R.id.empty_shirts_message));
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+
+        });
+
+    }
+
+}
+</code></pre>
+
+<p><strong>Item.java</strong></p>
+
+<pre><code>package ankitkaushal.app.healthysizing;
+
+public class Item {
+
+    private String brand;
+    private String size;
+    private String price;
+    private String store;
+    private String description;
+    private String ID;
+    private String gender;
+
+    public Item() {
+
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public void setID(String ID) {
+        this.ID = ID;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public void setPrice(String price) {
+        this.price = price;
+    }
+
+    public void setStore(String store) {
+        this.store = store;
+    }
+
+    public void setDescription(String description) {this.description = description;}
+
+    public String getStore() {
+        return store;
+    }
+
+    public String getPrice() {
+        return price;
+    }
+
+    public String getGender() {return gender; }
+
+    public String getSize() {
+        return size;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public String getID() {
+        return ID;
+    }
+
+    public String getDescription() {return description; }
+
+    @Override
+    public String toString() {
+        return (this.brand + "  " + this.store + "  " + this.price + "  " + this.description);
+    }
+
+}
+</code></pre>
+
+<p><strong>item_layout_shirts.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/txt_shirt_price"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/button"
+            android:layout_alignEnd="@+id/button"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="-5dp"
+            android:layout_marginTop="15dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/txt_shirt_brand"
+            android:layout_below="@+id/txt_shirt_price"
+            android:layout_alignLeft="@+id/txt_shirt_price"
+            android:layout_alignStart="@+id/txt_shirt_price"
+            android:layout_marginBottom="5dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/txt_shirt_store"
+            android:layout_below="@+id/txt_shirt_brand"
+            android:layout_alignLeft="@+id/txt_shirt_brand"
+            android:layout_alignStart="@+id/txt_shirt_brand"
+            android:layout_marginBottom="5dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/txt_shirt_size"
+            android:layout_below="@+id/txt_shirt_store"
+            android:layout_alignLeft="@+id/txt_shirt_store"
+            android:layout_alignStart="@+id/txt_shirt_store" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add item to Cart"
+            android:id="@+id/button"
+            android:layout_below="@+id/txt_shirt_description"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="15dp" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/image_view_shirts"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/button"
+            android:layout_alignBottom="@+id/txt_shirt_size"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/shirts"
+            android:layout_marginLeft="10dp"
+            android:layout_toLeftOf="@+id/button"
+            android:layout_marginBottom="-20dp"
+            android:layout_marginRight="-25dp"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/txt_shirt_description"
+            android:layout_below="@+id/image_view_shirts"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="20dp" />
+
+    </RelativeLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>activity_shirts.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#29A9D2"
+    android:weightSum="1"
+    android:id="@+id/shirt">
+
+    <SearchView
+        android:layout_width="358dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/searchView3"
+        android:background="#ffffffff"
+        android:queryHint="Search for specific brand" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/listViewShirts"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"/>
+
+        <TextView
+            android:id="@+id/empty_shirts_message"
+            android:text="No Results Found"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="#FFFFFF"
+            android:gravity="center|top"
+            android:textSize="25dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:visibility="invisible"
+            android:layout_marginTop="10dp"/>
+
+    </RelativeLayout>
+
+</LinearLayout>
+</code></pre>

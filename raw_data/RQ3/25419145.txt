@@ -1,0 +1,51 @@
+<p>is it possible to set a single item in a GridView as transparent?</p>
+
+<p>I got a GridView with an ImageAdapter and want to set the item in center without transparency and the others with setAlpha().</p>
+
+<pre><code>gridView.setOnScrollListener(new AbsListView.OnScrollListener() {
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+         Log.v("firstVisibleItem", firstVisibleItem+"");
+         Log.v("visibleItemCount", visibleItemCount+"");
+         Log.v("totalItemCount", totalItemCount+"");                            
+
+    }
+}
+</code></pre>
+
+<p>and this should be done in the OnScrollListener.</p>
+
+<p><strong>EDIT:</strong></p>
+
+<p>This is my getView in the ImageAdapter class </p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) { 
+        imageView = new ImageView(mContext);
+        imageView.setLabelFor(position);
+        imageView.setLayoutParams(new GridView.LayoutParams(100,100));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8); //left, top, right, bottom
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+
+    return imageView;
+}
+
+    public ArrayList<View> getListView() {
+    return listView;
+}
+</code></pre>
+
+<p>and i want to store the imageView in an array and pass it to my main activity.
+Any suggestions?</p>

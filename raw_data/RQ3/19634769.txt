@@ -1,0 +1,82 @@
+<p><strong>Null Pointer while assigning an adapter to a view in Fragment.</strong></p>
+
+<p>I have an Activity which contains Fragments. I want to populate the Fragment with a GridView.
+For that I have created a custom Adapter - </p>
+
+<pre><code>public class MyBaseAdapter extends BaseAdapter {
+
+        private Context mContext;
+        private List<ResolveInfo> mAppList;
+
+        MyBaseAdapter(Context c, List<ResolveInfo> l) {
+            mContext = c;
+            mAppList = l;
+        }
+        public int getCount() {
+            return mAppList.size();
+        }
+        public Object getItem(int position) {
+            return mAppList.get(position);
+        }
+        public long getItemId(int position) {
+            return position;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {
+                // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(200, 200));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            ResolveInfo resolveInfo = mAppList.get(position);
+            imageView.setImageDrawable(resolveInfo
+                    .loadIcon(mPackageManager));
+            return imageView;
+        }
+    }
+</code></pre>
+
+<p>I have implemented the Fragment as - </p>
+
+<pre><code>    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.grid_of_app, container, false);
+
+        HashMap<String, String> pkClsPair = new HashMap<String, String>();
+        pkClsPair.put("com.android.contacts", "com.android.contacts.activities.PeopleActivity");
+        pkClsPair.put("com.android.gallery", "com.android.camera.GalleryPicker");
+
+        mPackageManager = getActivity().getPackageManager();
+        List<ResolveInfo> intentList = null, intentList_temp = null;
+
+        Intent intent = new Intent(Intent.ACTION_MAIN, null);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        for (Map.Entry<String, String> entry : pkClsPair.entrySet()) {
+            intent.setClassName(entry.getKey(), entry.getValue());
+            if (intentList == null)
+                intentList = getActivity().getPackageManager().queryIntentActivities(intent, 0);
+            else {
+                intentList_temp = (getActivity().getPackageManager().queryIntentActivities(intent, 0));
+                intentList.addAll(intentList_temp);
+            }
+        }
+
+        mBaseAdapter = new MyBaseAdapter(getActivity(), intentList);
+        GridView mGridview = (GridView) getActivity().findViewById(R.id.gridView);
+        mGridview.setAdapter(mBaseAdapter);
+
+        mGridview.setOnItemClickListener(mOnItemClickListener);
+
+        return rootView;
+    }
+</code></pre>
+
+<p>However, I seem to get a NullPointer Exception while assigning the Adapter - mBaseAdapter - to the Gridview. As far as I know it should work because I am providing with a proper Context to the Adapter(I checked it while debugging too, the value is not null).</p>
+
+<p>Thanks in advance.</p>

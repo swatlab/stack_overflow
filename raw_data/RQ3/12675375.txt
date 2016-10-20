@@ -1,0 +1,294 @@
+<p>I created my own database for my project, but i am having a trouble pushing it in the data/data folder.<br>
+I first tested it out on my rooted phone and i successfully pushed the database that i created. <br>
+Now im facing a problem on testing it on a different phone. i get an error </p>
+
+<pre><code>android.database.sqlite.SQLiteException: no such table: tblFirstAid: , while compiling: SELECT faName FROM tblFirstAid
+</code></pre>
+
+<p>I placed my database in the assets folder and it was running fine on my rooted phone. <br> What code would i add for it to copy the file from the assets folder and push it inside the /data/data directory.<br>
+I already tried the one reigndesign and I am getting that error.</p>
+
+<p>Here is my DB Helper Class</p>
+
+<pre><code>package com.dr.droid.lee;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.net.http.SslCertificate.DName;
+import android.util.Log;
+
+public class DbHelper {
+
+    public static final String Row_id = "_id";
+    public static final String Row_Name = "faName";
+    public static final String Row_Desc = "faInfo";
+    private static final String db_Name = "dbDrDroid";
+    private static final String db_Table = "tblFirstAid";
+    private static final String db_HTable = "tblHospitals";
+    private static final String Row_HosName = "HospitalName";
+    private static final String Row_HosAdd = "Address";
+    private static final String Row_HosReg = "Region";
+    private static final String Row_HosCity = "City";
+    private static final String Row_HosContact = "Contact";
+    private static final String Row_dName = "dName";
+    private static final String Row_dTable = "tblDisease";
+    private static final int db_Version = 1;
+    private dbhelp ourhelper;
+    private static Context ourcontext;
+    private SQLiteDatabase ourDB;
+
+    private static class dbhelp extends SQLiteOpenHelper{
+
+        public dbhelp(Context context) {
+            super(context, db_Name, null, db_Version);
+            // TODO Auto-generated constructor stub
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            // TODO Auto-generated method stub
+
+
+
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + db_Table + " (" + Row_id + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + Row_Name + " TEXT NOT NULL, "
+                + Row_Desc + " TEXT NOT NULL)" );
+
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // TODO Auto-generated method stub
+            db.execSQL("DROP TABLE IF EXISTS" + db_Table);
+            onCreate(db);
+
+        }
+
+    }
+
+    public DbHelper (Context c){
+        ourcontext= c;
+    }
+
+    public DbHelper open(){
+        ourhelper = new dbhelp(ourcontext);
+        ourDB = ourhelper.getWritableDatabase();
+        return this;
+    }
+
+    public void   close(){
+        ourhelper.close();
+    }
+
+    public ArrayList<String> getFAData() {
+        // TODO Auto-generated method stub
+        ArrayList<String> comments = new ArrayList<String>();
+        String [] columns = new String[]{Row_Name};
+        Cursor c = ourDB.query(db_Table, columns, null, null, null, null, null);
+        int iRow = c.getColumnIndex(Row_Name);
+        c.moveToFirst();
+        while (!c.isAfterLast()) {          
+            comments.add(c.getString(iRow));
+            c.moveToNext();
+        }
+
+        c.close();
+        return comments;
+    }
+
+    public ArrayList<String> getHData(){
+        ArrayList<String>  res = new  ArrayList<String>();
+        String [] columns = new String []{Row_HosName};
+        Cursor h = ourDB.query(db_HTable, columns, null, null, null, null, Row_HosName);
+        int HRow = h.getColumnIndex(Row_HosName);
+        h.moveToFirst();
+         while (!h.isAfterLast()) {          
+                res.add(h.getString(HRow));
+                h.moveToNext();
+            }
+
+            h.close();
+            return res;
+
+    }
+
+    public ArrayList<String> getDData(){
+        ArrayList<String>  res = new  ArrayList<String>();
+        String [] columns = new String []{Row_dName};
+        Cursor d = ourDB.query(Row_dTable, columns, null, null, null, null, null);
+        int HRow = d.getColumnIndex(Row_dName);
+        d.moveToFirst();
+         while (!d.isAfterLast()) {          
+                res.add(d.getString(HRow));
+                d.moveToNext();
+            }
+
+            d.close();
+            return res;
+
+    }
+
+
+
+}
+</code></pre>
+
+<p>Here is the class that i used from reigndesign</p>
+
+<pre><code>package com.dr.droid.lee;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.dr.droid.lee/databases/";
+
+    private static String DB_NAME = "dbDrDroid";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+                this.close();
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>
+
+<p>Some how i am still getting errors if my i don't push my database in my phone. </p>

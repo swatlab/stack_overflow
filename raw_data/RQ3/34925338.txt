@@ -1,0 +1,229 @@
+<p>I followed <a href="http://www.truiton.com/2015/06/android-tabs-example-fragments-viewpager/" rel="nofollow">this tutorial</a> and  created a layout contains 3 fragments and used ViewPager to switch them, it worked just fine. Then I tried to add a GridView into the middle fragment so that it can be performed as an image gallery like what it shows in <a href="http://developer.android.com/guide/topics/ui/layout/gridview.html" rel="nofollow">this tutorial</a>, but I kept getting "Unfortunately, ** has stopped" messages. in the beginning I thought it might because the size of images was too big to run, so I used the sample images from the second tutorial, but it didn't work. </p>
+
+<p>Please help me out of there since it has bothering me several days. Thank you in advance. :D</p>
+
+<p>This is my logcat:</p>
+
+<pre><code>java.lang.RuntimeException: Unable to start activity ComponentInfo{my.com.impressor.demo2/my.com.impressor.demo2.MainActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.GridView.setAdapter(android.widget.ListAdapter)' on a null object reference
+at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2416)
+at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476)
+at android.app.ActivityThread.-wrap11(ActivityThread.java)
+at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+at android.os.Handler.dispatchMessage(Handler.java:102)
+at android.os.Looper.loop(Looper.java:148)
+at android.app.ActivityThread.main(ActivityThread.java:5417)
+at java.lang.reflect.Method.invoke(Native Method)
+at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.GridView.setAdapter(android.widget.ListAdapter)' on a null object reference
+at my.com.impressor.demo2.MainActivity.onCreate(MainActivity.java:27)
+at android.app.Activity.performCreate(Activity.java:6237)
+at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1107)
+at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2369)
+at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476) 
+at android.app.ActivityThread.-wrap11(ActivityThread.java) 
+at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344) 
+at android.os.Handler.dispatchMessage(Handler.java:102) 
+at android.os.Looper.loop(Looper.java:148) 
+at android.app.ActivityThread.main(ActivityThread.java:5417) 
+at java.lang.reflect.Method.invoke(Native Method) 
+at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726) 
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+</code></pre>
+
+<p>This is my middle fragment.java containing GridView:</p>
+
+<pre><code>public class Fragment2 extends Fragment {
+
+private GridView gridView; //added regarding to the answer by Atual in <http://stackoverflow.com/questions/22613064/using-gridview-image-in-fragment>
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+    View view = inflater.inflate(R.layout.fragment2, container, false);
+    GridView gridView = (GridView) view.findViewById(R.id.gridview);
+    gridView.setAdapter(new ImageAdapter(getActivity().getApplicationContext()));
+    return view;
+}
+
+}
+</code></pre>
+
+<p>This is the related XML file:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="@android:color/white"
+android:orientation="vertical" >
+
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gridview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnWidth="90dp"
+    android:numColumns="auto_fit"
+    android:verticalSpacing="10dp"
+    android:horizontalSpacing="10dp"
+    android:stretchMode="columnWidth"
+    android:gravity="center"
+    />
+</code></pre>
+
+<p></p>
+
+<p>This is the MainActivity:</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+//ImageView im;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    GridView gridview = (GridView) findViewById(R.id.gridview);
+    gridview.setAdapter(new ImageAdapter(this));
+
+    gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v,
+                                int position, long id) {
+            Toast.makeText(MainActivity.this, "" + position,
+                    Toast.LENGTH_SHORT).show();
+        }
+    });
+
+    Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+    setSupportActionBar(toolbar);
+
+    TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+    tabLayout.addTab(tabLayout.newTab().setText("Service"));
+    tabLayout.addTab(tabLayout.newTab().setText("Gallery"));
+    tabLayout.addTab(tabLayout.newTab().setText("Contact Us"));
+    tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+    final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
+    final PagerAdapter adapter = new PagerAdapter
+            (getSupportFragmentManager(), tabLayout.getTabCount());
+    viewPager.setAdapter(adapter);
+    viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+    tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        @Override
+        public void onTabSelected(TabLayout.Tab tab) {
+            viewPager.setCurrentItem(tab.getPosition());
+        }
+
+        @Override
+        public void onTabUnselected(TabLayout.Tab tab) {
+
+        }
+
+        @Override
+        public void onTabReselected(TabLayout.Tab tab) {
+
+        }
+    });
+}
+
+/*public void biggerView(View v)
+{
+    im=(ImageView)findViewById(R.id.selected);
+
+    switch (v.getId())
+    {
+        case R.id.image1: im.setImageResource(R.drawable.p1);
+            break;
+        case R.id.image2: im.setImageResource(R.drawable.p2);
+            break;
+        case R.id.image3: im.setImageResource(R.drawable.p3);
+            break;
+        case R.id.image4: im.setImageResource(R.drawable.p4);
+            break;
+        case R.id.image5: im.setImageResource(R.drawable.p5);
+            break;
+        case R.id.image6: im.setImageResource(R.drawable.p6);
+            break;
+        case R.id.image7: im.setImageResource(R.drawable.p7);
+            break;
+    }
+}*/
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p>This is the ImageAdapter:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {
+        // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        /*R.drawable.p1, R.drawable.p2,
+        R.drawable.p3, R.drawable.p4,
+        R.drawable.p5, R.drawable.p6,
+        R.drawable.p7, R.drawable.p8,
+        R.drawable.p9, R.drawable.p10,
+        R.drawable.p11, R.drawable.p12,
+        R.drawable.p13, R.drawable.p14,
+        R.drawable.p15, R.drawable.p16,
+        R.drawable.p17, R.drawable.p18,
+        R.drawable.p19, R.drawable.p20,
+        R.drawable.p21, R.drawable.p22,
+        R.drawable.p23*/
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+        R.drawable.sample_6, R.drawable.sample_7
+};
+}
+</code></pre>

@@ -1,0 +1,677 @@
+<blockquote>
+  <p><strong>Possible Duplicate:</strong><br>
+  <a href="http://stackoverflow.com/questions/13452621/how-can-i-display-latin-words-in-android">How can I display Latin words in Android?</a>  </p>
+</blockquote>
+
+
+
+<p>I have to fetch text from an Sqlite database  and every special Latin character (i.e. à, ò, ù, è...) was displayed with black squares with a "?" inside.</p>
+
+<p>How can i display this correctly?</p>
+
+<p>i Used DatabaseHelper in below:</p>
+
+<pre><code>public class VocabTesterDatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "data/data/com.VoacabTester/databases/";
+
+    private static String DB_NAME = "vocabdb.db";
+
+    private SQLiteDatabase vocabDatabase;
+
+    private final Context vocabContext;
+
+    public VocabTesterDatabaseHelper(Context context) {
+        super(context, DB_NAME, null, 3);
+        this.vocabContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+
+        } else {
+            this.getReadableDatabase();
+            copyDataBase();
+        }
+
+    }
+
+    private boolean checkDataBase() {
+
+        File dbFile = new File(DB_PATH + DB_NAME);
+        return dbFile.exists();
+    }
+
+    private void copyDataBase() throws IOException {
+        try {
+
+            InputStream myInput = vocabContext.getAssets().open(DB_NAME);
+            String outFileName = DB_PATH + DB_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        } catch (IOException e) {
+            Log.v("data", e.toString().concat("sql"));
+        }
+    }
+
+    public void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        vocabDatabase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    public Cursor getFoundationTierQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FoundationTierVocabularyQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    };
+
+    public Cursor getHigherTierQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM HigherTierQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyFirstConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions1stConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasySecondConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions2ndConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyThirdConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions3rdConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyFourthConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions4thConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyMixConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestionsallConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyIrregularConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM IrregularVerbsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getFirstDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FirstDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getSecondDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM SecondDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getThirdDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM ThirdDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getFourthDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FourthDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getFifthDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FifthDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getNounsAllDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM NounsDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getis_ea_idQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IsEaIdQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor gethic_haec_hocQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM HicHaecHocQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getille_illa_illudQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IlleIllaIlludQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getqui_quae_quodQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM QuiQuaeQuodQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getIdem_eadem_idemQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IdemEademIdemQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getipse_ipsa_ipsumQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IpseIpsaIpsumQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getalius_alia_aliudQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM AliusAliaAliudQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAdjectiveQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM AdjectivesQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerFirstDeclensionNounsQuestion(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM FirstDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getSAnswerecondDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM SecondDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerThirdDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM ThirdDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerFourthDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM FourthDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerFifthDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM FifthDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerNounsAllDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM NounsDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnsweris_ea_idQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IsEaIdQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerhic_haec_hocQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM HicHaecHocQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerille_illa_illudQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IlleIllaIlludQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerqui_quae_quodQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM QuiQuaeQuodQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerIdem_eadem_idemQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IdemEademIdemQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnsweripse_ipsa_ipsumQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IpseIpsaIpsumQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnsweralius_alia_aliudQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM AliusAliaAliudQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerAdjectiveQuestions(String question) {
+        Cursor cur;
+
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM AdjectivesQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if (vocabDatabase != null)
+            vocabDatabase.close();
+
+        super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>
+
+<p>I used Activity class in below:</p>
+
+<pre><code>public class VocabTesterAdjectiveActivity extends Activity {
+    private TextView question;
+    private TextView stats;
+    private Button skipButton;
+    private Button finishButton;
+
+    final VocabTesterDatabaseHelper dbObj = new VocabTesterDatabaseHelper(this);
+
+    Cursor questionCursor;
+    Cursor answerCursor;
+    Button userAnserButtoon;
+    AlertDialog alertDialog;
+
+    String adjectiveNumber;
+    String adjectiveCase;
+    String adjectiveGender;
+
+    int totalNumberOfQuestions = 0;
+    int totalRightQuestions = 0;
+
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.adjective_test);
+
+        question = (TextView) findViewById(R.id.QuestionView);
+        stats = (TextView) findViewById(R.id.TotalView);
+
+        skipButton = (Button) findViewById(R.id.skipButton);
+        finishButton = (Button) findViewById(R.id.finishButton);
+        userAnserButtoon = (Button) findViewById(R.id.enterButton);
+
+        alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setMessage("No More Questions");
+        alertDialog.setTitle("Finish");
+
+        skipButton.setOnClickListener(skipClickListener);
+        finishButton.setOnClickListener(finishClickListener);
+        userAnserButtoon.setOnClickListener(answerClickListener);
+
+        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        getAllQuestions();
+        displayTestQuestion();
+
+    }
+
+    private void displayTestQuestion() {
+        resetEverything();
+        stats.setText(Integer.toString(totalRightQuestions) + "/"
+                + Integer.toString(totalNumberOfQuestions));
+
+        String questionText = questionCursor.getString(0);
+
+        question.setText(questionText);
+        //question.setText(Html.fromHtml(questionText));
+        adjectiveNumber = questionCursor.getString(1);
+        adjectiveCase = questionCursor.getString(3);
+        adjectiveGender = questionCursor.getString(2);
+    }
+
+    private void resetEverything() {
+
+        RadioGroup adjectiveNumberList = (RadioGroup) findViewById(R.id.adjectiveNumberList);
+        adjectiveNumberList.clearCheck();
+
+        RadioGroup adjectiveCaseList = (RadioGroup) findViewById(R.id.adjectiveCaseList);
+        adjectiveCaseList.clearCheck();
+
+        RadioGroup adjectiveGenderList = (RadioGroup) findViewById(R.id.adjectiveGenderList);
+        adjectiveGenderList.clearCheck();
+
+        userAnserButtoon.getBackground().setColorFilter(Color.GRAY,
+                Mode.MULTIPLY);
+    }
+
+    private void getAllQuestions() {
+        try {
+            dbObj.createDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        dbObj.openDataBase();
+        questionCursor = dbObj.getAdjectiveQuestions();
+    }
+
+    private OnClickListener finishClickListener = new OnClickListener() {
+        public void onClick(View v) {
+            Intent i = new Intent(VocabTesterAdjectiveActivity.this,
+                    VocabTesterHomeActivity.class);
+            startActivity(i);
+        }
+    };
+
+    private OnClickListener skipClickListener = new OnClickListener() {
+        public void onClick(View v) {
+            if (!questionCursor.isLast()) {
+                questionCursor.moveToNext();
+                totalNumberOfQuestions++;
+                displayTestQuestion();
+            } else {
+                alertDialog.setMessage("No More Questions");
+                alertDialog.show();
+            }
+        }
+    };
+
+    private OnClickListener answerClickListener = new OnClickListener() {
+        public void onClick(View v) {
+            String useSelectedNumber = "";
+            String useSelectedCase = "";
+            String useSelectedGender = "";
+
+            RadioGroup adjectiveNumberList = (RadioGroup) findViewById(R.id.adjectiveNumberList);
+            int count = adjectiveNumberList.getChildCount();
+            for (int i = 0; i < count; i++) {
+                View radio = adjectiveNumberList.getChildAt(i);
+                if (radio instanceof RadioButton) {
+                    if (((RadioButton) radio).isChecked()) {
+                        useSelectedNumber = ((String) ((RadioButton) radio)
+                                .getText()).toLowerCase();
+                        break;
+                    }
+                }
+            }
+
+            RadioGroup adjectiveCaseList = (RadioGroup) findViewById(R.id.adjectiveCaseList);
+            count = adjectiveCaseList.getChildCount();
+            for (int i = 0; i < count; i++) {
+                View radio = adjectiveCaseList.getChildAt(i);
+                if (radio instanceof RadioButton) {
+                    if (((RadioButton) radio).isChecked()) {
+                        useSelectedCase = ((String) ((RadioButton) radio)
+                                .getText()).toLowerCase();
+                        break;
+                    }
+                }
+            }
+
+            RadioGroup adjectiveGenderList = (RadioGroup) findViewById(R.id.adjectiveGenderList);
+            count = adjectiveGenderList.getChildCount();
+            for (int i = 0; i < count; i++) {
+                View radio = adjectiveGenderList.getChildAt(i);
+                if (radio instanceof RadioButton) {
+                    if (((RadioButton) radio).isChecked()) {
+                        useSelectedGender = ((String) ((RadioButton) radio)
+                                .getText()).toLowerCase();
+                        break;
+                    }
+                }
+            }
+
+            dbObj.openDataBase();
+            answerCursor = dbObj.getAnswerAdjectiveQuestions(questionCursor
+                    .getString(0));
+            boolean isCorrect = false;
+
+            while (!answerCursor.isLast()) {
+                if (useSelectedNumber.equals(answerCursor.getString(1))
+                        && useSelectedGender.equals(answerCursor.getString(2))
+                        && useSelectedCase.equals(answerCursor.getString(3))) {
+                    isCorrect = true;
+                    break;
+                }
+                answerCursor.moveToNext();
+            }
+            if (useSelectedNumber.equals(answerCursor.getString(1))
+                    && useSelectedGender.equals(answerCursor.getString(2))
+                    && useSelectedCase.equals(answerCursor.getString(3))) {
+                isCorrect = true;
+            }
+            if (isCorrect) {
+                userAnserButtoon.getBackground().setColorFilter(Color.GREEN,
+                        Mode.MULTIPLY);
+                totalRightQuestions++;
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        if (!questionCursor.isLast()) {
+                            questionCursor.moveToNext();
+                            totalNumberOfQuestions++;
+                            displayTestQuestion();
+                        } else {
+                            alertDialog.setMessage("No More Questions");
+                            alertDialog.show();
+                        }
+                    }
+                }, 1000);
+
+            } else {
+                userAnserButtoon.getBackground().setColorFilter(Color.RED,
+                        Mode.MULTIPLY);
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        totalNumberOfQuestions++;
+                        displayTestQuestion();
+                    }
+                }, 1000);
+            }
+
+        }
+    };
+}
+</code></pre>

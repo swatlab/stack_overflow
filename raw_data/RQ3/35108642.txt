@@ -1,0 +1,102 @@
+<p>I have several threads that does some work, and then must go to sleep/wait for an undetermined time. Later they all need to be waken up and resume their work. I can do this by calling <code>wait()</code> on an object and then <code>notifyall()</code> on the same object when they need to resume. When researching this issue i discovered this tutorial: <a href="http://tutorials.jenkov.com/java-concurrency/thread-signaling.html" rel="nofollow">http://tutorials.jenkov.com/java-concurrency/thread-signaling.html</a>
+Apparantly it is good practice to guard against missed signals and spurious wakeups by storing the signal inside the signal class and check the signal member variable inside a while loop.
+Here is the code example from the tutorial:</p>
+
+<pre><code>public class MonitorObject{
+}
+
+public class MyWaitNotify3{
+
+  MonitorObject myMonitorObject = new MonitorObject();
+  boolean wasSignalled = false;
+
+  public void doWait(){
+    synchronized(myMonitorObject){
+      while(!wasSignalled){
+        try{
+          myMonitorObject.wait();
+         } catch(InterruptedException e){...}
+      }
+      //clear signal and continue running.
+      wasSignalled = false;
+    }
+  }
+
+  public void doNotify(){
+    synchronized(myMonitorObject){
+      wasSignalled = true;
+      myMonitorObject.notify();
+    }
+  }
+}
+</code></pre>
+
+<p>This code is working, but I need to wake up all threads and not just one. If I replace <code>myMonitorObject.notify();</code> with <code>myMonitorObject.notifyAll();</code> that will not work because the first thread that resumes work will set the <code>wasSignalled</code> flag to <code>false</code> and all the other threads will be trapped in the while loop.</p>
+
+<p>I have made some changes that will enable me to wake up all threads:</p>
+
+<pre><code>MonitorObject myMonitorObject = new MonitorObject();
+boolean wasSignalled = false;
+
+public void doWait(){
+    synchronized(myMonitorObject){
+        while(!wasSignalled){
+            try{
+                myMonitorObject.wait();
+            } catch(InterruptedException e){
+
+            }
+        }
+
+    }
+}
+
+public void resetSignal() {
+    wasSignalled = false;
+}
+
+public void doNotifyAll() {
+    synchronized(myMonitorObject){
+        wasSignalled = true;
+        myMonitorObject.notifyAll();
+    }
+}
+</code></pre>
+
+<p>But this is not a very good solution, because now I can't wake up just one thread, and I have to reset the signal after <code>doNotify</code> before I can use doWait again.</p>
+
+<p>Does anyone have a solution that will enable me to use both <code>notify</code> or <code>notifyAll</code> on the threads that is waiting?</p>
+
+<p>And one thing about the example I do not understand, why do I have to use a separate MonitorObject class at all? Why can't I just call <code>wait</code> and <code>notify</code> on the <code>MyWaitNotify</code> class itself?</p>
+
+<p>Like this:</p>
+
+<pre><code>public class WaitNotify {
+    boolean wasSignalled = false;
+
+    public void doWait(){
+        synchronized(this){
+            while(!wasSignalled){
+                try{
+                    wait();
+                } catch(InterruptedException e){
+
+                }
+            }
+        }
+    }
+
+    public void resetSignal() {
+        wasSignalled = false;
+    }
+
+    public void doNotifyAll() {
+        synchronized(this){
+            wasSignalled = true;
+            notifyAll();
+        }
+    }
+}
+</code></pre>
+
+<p>This seems to be working, any reason I should not be doing this?</p>

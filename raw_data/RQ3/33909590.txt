@@ -1,0 +1,37 @@
+<p>I am using appcompat support library v22 and creating a ViewPager from MainActivity with three fragments. Following is the code to setup ViewPager which is called from <code>onCreate()</code> of MainActivity. </p>
+
+<pre><code>private void setupViewPager(ViewPager viewPager) {
+    mTabAdapter = new Adapter(getSupportFragmentManager());
+
+    mTabAdapter.addFragment(new CarFragment(), "Cars");
+    mTabAdapter.addFragment(new VehiclesRecycleListFragment(), "Vehicles");
+    mTabAdapter.addFragment(new BikeFragment(), "Bikes");
+
+    viewPager.addOnPageChangeListener(new InternalViewPagerListener());
+    viewPager.setAdapter(mTabAdapter);
+}
+</code></pre>
+
+<p>All three fragments use <code>LoaderManager</code> to load data and showing it in RecyclerView. The issue is that one of the fragment (VehiclesRecycleListFragment), <code>throws "IllegalStateException: Fragment not attached to Activity"</code> in getLoaderManager() randomly after running for a long time (maybe after a few resumes). Since we are catching that exception, the fragment is not crashing but the functionalities are crippled now. Before this point, application is running fine. </p>
+
+<p>We tried to debug into getLoaderManager, and following is the code which throws exception after checking mHost</p>
+
+<pre><code>/**
+ * Return the LoaderManager for this fragment, creating it if needed.
+ */
+public LoaderManager getLoaderManager() {
+    if (mLoaderManager != null) {
+        return mLoaderManager;
+    }
+    if (mHost == null) {
+        throw new IllegalStateException("Fragment " + this + " not attached to Activity");
+    }
+    mCheckedForLoaderManager = true;
+    mLoaderManager = mHost.getLoaderManager(mWho, mLoadersStarted, true);
+    return mLoaderManager;
+}
+</code></pre>
+
+<p>I am not able to understand is that if a fragment is displaying and running fine inside ViewPager, how come it's not attached to activity. </p>
+
+<p>Please help me to resolve this, let me know if you need more details.</p>

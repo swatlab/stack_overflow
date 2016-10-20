@@ -1,0 +1,131 @@
+<p>I know I should have made the Public Class immutable but still I already changed the name of the a Person object before it was added to the Set set of type <code>HashSet</code> and my Person class also implements the <code>hashCode()</code> and equals() methods which help to check weather an object is same as the previous object or not and prevent addition to the list if it is equivalent with the help of the <code>hashCode()</code> and the equals() methods, but still the output is :
+bob
+charlie
+bob</p>
+
+<p>instead of:
+bob
+charlie</p>
+
+<p>If i replace the code piece of the Main Class:</p>
+
+<pre><code>Set<Person> set = new HashSet<Person>();
+        Person a= new Person("alice",45);
+        Person b=new Person("bob",41);
+        Person c= new Person("charlie",48);
+        set.add(a);
+        a.name="bob";
+        set.add(b);
+        set.add(c);
+</code></pre>
+
+<p>By the following code down below (i.e. I declared an equivalent object directly without changing the name later as in the original problematic code):</p>
+
+<pre><code>Set<Person> set = new HashSet<Person>();
+        Person a= new Person("bob",45);
+        Person b=new Person("bob",41);
+        Person c= new Person("charlie",48);
+        set.add(a);
+        set.add(b);
+        set.add(c);
+</code></pre>
+
+<p>Then the object b is not added.</p>
+
+<p>And also another point to note is that I changed the name of object(in the original problematic code) a before the addition of object b but still it is adding b why????   </p>
+
+<p>My original problematic code which contains the Main Class followed by the Public Class is given in full detail below::</p>
+
+<pre><code>//Main.java class of generics_practice_test package;
+package generics_practice_test;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
+public class Main {
+
+
+    public static void main (String args[])
+    {
+        Set<Person> set = new HashSet<Person>();
+        Person a= new Person("alice",45);
+        Person b=new Person("bob",41);
+        Person c= new Person("charlie",48);
+        set.add(a);
+        a.name="bob";
+        set.add(b);
+        set.add(c);
+
+
+        for(Iterator<Person> iterator=set.iterator();iterator.hasNext();){
+
+            System.out.println(iterator.next());
+
+        }
+
+
+
+    }
+
+
+}
+</code></pre>
+
+<p>And the code for the Person Class is below:
+//Person class of generics_practice_test package is below</p>
+
+<pre><code>package generics_practice_test;
+
+public class Person implements Comparable<Person> {
+
+    public String name;
+
+    public int age;
+
+    public Person(String name,int age)
+    {
+        this.name=name;
+        this.age=age;
+    }
+
+    public String toString()
+    {
+        return this.name;
+    }
+
+    public int compareTo(Person o)
+    {
+        int myLength=name.length();
+        int oLength=o.name.length();
+        if(myLength == oLength) return 0;
+        if(oLength > myLength) return -1;
+        return 1;
+
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Person other = (Person) obj;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+
+}
+</code></pre>

@@ -1,0 +1,323 @@
+<p>May be duplicate question. but i cant find the solution of my problem</p>
+
+<p>I have a TabHost with 3 Tabs. let say <code>tabA</code>, <code>tabB</code>, <code>tabC</code>. I do lots of view changes like button text changes, editText changes in <code>tabC</code> when i switch to another tab (i.e either tabA or tabB) and comes back to <code>tabC</code> i lost all my changes of views. All my values of the views (buttons and editTexts) and it resets my all views to default XML file values. I don't want this happen.
+I just want how to save the states of my views. i must not lose this on tab change.</p>
+
+<p>I tried this <a href="http://stackoverflow.com/questions/6787071/android-fragment-how-to-save-states-of-views-in-a-fragment-when-another-fragmen">link</a> but failed.</p>
+
+<p>here is my code </p>
+
+<pre><code>    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+
+    Toast.makeText(getActivity(), "onCreateView", Toast.LENGTH_SHORT)
+            .show();
+
+    if (container == null) {
+
+        return null;
+    }
+
+    View vi = inflater.inflate(R.layout.settings, container, false);
+
+    btnInsert = (Button) vi.findViewById(R.id.btnInsert);
+    btnInsert.setOnClickListener(this);
+    btnPosition = (Button) vi.findViewById(R.id.btnPosition);
+    btnPosition.setOnClickListener(this);
+    txtPosition = (TextView) vi.findViewById(R.id.txtPosition);
+    txtLogo = (TextView) vi.findViewById(R.id.txtLogo);
+    imgLogoPreview = (ImageView) vi.findViewById(R.id.imgLogoPreview);
+    imgLogoPreview.setOnClickListener(this);
+    edTxtUserText = (EditText) vi.findViewById(R.id.edTxtPreview);
+    relLogo = (RelativeLayout) vi.findViewById(R.id.RelLogo);
+    relText = (RelativeLayout) vi.findViewById(R.id.RelText);
+
+    logoWheel = (WheelView) vi.findViewById(R.id.wheelLogo);
+
+    logoWheel.setAdapter(new ArrayWheelAdapter<String>(logoWheelList));
+    logoWheel.setVisibleItems(4);
+    logoWheel.setCurrentItem(1);
+    positionWheel = (WheelView) vi.findViewById(R.id.wheelPosition);
+    positionWheel.setAdapter(new ArrayWheelAdapter<String>(
+            positionWheelTextList));
+
+    // LogoWheel changed listener
+    changedListenerLogo = new OnWheelChangedListener() {
+        public void onChanged(WheelView wheel, int oldValue, int newValue) {
+            if (!wheelScrolled) {
+
+            }
+        }
+    };
+
+    logoWheel.addChangingListener(changedListenerLogo);
+
+    // Wheel scrolled listener
+    scrolledListenerLogo = new OnWheelScrollListener() {
+
+        public void onScrollStarts(WheelView wheel) {
+            wheelScrolled = true;
+
+        }
+
+        public void onScrollEnds(WheelView wheel) {
+            wheelScrolled = false;
+            btnInsert.setText(logoWheelList[wheel.getCurrentItem()] + "");
+            wheel.setVisibility(View.INVISIBLE);
+            if (wheel.getCurrentItem() == 2) {
+
+                txtPosition.setVisibility(View.INVISIBLE);
+                btnPosition.setVisibility(View.INVISIBLE);
+                relText.setVisibility(View.INVISIBLE);
+                relLogo.setVisibility(View.INVISIBLE);
+
+            } else if (wheel.getCurrentItem() == 1) {
+
+                relText.setVisibility(View.VISIBLE);
+                relLogo.setVisibility(View.INVISIBLE);
+                txtPosition.setVisibility(View.VISIBLE);
+                btnPosition.setVisibility(View.VISIBLE);
+                btnPosition.setText("Top");
+                positionWheel.setAdapter(new ArrayWheelAdapter<String>(
+                        positionWheelTextList));
+                positionWheel.setVisibleItems(4);
+                positionWheel.setCurrentItem(1);
+
+            } else if (wheel.getCurrentItem() == 0) {
+
+                relLogo.setVisibility(View.VISIBLE);
+                relText.setVisibility(View.INVISIBLE);
+                txtPosition.setVisibility(View.VISIBLE);
+                btnPosition.setVisibility(View.VISIBLE);
+                btnPosition.setText("Top Left");
+                positionWheel.setAdapter(new ArrayWheelAdapter<String>(
+                        positionWheelLogoList));
+                positionWheel.setVisibleItems(4);
+                positionWheel.setCurrentItem(1);
+
+            }
+        }
+    };
+
+    logoWheel.addScrollingListener(scrolledListenerLogo);
+
+    // /////////////////////Positon Wheel Listners///////////
+
+    // LogoWheel changed listener
+    changedListenerPosition = new OnWheelChangedListener() {
+        public void onChanged(WheelView wheel, int oldValue, int newValue) {
+            if (!wheelScrolled) {
+
+            }
+        }
+    };
+
+    positionWheel.addChangingListener(changedListenerPosition);
+
+    // Wheel scrolled listener
+    scrolledListenerPosition = new OnWheelScrollListener() {
+
+        public void onScrollStarts(WheelView wheel) {
+            wheelScrolled = true;
+
+        }
+
+        public void onScrollEnds(WheelView wheel) {
+            wheelScrolled = false;
+
+            String btnStatus = btnInsert.getText().toString();
+            if (btnStatus.equals("Logo")) {
+                btnPosition.setText(positionWheelLogoList[positionWheel
+                        .getCurrentItem()] + "");
+
+            } else if (btnStatus.equals("Text")) {
+                btnPosition.setText(positionWheelTextList[positionWheel
+                        .getCurrentItem()] + "");
+            }
+
+            wheel.setVisibility(View.INVISIBLE);
+
+        }
+    };
+
+    positionWheel.addScrollingListener(scrolledListenerPosition);
+
+    return vi;
+
+}
+</code></pre>
+
+<p><strong>Edit</strong>
+Here is code of my FrgmentActivity</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements
+    TabHost.OnTabChangeListener {
+
+private TabHost mTabHost;
+private HashMap mapTabInfo = new HashMap();
+private TabInfo mLastTab = null;
+
+private class TabInfo {
+    private String tag;
+    private Class clss;
+    private Bundle args;
+    private Fragment fragment;
+
+    TabInfo(String tag, Class clazz, Bundle args) {
+        this.tag = tag;
+        this.clss = clazz;
+        this.args = args;
+    }
+
+}
+
+class TabFactory implements TabContentFactory {
+
+    private final Context mContext;
+
+    /**
+     * @param context
+     */
+    public TabFactory(Context context) {
+        mContext = context;
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+     */
+    public View createTabContent(String tag) {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+    }
+
+}
+
+/**
+ * (non-Javadoc)
+ * 
+ * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+ */
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Step 1: Inflate layout
+    setContentView(R.layout.tabs_layout);
+    // Step 2: Setup TabHost
+    initialiseTabHost(savedInstanceState);
+    if (savedInstanceState != null) {
+        mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); // set
+    }
+}
+
+/**
+ * (non-Javadoc)
+ * 
+ * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+ */
+protected void onSaveInstanceState(Bundle outState) {
+    outState.putString("tab", mTabHost.getCurrentTabTag()); // save the tab
+                                                            // selected
+    super.onSaveInstanceState(outState);
+}
+
+/**
+ * Step 2: Setup TabHost
+ */
+private void initialiseTabHost(Bundle args) {
+    mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+    TabInfo tabInfo = null;
+    MainActivity.addTab(
+            this,
+            this.mTabHost,
+            this.mTabHost.newTabSpec("Tab1").setIndicator("Home",
+                    getResources().getDrawable(R.drawable.instructions)),
+            (tabInfo = new TabInfo("Tab1", Instructions.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    MainActivity.addTab(
+            this,
+            this.mTabHost,
+            this.mTabHost.newTabSpec("Tab2").setIndicator("Capture",
+                    getResources().getDrawable(R.drawable.capture)),
+            (tabInfo = new TabInfo("Tab2", Capture.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    MainActivity.addTab(
+            this,
+            this.mTabHost,
+            this.mTabHost.newTabSpec("Tab3").setIndicator("Settings",
+                    getResources().getDrawable(R.drawable.settings)),
+            (tabInfo = new TabInfo("Tab3", Settings.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    // Default to first tab
+    this.onTabChanged("Tab1");
+    //
+    mTabHost.setOnTabChangedListener(this);
+}
+
+/**
+ * @param activity
+ * @param tabHost
+ * @param tabSpec
+ * @param clss
+ * @param args
+ */
+private static void addTab(MainActivity activity, TabHost tabHost,
+        TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+    // Attach a Tab view factory to the spec
+    tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+
+    // Check to see if we already have a fragment for this tab, probably
+    // from a previously saved state. If so, deactivate it, because our
+    // initial state is that a tab isn't shown.
+    tabInfo.fragment = activity.getSupportFragmentManager()
+            .findFragmentByTag(tag);
+    if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+        FragmentTransaction ft = activity.getSupportFragmentManager()
+                .beginTransaction();
+        ft.detach(tabInfo.fragment);
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+    }
+
+    tabHost.addTab(tabSpec);
+}
+
+/**
+ * (non-Javadoc)
+ * 
+ * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+ */
+public void onTabChanged(String tag) {
+    TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager()
+                .beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this,
+                        newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+            }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+
+}
+</code></pre>
+
+<p>i m following <a href="http://thepseudocoder.wordpress.com/2011/10/04/android-tabs-the-fragment-way/" rel="nofollow">this</a> tutorial.</p>

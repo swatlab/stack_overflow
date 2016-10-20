@@ -1,0 +1,31 @@
+<p>Just a question, I'm making an app in android with fragments, that when it opens it loads a list view, when I touch an element it goes to the next fragment and shows me the content, I enable the <code>bar.setDisplayHomeAsUpEnabled(true);</code> to get the back button on the action bar, but I don't know how to return to the ListView Fragment, I'm doing it by this way </p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) 
+       {        
+          case android.R.id.home:  
+              Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+              startActivity(intent);
+              finish();
+          default:            
+             return super.onOptionsItemSelected(item);    
+       }
+}
+</code></pre>
+
+<p>But it makes this animation like open the window again, it works but looks nasty, also I want to disable the button when I'm in the ListView fragment because there are no more places to go just outside the app, so I want to hide it in the ListView fragment something similar to this:</p>
+
+<pre><code>if(this.equals(MainActivity.class)){
+//Hide the back button in action bar
+}else{
+//display ir
+}
+</code></pre>
+
+<p>Also i'm using this to make the Action Bar, because I need support for 2.3+ devices:</p>
+
+<pre><code>ActionBar bar = getSupportActionBar();
+bar.setDisplayHomeAsUpEnabled(true);
+bar.setTitle("Interview app");
+</code></pre>

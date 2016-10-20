@@ -1,0 +1,199 @@
+<p>I have been stuck in this problem for two weeks, I hope someone could help me out. Thanks in advance.</p>
+
+<p>I want to create a view in an activity which consists of a header view and a list view at the bottom. So far, I have been successful in getting the data from JSON to the listView since most of the tutorials out there are only about JSON and listView. </p>
+
+<p>My question is, how can I get the below data to display on the header, a simple view(non listView) or even the view I want...</p>
+
+<p>the JSON file</p>
+
+<pre><code>{
+ "photos" : [
+  {
+     "thumbnail" : "http://www.myserver.com/01.jpg",
+  },
+  {
+     "thumbnail" : "http://www.myserver.com/02.jpg",
+  },
+  {
+     "thumbnail" : "http://www.myserver.com/03.jpg",
+  },
+],
+"info" : [
+  {
+     "id" : "1",
+     "description" : "My White Toyota",
+     "country" : "Japan",
+     "year" : "1982"
+   }
+ ];
+"owners" : [
+   {
+     "ownerid" : "5633432",
+     "name" : "Jackson",
+     "year_own" : "1982-1985"
+    },
+    {
+     "ownerid" : "76832",
+     "name" : "Kurt",
+     "year_own" : "1986-1995"
+    },
+    {
+     "ownerid" : "236471",
+     "name" : "Alma",
+     "year_own" : "1999-2005"
+    }
+   ]
+}
+</code></pre>
+
+<p>the List class</p>
+
+<pre><code>public class car_detail {
+    private List<CAR_INFO_MODEL> photos;
+    private List<CAR_INFO_MODEL> info;
+    private List<CAR_INFO_MODEL> owners;
+
+public List<CAR_INFO_MODEL> getPhotos(){
+    return photos;
+}
+public void setPhotoList(List<CAR_INFO_MODEL> photos){
+    this.photos = photos;
+}
+
+    public List<CAR_INFO_MODEL> getInfos(){
+    return info;
+}
+public void setInfoList(List<CAR_INFO_MODEL> info){
+    this.info = info;
+}
+
+    public List<CAR_INFO_MODEL> getOwners(){
+    return owners;
+}
+public void setOwnerList(List<CAR_INFO_MODEL> owners){
+    this.owners = owners;
+}
+}
+</code></pre>
+
+<p>the model class</p>
+
+<pre><code>public class CAR_INFO_MODEL {
+private String description;
+private String year;
+
+private String thumbnail;
+
+private String name;
+private String year_own;
+
+public String getDesc() {
+    return description;
+}
+public void setDesc(String description) {
+    this.description = description; 
+    }
+    public String getYear() {
+    return year;
+}
+public void setYear(String year) {
+    this.year = year; 
+    }
+    public String getPhoto() {
+    return thumbnail;
+}
+public void setPhoto(String thumbnail) {
+    this.thumbnail = thumbnail; 
+    }
+    public String getName() {
+    return name;
+}
+public void setName(String name) {
+    this.name = name; 
+    }
+    public String getYearown() {
+    return year_own;
+}
+public void setYearown(String year_own) {
+    this.year_own = year_own; 
+    }
+}
+</code></pre>
+
+<p>the activity class (I use AsyncTask to query and get the JSON respose), I can successfully get the info object from the JSON, but no idea on how to get the photos and owners.</p>
+
+<pre><code> public void onCreate(Bundle savedInstanceState){
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.cardetail_layout);
+
+    lv = (ListView) findViewById(R.id.list_cardetail);
+
+    carArray = new ArrayList<CAR_INFO_MODEL>();
+    carDetailAdapter = new carDetailAdapter(carActivity.this, R.layout.caritem_layout, infoArray);
+            lv.setAdapter(carDetailAdapter);  
+            try {
+                new DealSync().execute("http://www.myserver.com/carsquery/");
+            } catch(Exception e) {}
+ }
+
+
+ String json = client.getResponse();
+ list = new Gson().fromJson(json, car_detail.class); 
+
+ return list;
+
+ protected void onPostExecute(car_detail infolist) {
+
+        for(CAR_INFO_MODEL lm : infolist.getInfo())
+        {
+            infoArray.add(lm);
+        }
+        carDetailAdapter.notifyDataSetChanged();
+    }
+</code></pre>
+
+<p>the adapter class (I can get the info to show as a single item list, but I don't know how to get the photos and the owners (bottom listview) from the data and show it.)</p>
+
+<pre><code>public class carDetailAdapter extends ArrayAdapter<CAR_INFO_MODEL> {
+int resource;
+String response;
+Context context;
+private LayoutInflater dInflater;
+
+public carDetailAdapter(Context context, int resource, List<CAR_INFO_MODEL> objects) {
+        super(context, resource, objects);
+        this.resource = resource;
+        dInflater = LayoutInflater.from(context);
+}
+static class ViewHolder {
+
+    TextView description;
+
+}
+public View getView(int position, View convertView, ViewGroup parent)
+{
+    ViewHolder holder;
+    CAR_INFO_MODEL lm = (CAR_INFO_MODEL) getItem(position);
+
+    //Inflate the view
+    if(convertView==null)
+    {
+        convertView = dInflater.inflate(R.layout.carDetail_layout, null);
+        holder = new ViewHolder();
+        holder.description = (TextView) convertView.findViewById(R.id.cardesc);
+        convertView.setTag(holder);
+    }
+    else
+    {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    holder.description.setText(lm.getDesc());
+
+    return convertView;
+}
+
+}
+</code></pre>
+
+<p>This may sound complex, just hope someone could give me a help. Thank you so much</p>

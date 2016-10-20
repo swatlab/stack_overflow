@@ -1,0 +1,146 @@
+<p>I set</p>
+
+<pre><code>tabHost = (TabHost) findViewBiId(android.R.id.tabhost);
+</code></pre>
+
+<p>And it comes out NULL.</p>
+
+<p>I have a <code>MainActivity</code> that extends <code>ActionBarActivity</code> and implements <code>ActionBar.TabListener</code>, as follows...</p>
+
+<p><strong>MainActivity</strong></p>
+
+<pre><code>    public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+        SectionsPagerAdapter mSectionsPagerAdapter;
+        ViewPager mViewPager;
+
+        public static TabHost tabHost;
+
+        private SharedPreferences mSharedPreferences;
+
+        protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        tabHost = (TabHost) findViewById(android.R.id.tabhost);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+    ... other methods ...
+}
+</code></pre>
+
+<p>But when I try to use <code>tabHost</code>, I get a NullPointerException. Inspection of <code>tabHost</code> shows that it is, in fact, null.</p>
+
+<p>Even a simple <code>tabHost.getCurrentTab()</code> crashes the whole thing. I would like to be able to switch tabs programmatically, but it isn't working. I've gone through dozens of threads and nothing seems to work out.</p>
+
+<p><strong>SectionsPagerAdapter</strong></p>
+
+<pre><code>import java.util.Locale;
+
+import android.content.Context;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.widget.TabHost;
+
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    protected Context mContext;
+
+    public SectionsPagerAdapter(Context context, FragmentManager fm) {
+        super(fm);
+        mContext = context;
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        switch(position){
+            case 0:
+                return new PunchCardFragment();
+            case 1:
+                return new CalendarFragment();
+        }
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return mContext.getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return mContext.getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>
+
+<p><strong>Gradle</strong></p>
+
+<pre><code>apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        applicationId "..."
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:21.0.3'
+}
+</code></pre>
+
+<p><strong>activity_main xml</strong></p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"/>
+</code></pre>

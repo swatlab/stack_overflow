@@ -1,0 +1,113 @@
+<p>So I am trying to make a simple Relative layout wich contains 3 Linear Layouts with TextViews, EditText and GridViews in them, but the last TextView is duplicated and is overlapping the previous GridView.</p>
+
+<p>The layout is used in a fragment which is added to an activity.
+For the GridViews I am using simple Adapters which return an ImageView for each item.</p>
+
+<p>Where is the extra TextView comming and why is overlapping the previous GridView?</p>
+
+<p>I've attached the layout code, adapter code and a screenshot for better understanding.</p>
+
+<p><strong>Layout code</strong>:
+    </p>
+
+<pre><code><LinearLayout
+    android:id="@+id/categoryNameGroup"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginStart="20dp"
+    android:layout_marginEnd="20dp">
+
+    <TextView
+        style="?android:attr/listSeparatorTextViewStyle"
+        android:id="@+id/categoryNameTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/name"/>
+
+    <EditText
+        android:id="@+id/categoryNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</LinearLayout>
+
+<LinearLayout
+    android:id="@+id/categoryIconGroup"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_below="@id/categoryNameGroup"
+    android:layout_alignParentLeft="true"
+    android:layout_marginStart="20dp"
+    android:layout_marginEnd="20dp">
+
+    <TextView
+        style="?android:attr/listSeparatorTextViewStyle"
+        android:id="@+id/categoryIconTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/icon"/>
+
+    <GridView
+        android:id="@+id/iconGridView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:horizontalSpacing="10dp"
+        android:verticalSpacing="10dp"
+        android:numColumns="4"/>
+</LinearLayout>
+
+<LinearLayout
+    android:id="@+id/categoryColorGroup"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/categoryIconGroup"
+    android:orientation="vertical"
+    android:layout_alignParentLeft="true"
+    android:layout_marginStart="20dp"
+    android:layout_marginEnd="20dp">
+
+    <TextView
+        style="?android:attr/listSeparatorTextViewStyle"
+        android:id="@+id/categoryColorTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/color"/>
+
+    <GridView
+        android:id="@+id/colorGridView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:horizontalSpacing="10dp"
+        android:verticalSpacing="10dp"
+        android:numColumns="4"/>
+</LinearLayout>
+</code></pre>
+
+<p></p>
+
+<p><strong>Adapter code</strong>:</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position].getCode());
+    return imageView;
+}
+</code></pre>
+
+<p><strong>Screenshot</strong>:
+<a href="https://drive.google.com/file/d/0B0TJ-ZEESqK3ZHE3cjVTMk1zMnM/edit?usp=sharing" rel="nofollow">https://drive.google.com/file/d/0B0TJ-ZEESqK3ZHE3cjVTMk1zMnM/edit?usp=sharing</a></p>
+
+<p><strong>UPDATE</strong>: Solved <br>
+<em>It seems the fragments createView method was called twice.</em></p>

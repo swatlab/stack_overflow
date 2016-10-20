@@ -1,0 +1,193 @@
+<p>I have an SQLite Database in android application, I am inserting data to a table named Favourite in this database like the following:</p>
+
+<pre><code>MySQLiteHelper helper = new MySQLiteHelper(context);
+                try {
+                    helper.createDataBase();
+                    helper.openDataBase();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                SQLiteDatabase db1 = helper.getWritableDatabase();
+                ContentValues contentValues = new ContentValues();
+                contentValues.put("TypeTitle", genericContents.getTitle());
+                contentValues.put("Title", genericContents.getTitle());
+                contentValues.put("ModuleID", genericContents.getModuleId());
+                contentValues.put("MainImage", genericContents.getMainImage());
+                db1.insert("Favourite", null, contentValues);
+
+                try {
+                    helper.closeDataBase();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } 
+</code></pre>
+
+<p>And my SQLite <strong>helper</strong> is the following:</p>
+
+<pre><code>public class MySQLiteHelper extends SQLiteOpenHelper {
+    public SQLiteDatabase myDataBase;
+    private final Context myContext;
+    private static final String DATABASE_NAME = "VADEnglish.sqlite";
+    public static String DATABASE_PATH = "";
+    public static final int DATABASE_VERSION = 7;
+
+    // public static final int DATABASE_VERSION_old = 1;
+
+    // Constructor
+    public MySQLiteHelper(Context context) {
+        super(context, Environment.getExternalStorageDirectory()+File.separator+"Vad"+
+                 File.separator + DATABASE_NAME, null, DATABASE_VERSION);
+//        if(android.os.Build.VERSION.SDK_INT >= 17){
+//            DATABASE_PATH = context.getApplicationInfo().dataDir + "/databases/";
+//        }
+//        else
+//        {
+//            DATABASE_PATH = "/data/data/" + context.getPackageName() + "/databases/";
+//        }
+        DATABASE_PATH = Environment.getExternalStorageDirectory()+File.separator +"Vad"+File.separator;
+        this.myContext = context;
+    }
+
+    // Create a empty database on the system
+    public void createDataBase() throws IOException {
+
+
+        boolean dbExist1 = checkDataBase();
+        if (!dbExist1) {
+            System.out.println("data base are not excist");
+            this.getReadableDatabase();
+            try {
+                this.close();
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    // Check database already exist or not
+    public boolean checkDataBase() {
+        boolean checkDB = false;
+        try {
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            File dbfile = new File(myPath);
+            checkDB = dbfile.exists();
+        } catch (SQLiteException e) {
+        }
+        return checkDB;
+    }
+
+    // Copies your database from your local assets-folder to the just created
+    // empty database in the system folder
+    private void copyDataBase() throws IOException {
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+        System.out.println("data base upgraded");
+    }
+
+    // delete database
+    public void db_delete() {
+        File file = new File(DATABASE_PATH + DATABASE_NAME);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
+    public Cursor query(String table, String[] columns, String selection,
+                        String[] selectionArgs, String groupBy, String having,
+                        String orderBy) {
+        return myDataBase.query("data_table", null, null, null, null, null,
+                null);
+
+    }
+
+    public Cursor qureyDatabase(String sql) {
+        Cursor cursor = myDataBase.rawQuery(sql, null);
+        return cursor;
+    }
+
+    // Open database
+    public void openDataBase() throws SQLException {
+        String myPath = DATABASE_PATH + DATABASE_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+    }
+
+    public synchronized void closeDataBase() throws SQLException {
+        if (myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (newVersion > oldVersion) {
+            try {
+              copyDataBase();
+            } catch (IOException e) {
+                System.out.println("data base couldn't be upgraded");
+            }
+
+        }
+    }
+
+}
+</code></pre>
+
+<p>I can insert to the table with the above code and view its contents in another activity with no troubles at all. However, when I restart the app I found that what I have inserted before I restart the application has gone!</p>
+
+<p>I am reading table contents like the following:</p>
+
+<pre><code>final MySQLiteHelper helper = new MySQLiteHelper(FavoriteList.this);
+        try {
+            helper.createDataBase();
+            helper.openDataBase();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        SQLiteDatabase db1 = helper.getWritableDatabase();
+
+        Cursor c = db1.rawQuery("SELECT * FROM Favourite", null);
+
+        if (c.moveToFirst()) {
+            while (!c.isAfterLast()) {
+                FavoriteListItemModel fav = new FavoriteListItemModel();
+
+                fav.setType(c.getString(0));
+                fav.setTitle(c.getString(1));
+                fav.setModule(c.getString(2));
+                fav.setImg(c.getString(3));
+
+                my_list.add(fav);
+
+                c.moveToNext();
+            }
+        }
+
+        try {
+            helper.closeDataBase();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+</code></pre>
+
+<p>Anybody can help me with this?</p>

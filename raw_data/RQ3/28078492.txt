@@ -1,0 +1,83 @@
+<p>I'm new to Java and Android Studio.</p>
+
+<p>I'm following this <a href="http://developer.android.com/guide/topics/ui/layout/gridview.html" rel="nofollow">tutorial</a>, trying to get a grid to work.</p>
+
+<p>I created a new barebones app.</p>
+
+<p>I followed the tutorial but I was getting an error in the following block.</p>
+
+<pre><code>public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    GridView gridview = (GridView) findViewById(R.id.gridview);
+    gridview.setAdapter(new ImageAdapter(this));
+
+    gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+            Toast.makeText(MainActivity.this, "" + position, Toast.LENGTH_SHORT).show();
+        }
+    });
+}
+</code></pre>
+
+<p>At this point, I was getting an error, saying that</p>
+
+<pre><code>? android.widget.adapterview.OnItemClickListener? (multiple choices) 
+</code></pre>
+
+<p>at which point I selected the first one and translated it to </p>
+
+<pre><code>new AdapterView.OnItemClickListener()
+</code></pre>
+
+<p>and the error went away.</p>
+
+<p>I had no other issues with the tutorial until I attempted to run it.  I got the following error</p>
+
+<pre><code> Caused by: java.lang.NullPointerException:
+ Attempt to invoke virtual method 'void android.widget.GridView.setAdapter
+ (android.widget.ListAdapter)' on a null object reference
+        at com.example.shiftedrec.myandroid.MainActivity.onCreate(MainActivity.java:24)
+</code></pre>
+
+<p>Line 24 refers to this:</p>
+
+<pre><code> gridview.setAdapter(new ImageAdapter(this));
+</code></pre>
+
+<p>So my assumption right now is that <code>(this)</code> is null.  That gets passed from here:</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+</code></pre>
+
+<p>What about this is null, and how do I fix the error?  Thanks for bearing with me.</p>
+
+<p><strong>Update</strong>
+I'll post the xml</p>
+
+<p>activity_main.xml</p>
+
+<pre><code><GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gridview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnWidth="90dp"
+    android:numColumns="auto_fit"
+    android:verticalSpacing="50dp"
+    android:horizontalSpacing="10dp"
+    android:stretchMode="columnWidth"
+    android:gravity="center"
+    />
+</code></pre>

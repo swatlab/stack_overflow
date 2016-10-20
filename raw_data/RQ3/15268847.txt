@@ -1,0 +1,63 @@
+<p>I have a list obtained after parsing the webservice response. I have created one customview using <code>BaseAdapter</code>. The problem I am facing is <em>I am not able to bind the data to the <code>ListView</code></em> using the customview I have created. Here is my custom view:</p>
+
+<pre><code>public class ItemListBaseAdapter extends BaseAdapter {
+
+    int layoutResourceId;  
+
+    private static List<Item> itemDetailsarrayList;
+
+
+    private LayoutInflater l_Inflater;
+
+    public ItemListBaseAdapter(Context context, List<Item> results) {
+        itemDetailsarrayList = results;
+        l_Inflater = LayoutInflater.from(context);
+    }
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = l_Inflater.inflate(R.layout.row_layout, null);
+            holder = new ViewHolder();
+            holder.txtTitle = (TextView) convertView.findViewById(R.id.textView1);         
+        convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txtTitle.setText(itemDetailsarrayList.get(position).getCity_name());
+        return convertView;
+     }
+
+     static class ViewHolder {   
+        TextView txtTitle;
+     }
+}
+</code></pre>
+
+<p>this is how I am trying to bind: </p>
+
+<pre><code>llstCities = Objparsecities.parse();
+ItemListBaseAdapter adapter = new ItemListBaseAdapter(this, lstCities);
+lstcities = (ListView)findViewById(R.id.listView1);
+lstcities.setAdapter(adapter);
+</code></pre>

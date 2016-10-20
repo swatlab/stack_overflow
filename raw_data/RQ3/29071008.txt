@@ -1,0 +1,153 @@
+<p>I am still learning java so just have a question. I have tabs and in each tab I have string-arrays showing the text data. At the moment, I have something like this, <code>showing different star names in a list view</code> but now I want to show the star name and a <code>little image</code> right next to it.</p>
+
+<p>How can I achieve this?</p>
+
+<pre><code>public class CelebActivity extends ActionBarActivity {
+
+private Toolbar toolbar;
+private ViewPager mPager;
+private SlidingTabLayout mTabs;
+
+@Override
+
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.celeb_layout);
+    toolbar = (Toolbar) findViewById(R.id.app_bar);
+    setSupportActionBar(toolbar);
+    getSupportActionBar().setHomeButtonEnabled(true);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+    mPager = (ViewPager) findViewById(R.id.viewPager);
+    mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+    mTabs = (SlidingTabLayout) findViewById(R.id.tabs);
+    mTabs.setDistributeEvenly(true);
+
+    mTabs.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+    mTabs.setSelectedIndicatorColors(getResources().getColor(R.color.colorAccent));
+    mTabs.setViewPager(mPager);
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    if (id == android.R.id.home) {
+        NavUtils.navigateUpFromSameTask(this);
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+private class MyPagerAdapter extends FragmentPagerAdapter {
+
+    String [] tabs;
+
+
+    public MyPagerAdapter(FragmentManager fm) {
+        super(fm);
+        tabs = getResources().getStringArray(R.array.tabs);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+
+        MyFragment myFragment = MyFragment.getInstance(position);
+
+        return myFragment;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+
+        {
+            return tabs[position];
+        }
+    }
+
+    @Override
+    public int getCount() {
+        return 5;
+    }
+}
+
+public static class MyFragment extends Fragment {
+    public static final String TAB_POSITION_KEY = "TAB_PORITION_KEY";
+    private ListView mainListView;
+    private ArrayAdapter<String> listAdapter;
+
+
+    public static MyFragment getInstance(int position) {
+
+        MyFragment myFragment = new MyFragment();
+        Bundle args = new Bundle();
+        args.putInt(TAB_POSITION_KEY, position);
+        myFragment.setArguments(args);
+        return myFragment;
+    }
+
+    @Override
+
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        View layout = inflater.inflate(R.layout.fragment_my, container, false);
+
+
+        Bundle bundel = getArguments();
+
+        int position = bundel.getInt(TAB_POSITION_KEY);
+
+        ArrayList<String> collection = new ArrayList<String>();
+
+        mainListView = (ListView) layout.findViewById(R.id.mainListView);
+
+        switch (position) {
+            case 0:
+
+
+                String[] planets = new String[]{"Venus", "Earth", "Mars",
+                        "Jupiter", "Saturn", "Uranus", "Neptune"};
+//                ArrayList<String> collection = new ArrayList<String>();
+                collection.addAll(Arrays.asList(planets));
+                break;
+
+            case 1:
+                String[] stars = new String[]{"Eridanus", "Cassiopeia", "Scorpius", "Crux",
+                        "Cancer", "Leo", "Canis Major", "Taurus"};
+//                ArrayList<String> starsList = new ArrayList<String>();
+                collection.addAll(Arrays.asList(stars));
+                break;
+
+            case 2:
+                String[] solarSystem = new String[]{"Inner Solar System", "Outer Solar System", "Trans-Neptunian region", "Farthest regions"};
+//                ArrayList<String> solarSystemList = new ArrayList<String>();
+                collection.addAll(Arrays.asList(solarSystem));
+                break;
+        }
+
+        listAdapter = new ArrayAdapter<String>(getActivity(), R.layout.simplerow, collection);
+        mainListView.setAdapter(listAdapter);
+        return layout;
+    }
+
+}
+
+}
+</code></pre>

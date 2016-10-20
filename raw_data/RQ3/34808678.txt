@@ -1,0 +1,241 @@
+<p>I want to create a sidebar using values fetch from my servers.
+But the values that I am trying to fetch from the method which holds the return value is causing error. I am unable to call this method.</p>
+
+<p>Here's the code:    </p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+
+    private ListView mDrawerList;
+    private DrawerLayout mDrawerLayout;
+    private ArrayAdapter<String> mAdapter;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private String mActivityTitle;
+    public String returnnumfromAsyncTask;
+    private TextView setTextValue;
+    private TextView textViewid;
+    private Button buttonHit;
+    private String var;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+
+        mDrawerList = (ListView)findViewById(R.id.navList);
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mActivityTitle = getTitle().toString();
+
+
+        addDrawerItems();
+        setupDrawer();
+
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        /*textViewid = (TextView)findViewById(R.id.textViewid);
+        buttonHit = (Button)findViewById(R.id.buttonHit);
+
+        buttonHit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new JSONTask().execute("http://xyz.co/tests/ems/query.php");
+            }
+        });*/
+
+    }
+
+
+    private void addDrawerItems() {
+        new JSONTask().execute("http://xyz.co/tests/ems/query.php");
+
+        JSONTask json = new JSONTask();
+        String myArray = json.myMethod();
+
+
+        String[] osArray = { "Android", "iOS", "Windows", "OS X", "Linux" };
+        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, osArray);
+        mDrawerList.setAdapter(mAdapter);
+
+
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(MainActivity.this, "Time for an upgrade!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+
+    private void setupDrawer() {
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getSupportActionBar().setTitle("Navigation!");
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getSupportActionBar().setTitle(mActivityTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+
+
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+
+        // Activate the navigation drawer toggle
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    public class JSONTask extends AsyncTask<String,String,String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+
+            try {
+                URL url = new URL(params[0]);
+                connection = (HttpURLConnection)url.openConnection();
+                connection.connect();
+//                    connecting to the url
+
+                //Reading the data in bytes stream
+                InputStream stream = connection.getInputStream();
+                reader = new BufferedReader(new InputStreamReader(stream));
+//Reading the data by creating a buffer
+                StringBuffer buffer = new StringBuffer();
+                String line="";
+                while((line = reader.readLine())!= null){
+                    buffer.append(line);
+                }
+
+                String finalJson = buffer.toString();
+                JSONObject parentObject = new JSONObject(finalJson);
+
+                List<String> list = new ArrayList<String>();
+                JSONArray array = parentObject.getJSONArray("kitten");
+                for(int i = 0 ; i < array.length() ; i++){
+                    list.add(array.getJSONObject(i).getString("if")+"\n");
+                }
+               /*String finalObject = parentObject.getString("name");
+
+                JSONArray parentArray = parentObject.getJSONArray("kitten");
+
+                StringBuffer finalBufferedData = new StringBuffer();
+                for(int i=0;i<parentArray.length();i++) {
+                    JSONObject finalObject = parentArray.getJSONObject(i);
+
+                    int curr = finalObject.getInt("name");
+                    //int bus = finalObject.getInt("bus");
+
+                    finalBufferedData.append(curr + "\n" );
+                }*/
+
+                //return finalBufferedData.toString();
+
+                return list.toString();
+//                    setting text view from the url
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } finally{
+                if(connection !=null) {
+                    connection.disconnect();
+                }
+
+                try {
+                    if (reader != null)
+                    {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            //textViewid.setText(result);
+            myMethod(result);
+        }
+
+        public String myMethod(String result){
+            return result;
+        }
+    }
+}
+</code></pre>
+
+<p>Notice the line: </p>
+
+<pre><code>String myArray = json.myMethod();
+</code></pre>
+
+<p>It tries to call a function myMethod() which returns a string value or rather an array which I get by executing asynctask. </p>
+
+<p>But somehow I am not able to call myMethod from JSON asynctask function.
+So my primary question is how to call a method which returns a value and thereby use it in my code?</p>
+
+<p>Thanks in advance</p>

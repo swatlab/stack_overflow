@@ -1,0 +1,532 @@
+<p>Trying to make an IOIO-OTG application and I am using a customized fragment activity. However the application crashes upon launch.</p>
+
+<p>If anyone is capable of offering insight as to why this is crashing upon launch I'd be super grateful!</p>
+
+<p>Thanks guys!</p>
+
+<pre><code>    package com.example.ioiofinal;
+
+import ioio.lib.api.AnalogInput;
+import ioio.lib.api.DigitalInput;
+import ioio.lib.api.DigitalOutput;
+import ioio.lib.api.PwmOutput;
+import ioio.lib.api.TwiMaster;
+import ioio.lib.api.exception.ConnectionLostException;
+import ioio.lib.util.BaseIOIOLooper;
+import ioio.lib.util.IOIOLooper;
+import ioio.lib.util.android.IOIOFragmentActivity;
+
+import java.util.Locale;
+
+
+import android.annotation.SuppressLint;
+import android.app.ActionBar;
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Switch;
+import android.widget.TableLayout;
+import android.widget.TextView;
+
+public class MainActivity extends IOIOFragmentActivity implements
+        ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            Fragment fragment = new DigitalFragment();
+            Bundle args = new Bundle();
+            args.putInt(DigitalFragment.ARG_SECTION_NUMBER, position + 1);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            case 2:
+                return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A dummy fragment representing a section of the app, but that simply
+     * displays dummy text.
+     */
+    public static class DigitalFragment extends Fragment {
+        public static final String ARG_SECTION_NUMBER = "Digital";
+        String TAG;
+        // Declare all the UI Variables
+        TableLayout centralDigitalTable;
+        View digitalfragmentview;
+
+        Switch digitalIO0Power;
+        Switch digitalIO1Power;
+        Switch digitalIO2Power;
+        Switch digitalIO3Power;
+        Switch digitalIO4Power;
+        Switch digitalIO5Power;
+        Switch digitalIO6Power;
+        Switch digitalIO7Power;
+        Switch digitalIO8Power;
+        Switch digitalIO9Power;
+
+        Switch digitalInput0Power;
+        Switch digitalInput1Power;
+        Switch digitalInput2Power;
+        Switch digitalInput3Power;
+
+        Switch[] digitalIOPowerSwitchArray = new Switch[10];
+        Switch[] digitalInputPowerSwitchArray = new Switch[4];
+
+        Context superContext;
+
+        public View onCreateView(LayoutInflater viewInflation, ViewGroup container,
+                Bundle SavedInstantState) {
+            superContext = getActivity().getApplicationContext();
+            digitalfragmentview = viewInflation.inflate(
+                    R.layout.digitalfragment_page, container, false);
+
+            digitalIO0Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio0power);
+            digitalIO1Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio1power);
+            digitalIO2Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio2power);
+            digitalIO3Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio3power);
+            digitalIO4Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio4power);
+            digitalIO5Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio5power);
+            digitalIO6Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio6power);
+            digitalIO7Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio7power);
+            digitalIO8Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio8power);
+            digitalIO9Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio9power);
+
+            digitalInput0Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput0power);
+            digitalInput1Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput1power);
+            digitalInput2Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput2power);
+            digitalInput3Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput3power);
+
+            centralDigitalTable = (TableLayout) digitalfragmentview
+                    .findViewById(R.id.digitalTable);
+
+            digitalInputPowerSwitchArray[0] = digitalInput0Power;
+            digitalIOPowerSwitchArray[0] = digitalIO0Power;
+            digitalInputPowerSwitchArray[1] = digitalInput1Power;
+            digitalIOPowerSwitchArray[1] = digitalIO1Power;
+            digitalInputPowerSwitchArray[2] = digitalInput2Power;
+            digitalIOPowerSwitchArray[2] = digitalIO2Power;
+            digitalInputPowerSwitchArray[3] = digitalInput3Power;
+            digitalIOPowerSwitchArray[3] = digitalIO3Power;
+            digitalIOPowerSwitchArray[4] = digitalIO4Power;
+            digitalIOPowerSwitchArray[5] = digitalIO5Power;
+            digitalIOPowerSwitchArray[6] = digitalIO6Power;
+            digitalIOPowerSwitchArray[7] = digitalIO7Power;
+            digitalIOPowerSwitchArray[8] = digitalIO8Power;
+            digitalIOPowerSwitchArray[9] = digitalIO9Power;
+
+            return digitalfragmentview;
+        }
+
+        // BEGIN SWITCH RELATED METHODS
+        public Switch getIOPowerSwitch(int index) {
+            return digitalIOPowerSwitchArray[index];
+        }
+
+        public Switch getInputPowerSwitch(int index) {
+            return digitalInputPowerSwitchArray[index];
+        }
+        // END SWITCH RELATED METHODS
+
+        public TableLayout getCentralDigitalTable() {
+            return centralDigitalTable;
+        }
+
+        public void setCentralDigitalTable(TableLayout centralDigitalTable) {
+            this.centralDigitalTable = centralDigitalTable;
+        }
+
+        public View getDigitalFragmentView() {
+            return digitalfragmentview;
+        }
+
+        public void setDigitalFragmentView(View digitalfragmentview) {
+            this.digitalfragmentview = digitalfragmentview;
+        }
+
+    }
+
+    class Looper extends BaseIOIOLooper {
+
+        DigitalFragment digfrag = new DigitalFragment();
+        /** The on-board LED. */
+        private DigitalOutput led_;
+
+        // TWI Corresponds to the pins with CLx and DAx
+        private TwiMaster t1;
+        private TwiMaster d1;
+        private TwiMaster t2;
+        private TwiMaster d2;
+
+        // Corresponds to UI Switches DO 0-11
+        private DigitalOutput DO1;
+        private DigitalOutput DO2;
+        private DigitalOutput DO3;
+        private DigitalOutput DO4;
+        private DigitalOutput DO5;
+        private DigitalOutput DO6;
+        private DigitalOutput DO7;
+        private DigitalOutput DO8;
+        private DigitalOutput DO9;
+        private DigitalOutput DO10;
+        private DigitalOutput DO11;
+        private DigitalOutput DO12;
+
+        // Corresponds to UI Switches DI 0-8
+        private DigitalInput DI1;
+        private DigitalInput DI2;
+        private DigitalInput DI3;
+        private DigitalInput DI4;
+        private DigitalInput DI5;
+        private DigitalInput DI6;
+        private DigitalInput DI7;
+        private DigitalInput DI8;
+        private DigitalInput DI9;
+
+        // PWM corresponds to pins 27-30
+        private PwmOutput PWM1;
+        private PwmOutput PWM2;
+        private PwmOutput PWM3;
+        private PwmOutput PWM4;
+
+        // Analog Inputs correspond to pins 31-46
+
+        private AnalogInput AI1;// 31
+        private AnalogInput AI2;// 32
+        private AnalogInput AI3;// 33
+        private AnalogInput AI4;// 34
+        private AnalogInput AI5;// 35
+        private AnalogInput AI6;
+        private AnalogInput AI7;
+        private AnalogInput AI8;
+        private AnalogInput AI9;
+        private AnalogInput AI10;
+        private AnalogInput AI11;
+        private AnalogInput AI12;
+        private AnalogInput AI13;
+        private AnalogInput AI14;
+        private AnalogInput AI15;
+        private AnalogInput AI16;
+
+        private DigitalOutput[] DOA = { DO1, DO2, DO3, DO4, DO5, DO6, DO7, DO8,
+                DO9, DO10, DO11, DO12 };
+
+        private DigitalInput[] DIA = { DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8,
+                DI9 };
+
+        private TwiMaster[] TWIA = { t1, d1, t2, d2 };
+
+        private PwmOutput[] PWMA = { PWM1, PWM2, PWM3, PWM4 };
+
+        private AnalogInput[] AIA = { AI1, AI2, AI3, AI4, AI5, AI6, AI7, AI8,
+                AI9, AI10, AI11, AI12, AI13, AI14, AI15, AI16 };
+
+        /**
+         * Called every time a connection with IOIO has been established.
+         * Typically used to open pins.
+         * 
+         * @throws ConnectionLostException
+         *             When IOIO connection is lost.
+         * 
+         * @see ioio.lib.util.AbstractIOIOActivity.IOIOThread#setup()
+         */
+        @Override
+        protected void setup() throws ConnectionLostException {
+            led_ = ioio_.openDigitalOutput(0, true);
+
+            for (int i = 0; i < DOA.length; i++) {
+                DOA[i] = ioio_.openDigitalOutput(i + 6);
+            }
+            for (int i = 0; i < DIA.length; i++) {
+                DIA[i] = ioio_.openDigitalInput(i + 18);
+            }
+            for (int i = 0; i < PWMA.length; i++) {
+                PWMA[i] = ioio_.openPwmOutput(i + 27, 10000);
+            }
+
+            for (int i = 0; i < AIA.length; i++) {
+                AIA[i] = ioio_.openAnalogInput(i + 31);
+            }
+            TWIA[0] = ioio_.openTwiMaster(1, TwiMaster.Rate.RATE_1MHz, false);
+            TWIA[1] = ioio_.openTwiMaster(2, TwiMaster.Rate.RATE_1MHz, false);
+            TWIA[2] = ioio_.openTwiMaster(4, TwiMaster.Rate.RATE_1MHz, false);
+            TWIA[3] = ioio_.openTwiMaster(5, TwiMaster.Rate.RATE_1MHz, false);
+        }
+
+        /**
+         * Called repetitively while the IOIO is connected.
+         * 
+         * @throws ConnectionLostException
+         *             When IOIO connection is lost.
+         * @throws InterruptedException
+         * 
+         * @see ioio.lib.util.AbstractIOIOActivity.IOIOThread#loop()
+         */
+        @SuppressLint("NewApi")
+        @Override
+        public void loop() throws ConnectionLostException {
+
+            for (int i = 0; i < DOA.length; i++) {
+                DOA[i].write(digfrag.getIOPowerSwitch(i).isChecked());
+            }
+        }
+    }
+
+    /**
+     * A method to create our IOIO thread.
+     * 
+     * @see ioio.lib.util.AbstractIOIOActivity#createIOIOThread()
+     */
+    @Override
+    protected IOIOLooper createIOIOLooper() {
+        return new Looper();
+    }
+
+}
+</code></pre>
+
+<p>This is my class and here is my logcat:</p>
+
+<pre><code>    03-05 13:40:17.276: D/dalvikvm(9803): Zygote::ForkAndSpecialize : 0
+03-05 13:40:17.282: D/dalvikvm(9803): zygote get new systemTid : 9803
+03-05 13:40:17.282: D/dalvikvm(9803): Late-enabling CheckJNI
+03-05 13:40:17.289: D/dalvikvm(9803): threadid=2: interp stack at 0x4ef97000
+03-05 13:40:17.299: D/dalvikvm(9803): threadid=3: interp stack at 0x4f09f000
+03-05 13:40:17.300: D/jdwp(9803): prepping for JDWP over ADB
+03-05 13:40:17.300: D/jdwp(9803): ADB transport startup
+03-05 13:40:17.300: D/dalvikvm(9803): Elevating priority from 0 to -8
+03-05 13:40:17.301: D/dalvikvm(9803): threadid=4: interp stack at 0x4f1a7000
+03-05 13:40:17.301: D/jdwp(9803): JDWP: thread running
+03-05 13:40:17.301: D/jdwp(9803): acceptConnection
+03-05 13:40:17.301: D/jdwp(9803): trying to receive file descriptor from ADB
+03-05 13:40:17.301: D/dalvikvm(9803): threadid=5: interp stack at 0x518ae000
+03-05 13:40:17.301: D/dalvikvm(9803): zygote get thread init done
+03-05 13:40:17.302: D/dalvikvm(9803): create interp thread : stack size=32KB
+03-05 13:40:17.302: D/dalvikvm(9803): create new thread
+03-05 13:40:17.302: D/dalvikvm(9803): new thread created
+03-05 13:40:17.302: D/dalvikvm(9803): update thread list
+03-05 13:40:17.309: D/jdwp(9803): received file descriptor 36 from ADB
+03-05 13:40:17.309: D/dalvikvm(9803): threadid=6: interp stack at 0x518b6000
+03-05 13:40:17.309: D/dalvikvm(9803): threadid=6: created from interp
+03-05 13:40:17.309: D/dalvikvm(9803): start new thread
+03-05 13:40:17.309: D/dalvikvm(9803): create interp thread : stack size=32KB
+03-05 13:40:17.309: D/dalvikvm(9803): create new thread
+03-05 13:40:17.309: D/dalvikvm(9803): new thread created
+03-05 13:40:17.309: D/dalvikvm(9803): update thread list
+03-05 13:40:17.309: D/dalvikvm(9803): threadid=6: notify debugger
+03-05 13:40:17.309: D/dalvikvm(9803): threadid=6 (ReferenceQueueDaemon): calling run()
+03-05 13:40:17.314: D/jdwp(9803): processIncoming
+03-05 13:40:17.322: D/jdwp(9803): processIncoming
+03-05 13:40:17.322: D/jdwp(9803): handlePacket : cmd=0x1, cmdSet=0xC7, len=0x13, id=0x40000164, flags=0x0, dataLen=0x8
+03-05 13:40:17.324: D/jdwp(9803): processIncoming
+03-05 13:40:17.324: D/jdwp(9803): handlePacket : cmd=0x1, cmdSet=0xC7, len=0x17, id=0x40000165, flags=0x0, dataLen=0xC
+03-05 13:40:17.326: D/jdwp(9803): processIncoming
+03-05 13:40:17.326: D/jdwp(9803): handlePacket : cmd=0x1, cmdSet=0xC7, len=0x13, id=0x40000166, flags=0x0, dataLen=0x8
+03-05 13:40:17.328: D/jdwp(9803): processIncoming
+03-05 13:40:17.328: D/jdwp(9803): handlePacket : cmd=0x1, cmdSet=0xC7, len=0x13, id=0x40000167, flags=0x0, dataLen=0x8
+03-05 13:40:17.330: D/dalvikvm(9803): threadid=7: interp stack at 0x519be000
+03-05 13:40:17.331: D/dalvikvm(9803): threadid=7: created from interp
+03-05 13:40:17.331: D/dalvikvm(9803): start new thread
+03-05 13:40:17.331: D/dalvikvm(9803): create interp thread : stack size=32KB
+03-05 13:40:17.331: D/dalvikvm(9803): create new thread
+03-05 13:40:17.331: D/dalvikvm(9803): new thread created
+03-05 13:40:17.331: D/dalvikvm(9803): update thread list
+03-05 13:40:17.331: D/dalvikvm(9803): threadid=7: notify debugger
+03-05 13:40:17.331: D/dalvikvm(9803): threadid=7 (FinalizerDaemon): calling run()
+03-05 13:40:17.334: D/dalvikvm(9803): threadid=8: interp stack at 0x51ac6000
+03-05 13:40:17.334: D/dalvikvm(9803): threadid=8: created from interp
+03-05 13:40:17.334: D/dalvikvm(9803): start new thread
+03-05 13:40:17.335: D/Zygote(9803): fork pid : 0
+03-05 13:40:17.342: D/dalvikvm(9803): threadid=8: notify debugger
+03-05 13:40:17.342: D/dalvikvm(9803): threadid=8 (FinalizerWatchdogDaemon): calling run()
+03-05 13:40:17.350: D/dalvikvm(9803): threadid=9: interp stack at 0x51ecc000
+03-05 13:40:17.351: D/dalvikvm(9803): threadid=10: interp stack at 0x51fd4000
+03-05 13:40:17.351: D/jdwp(9803): sendBufferedRequest : len=0x39
+03-05 13:40:17.371: E/Trace(9803): error opening trace file: No such file or directory (2)
+03-05 13:40:17.371: D/jdwp(9803): sendBufferedRequest : len=0x41
+03-05 13:40:17.380: D/dalvikvm(9803): open_cached_dex_file : /data/app/com.example.ioiofinal-1.apk /data/dalvik-cache/data@app@com.example.ioiofinal-1.apk@classes.dex
+03-05 13:40:17.382: D/ActivityThread(9803): BIND_APPLICATION handled : 0 / AppBindData{appInfo=ApplicationInfo{41433ff8 com.example.ioiofinal}}
+03-05 13:40:17.386: D/IOIOConnectionRegistry(9803): Successfully added bootstrap class: ioio.lib.impl.SocketIOIOConnectionBootstrap
+03-05 13:40:17.388: I/dalvikvm(9803): Could not find method com.android.future.usb.UsbManager.getInstance, referenced from method ioio.lib.android.accessory.Adapter.getManagerLegacy
+03-05 13:40:17.388: W/dalvikvm(9803): VFY: unable to resolve static method 5092: Lcom/android/future/usb/UsbManager;.getInstance (Landroid/content/Context;)Lcom/android/future/usb/UsbManager;
+03-05 13:40:17.388: D/dalvikvm(9803): VFY: replacing opcode 0x71 at 0x0000
+03-05 13:40:17.389: D/IOIOConnectionRegistry(9803): Successfully added bootstrap class: ioio.lib.android.accessory.AccessoryConnectionBootstrap
+03-05 13:40:17.390: D/IOIOConnectionRegistry(9803): Successfully added bootstrap class: ioio.lib.android.bluetooth.BluetoothIOIOConnectionBootstrap
+03-05 13:40:17.392: D/IOIOConnectionRegistry(9803): Successfully added bootstrap class: ioio.lib.android.device.DeviceConnectionBootstrap
+03-05 13:40:17.402: V/DeviceConnectionBootstrap(9803): onCreate()
+03-05 13:40:17.446: D/dalvikvm(9803): GC_FOR_ALLOC freed 88K, 11% free 6295K/7027K, paused 14ms, total 14ms
+03-05 13:40:17.450: I/dalvikvm-heap(9803): Grow heap (frag case) to 7.694MB for 1536016-byte allocation
+03-05 13:40:17.486: D/dalvikvm(9803): GC_CONCURRENT freed 1K, 10% free 7794K/8567K, paused 16ms+1ms, total 36ms
+03-05 13:40:17.486: D/dalvikvm(9803): WAIT_FOR_CONCURRENT_GC blocked 19ms
+03-05 13:40:17.526: D/AccessoryIOIOConnection(9803): No accessory found.
+03-05 13:40:17.526: V/DeviceConnectionBootstrap(9803): open()
+03-05 13:40:17.526: V/DeviceConnectionBootstrap(9803): state <= WAIT_DEVICE_ATTACHED
+03-05 13:40:17.528: E/BluetoothIOIOConnectionDiscovery(9803): Did you forget to declare uses-permission of android.permission.BLUETOOTH?
+03-05 13:40:17.529: D/AndroidRuntime(9803): Shutting down VM
+03-05 13:40:17.529: W/dalvikvm(9803): threadid=1: thread exiting with uncaught exception (group=0x40e15908)
+03-05 13:40:17.532: E/AndroidRuntime(9803): FATAL EXCEPTION: main
+03-05 13:40:17.532: E/AndroidRuntime(9803): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.ioiofinal/com.example.ioiofinal.MainActivity}: java.lang.SecurityException: Need BLUETOOTH permission: Neither user 10094 nor current process has android.permission.BLUETOOTH.
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2184)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2211)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.ActivityThread.access$600(ActivityThread.java:149)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1300)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.os.Handler.dispatchMessage(Handler.java:99)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.os.Looper.loop(Looper.java:153)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.ActivityThread.main(ActivityThread.java:4987)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at java.lang.reflect.Method.invokeNative(Native Method)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at java.lang.reflect.Method.invoke(Method.java:511)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:821)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:584)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at dalvik.system.NativeStart.main(Native Method)
+03-05 13:40:17.532: E/AndroidRuntime(9803): Caused by: java.lang.SecurityException: Need BLUETOOTH permission: Neither user 10094 nor current process has android.permission.BLUETOOTH.
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.os.Parcel.readException(Parcel.java:1425)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.os.Parcel.readException(Parcel.java:1379)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.bluetooth.IBluetooth$Stub$Proxy.getBluetoothState(IBluetooth.java:980)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.bluetooth.BluetoothAdapter.getState(BluetoothAdapter.java:462)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.bluetooth.BluetoothAdapter.getBondedDevices(BluetoothAdapter.java:793)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.android.bluetooth.BluetoothIOIOConnectionBootstrap.getFactories(BluetoothIOIOConnectionBootstrap.java:64)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.util.IOIOConnectionRegistry.getConnectionFactories(IOIOConnectionRegistry.java:76)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.util.IOIOConnectionManager.createAllThreads(IOIOConnectionManager.java:97)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.util.IOIOConnectionManager.start(IOIOConnectionManager.java:64)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.util.android.AndroidIOIOConnectionManager.start(AndroidIOIOConnectionManager.java:90)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.util.android.IOIOAndroidApplicationHelper.start(IOIOAndroidApplicationHelper.java:87)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at ioio.lib.util.android.IOIOFragmentActivity.onStart(IOIOFragmentActivity.java:104)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.Instrumentation.callActivityOnStart(Instrumentation.java:1166)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.Activity.performStart(Activity.java:5030)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2157)
+03-05 13:40:17.532: E/AndroidRuntime(9803):     ... 11 more
+03-05 13:40:19.055: I/Process(9803): Sending signal. PID: 9803 SIG: 9
+</code></pre>

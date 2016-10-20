@@ -1,0 +1,223 @@
+<p>I have an app that has a database 'Contact.db' in the assets folder. I am trying to use it to populate my second spinner. But the app crashes and the main error shown is no such table exists</p>
+
+<p>DataBaseHelper.java</p>
+
+<pre><code>package com.example.testspinner;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataBaseHelper extends SQLiteOpenHelper {
+    // The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.example.testspinner/databases/";
+    private static String DB_NAME = "Contact";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+
+    public DataBaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+            // do nothing - database already exist
+        } else {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error(e.toString());
+            }
+        }
+    }
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+            // database does't exist yet.
+        }
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException {
+        // Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+    }
+    @Override
+    public synchronized void close() {
+        if (myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    public List<String> getAllData() {
+        List<String> set = new ArrayList<String>();
+        String selectQuery = "select reg_name from " + "regions";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                set.add(cursor.getString(1));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return set;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+}
+</code></pre>
+
+<p>MainActivity.java:</p>
+
+<pre><code>package com.example.testspinner;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+
+public class MainActivity extends Activity implements OnItemSelectedListener {
+    Spinner s1, s2;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        s1 = (Spinner) findViewById(R.id.countries);
+        s2 = (Spinner) findViewById(R.id.region);
+        s1.setOnItemSelectedListener(this);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this, R.array.Countries, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        s1.setAdapter(adapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2,
+            long arg3) {
+        List<String> list = new ArrayList<String>();
+        if (s1.getSelectedItem().equals("India")) {
+            DataBaseHelper db = new DataBaseHelper(this);
+            try {
+                db.createDataBase();
+                db.openDataBase();
+                list = db.getAllData();
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_spinner_item, list);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                s2.setAdapter(adapter);
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                throw new RuntimeException(e);
+                //e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p>logcat:</p>
+
+<pre><code>05-28 12:04:12.144: E/AndroidRuntime(11965): FATAL EXCEPTION: main
+05-28 12:04:12.144: E/AndroidRuntime(11965): android.database.sqlite.SQLiteException: no such table: regions: , while compiling: select reg_name from regions
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:68)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteProgram.compileSql(SQLiteProgram.java:143)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteProgram.compileAndbindAllArgs(SQLiteProgram.java:361)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:127)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:94)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:53)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:47)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1564)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.database.sqlite.SQLiteDatabase.rawQuery(SQLiteDatabase.java:1538)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at com.example.testspinner.DataBaseHelper.getAllData(DataBaseHelper.java:95)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at com.example.testspinner.MainActivity.onItemSelected(MainActivity.java:48)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.widget.AdapterView.fireOnSelected(AdapterView.java:882)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.widget.AdapterView.access$200(AdapterView.java:48)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.widget.AdapterView$SelectionNotifier.run(AdapterView.java:848)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.os.Handler.handleCallback(Handler.java:605)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.os.Handler.dispatchMessage(Handler.java:92)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.os.Looper.loop(Looper.java:137)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at android.app.ActivityThread.main(ActivityThread.java:4441)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at java.lang.reflect.Method.invokeNative(Native Method)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at java.lang.reflect.Method.invoke(Method.java:511)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+05-28 12:04:12.144: E/AndroidRuntime(11965):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

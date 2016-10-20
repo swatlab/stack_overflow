@@ -1,0 +1,164 @@
+<p>I am developing an app with navigation drawer and fragments but I can't seem to resolve one error.</p>
+
+<p>I have a error in <code>FragmentTransaction</code> method <code>replace(int,Fragment)</code> . It is showing The method <code>replace(int, Fragment)</code> in the type <code>FragmentTransaction</code> is not applicable for the arguments <code>(int, MyFragment)</code>.</p>
+
+<p><code>MyFragment</code> is a custom fragment.</p>
+
+<pre><code>import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+@SuppressWarnings("deprecation")
+public class MainActivity extends ActionBarActivity implements OnItemClickListener {
+
+    private DrawerLayout drawerlayout;
+    private ListView listview;
+    private String[] planets;
+    private ActionBarDrawerToggle drawerlistener;
+    private ActionBar actionBar;    
+    private FragmentTransaction fragmenttransaction;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        drawerlayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        listview = (ListView) findViewById(R.id.list);
+        planets = getResources().getStringArray(R.array.planets);
+        listview.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        listview.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_activated_1, planets));
+        listview.setOnItemClickListener(this);
+        drawerlistener = new ActionBarDrawerToggle(this, drawerlayout, R.drawable.ic_drawer, R.string.drawer_open);
+
+        drawerlayout.setDrawerListener(drawerlistener);
+        actionBar = getSupportActionBar();
+        actionBar.setHomeButtonEnabled(true);
+        //getSupportActionBar().setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        FragmentManager fragmentmanager = getSupportFragmentManager();
+        fragmenttransaction = fragmentmanager.beginTransaction();
+        loadSelection(0);
+    }
+
+    private void loadSelection(int i) {
+        // TODO Auto-generated method stub
+        listview.setItemChecked(i, true);
+        if(i==1)
+        {
+            MyFragment fragment1 = new MyFragment();
+            fragmenttransaction.replace(R.id.main, fragment1);
+            fragmenttransaction.commit();
+        }
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onPostCreate(savedInstanceState);
+        drawerlistener.syncState();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (drawerlistener.onOptionsItemSelected(item)) {
+              return true;
+            }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        // TODO Auto-generated method stub
+
+        switch (position) {
+        case 0:
+
+            break;
+
+        case 1:
+
+            break;
+
+        case 3:
+
+            break;
+        default:
+            break;
+        }
+        drawerlayout.closeDrawer(listview);
+    }
+}
+</code></pre>
+
+<p></p>
+
+<p>And the MyFragment.java is here:</p>
+
+<pre><code>package com.example.test3;
+import android.app.Activity;
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class MyFragment extends Fragment
+ {
+   public MyFragment(){
+
+    }
+    @SuppressWarnings({ "deprecation" })
+    @Override
+    public void onAttach(Activity activity) {
+        // TODO Auto-generated method stub
+        super.onAttach(activity);
+    }
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+    }
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        //return super.onCreateView(inflater, container, savedInstanceState);
+        return inflater.inflate(R.layout.fragment1, container, false);
+    }
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onActivityCreated(savedInstanceState);
+    }
+    @Override
+    public void onDestroy() {
+        // TODO Auto-generated method stub
+        super.onDestroy();
+    }
+}
+</code></pre>

@@ -1,0 +1,50 @@
+<p>I have implemented a search feature for one of my project using <strong>ActionBar Sherlock</strong>. So now I have the search edit text on the ActionBar like in the samples of the official AB sherlock project repo (on github) : <a href="https://github.com/JakeWharton/ActionBarSherlock/blob/master/samples/demos/src/com/actionbarsherlock/sample/demos/CollapsibleActionItem.java" rel="nofollow">Collapsible action items</a></p>
+
+<p>My search edit text is filtering a ListView within the activity. When the user starts to type in some characters, the ListView gets filtered. I did it by adding a textWatcher to the search Edit text like this : </p>
+
+<pre><code>  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    super.onCreateOptionsMenu(menu);
+
+    menu.add(Menu.NONE, SEARCH_ACTION_MENU, 0, "Search")
+        .setIcon(R.drawable.ic_search)
+        .setActionView(R.layout.search_edittext)
+        .setShowAsAction(
+            MenuItem.SHOW_AS_ACTION_ALWAYS
+                | MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+
+    /** We get a reference to the search edit */
+    MenuItemWrapper menuItemWrapper = (MenuItemWrapper) menu.getItem(0);
+    final EditText searchEdit = (EditText) menuItemWrapper.getActionView();
+    /** We add a listener search filter listener */
+    searchEdit.addTextChangedListener(filterWatcher); // filterwatcher is a textWatcher
+    return true;
+  }
+</code></pre>
+
+<p>When I click on the search icon, the search Edit Text is shown and the user can start to type in things. Also, the home button is displayed as an "Up Home button" (with the left arrow).</p>
+
+<p>Clicking on this arrow will make the search text view disappear but if the user has already started to type in things, the List View is filtered and is not reset when the search Text View is not visible anymore after the user clicks on the home "Up" button.</p>
+
+<p><strong>My question is</strong> : how can I intercept click on the <strong>"Up"</strong> button to reset my List View ? I think this is the only way I can reset my list.</p>
+
+<p>I have already tried :</p>
+
+<pre><code>@Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case android.R.id.home:
+        Log.d(Constants.LOG_TAG, "Home button clicked");
+        return true;
+
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
+</code></pre>
+
+<p>It is not working when the "Home button" is displayed as "Up" button.</p>
+
+<p>any help would be appreciated.</p>
+
+<p>thanks in advance,</p>

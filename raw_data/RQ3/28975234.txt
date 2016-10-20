@@ -1,0 +1,23 @@
+<p>tl;dr: How do I cast an object with type parameters without incurring an 'unchecked cast' warning? i.e:</p>
+
+<pre><code>List<Foo> bar = (List<Foo>) obj;
+</code></pre>
+
+<p>The compiler is giving me an 'unchecked cast' warning about the following code. How do I fix the warning? Placing a <code>@SuppressWarnings("unchecked")</code> before the cast would represent the saddest of solutions.</p>
+
+<pre><code>public class Container<V> {
+    public V getV();
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Container<V> other = (Container<V>) obj;
+        return this.getV().equals(other.getV());
+    }
+}
+</code></pre>

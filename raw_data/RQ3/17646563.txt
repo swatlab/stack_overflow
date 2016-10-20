@@ -1,0 +1,61 @@
+<p>I have a background resource with the dimensions of 854 x 480 (The exact screen resolution of my test phone).  When I load this resource into my app, it is scaled out of proportion.  I have searched through here and tried some of the suggestions, but for some crazy reason, it will not scale to the appropriate size.  </p>
+
+<p>Being that the resource is the same size as the screen, I'm not sure why it is increasing the size of the background resource.  It scales it up to 1281 x 720 and I do not know why.</p>
+
+<p>The code where the conversion happens is:</p>
+
+<pre><code>public Sprite newSpriteLargeResource(Resources res, SpriteFormat format,
+        int resId, int reqWidth, int reqHeight) {
+
+    Options options = new Options();
+
+    options.inJustDecodeBounds = true;
+
+    Bitmap bitmap = null;
+
+    options.inSampleSize = calculateSample(options, reqWidth, reqHeight);
+    options.inJustDecodeBounds = false;
+
+    bitmap = BitmapFactory.decodeResource(res, resId, options);
+
+    Matrix m = new Matrix();
+    RectF inRect = new RectF(0, 0, bitmap.getWidth(), bitmap.getHeight());
+    RectF outRect = new RectF(0, 0, reqWidth, reqHeight);
+    boolean scaled;
+    scaled = m.setRectToRect(inRect, outRect, Matrix.ScaleToFit.CENTER);
+    if (scaled) {
+        float[] bmpValues = new float[9];
+        m.getValues(bmpValues);
+        Bitmap.createScaledBitmap(bitmap,
+                (int) ((bitmap.getWidth() * bmpValues[0])),
+                (int) ((bitmap.getHeight() * bmpValues[4])), true);
+    }else{
+        Bitmap.createScaledBitmap(bitmap, reqWidth, reqHeight, true);
+    }
+
+
+    return new AndroidSprite(bitmap, format);
+}
+
+private int calculateSample(Options options, int reqWidth, int reqHeight) {
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+
+        final int heightRatio = Math.round((float) height
+                / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+
+}
+</code></pre>
+
+<p>You may notice multiple versions of the scaling.  The only reason I kept the code like this is to show that I have tried multiple versions of the scaling and all of them have not worked like I had hoped.  I know the problem lies somewhere in these two methods as I have another method for non-background resources and they work fine.  The only reason I am using this one is for larger image files to avoid having an Out of Memory exception.</p>

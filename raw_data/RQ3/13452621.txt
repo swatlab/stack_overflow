@@ -1,0 +1,493 @@
+<p>I am a new Android developer. I'm working with a Latin font in my app but I can't get it to work and keep getting a <code>?</code> for the character. My code is below, using an sqlite database.I have to fetch text from an Sqlite database and every special Latin character (i.e. à, ò, ù, è...) was displayed with black squares with a "?" inside.</p>
+
+<p>How can i display this correctly?</p>
+
+<pre><code>private void displayTestQuestion() {
+    resetEverything();
+    stats.setText(Integer.toString(totalRightQuestions)+"/"+Integer.toString(totalNumberOfQuestions));
+
+    String questionText = questionCursor.getString(0);
+    question.setText(Html.fromHtml(questionText));
+    adjectiveNumber = questionCursor.getString(1);
+    adjectiveCase = questionCursor.getString(3);
+    adjectiveGender = questionCursor.getString(2);
+}
+</code></pre>
+
+<p>My emulator screen:</p>
+
+<p><img src="http://i.stack.imgur.com/aeuQX.png" alt="enter image description here"> </p>
+
+<p>I've also tried this code:</p>
+
+<pre><code>private void displayTestQuestion() {
+    resetEverything();
+    stats.setText(Integer.toString(totalRightQuestions)+"/"+Integer.toString(totalNumberOfQuestions));
+
+    String questionText = questionCursor.getString(0);
+    Typeface font = Typeface.createFromAsset(questionCursor.getString(0), "fonts/LATINWD.TTF");
+    //question.setText(Html.fromHtml(questionText));
+    question.setText((CharSequence) font);
+    adjectiveNumber = questionCursor.getString(1);
+    adjectiveCase = questionCursor.getString(3);
+    adjectiveGender = questionCursor.getString(2);
+}
+</code></pre>
+
+<p>But this is giving me the following error:</p>
+
+<blockquote>
+  <p>The method createFromAsset(AssetManager, String) in the type Typeface is not applicable for the arguments (String, String).</p>
+</blockquote>
+
+<p>And i used Sqlitehelper class my code is below:</p>
+
+<pre><code>public class VocabTesterDatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "data/data/com.VoacabTester/databases/";
+
+    private static String DB_NAME = "vocabdb.db";
+
+    private SQLiteDatabase vocabDatabase;
+
+    private final Context vocabContext;
+
+    public VocabTesterDatabaseHelper(Context context) {
+        super(context, DB_NAME, null, 3);
+        this.vocabContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+
+        } else {
+            this.getReadableDatabase();
+            copyDataBase();
+        }
+
+    }
+
+    private boolean checkDataBase() {
+
+        File dbFile = new File(DB_PATH + DB_NAME);
+        return dbFile.exists();
+    }
+
+    private void copyDataBase() throws IOException {
+        try {
+
+            InputStream myInput = vocabContext.getAssets().open(DB_NAME);
+            String outFileName = DB_PATH + DB_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        } catch (IOException e) {
+            Log.v("data", e.toString().concat("sql"));
+        }
+    }
+
+    public void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        vocabDatabase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    public Cursor getFoundationTierQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FoundationTierVocabularyQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    };
+
+    public Cursor getHigherTierQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM HigherTierQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyFirstConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions1stConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasySecondConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions2ndConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyThirdConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions3rdConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyFourthConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestions4thConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyMixConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM VerbQuestionsallConjugation ORDER BY Random()",
+                null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getEasyIrregularConjugationVerbs() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM IrregularVerbsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getFirstDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FirstDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getSecondDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM SecondDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getThirdDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM ThirdDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getFourthDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FourthDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getFifthDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM FifthDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getNounsAllDeclensionNounsQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM NounsDeclensionNounsQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getis_ea_idQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IsEaIdQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor gethic_haec_hocQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM HicHaecHocQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getille_illa_illudQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IlleIllaIlludQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getqui_quae_quodQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM QuiQuaeQuodQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getIdem_eadem_idemQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IdemEademIdemQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getipse_ipsa_ipsumQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IpseIpsaIpsumQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getalius_alia_aliudQuestions() {
+        Cursor cur;
+        cur = vocabDatabase
+                .rawQuery(
+                        "SELECT * FROM AliusAliaAliudQuestions ORDER BY Random()",
+                        null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAdjectiveQuestions() {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM AdjectivesQuestions ORDER BY Random()", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerFirstDeclensionNounsQuestion(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM FirstDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getSAnswerecondDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM SecondDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerThirdDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM ThirdDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerFourthDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM FourthDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerFifthDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM FifthDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerNounsAllDeclensionNounsQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM NounsDeclensionNounsQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnsweris_ea_idQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IsEaIdQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerhic_haec_hocQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM HicHaecHocQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerille_illa_illudQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IlleIllaIlludQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerqui_quae_quodQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM QuiQuaeQuodQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerIdem_eadem_idemQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IdemEademIdemQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnsweripse_ipsa_ipsumQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM IpseIpsaIpsumQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnsweralius_alia_aliudQuestions(String question) {
+        Cursor cur;
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM AliusAliaAliudQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    public Cursor getAnswerAdjectiveQuestions(String question) {
+        Cursor cur;
+
+        cur = vocabDatabase.rawQuery(
+                "SELECT * FROM AdjectivesQuestions WHERE Question LIKE '"
+                        + question + "'", null);
+
+        cur.moveToFirst();
+        vocabDatabase.close();
+        return cur;
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if (vocabDatabase != null)
+            vocabDatabase.close();
+
+        super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>

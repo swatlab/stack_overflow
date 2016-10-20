@@ -1,0 +1,128 @@
+<p>I read many more realted to this problem but not getting more idea. After this, i am trying to post, here in this picture I have 3 items on list, I have 2 item click. So I want to delete these two checked item. But i am the newbie for android, So could not get more idea behind this.</p>
+
+<blockquote>
+  <p>Code</p>
+</blockquote>
+
+<pre><code> public class CountryList extends Activity implements OnClickListener,
+    OnItemClickListener {
+private static class EfficientAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+
+    public EfficientAdapter(Context context) {
+        mInflater = LayoutInflater.from(context);
+
+    }
+
+    public int getCount() {
+        return tempCountry.length;
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = mInflater.inflate(R.layout.bookmarks_list_item,
+                    null);
+            holder = new ViewHolder();
+            holder.text1 = (TextView) convertView
+                    .findViewById(R.id.country);
+
+            holder.checkBox = (CheckedTextView) convertView
+                    .findViewById(android.R.id.checkbox);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+        holder.txtcnt.setText(country[position]);
+        return convertView;
+    }
+    static class ViewHolder {
+        TextView txtcnt;
+        CheckBox checkBox;
+    }}
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.bokmarksjoks);
+
+    try {
+        db = (new DatabaseHelper(this)).getWritableDatabase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    lv = (ListView) findViewById(R.id.list);
+            btn_delete = (Button) findViewById(R.id.delete);
+    btn_delete.setOnClickListener(this);
+    checkbox = (CheckBox) findViewById(R.id.checkbox);
+    txtname= (TextView) findViewById(R.id.body);
+
+    String name= pref.getString("name", "");
+    country= name.split(",");
+
+    lv.setAdapter(new EfficientAdapter(this));
+
+    lv.setItemsCanFocus(false);
+    lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
+    lv.setOnItemClickListener(this);
+        }
+
+public void onClick(View v) {
+    switch (v.getId()) {
+    case R.id.delete:
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder .setMessage("Are you Sure want to delete checked country ?")
+                .setCancelable(false)
+                .setPositiveButton("Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,
+                                    int id) {
+                                // how to remove country
+
+                            }
+                        })
+                .setNegativeButton("No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,
+                                    int id) {
+                                dialog.cancel();
+                            }
+                        });
+        AlertDialog alert = builder.create();
+        alert.setTitle("Delete Country");
+        alert.show();
+    case R.id.checkbox:
+     //What is the procedue in this section
+    default:
+        break;
+    }
+}
+public void onItemClick(AdapterView<?> pareant, View view, int position,
+        long id) {
+
+    try {
+        // I have trying this but could not proper output or only errors
+                 SparseBooleanArray sp = lv.getCheckedItemPositions();
+        /*String str = "";
+        for (int i = 0; i < sp.size(); i++) {
+            str += country[sp.keyAt(i)] + ",";
+
+        }*/
+
+    } catch (Exception e) {
+        e.printStackTrace();
+}}}
+</code></pre>
+
+<p>This is the only three country, actually, I have more then hundreds countries.</p>

@@ -1,0 +1,238 @@
+<p>I'm getting a Force Close when I launch the Gallery Fragment. It's not the code from the <a href="http://stackoverflow.com/questions/20768766/gallery-in-a-fragment/20768841?noredirect=1#comment31140028_20768841/">Gallery</a> since <a href="http://stackoverflow.com/users/653856/raghunandan/%20Raghunandan">Ranghunandan</a> showed me what was wrong there. I think (but I'm not sure) it's within the ImageAdapter. I'll also post the LogCat </p>
+
+<p>Here's the Java Code</p>
+
+<pre><code>import java.lang.ref.WeakReference;
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.support.v4.util.LruCache;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter {
+
+  private static final String TAG = "ImageAdapter";
+
+  private Context mContext;
+
+  public static final Integer[] TATTOOS = {
+        R.drawable.tattoo1, R.drawable.tattoo2,
+        R.drawable.tattoo3, R.drawable.tattoo4,
+        R.drawable.tattoo5, R.drawable.tattoo6,
+        R.drawable.tattoo7, R.drawable.tattoo8,
+        R.drawable.tattoo9, R.drawable.tattoo10,
+       /* R.drawable.tattoo11, R.drawable.tattoo12,
+        R.drawable.tattoo13, R.drawable.tattoo14,
+        R.drawable.tattoo15, R.drawable.tattoo16,
+        R.drawable.tattoo17, R.drawable.tattoo18,
+        R.drawable.tattoo19, R.drawable.tattoo20,
+        R.drawable.tattoo21, R.drawable.tattoo22,
+        R.drawable.tattoo23, R.drawable.tattoo24,
+        R.drawable.tattoo25, R.drawable.tattoo26,
+        R.drawable.tattoo27, R.drawable.tattoo28,
+        R.drawable.tattoo29, R.drawable.tattoo30,
+        R.drawable.tattoo31, R.drawable.tattoo32,
+        R.drawable.tattoo33, R.drawable.tattoo34,
+        R.drawable.tattoo35, R.drawable.tattoo36,
+        R.drawable.tattoo37, R.drawable.tattoo38,
+        R.drawable.tattoo39, R.drawable.tattoo40,
+        R.drawable.tattoo41, R.drawable.tattoo42,
+        R.drawable.tattoo43, R.drawable.tattoo44,
+        R.drawable.tattoo45, R.drawable.tattoo46,
+        R.drawable.tattoo47, R.drawable.tattoo48,
+        R.drawable.tattoo49, R.drawable.tattoo50,
+        R.drawable.tattoo51, R.drawable.tattoo52,
+        R.drawable.tattoo53, R.drawable.tattoo54,
+        R.drawable.tattoo55, R.drawable.tattoo56,
+        R.drawable.tattoo57, R.drawable.tattoo58,
+        R.drawable.tattoo59, R.drawable.tattoo60,
+        R.drawable.tattoo61, R.drawable.tattoo62,
+        R.drawable.tattoo63, R.drawable.tattoo64,
+        R.drawable.tattoo65, R.drawable.tattoo66,
+        R.drawable.tattoo67, R.drawable.tattoo68,
+        R.drawable.tattoo69, R.drawable.tattoo70,
+        R.drawable.tattoo71, R.drawable.tattoo72,
+        R.drawable.tattoo73, R.drawable.tattoo74,
+        R.drawable.tattoo75, R.drawable.tattoo76,
+        R.drawable.tattoo77, R.drawable.tattoo78,
+        R.drawable.tattoo79, R.drawable.tattoo80,
+        R.drawable.tattoo81, R.drawable.tattoo82*/
+  };
+
+  private Bitmap mHolder = null;
+  private static final int CACHE_SIZE = 30 * 1024 * 1024; // 8 MiB cache
+  /** Cache to store all decoded images */
+  private LruCache<Integer, Bitmap> mBitmapsCache = new LruCache<Integer, Bitmap>(CACHE_SIZE) {
+
+    @Override
+    protected int sizeOf(final Integer key, final Bitmap value) {
+        return value.getByteCount();
+    }
+
+    @Override
+    protected void entryRemoved(final boolean evicted, final Integer key, final Bitmap oldValue, final Bitmap newValue) {
+        if (!oldValue.equals(mHolder)) {
+            oldValue.recycle();
+        }
+    }
+  };
+
+  // Constructor
+  public ImageAdapter(Context c){
+    mContext = c;
+    mHolder = BitmapFactory.decodeResource(c.getResources(), R.drawable.ic_launcher, null);
+  }
+
+  @Override
+  public int getCount() {
+    return TATTOOS.length;
+  }
+
+  @Override
+  public Object getItem(int position) {
+    return TATTOOS[position];
+  }
+
+  @Override
+  public long getItemId(int position) {
+    return position;
+  }
+
+  @Override
+  public View getView(int position, View convertView, ViewGroup parent) {
+    //This actually is a bad solution, because every time convertView is reused, you will still initialize new ImageView, which is wrong
+    //ImageView imageView = new ImageView(this.mContext);
+    //new BitmapWorkerTask(imageView).execute(Tattoos[position]);
+    //return imageView;
+
+    //Better solution
+    ImageView imageView;
+
+    if (convertView == null) {
+        imageView = new ImageView(this.mContext);
+
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setLayoutParams(new GridView.LayoutParams(280, 280));
+    } else {
+        imageView = (ImageView) convertView;
+        //re-use ImageView that already exists in memory
+    }
+
+    final Bitmap itemBitmap = mBitmapsCache.get(TATTOOS[position]);
+
+    if (itemBitmap == null || itemBitmap.isRecycled()) {
+        Log.e(TAG, position + " is missed, launch decode for " + TATTOOS[position]);
+        imageView.setImageBitmap(mHolder);
+        mBitmapsCache.put(TATTOOS[position], mHolder);
+        new BitmapWorkerTask(mBitmapsCache, mContext.getResources(), this).execute(TATTOOS[position]);
+    } else {
+        Log.e(TAG, position + " is here for " + TATTOOS[position]);
+        imageView.setImageBitmap(itemBitmap);
+    }
+
+    return imageView;
+  }
+
+  /** AsyncTask for decoding images from resources */
+  static class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
+    private int data = 0;
+    private final LruCache<Integer, Bitmap> mCache;
+    private final Resources mRes;
+    private final BaseAdapter mAdapter;
+
+    public BitmapWorkerTask(LruCache<Integer, Bitmap> cache, Resources res, BaseAdapter adapter) {
+        // nothing to do here
+        mCache = cache;
+        mRes = res;
+        mAdapter = adapter;
+    }
+
+    // Decode image in background.
+    @Override
+    protected Bitmap doInBackground(Integer... params) {
+        data = params[0];
+        return decodeSampledBitmapFromResource(mRes, data, 300, 300);
+    }
+
+    // Once complete, see if ImageView is still around and set bitmap.
+    @Override
+    protected void onPostExecute(Bitmap bitmap) {
+        mCache.put(data, bitmap);
+        mAdapter.notifyDataSetChanged();
+    }
+  }
+
+  public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                                                     int reqWidth, int reqHeight) {
+
+    // First decode with inJustDecodeBounds=true to check dimensions
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeResource(res, resId, options);
+
+    // Calculate inSampleSize
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+    options.outHeight = 300;
+    options.outWidth = 300;
+    return BitmapFactory.decodeResource(res, resId, options);
+  }
+
+  public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+  }
+}
+</code></pre>
+
+<p>Here's the LogCat </p>
+
+<pre><code>12-25 13:55:13.722: D/AndroidRuntime(7065): Shutting down VM
+12-25 13:55:13.722: W/dalvikvm(7065): threadid=1: thread exiting with uncaught exception     (group=0x419c5b90)
+12-25 13:55:13.752: D/dalvikvm(7065): GC_FOR_ALLOC freed 179K, 3% free 9923K/10136K,     paused 20ms, total 20ms
+12-25 13:55:13.752: E/AndroidRuntime(7065): FATAL EXCEPTION: main
+12-25 13:55:13.752: E/AndroidRuntime(7065): Process: info.androidhive.slidingmenu, PID:     7065
+12-25 13:55:13.752: E/AndroidRuntime(7065): android.util.SuperNotCalledException:     Fragment GalleryActivity{4238f5d8 #0 id=0x7f0a0008} did not call through to     super.onActivityCreated()
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.Fragment.performActivityCreated(Fragment.java:1710)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.FragmentManagerImpl.moveToState(FragmentManager.java:908)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1062)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.BackStackRecord.run(BackStackRecord.java:684)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1447)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.FragmentManagerImpl$1.run(FragmentManager.java:443)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at             android.os.Handler.handleCallback(Handler.java:733)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at         android.os.Handler.dispatchMessage(Handler.java:95)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at         android.os.Looper.loop(Looper.java:137)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     android.app.ActivityThread.main(ActivityThread.java:4998)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     java.lang.reflect.Method.invokeNative(Native Method)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     java.lang.reflect.Method.invoke(Method.java:515)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:777)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at     com.android.internal.os.ZygoteInit.main(ZygoteInit.java:593)
+12-25 13:55:13.752: E/AndroidRuntime(7065):     at         dalvik.system.NativeStart.main(Native Method)
+12-25 14:00:13.902: I/Process(7065): Sending signal. PID: 7065 SIG: 9
+</code></pre>

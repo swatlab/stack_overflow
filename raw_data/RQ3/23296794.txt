@@ -1,0 +1,216 @@
+<p>I am trying to attach a database - prepopulated with information to my application.  I followed this tutorial <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">here</a> however when I try to run through my database helper I am getting an error.</p>
+
+<p>Here is my helper code:</p>
+
+<pre><code>import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class WorkoutsDatabaseHelper extends SQLiteOpenHelper {
+
+    private String DATABASE_PATH = "/src/main/assets/";
+
+    // All Static variables
+    // Database Version
+    private static final int DATABASE_VERSION = 1;
+
+    // Database Name
+    private static final String DATABASE_NAME = "workoutsDatabase.db";
+
+    // Workouts table name
+    private static final String TABLE_WORKOUTS = "workouts";
+
+    // Workouts Table Columns names
+    private static final String KEY_ID = "_id";
+    private static final String KEY_WORKOUT_NAME = "workout_name";
+    private static final String KEY_HERO_LAST_NAME = "hero_last_name";
+    private static final String KEY_HERO_FIRST_NAME = "hero_first_name";
+    private static final String KEY_HERO_MIDDLE_NAME = "hero_middle_name";
+    private static final String KEY_HERO_DESCRIPTION = "hero_description";
+    private static final String KEY_DATE_ADDED = "date_added";
+    private static final String KEY_WORKOUT = "workout";
+    private static final String KEY_MEASUREMENT = "measurement";
+    private static final String KEY_PHOTO = "photo";
+
+    private SQLiteDatabase myDatabase;
+    private final Context myContext;
+
+    public WorkoutsDatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.myContext = context;
+    }
+
+    // Creates a empty database on the system and rewrites it with your own database.
+    public void createDatabase() throws IOException {
+
+        boolean dbExist = checkDatabase();
+
+        if(dbExist) {
+            // Do nothing - database already exist
+        } else {
+            //By calling this method an empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+                copyDatabase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+        Log.d("Workouts DB", "Database Created");
+
+    }
+
+    //Check if the database already exist to avoid re-copying the file each time you open the application.
+    //@return true if it exists, false if it doesn't
+    private boolean checkDatabase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        } catch(SQLiteException e) {
+            // Database doesn't exist yet
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+
+    private void copyDatabase() throws IOException {
+
+        // Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // Transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDatabase() throws android.database.SQLException {
+
+        // Open the database
+        String myPath = DATABASE_PATH + DATABASE_NAME;
+        myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if(myDatabase != null)
+            myDatabase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    // Add your public helper methods to access and get content from the database.
+    // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+    // to you to create adapters for your views.
+
+ }
+</code></pre>
+
+<p>Here is the log:</p>
+
+<pre><code>04-25 11:03:15.538  11852-11852/com.rcd.mypr D/OpenGLRenderer﹕ Enabling debug mode 0
+04-25 11:03:15.610  11852-11852/com.rcd.mypr E/Adreno-ES20﹕ <gl_external_unsized_fmt_to_sized:2379>: QCOM> format, datatype mismatch
+04-25 11:03:15.610  11852-11852/com.rcd.mypr E/Adreno-ES20﹕ <get_texture_formats:3009>: QCOM> Invalid format!
+04-25 11:03:16.691  11852-11852/com.rcd.mypr E/SQLiteLog﹕ (14) cannot open file at line 30191 of [00bb9c9ce4]
+04-25 11:03:16.691  11852-11852/com.rcd.mypr E/SQLiteLog﹕ (14) os_unix.c:30191: (2) open(/src/main/assets/workoutsDatabase.db) -
+04-25 11:03:16.702  11852-11852/com.rcd.mypr E/SQLiteDatabase﹕ Failed to open database '/src/main/assets/workoutsDatabase.db'.
+    android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+            at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+            at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+            at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+            at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+            at com.rcd.mypr.Workouts.WorkoutsDatabaseHelper.checkDatabase(WorkoutsDatabaseHelper.java:81)
+            at com.rcd.mypr.Workouts.WorkoutsDatabaseHelper.createDatabase(WorkoutsDatabaseHelper.java:54)
+            at com.rcd.mypr.Workouts.WorkoutsActivity.onCreate(WorkoutsActivity.java:53)
+            at android.app.Activity.performCreate(Activity.java:5248)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1110)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2173)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2269)
+            at android.app.ActivityThread.access$800(ActivityThread.java:139)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5102)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+            at dalvik.system.NativeStart.main(Native Method)
+04-25 11:03:16.742  11852-11852/com.rcd.mypr D/AndroidRuntime﹕ Shutting down VM
+04-25 11:03:16.742  11852-11852/com.rcd.mypr W/dalvikvm﹕ threadid=1: thread exiting with uncaught exception (group=0x416d4d40)
+04-25 11:03:16.745  11852-11852/com.rcd.mypr E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    Process: com.rcd.mypr, PID: 11852
+    java.lang.Error: Error copying database
+            at com.rcd.mypr.Workouts.WorkoutsDatabaseHelper.createDatabase(WorkoutsDatabaseHelper.java:66)
+            at com.rcd.mypr.Workouts.WorkoutsActivity.onCreate(WorkoutsActivity.java:53)
+            at android.app.Activity.performCreate(Activity.java:5248)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1110)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2173)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2269)
+            at android.app.ActivityThread.access$800(ActivityThread.java:139)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5102)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>My database is called workoutsDatabase.db and it lives in src/main/assets</p>
+
+<p>Any help would be appreciated.</p>

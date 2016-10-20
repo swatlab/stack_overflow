@@ -1,0 +1,187 @@
+<p>In this app I want to fetch question from the db that I have made using Firefox sqlite manager.</p>
+
+<p>When I run the code I get a <strong>db locked</strong> in the error log and I'm unable to display the content in the <code>textview</code>.</p>
+
+<p><strong>AptitudeActivity</strong></p>
+
+<pre><code>public class AptitudeActivity extends Activity implements OnClickListener {
+    private Button next;
+    private Button previous;
+      private TextView qdisply,adisplay;
+     int counter=0;
+    private String v;
+
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        next = (Button)findViewById(R.id.button1);
+        previous = (Button)findViewById(R.id.button2);
+        qdisply = (TextView)findViewById(R.id.textView1);
+       adisplay = (TextView)findViewById(R.id.textView2);
+
+        next.setOnClickListener(this);
+        previous.setOnClickListener(this);
+
+
+    }
+
+    public void onClick(View arg) {
+
+        switch(arg.getId())
+        {
+        case R.id.button1:
+            counter++;
+            upper up=new upper(this);
+            up.open();
+            // here i want to display based on the counter value which will be +1 when the button is clicked
+
+
+            up.close();
+
+
+
+
+        break;
+        case  R.id.button2:
+        //not defined till now  
+            break;
+        }
+    }
+
+
+}
+</code></pre>
+
+<hr>
+
+<p><strong>insertq</strong></p>
+
+<pre><code>public class upper {
+    static String path;
+    insertq q;
+    private String dispa;
+    String dispq;
+
+    static SQLiteDatabase db1;
+    static Context ourcontext;
+    static String mydb = "APTITUDE.sqlite";
+    static Boolean dbchk;
+
+    private static class insertq extends SQLiteOpenHelper {
+
+        private String dbpath;
+
+        public insertq(Context context) {
+            super(context, mydb, null, 1);
+            path = "/data/data/"
+                    + context.getApplicationContext().getPackageName()
+                    + "/databases/";
+
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+
+            boolean addb = chechkdb();
+            if (!addb) {
+                this.getReadableDatabase();
+                try {
+                    copyDataBase();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            } else {
+
+            }
+        }
+
+        private void copyDataBase() throws IOException {
+
+            InputStream myInput = ourcontext.getAssets().open(mydb);
+
+            String outFileName = path + mydb;
+
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+            // Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        }
+
+        private Boolean chechkdb() {
+            dbpath = path + mydb;
+
+            SQLiteDatabase check = null;
+            check = SQLiteDatabase.openDatabase(dbpath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+            if (check != null) {
+                dbchk = true;
+            } else {
+                dbchk = false;
+            }
+            return dbchk;
+
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        }
+    }
+
+    public void fetchqan() {
+
+    String qu="SELECT QUESTION,ANSWER FROM QNA WHERE QID=1 ";
+    q.getWritableDatabase();
+    Cursor c=db1.rawQuery(qu, null);
+dispq=c.getString(1);
+dispa=c.getString(2);
+
+    }
+
+    public upper(Context c) {
+        ourcontext = c;
+    }
+
+    public upper open() {
+
+        q = new insertq(ourcontext);
+        db1 = q.getWritableDatabase();
+        return this;
+
+    }
+
+    public void close() {
+        q.close();
+    }
+
+}
+</code></pre>
+
+<p><strong>stacktrace</strong></p>
+
+<pre><code>Thread [<1> main] (Suspended (exception SQLiteException))   
+    upper$insertq(SQLiteOpenHelper).getWritableDatabase() line: 96  
+    upper.open() line: 112  
+    AptitudeActivity.onClick(View) line: 41 
+    Button(View).performClick() line: 2485  
+    View$PerformClick.run() line: 9080  
+    ViewRoot(Handler).handleCallback(Message) line: 587 
+    ViewRoot(Handler).dispatchMessage(Message) line: 92 
+    Looper.loop() line: 123 
+    ActivityThread.main(String[]) line: 3683    
+    Method.invokeNative(Object, Object[], Class, Class[], Class, int, boolean) line: not available [native method]  
+    Method.invoke(Object, Object...) line: 507  
+    ZygoteInit$MethodAndArgsCaller.run() line: 839  
+    ZygoteInit.main(String[]) line: 597 
+    NativeStart.main(String[]) line: not available [native method]  
+</code></pre>

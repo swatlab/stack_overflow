@@ -1,0 +1,177 @@
+<p>I am fairly new to Android development and I am trying to build a ListView which get data from web service using gson. I have a model class, a list class, an adapter class and the activity class.</p>
+
+<p>The list works fine and it got the data, and now I want to integrate the OnItemClickListener to it and pass the data to the 2nd activity. And I'd like to get the item id (DistrictId) and pass it to the next Activity(listView) instead of the row id. It would be great if someone could show me the light... as the documentation is not as clear to understand and because I am new.</p>
+
+<p>Below is my code.</p>
+
+<p><strong>The model class</strong></p>
+
+<pre><code>package com.sample.myapp;
+
+public class DistrictModel {
+private String id;
+private String districtName;
+
+public String getDistrictId() {
+    return id;
+}
+public void setId(String id) {
+    this.id = id;
+}
+public String getDistrictName(){
+    return districtName;
+}
+public void setDistrictEN(String districtName){
+    this.districtName = districtName;
+}
+}
+</code></pre>
+
+<p><strong>The List class</strong></p>
+
+<pre><code>public class DistrictList {
+private List<DistrictModel> districts;
+
+public List<DistrictModel> getDistricts(){
+    return districts;
+}
+public void setDistrictList(List<DistrictModel> districts){
+    this.districts = districts;
+}
+} 
+</code></pre>
+
+<p><strong>The Adapter class</strong></p>
+
+<pre><code>public class DistrictAdapter extends ArrayAdapter<DistrictModel>{
+int resource;
+String response;
+Context context;
+private LayoutInflater dInflater;
+
+public DistrictAdapter(Context context, int resource, List<DistrictModel> objects) {
+        super(context, resource, objects);
+        this.resource = resource;
+        dInflater = LayoutInflater.from(context);
+}
+
+static class ViewHolder {
+    TextView title;
+}
+public View getView(int position, View convertView, ViewGroup parent)
+{
+    ViewHolder holder;
+    //Get the current location object
+    DistrictModel lm = (DistrictModel) getItem(position);
+
+    //Inflate the view
+    if(convertView==null)
+    {
+        convertView = dInflater.inflate(R.layout.item_district, null);
+        holder = new ViewHolder();
+        holder.title = (TextView) convertView
+                .findViewById(R.id.district_name);
+
+        convertView.setTag(holder);
+    }
+    else
+    {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    holder.title.setText(lm.getDistrictName());
+
+    return convertView;
+}
+}
+</code></pre>
+
+<p><strong>The activity class</strong></p>
+
+<pre><code>public class DistrictListActivity extends Activity{
+LocationManager lm;
+
+ArrayList<DistrictModel> districtArray = null;
+DistrictAdapter districtAdapter;
+DistrictList list;
+
+ListView lv;
+
+public void onCreate(Bundle savedInstanceState){
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.districtlist_layout);
+
+    lv = (ListView) findViewById(R.id.list_district);
+
+    districtArray = new ArrayList<DistrictModel>();
+    districtAdapter = new DistrictAdapter(DistrictListActivity.this, R.layout.item_district, districtArray);
+
+    lv.setTextFilterEnabled(true);
+            lv.setAdapter(districtAdapter);
+
+            try {
+                new DistrictSync().execute("http://aws.something.com/service");
+            } catch(Exception e) {}
+
+    lv.setOnItemClickListener(new OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View convertView, int position, long id) {
+                AlertDialog.Builder adb=new AlertDialog.Builder(DistrictListActivity.this);
+                adb.setTitle("LVSelectedItemExample");
+                adb.setMessage("Selected Item is = "+(lv.getItemIdAtPosition(position)));
+                adb.setPositiveButton("Ok", null);
+                adb.show();
+
+                }
+        }); **//i'd like to get the DistrictId from the json data.**
+}
+
+
+
+private class DistrictSync extends AsyncTask<String, Integer, DistrictList> {
+
+    protected DistrictList doInBackground(String... urls) {
+        DistrictList list = null;
+        int count = urls.length;
+
+        for (int i = 0; i < count; i++) {
+            try {           
+                // ntar diganti service
+                RestClient client = new RestClient(urls[i]);
+
+                try {
+                    client.Execute(RequestMethod.GET);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                String json = client.getResponse();
+
+                list = new Gson().fromJson(json, DistrictList.class);
+
+                //
+            } catch(Exception e) {}
+        }
+        return list;
+    }
+
+    protected void onProgressUpdate(Integer... progress) {
+
+    }
+
+    protected void onPostExecute(DistrictList dislist) {
+
+        for(DistrictModel lm : dislist.getDistricts())
+        {
+            districtArray.add(lm);
+        }
+        districtAdapter.notifyDataSetChanged();
+    }
+
+}
+}
+</code></pre>
+
+<p>For testing purpose, now I click the row it will show me the row id, so I know the onclick listener works, but I just want it to grab me the DistrictId so I can use it to pass to the next activity. </p>
+
+<p>Thank you so much.</p>

@@ -1,0 +1,95 @@
+<p>I'm a beginner to android programming and this is my first question in <em>StackOverflow</em>. I have a <strong><em>preference fragment</em></strong> and on click of a preference, I'm trying to display a <strong><em>grid view inside a dialog</em></strong>. The grid view is dynamically loaded. I tried many ways of doing this but none worked for me. </p>
+
+<p>This is my code in <strong>MyPreferenceFragment</strong> that is extending PreferenceFragment</p>
+
+<pre><code>Preference iconPref = (Preference)findPreference("pref_icon");
+iconPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {    
+    @Override
+    public boolean onPreferenceClick(Preference arg0) {
+        Log.i(TAG, "Preparing grid view layout");
+        GridView gridview = (GridView)getActivity().findViewById(R.id.icons_gridview);
+        gridview.setAdapter(new ImageAdapter(getActivity()));
+        Log.i(TAG, "Icons image adapter ready");
+
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                Toast.makeText(getActivity(), "" + position, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Log.i(TAG, "Creating dialog");
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());   
+        builder.setView(gridview);
+        builder.show();
+        return false;
+    }
+});
+</code></pre>
+
+<p>This is my <strong>ImageAdapter.java</strong> code</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) 
+    {
+        ImageView imageView;
+        if (convertView == null) {  
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } 
+        else 
+        {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+        R.drawable.ic_img1, R.drawable.ic_img2,
+        R.drawable.ic_img3, R.drawable.ic_img4,
+        R.drawable.ic_img5, R.drawable.ic_img6,
+        R.drawable.ic_img7
+    };
+}
+</code></pre>
+
+<p>And finally, this is my Xml layout file: <strong>icon_grid.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/icons_gridview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnWidth="90dp"
+    android:numColumns="auto_fit"
+    android:verticalSpacing="10dp"
+    android:horizontalSpacing="10dp"
+    android:stretchMode="columnWidth"
+    android:gravity="center"
+/>
+</code></pre>
+
+<p>I'm looking forward for any <strong><em>help or alternative</em></strong>. And thanks in advance...</p>

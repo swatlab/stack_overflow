@@ -1,0 +1,774 @@
+<p>I am trying to develop a map activity that is initiated from navigation drawer. I have read <a href="http://stackoverflow.com/questions/31018953/maps-activity-in-navigation-drawer">this query</a> .</p>
+
+<p>My code is :-</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>package com.tadrish.last;
+
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
+import android.content.Intent;
+
+
+public class MainActivity extends AppCompatActivity
+    implements NavigationDrawerCallbacks {
+
+/**
+ * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
+ */
+private NavigationDrawerFragment mNavigationDrawerFragment;
+private Toolbar mToolbar;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    mToolbar = (Toolbar) findViewById(R.id.toolbar_actionbar);
+    setSupportActionBar(mToolbar);
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getFragmentManager().findFragmentById(R.id.fragment_drawer);
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setup(R.id.fragment_drawer, (DrawerLayout) findViewById(R.id.drawer), mToolbar);
+    // populate the navigation drawer
+    mNavigationDrawerFragment.setUserData("John Doe", "johndoe@doe.com", BitmapFactory.decodeResource(getResources(), R.drawable.avatar));
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+    // update the main content by replacing fragments
+    switch(position) {
+        case 0:
+            Intent a = new Intent(this, MapActivity.class);
+            startActivity(a);
+            break;
+        case 1:
+            break;
+        case 2:
+            break;
+        default:
+            break;
+    }
+    Toast.makeText(this, "Menu item selected -> " + (position +1), Toast.LENGTH_SHORT).show();
+}
+
+
+@Override
+public void onBackPressed() {
+    if (mNavigationDrawerFragment.isDrawerOpen())
+        mNavigationDrawerFragment.closeDrawer();
+    else
+        super.onBackPressed();
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    if (!mNavigationDrawerFragment.isDrawerOpen()) {
+        // Only show items in the action bar relevant to this screen
+        // if the drawer is not showing. Otherwise, let the drawer
+        // decide what to show in the action bar.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+    return super.onCreateOptionsMenu(menu);
+}
+
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+
+}
+</code></pre>
+
+<p>MapActivity.java</p>
+
+<pre><code>package com.tadrish.last;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import org.json.JSONObject;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AutoCompleteTextView;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+public class MapActivity extends FragmentActivity{
+
+AutoCompleteTextView atvPlaces;
+
+DownloadTask placesDownloadTask;
+DownloadTask placeDetailsDownloadTask;
+ParserTask placesParserTask;
+ParserTask placeDetailsParserTask;
+
+GoogleMap googleMap;
+
+final int PLACES=0;
+final int PLACES_DETAILS=1;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_map);
+
+    // Getting a reference to the AutoCompleteTextView
+    atvPlaces = (AutoCompleteTextView) findViewById(R.id.atv_places);
+    atvPlaces.setThreshold(1);
+
+    // Adding textchange listener
+    atvPlaces.addTextChangedListener(new TextWatcher() {
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            // Creating a DownloadTask to download Google Places matching "s"
+            placesDownloadTask = new DownloadTask(PLACES);
+
+            // Getting url to the Google Places Autocomplete api
+            String url = getAutoCompleteUrl(s.toString());
+
+            // Start downloading Google Places
+            // This causes to execute doInBackground() of DownloadTask class
+            placesDownloadTask.execute(url);
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count,
+                                      int after) {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            // TODO Auto-generated method stub
+        }
+    });
+
+    // Setting an item click listener for the AutoCompleteTextView dropdown list
+    atvPlaces.setOnItemClickListener(new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int index,
+                                long id) {
+
+            ListView lv = (ListView) arg0;
+            SimpleAdapter adapter = (SimpleAdapter) arg0.getAdapter();
+
+            HashMap<String, String> hm = (HashMap<String, String>) adapter.getItem(index);
+
+            // Creating a DownloadTask to download Places details of the selected place
+            placeDetailsDownloadTask = new DownloadTask(PLACES_DETAILS);
+
+            // Getting url to the Google Places details api
+            String url = getPlaceDetailsUrl(hm.get("reference"));
+
+            // Start downloading Google Place Details
+            // This causes to execute doInBackground() of DownloadTask class
+            placeDetailsDownloadTask.execute(url);
+
+        }
+    });
+}
+
+private String getAutoCompleteUrl(String place){
+
+    // Obtain browser key from https://code.google.com/apis/console
+    String key = "key=AIzaSyARE2P8bfAQUezyOG-Dn5AJ0oTmb6wTfcI";
+
+    // place to be be searched
+    String input = "input="+place;
+
+    // place type to be searched
+    String types = "types=geocode";
+
+    // Sensor enabled
+    String sensor = "sensor=false";
+
+    // Building the parameters to the web service
+    String parameters = input+"&"+types+"&"+sensor+"&"+key;
+
+    // Output format
+    String output = "json";
+
+    // Building the url to the web service
+    String url = "https://maps.googleapis.com/maps/api/place/autocomplete/"+output+"?"+parameters;
+
+    return url;
+}
+
+private String getPlaceDetailsUrl(String ref){
+
+    // Obtain browser key from https://code.google.com/apis/console
+    String key = "key=AIzaSyARE2P8bfAQUezyOG-Dn5AJ0oTmb6wTfcI";
+
+    // reference of place
+    String reference = "reference="+ref;
+
+    // Sensor enabled
+    String sensor = "sensor=false";
+
+    // Building the parameters to the web service
+    String parameters = reference+"&"+sensor+"&"+key;
+
+    // Output format
+    String output = "json";
+
+    // Building the url to the web service
+    String url = "https://maps.googleapis.com/maps/api/place/details/"+output+"?"+parameters;
+
+    return url;
+}
+
+/** A method to download json data from url */
+private String downloadUrl(String strUrl) throws IOException{
+    String data = "";
+    InputStream iStream = null;
+    HttpURLConnection urlConnection = null;
+    try{
+        URL url = new URL(strUrl);
+
+        // Creating an http connection to communicate with url
+        urlConnection = (HttpURLConnection) url.openConnection();
+
+        // Connecting to url
+        urlConnection.connect();
+
+        // Reading data from url
+        iStream = urlConnection.getInputStream();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+        StringBuffer sb  = new StringBuffer();
+
+        String line = "";
+        while( ( line = br.readLine())  != null){
+            sb.append(line);
+        }
+
+        data = sb.toString();
+
+        br.close();
+
+    }catch(Exception e){
+        Log.d("Exception :", e.toString());
+    }finally{
+        iStream.close();
+        urlConnection.disconnect();
+    }
+    return data;
+}
+
+// Fetches data from url passed
+private class DownloadTask extends AsyncTask<String, Void, String>{
+
+    private int downloadType=0;
+
+    // Constructor
+    public DownloadTask(int type){
+        this.downloadType = type;
+    }
+
+    @Override
+    protected String doInBackground(String... url) {
+
+        // For storing data from web service
+        String data = "";
+
+        try{
+            // Fetching the data from web service
+            data = downloadUrl(url[0]);
+        }catch(Exception e){
+            Log.d("Background Task",e.toString());
+        }
+        return data;
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+        super.onPostExecute(result);
+
+        switch(downloadType){
+            case PLACES:
+                // Creating ParserTask for parsing Google Places
+                placesParserTask = new ParserTask(PLACES);
+
+                // Start parsing google places json data
+                // This causes to execute doInBackground() of ParserTask class
+                placesParserTask.execute(result);
+
+                break;
+
+            case PLACES_DETAILS :
+                // Creating ParserTask for parsing Google Places
+                placeDetailsParserTask = new ParserTask(PLACES_DETAILS);
+
+                // Starting Parsing the JSON string
+                // This causes to execute doInBackground() of ParserTask class
+                placeDetailsParserTask.execute(result);
+        }
+    }
+}
+
+/** A class to parse the Google Places in JSON format */
+private class ParserTask extends AsyncTask<String, Integer, List<HashMap<String,String>>>{
+
+    int parserType = 0;
+
+    public ParserTask(int type){
+        this.parserType = type;
+    }
+
+    @Override
+    protected List<HashMap<String, String>> doInBackground(String... jsonData) {
+
+        JSONObject jObject;
+        List<HashMap<String, String>> list = null;
+
+        try{
+            jObject = new JSONObject(jsonData[0]);
+
+            switch(parserType){
+                case PLACES :
+                    PlaceJSONParser placeJsonParser = new PlaceJSONParser();
+                    // Getting the parsed data as a List construct
+                    list = placeJsonParser.parse(jObject);
+                    break;
+                case PLACES_DETAILS :
+                    PlaceDetailsJSONParser placeDetailsJsonParser = new PlaceDetailsJSONParser();
+                    // Getting the parsed data as a List construct
+                    list = placeDetailsJsonParser.parse(jObject);
+            }
+
+        }catch(Exception e){
+            Log.d("Exception",e.toString());
+        }
+        return list;
+    }
+
+    @Override
+    protected void onPostExecute(List<HashMap<String, String>> result) {
+
+        switch(parserType){
+            case PLACES :
+                String[] from = new String[] { "description"};
+                int[] to = new int[] { android.R.id.text1 };
+
+                // Creating a SimpleAdapter for the AutoCompleteTextView
+                SimpleAdapter adapter = new SimpleAdapter(getBaseContext(), result, android.R.layout.simple_list_item_1, from, to);
+
+                // Setting the adapter
+                atvPlaces.setAdapter(adapter);
+                break;
+            case PLACES_DETAILS :
+                HashMap<String, String> hm = result.get(0);
+
+                // Getting latitude from the parsed data
+                double latitude = Double.parseDouble(hm.get("lat"));
+
+                // Getting longitude from the parsed data
+                double longitude = Double.parseDouble(hm.get("lng"));
+
+                // Getting reference to the SupportMapFragment of the activity_main.xml
+                SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+
+                // Getting GoogleMap from SupportMapFragment
+                googleMap = fm.getMap();
+
+                LatLng point = new LatLng(latitude, longitude);
+
+                CameraUpdate cameraPosition = CameraUpdateFactory.newLatLng(point);
+                CameraUpdate cameraZoom = CameraUpdateFactory.zoomBy(5);
+
+                // Showing the user input location in the Google Map
+                googleMap.moveCamera(cameraPosition);
+                googleMap.animateCamera(cameraZoom);
+
+                MarkerOptions options = new MarkerOptions();
+                options.position(point);
+                options.title("Position");
+                options.snippet("Latitude:"+latitude+",Longitude:"+longitude);
+
+                // Adding the marker in the Google Map
+                googleMap.addMarker(options);
+
+                break;
+        }
+    }
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+}
+</code></pre>
+
+<p>NavigationDrawerFragment.java</p>
+
+<pre><code>package com.tadrish.last;
+
+import android.app.Activity;
+import android.app.Fragment;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class NavigationDrawerFragment extends Fragment implements NavigationDrawerCallbacks {
+
+/**
+ * Remember the position of the selected item.
+ */
+private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+
+/**
+ * Per the design guidelines, you should show the drawer on launch until the user manually
+ * expands it. This shared preference tracks this.
+ */
+private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+/**
+ * A pointer to the current callbacks instance (the Activity).
+ */
+private NavigationDrawerCallbacks mCallbacks;
+
+/**
+ * Helper component that ties the action bar to the navigation drawer.
+ */
+private ActionBarDrawerToggle mActionBarDrawerToggle;
+
+private DrawerLayout mDrawerLayout;
+private RecyclerView mDrawerList;
+private View mFragmentContainerView;
+
+private int mCurrentSelectedPosition = 0;
+private boolean mFromSavedInstanceState;
+private boolean mUserLearnedDrawer;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    // Read in the flag indicating whether or not the user has demonstrated awareness of the
+    // drawer. See PREF_USER_LEARNED_DRAWER for details.
+    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+    if (savedInstanceState != null) {
+        mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+        mFromSavedInstanceState = true;
+    }
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+    View view = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+    mDrawerList = (RecyclerView) view.findViewById(R.id.drawerList);
+    LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+    layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+    mDrawerList.setLayoutManager(layoutManager);
+    mDrawerList.setHasFixedSize(true);
+
+    final List<NavigationItem> navigationItems = getMenu();
+    NavigationDrawerAdapter adapter = new NavigationDrawerAdapter(navigationItems);
+    adapter.setNavigationDrawerCallbacks(this);
+    mDrawerList.setAdapter(adapter);
+    selectItem(mCurrentSelectedPosition);
+    return view;
+}
+
+public boolean isDrawerOpen() {
+    return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+}
+
+public ActionBarDrawerToggle getActionBarDrawerToggle() {
+    return mActionBarDrawerToggle;
+}
+
+public DrawerLayout getDrawerLayout() {
+    return mDrawerLayout;
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+    selectItem(position);
+}
+
+public List<NavigationItem> getMenu() {
+    List<NavigationItem> items = new ArrayList<NavigationItem>();
+    items.add(new NavigationItem("Map", getResources().getDrawable(R.drawable.ic_action_map)));
+    items.add(new NavigationItem("item 2", getResources().getDrawable(R.drawable.ic_menu_check)));
+    items.add(new NavigationItem("item 3", getResources().getDrawable(R.drawable.ic_menu_check)));
+    return items;
+}
+
+/**
+ * Users of this fragment must call this method to set up the navigation drawer interactions.
+ *
+ * @param fragmentId   The android:id of this fragment in its activity's layout.
+ * @param drawerLayout The DrawerLayout containing this fragment's UI.
+ * @param toolbar      The Toolbar of the activity.
+ */
+public void setup(int fragmentId, DrawerLayout drawerLayout, Toolbar toolbar) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    mDrawerLayout.setStatusBarBackgroundColor(getResources().getColor(R.color.myPrimaryDarkColor));
+
+    mActionBarDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) return;
+
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) return;
+            if (!mUserLearnedDrawer) {
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+            }
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+    };
+
+    // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+    // per the navigation drawer design guidelines.
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mActionBarDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
+}
+
+private void selectItem(int position) {
+    mCurrentSelectedPosition = position;
+    if (mDrawerLayout != null) {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+    if (mCallbacks != null) {
+        mCallbacks.onNavigationDrawerItemSelected(position);
+    }
+    ((NavigationDrawerAdapter) mDrawerList.getAdapter()).selectPosition(position);
+}
+
+public void openDrawer() {
+    mDrawerLayout.openDrawer(mFragmentContainerView);
+}
+
+public void closeDrawer() {
+    mDrawerLayout.closeDrawer(mFragmentContainerView);
+}
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        mCallbacks = (NavigationDrawerCallbacks) activity;
+    } catch (ClassCastException e) {
+        throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+    }
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    mCallbacks = null;
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    // Forward the new configuration the drawer toggle component.
+    mActionBarDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+public void setUserData(String user, String email, Bitmap avatar) {
+    ImageView avatarContainer = (ImageView) mFragmentContainerView.findViewById(R.id.imgAvatar);
+    ((TextView) mFragmentContainerView.findViewById(R.id.txtUserEmail)).setText(email);
+    ((TextView) mFragmentContainerView.findViewById(R.id.txtUsername)).setText(user);
+    avatarContainer.setImageDrawable(new RoundImage(avatar));
+}
+
+public View getGoogleDrawer() {
+    return mFragmentContainerView.findViewById(R.id.googleDrawer);
+}
+
+public static class RoundImage extends Drawable {
+    private final Bitmap mBitmap;
+    private final Paint mPaint;
+    private final RectF mRectF;
+    private final int mBitmapWidth;
+    private final int mBitmapHeight;
+
+    public RoundImage(Bitmap bitmap) {
+        mBitmap = bitmap;
+        mRectF = new RectF();
+        mPaint = new Paint();
+        mPaint.setAntiAlias(true);
+        mPaint.setDither(true);
+        final BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        mPaint.setShader(shader);
+
+        mBitmapWidth = mBitmap.getWidth();
+        mBitmapHeight = mBitmap.getHeight();
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        canvas.drawOval(mRectF, mPaint);
+    }
+
+    @Override
+    protected void onBoundsChange(Rect bounds) {
+        super.onBoundsChange(bounds);
+        mRectF.set(bounds);
+    }
+
+    @Override
+    public void setAlpha(int alpha) {
+        if (mPaint.getAlpha() != alpha) {
+            mPaint.setAlpha(alpha);
+            invalidateSelf();
+        }
+    }
+
+    @Override
+    public void setColorFilter(ColorFilter cf) {
+        mPaint.setColorFilter(cf);
+    }
+
+    @Override
+    public int getOpacity() {
+        return PixelFormat.TRANSLUCENT;
+    }
+
+    @Override
+    public int getIntrinsicWidth() {
+        return mBitmapWidth;
+    }
+
+    @Override
+    public int getIntrinsicHeight() {
+        return mBitmapHeight;
+    }
+
+    public void setAntiAlias(boolean aa) {
+        mPaint.setAntiAlias(aa);
+        invalidateSelf();
+    }
+
+    @Override
+    public void setFilterBitmap(boolean filter) {
+        mPaint.setFilterBitmap(filter);
+        invalidateSelf();
+    }
+
+    @Override
+    public void setDither(boolean dither) {
+        mPaint.setDither(dither);
+        invalidateSelf();
+    }
+
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+}
+}
+</code></pre>
+
+<p>whenever i open the app it automatically starts at map and no navigation drawer is not available.
+rest of the code is adapted from <a href="https://github.com/kanytu/Android-studio-material-template" rel="nofollow">here</a> and <a href="http://wptrafficanalyzer.in/blog/selecting-google-place-from-autocompletetextview-and-marking-in-google-map-android-api-v2/" rel="nofollow">here</a></p>
+
+<p>Please help me out...or point out any other info i need to provide</p>

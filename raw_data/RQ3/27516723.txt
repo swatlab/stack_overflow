@@ -1,0 +1,252 @@
+<p>I know this may be a very basic question to the experts in here. But I cannot get my head around this. 
+Basically, I have the following depth-first-search instance method. I have an object class <code>Dgraph</code>, which is <code>HashMap<Vertex, ArrayList<Vertex>></code>. <code>Vertex</code> is just an object class I created and it contains a <code>color</code> attribute and a <code>node</code> attribute. </p>
+
+<p><strong>Problem:</strong> Basically, I want to change the color of the Vertex object within the iterator statement. But it doesn't work as expected. I was able to change the <code>color</code> attribute of each vertex object within the iterator but when I leave the iterator , the color attribute of each vertex are still <code>null</code>.</p>
+
+<p><strong>Note that Vertex objects with same node values are the same object</strong>, i.e. consider <code>5 --> 1</code> and <code>1 -- 9</code>, we only have one  Vertex object with node equal to <code>1</code> here. </p>
+
+<pre><code>public void depth_first_search(Dgraph graph){
+        // for debugging
+        System.out.println("Before iterator");
+        System.out.println("Graph = " + graph);
+        System.out.println("");
+        graph.display();
+    HashMap<Vertex, ArrayList<Vertex>> dag = graph.returnHashMap(graph);
+    for(Map.Entry<Vertex, ArrayList<Vertex>> g_map : dag.entrySet() ){
+        Vertex u = g_map.getKey();
+        u.set_color("WHITE");
+        System.out.println("In iterator --> Vertex u = " + u + " color = " + u.get_color());
+    }
+    // for debugging 
+    System.out.println("*************************");
+    System.out.println("After iterator");
+    System.out.println("Graph = " + dag);
+    graph.display();
+    }
+}
+</code></pre>
+
+<p>This is the debugging output I got:</p>
+
+<pre><code>Before iterator
+Graph = Dgraph@7852e922
+
+5 : [1, 9]
+    null    null
+3 : [511596]
+    null
+2 : [47646, 47647, 13019, 47648, 47649, 47650, 7700, 47651, 47652]
+    null    null    null    null    null    null    null    null    null
+1 : [1, 2, 5, 6, 7, 3, 8, 4]
+    null    null    null    null    null    null    null    null
+in iterator --> Vertex u = 5 color = WHITE
+in iterator --> Vertex u = 3 color = WHITE
+in iterator --> Vertex u = 2 color = WHITE
+in iterator --> Vertex u = 1 color = WHITE
+*************************
+After iterator
+Graph = {5=[1, 9], 3=[511596], 2=[47646, 47647, 13019, 47648, 47649, 47650, 7700, 47651, 47652], 1=[1, 2, 5, 6, 7, 3, 8, 4]}
+
+5 : [1, 9]
+    null    null
+3 : [511596]
+    null
+2 : [47646, 47647, 13019, 47648, 47649, 47650, 7700, 47651, 47652]
+    null    null    null    null    null        null    null   null   null
+1 : [1, 2, 5, 6, 7, 3, 8, 4]
+    WHITE   null        null    null    null    null    null       null
+</code></pre>
+
+<p>I removed my <code>toString</code> method, so you guys can take a look at the references and check some of them referring to the same object. </p>
+
+<pre><code>Before iterator
+Graph = Dgraph@7852e922
+
+Vertex@9b : [Vertex@1f, Vertex@117]
+    null    null
+Vertex@5d : [Vertex@f1ff14]
+    null
+Vertex@3e : [Vertex@1689a2, Vertex@1689c1, Vertex@62885, Vertex@1689e0, Vertex@1689ff, Vertex@168a1e, Vertex@3a46c, Vertex@168a3d, Vertex@168a5c]
+    null    null    null    null    null    null    null    null    null
+Vertex@1f : [Vertex@1f, Vertex@3e, Vertex@9b, Vertex@ba, Vertex@d9, Vertex@5d, Vertex@f8, Vertex@7c]
+    null    null    null    null    null    null    null    null
+in iterator --> Vertex u = Vertex@9b color = WHITE
+in iterator --> Vertex u = Vertex@5d color = WHITE
+in iterator --> Vertex u = Vertex@3e color = WHITE
+in iterator --> Vertex u = Vertex@1f color = WHITE
+*************************
+After iterator
+Graph = {Vertex@9b=[Vertex@1f, Vertex@117], Vertex@5d=[Vertex@f1ff14], Vertex@3e=[Vertex@1689a2, Vertex@1689c1, Vertex@62885, Vertex@1689e0, Vertex@1689ff, Vertex@168a1e, Vertex@3a46c, Vertex@168a3d, Vertex@168a5c], Vertex@1f=[Vertex@1f, Vertex@3e, Vertex@9b, Vertex@ba, Vertex@d9, Vertex@5d, Vertex@f8, Vertex@7c]}
+
+Vertex@9b : [Vertex@1f, Vertex@117]
+    null    null
+Vertex@5d : [Vertex@f1ff14]
+    null
+Vertex@3e : [Vertex@1689a2, Vertex@1689c1, Vertex@62885, Vertex@1689e0, Vertex@1689ff, Vertex@168a1e, Vertex@3a46c, Vertex@168a3d, Vertex@168a5c]
+    null    null    null    null    null    null    null    null    null
+Vertex@1f : [Vertex@1f, Vertex@3e, Vertex@9b, Vertex@ba, Vertex@d9, Vertex@5d, Vertex@f8, Vertex@7c]
+    WHITE   null    null    null    null    null    null    null
+</code></pre>
+
+<p><strong>UPDATE:</strong> The instance method <code>returnHashMap</code> sits in the class <code>Dgraph</code> as follow:</p>
+
+<pre><code>class Dgraph{
+
+    // instance variable
+    HashMap<Vertex, ArrayList<Vertex>> dag;
+
+    // constructor
+    public Dgraph(String file, boolean reverse) throws IOException{
+        dag = read_file_and_populate(file, reverse);
+    }
+
+    public HashMap<Vertex, ArrayList<Vertex>> returnHashMap(Dgraph g){
+        return g.dag;
+    }
+    .....
+}
+</code></pre>
+
+<p>The Vertex class is shown below:</p>
+
+<pre><code>class Vertex{
+    private long node;
+    private String color;
+    private long d;
+    private long pi;
+    private long f;
+
+public Vertex(long node){
+    this.node = node;
+}
+
+// return color
+public String get_color(){
+    return color;
+}
+
+// change color
+public void set_color(String color){
+    this.color = color;
+}
+
+// return distance
+public long get_d(){
+    return d;
+}
+
+// change distance
+public void set_d(long d){
+    this.d = d;
+}
+
+// return predecessor
+public long get_pi(){
+    return pi;
+}
+
+// assign predecessor
+public void set_pi(long pi){
+    this.pi = pi;
+}
+
+// to String (prevent print reference)
+public String toString(){
+    return node+"";
+}
+
+// return node
+public long get_node(){
+    return node;
+}
+
+// return finishing time
+public long get_f(){
+    return f;
+}
+
+// set finishing time
+public void set_f(long f){
+    this.f = f;
+}
+
+// Need hashCode() and equals() to compare objects
+ public int hashCode(){
+     return (int)(node * 31);
+}
+
+public boolean equals(Object o) {
+    if (o == this){
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()){
+        return false;
+    }
+    Vertex other = (Vertex)o;
+    return node  == other.node;
+}
+}
+</code></pre>
+
+<p>This is the display method that I am using: </p>
+
+<pre><code>public void display(){
+    for(Map.Entry<Vertex, ArrayList<Vertex>> entry : dag.entrySet()){
+        System.out.println(entry.getKey() + " : " + entry.getValue());
+        for(Iterator<Vertex> iterator = dag.get(entry.getKey()).iterator(); iterator.hasNext();){
+            Vertex vv = iterator.next();
+            System.out.print("\t" + vv.get_color());
+        }
+        System.out.println("");
+
+    }
+}
+</code></pre>
+
+<p><strong>UPDATE</strong> : Below is the code that I used to create the HashMap. I thought I was creating a HashMap such that if two Vertex objects with the same node value appear in the key and in the value , they would share the same memory address and point to the same Vertex Object (i.e. there should only be one Vertex Object). </p>
+
+<pre><code>public Vertex getVertex(Map<Long,Vertex> vertices_map, long node){
+        if( ! vertices_map.containsKey(node) ) vertices_map.put(node, new Vertex(node));
+        return vertices_map.get(node);
+    }
+
+    // read file and return graphs
+    public HashMap<Vertex, ArrayList<Vertex>> read_file_and_populate(String file_loc, boolean reverse) throws IOException{
+
+    HashMap<Vertex, ArrayList<Vertex>> graph = new HashMap<Vertex, ArrayList<Vertex>>();
+    int l = 0;
+    int r = 0;
+    if(reverse == false){
+        r = 1;
+    } else{
+        l = 1;
+    }
+
+    FileInputStream fil = new FileInputStream(file_loc);
+    BufferedReader br = new BufferedReader( new InputStreamReader(fil));
+    String element = null;
+
+    while( (element = br.readLine()) != null){
+        String[] line = element.split("\\s");
+        /*
+         *
+         *  Create a new vertex object when the node first occurs;
+         *  And if the node occurs more than once, return a copy of the
+         *  reference to the same object with the same node value.
+         *
+         */
+        HashMap<Long, Vertex> vertices_map = new HashMap<Long, Vertex>();
+        Vertex v_l = getVertex(vertices_map , Long.parseLong(line[l]) );
+        Vertex v_r = getVertex(vertices_map , Long.parseLong(line[r]) );
+
+        if(graph.containsKey(v_l) == false){
+            ArrayList<Vertex> edges_of_this_vertex = new ArrayList<Vertex>();
+            edges_of_this_vertex.add(v_r);
+            graph.put(v_l, edges_of_this_vertex);
+        } else{
+            graph.get(v_l).add(v_r);
+        }
+    }
+    return graph;
+}
+</code></pre>

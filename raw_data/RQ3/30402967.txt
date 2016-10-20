@@ -1,0 +1,152 @@
+<p>Every time I open my Activity from Navigation Drawer, a blank screen appears. I am trying to open a fragment from my Navigation:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+
+    private ListView mDrawerList;
+    private DrawerLayout mDrawerLayout;
+    private ArrayAdapter<String> mAdapter;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private String mActivityTitle;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mDrawerList = (ListView)findViewById(R.id.navList);mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mActivityTitle = getTitle().toString();
+
+        addDrawerItems();
+        setupDrawer();
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    private void addDrawerItems() {
+        String[] osArray = {"Math", "Physics", "Chemistry"};
+        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, osArray);
+        mDrawerList.setAdapter(mAdapter);
+
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    switch(position) {
+                        case 0:
+                            Intent a = new Intent(MainActivity.this, MathActivity.class);
+                            startActivity(a);
+                            break;
+
+                        case 1:
+                            Intent b = new Intent(MainActivity.this, PhysicsActivity.class);
+                            startActivity(b);
+                            break;
+                        case 2:
+                            Intent c = new Intent(MainActivity.this, ChemistryActivity.class );
+                            startActivity(c);
+                            break;
+                        default:
+                    }
+
+            }
+
+        });
+
+
+    }
+    private void setupDrawer() {
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getSupportActionBar().setTitle("Navigation!");
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getSupportActionBar().setTitle(mActivityTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        // Activate the navigation drawer toggle
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>To open Activity like this:</p>
+
+<pre><code>public class MathActivity extends Activity{
+
+protected void onCreate(Bundle bundle) {
+
+    setContentView(R.layout.math_fragment_activity);
+    super.onCreate(bundle);
+}
+
+}
+</code></pre>
+
+<p>Every time I do so, a blank screen appears. Why is this happening and can anyone help me solve this problem?</p>
+
+<p>UPDATE:
+Here is my layout file:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:orientation="vertical" >
+
+<ListView
+    android:id="@+id/listViewAnimals"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:dividerHeight="0.1dp"
+    android:divider="#0000CC"/> </RelativeLayout>
+</code></pre>

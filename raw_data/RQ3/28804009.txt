@@ -1,0 +1,202 @@
+<p>I am pretty new to Android. I am making a new App which makes use of Tabs.
+Now, I want to display different fragments in the tabs.</p>
+
+<p><strong>Please note that my MinSDK is Android KitKat 4.4 so I wont be using deprecated methods</strong></p>
+
+<p>My Code is:</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+ViewPager mViewPager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    if(id == R.id.search)
+    {
+        Toast.makeText(getApplicationContext(),"You tapped on SEARCH !", Toast.LENGTH_LONG).show();
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class below).
+
+
+        return PlaceholderFragment.newInstance(position + 1);
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages.
+        return 3;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            case 2:
+                return getString(R.string.title_section3).toUpperCase(l);
+        }
+        return null;
+    }
+}
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public static class PlaceholderFragment extends Fragment {
+    /**
+     * The fragment argument representing the section number for this
+     * fragment.
+     */
+    private static final String ARG_SECTION_NUMBER = "section_number";
+
+    /**
+     * Returns a new instance of this fragment for the given section
+     * number.
+     */
+    public static PlaceholderFragment newInstance(int sectionNumber) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_1, container, false);
+
+        Button b1 = (Button) rootView.findViewById(R.id.b1);
+        b1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Done", Toast.LENGTH_LONG).show();
+            }
+        });
+        return rootView;
+    }
+}
+}
+</code></pre>
+
+<p>Fragment_Main.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:paddingLeft="@dimen/activity_horizontal_margin"
+android:paddingRight="@dimen/activity_horizontal_margin"
+android:paddingTop="@dimen/activity_vertical_margin"
+android:paddingBottom="@dimen/activity_vertical_margin"
+tools:context=".MainActivity$PlaceholderFragment">
+
+<EditText
+    android:id="@+id/et1"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:hint="Enter your Name (Fragment Main"/>
+
+<EditText
+    android:id="@+id/et2"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/et1"
+    android:hint="Enter your ID (Fragment Main)"/>
+
+<Button
+    android:id="@+id/b1"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="Submit"
+    android:layout_below="@+id/et2"/>
+</RelativeLayout>
+</code></pre>
+
+<p>Fragment_1.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:paddingLeft="@dimen/activity_horizontal_margin"
+android:paddingRight="@dimen/activity_horizontal_margin"
+android:paddingTop="@dimen/activity_vertical_margin"
+android:paddingBottom="@dimen/activity_vertical_margin"
+tools:context=".MainActivity$FragmentOne">
+
+<Button
+    android:id="@+id/b1"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="Submit"
+    android:layout_below="@+id/et2"/>
+</RelativeLayout>
+</code></pre>
+
+<p><strong>I have changed the tools:context in fragment_1.xml for my tests. I don't know what it does
+Now, when the user opens the App, he should see the Fragment_Main fragment. When he swipes for the next tab, he should see fragment_1.</strong></p>
+
+<p>Please help in detail as i am very new.</p>

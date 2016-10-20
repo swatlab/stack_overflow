@@ -1,0 +1,188 @@
+<p>Im trying to make a login using Sqlite Database Browser which is basically in the asset folder. Whenever I sign in, the app is always closing, getting an error about no such table as login. </p>
+
+<p>In my database broswer there's such a table but in ddms, only the android_metadata is shown and no such table as login is existed. Please help me.</p>
+
+<p>Here is my DatabaseHelper</p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {  
+
+private static String DB_NAME = "cafs";  
+private static int DB_Version = 2;
+private SQLiteDatabase db;  
+private final Context context;  
+private String DB_PATH = "/data/data/com.example.trialngiba/databases/";  
+
+public DatabaseHelper(Context context) {  
+super(context, DB_NAME, null, DB_Version);  
+this.context = context;  
+
+}  
+
+public void createDataBase() throws IOException {  
+
+
+      boolean dbExist = checkDataBase();  
+      if (dbExist) {  
+     try {  
+       copyDataBase();  
+      } catch (IOException e) {  
+       throw new Error("Error copying database");  
+      }  
+      } else {  
+     SQLiteDatabase db = this.getWritableDatabase();
+     if (db.isOpen()){
+         db.close();
+         try {  
+           copyDataBase();  
+          } catch (IOException e) {  
+           throw new Error("Error copying database");  
+          }  
+     } else {
+     try {  
+       copyDataBase();  
+      } catch (IOException e) {  
+       throw new Error("Error copying database");  
+      }  
+     }
+      }
+      }  
+
+private boolean checkDataBase() {  
+File dbFile = new File(DB_PATH + DB_NAME);  
+return dbFile.exists();  
+}  
+
+private void copyDataBase() throws IOException {  
+
+InputStream myInput = context.getAssets().open(DB_NAME);  
+String outFileName = DB_PATH + DB_NAME;  
+OutputStream myOutput = new FileOutputStream(outFileName);  
+byte[] buffer = new byte[1024];  
+int length;  
+while ((length = myInput.read(buffer)) > 0) {  
+myOutput.write(buffer, 0, length);  
+}  
+
+// Close the streams  
+myOutput.flush();  
+myOutput.close();  
+myInput.close();  
+
+}  
+public  DatabaseHelper open() throws SQLException 
+{
+    db = this.getWritableDatabase();
+    return this;
+}
+public void close() 
+{
+    db.close();
+}
+
+public  SQLiteDatabase getDatabaseInstance()
+{
+    return db;
+}
+
+public void insertEntry(String userName,String password)
+{
+ContentValues newValues = new ContentValues();
+
+    newValues.put("USERNAME", userName);
+    newValues.put("PASSWORD",password);
+
+
+    db.insert("login", null, newValues);
+
+}
+public int deleteEntry(String UserName)
+{
+
+    String where="USERNAME=?";
+    int numberOFEntriesDeleted= db.delete("login", where, new String[]{UserName}) ;
+
+ return numberOFEntriesDeleted;
+}   
+public String getSinlgeEntry(String userName)
+{
+    Cursor cursor=db.query("login", null, " USERNAME=?", new String[]{userName}, null, null, null);
+ if(cursor.getCount()<1)
+ {
+    cursor.close();
+    return "NOT EXIST";
+ }
+    cursor.moveToFirst();
+    String password= cursor.getString(cursor.getColumnIndex("PASSWORD"));
+    cursor.close();
+    return password;                
+}
+public void  updateEntry(String userName,String password)
+{
+
+    ContentValues updatedValues = new ContentValues();
+
+    updatedValues.put("USERNAME", userName);
+    updatedValues.put("PASSWORD",password);
+
+ String where="USERNAME = ?";
+    db.update("login",updatedValues, where, new String[]{userName});               
+}       
+
+
+@Override  
+public void onCreate(SQLiteDatabase arg0) {  
+// TODO Auto-generated method stub  
+
+}  
+
+@Override  
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {  
+// TODO Auto-generated method stub  
+Log.d ("onUpgrade first log", Integer.toString(db.getVersion()));
+
+if (oldVersion == 1) {
+
+    DB_Version = 2;
+    db.setVersion(2);
+    Log.d ("onUpgrade second log", Integer.toString(db.getVersion()));
+
+}
+
+else {
+    Log.d("onUpgrade", "else-clause: Already upgraded!");
+}  
+}  
+}
+</code></pre>
+
+<p>Here is my logcat</p>
+
+<pre><code>12-01 00:58:02.408: E/Trace(3081): error opening trace file: No such file or directory (2)
+12-01 00:58:09.822: E/SQLiteLog(3081): (1) no such table: login
+12-01 00:58:09.851: E/AndroidRuntime(3081): FATAL EXCEPTION: main
+12-01 00:58:09.851: E/AndroidRuntime(3081): android.database.sqlite.SQLiteException: no such table: login (code 1): , while compiling: SELECT * FROM login WHERE  USERNAME=?
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:882)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:493)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1161)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1032)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1200)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at com.example.trialngiba.DatabaseHelper.getSinlgeEntry(DatabaseHelper.java:131)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at com.example.trialngiba.MainActivity$2.onClick(MainActivity.java:67)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.view.View.performClick(View.java:4091)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.view.View$PerformClick.run(View.java:17072)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.os.Handler.handleCallback(Handler.java:615)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.os.Handler.dispatchMessage(Handler.java:92)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.os.Looper.loop(Looper.java:153)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at android.app.ActivityThread.main(ActivityThread.java:5042)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at java.lang.reflect.Method.invokeNative(Native Method)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at java.lang.reflect.Method.invoke(Method.java:511)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:821)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:584)
+12-01 00:58:09.851: E/AndroidRuntime(3081):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

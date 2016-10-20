@@ -1,0 +1,190 @@
+<p>So I created a new activity using the 'Fullscreen Activity' template in Android Studio. I now want to change the background which is set to <code>android:background="#0099cc"</code> by default in its generated XML file. However, I've tried the 'solution' on one of the more popular, similar questions but got a error.</p>
+
+<p><a href="http://stackoverflow.com/questions/4761686/how-to-set-background-color-of-activity-to-white-programmatically">How to set background color of Activity to white programmatically?</a></p>
+
+<p>The error I get is:      </p>
+
+<pre><code>Caused by: android.content.res.Resources$NotFoundException: Resource ID #0xffffffff
+            at android.content.res.Resources.getValue(Resources.java:2060)
+            at android.content.res.Resources.getDrawable(Resources.java:1625)
+            at android.view.View.setBackgroundResource(View.java:16251)
+</code></pre>
+
+<p>which happens at the <code>root.setBackgroundResource(Color.WHITE);</code> line. Below is the entirety of the java code with the only two things added to the Activity template being the onStart method and a setActivityBackgroundColor() method.</p>
+
+<pre><code>package org.test.app;
+
+import org.test.app.util.SystemUiHider;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+
+import org.test.app.R;
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ *
+ * @see SystemUiHider
+ */
+public class FullscreenActivityTest extends Activity {
+    /**
+     * Whether or not the system UI should be auto-hidden after
+     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+     */
+    private static final boolean AUTO_HIDE = true;
+
+    /**
+     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+     * user interaction before hiding the system UI.
+     */
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    /**
+     * If set, will toggle the system UI visibility upon interaction. Otherwise,
+     * will show the system UI visibility upon interaction.
+     */
+    private static final boolean TOGGLE_ON_CLICK = true;
+
+    /**
+     * The flags to pass to {@link SystemUiHider#getInstance}.
+     */
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+
+    /**
+     * The instance of the {@link SystemUiHider} for this activity.
+     */
+    private SystemUiHider mSystemUiHider;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_fullscreen_activity_test);
+
+        final View controlsView = findViewById(R.id.fullscreen_content_controls);
+        final View contentView = findViewById(R.id.fullscreen_content);
+
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider
+                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                    // Cached values.
+                    int mControlsHeight;
+                    int mShortAnimTime;
+
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                    public void onVisibilityChange(boolean visible) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                            // If the ViewPropertyAnimator API is available
+                            // (Honeycomb MR2 and later), use it to animate the
+                            // in-layout UI controls at the bottom of the
+                            // screen.
+                            if (mControlsHeight == 0) {
+                                mControlsHeight = controlsView.getHeight();
+                            }
+                            if (mShortAnimTime == 0) {
+                                mShortAnimTime = getResources().getInteger(
+                                        android.R.integer.config_shortAnimTime);
+                            }
+                            controlsView.animate()
+                                    .translationY(visible ? 0 : mControlsHeight)
+                                    .setDuration(mShortAnimTime);
+                        } else {
+                            // If the ViewPropertyAnimator APIs aren't
+                            // available, simply show or hide the in-layout UI
+                            // controls.
+                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                        }
+
+                        if (visible && AUTO_HIDE) {
+                            // Schedule a hide().
+                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                        }
+                    }
+                });
+
+        // Set up the user interaction to manually show or hide the system UI.
+        contentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+            }
+        });
+
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+    }
+
+    protected void onStart() {
+        super.onStart();
+        setActivityBackgroundColor();
+    }
+
+    public void setActivityBackgroundColor() {
+        setContentView(R.layout.activity_fullscreen_activity_test);
+
+        View root = ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0);
+        root.setBackgroundResource(Color.WHITE);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    Handler mHideHandler = new Handler();
+    Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
+
+    /**
+     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+}
+</code></pre>

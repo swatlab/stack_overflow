@@ -1,0 +1,712 @@
+<p>I'm working on an android app that is a hearing test. it was quite outdated so I've had to update it. I've used the Sherlock library so the app is compatible for many different phones. What I'm trying to do is get the results of a hearing test to show up. The problem I'm getting it when I draw the graph to show the user how well they did, I'm getting a null pointer exception.</p>
+
+<p>once the test is completed, the user is taken to the Saved tests Activity shown below:</p>
+
+<pre><code>public class SavedResultsActivity extends SherlockListActivity {
+// TODO set column names when saving test implemented
+private static final String TEST_NAME_COLUMN = ResultsDatabase.SAVED_NAME;
+private static final String TEST_DATE_COLUMN = ResultsDatabase.COLUMN_NAME_CREATE_DATE;
+
+private ResultsDatabase mDb;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    mDb = new ResultsDatabase(this);
+
+    setContentView(R.layout.saved_tests);
+
+    ActionBar ab = getSherlock().getActionBar();
+    SherlockHelper.setupActionBar(ab, this);
+
+    TextView titleText = (TextView)findViewById(R.id.title_text);
+    titleText.setText(R.string.Saved_Tests);
+
+    // Set the empty view
+    getListView().setEmptyView(findViewById(R.id.empty));
+    getListView().setItemsCanFocus(true);
+
+ // Get a cursor with all phones
+    Cursor c = getSavedTests();
+
+    if ( c != null ) {
+        // Set up our adapter
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
+                R.layout.saved_results_item, c, 
+                        new String[] { TEST_NAME_COLUMN, TEST_DATE_COLUMN, TEST_DATE_COLUMN }, 
+                        new int[] { android.R.id.text1, android.R.id.text2, R.id.delete_button });
+
+        adapter.setViewBinder(mViewBinder);
+        // Set up our adapter
+        setListAdapter(adapter);
+        }
+
+}
+
+@Override
+protected void onListItemClick(ListView l, View v, int position, long id) 
+{    
+    Intent intent = new Intent(this, TabbedResults.class);
+    Cursor cursor = (Cursor) getListAdapter().getItem(position);
+    intent.putExtra(ResultsDatabase._ID, cursor.getInt(cursor.getColumnIndex(ResultsDatabase._ID)));
+    startActivity(intent);
+}
+
+private final ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder(){
+
+    @Override
+    public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+        if ( view.getId() == android.R.id.text1 ){
+            String name = cursor.getString(columnIndex);
+            TextView nameView =  (TextView)view;
+            nameView.setText(name);
+        } else if ( view.getId() == android.R.id.text2 ){
+            long date = cursor.getLong(columnIndex);
+            String dateStr = DateUtils.formatDateTime(view.getContext(), date, DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_DATE);
+            TextView dateView =  (TextView)view;
+            dateView.setText(dateStr);
+        } else if ( view.getId() == R.id.delete_button ){
+            int idCol = cursor.getColumnIndex(ResultsDatabase._ID);
+            final long id = cursor.getLong(idCol);
+
+            view.setOnClickListener( new OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    deleteTest(id); 
+                }   
+            });
+        }
+
+        return true;
+    }
+
+};
+
+private static final String DELETE_SELECTION = ResultsDatabase._ID + " = ? ";
+private void deleteTest(long id) {
+    String[] whereArgs = new String[]{String.valueOf(id)};
+    SQLiteDatabase db = mDb.getWritableDatabase();
+    db.delete(ResultsDatabase.TABLE_NAME, DELETE_SELECTION, whereArgs);
+
+    SimpleCursorAdapter adapter = (SimpleCursorAdapter) getListAdapter();
+    adapter.getCursor().requery();
+    adapter.notifyDataSetChanged();
+}   
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    return MenuActivity.createMenu(this, menu);
+}
+
+// TODO fetch list of saved tests
+private Cursor getSavedTests(){
+    // get cursor
+    SQLiteDatabase db = mDb.getReadableDatabase();
+    Cursor c = db.query(ResultsDatabase.TABLE_NAME, null, null, null, null, null,null);
+
+    startManagingCursor(c);
+    return c;
+}
+}
+</code></pre>
+
+<p>Here the user will click on the test they want to view and that will take the user to a tabbed results page one tab for one ear the other tab for the other ear. I've used fragments for this:</p>
+
+<pre><code>public class TabbedResults extends SherlockFragmentActivity{
+TabHost mTabHost;
+TabManager mTabManager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.tab_indicator);
+
+    ActionBar ab = this.getSupportActionBar();
+    SherlockHelper.setupActionBar(ab, this);
+
+    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+
+    mTabManager = new TabManager(this, mTabHost, R.id.realtabcontent);
+
+    mTabManager.addTab(mTabHost.newTabSpec(getString(R.string.Left_ear)).setIndicator(getString(R.string.Left_ear)),
+            ResultActivity.Results.class, null);
+    mTabManager.addTab(mTabHost.newTabSpec("contacts").setIndicator(getString(R.string.Left_ear)),
+            ResultActivity.Results.class, null);
+
+    if (savedInstanceState != null) {
+        mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+    }
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putString("tab", mTabHost.getCurrentTabTag());
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    return MenuActivity.createMenu(this, menu);
+}
+}
+</code></pre>
+
+<p>this method uses another method called TabManager to manage which tab is open etc:</p>
+
+<pre><code>public class TabManager extends SherlockFragmentActivity implements TabHost.OnTabChangeListener {
+    private final FragmentActivity mActivity;
+    private final TabHost mTabHost;
+    private final int mContainerId;
+    private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+    TabInfo mLastTab;
+
+    static final class TabInfo {
+        private final String tag;
+        private final Class<?> clss;
+        private final Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String _tag, Class<?> _class, Bundle _args) {
+            tag = _tag;
+            clss = _class;
+            args = _args;
+        }
+    }
+
+    static class DummyTabFactory implements TabHost.TabContentFactory {
+        private final Context mContext;
+
+        public DummyTabFactory(Context context) {
+            mContext = context;
+        }
+
+        @Override
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    public TabManager(FragmentActivity activity, TabHost tabHost, int containerId) {
+        mActivity = activity;
+        mTabHost = tabHost;
+        mContainerId = containerId;
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+        tabSpec.setContent(new DummyTabFactory(mActivity));
+        String tag = tabSpec.getTag();
+
+        TabInfo info = new TabInfo(tag, clss, args);
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        info.fragment = mActivity.getSupportFragmentManager().findFragmentByTag(tag);
+        if (info.fragment != null && !info.fragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+            ft.detach(info.fragment);
+            ft.commit();
+        }
+
+        mTabs.put(tag, info);
+        mTabHost.addTab(tabSpec);
+    }
+
+    @Override
+    public void onTabChanged(String tabId) {
+        TabInfo newTab = mTabs.get(tabId);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(mActivity,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(mContainerId, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+
+            mLastTab = newTab;
+            ft.commit();
+            mActivity.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+    private Intent createIntent( boolean aRight) {
+        Intent newIntent = new Intent(getIntent());
+        newIntent.putExtra(ResultActivity.IS_RIGHT_EAR, aRight);
+        newIntent.setClass(this, ResultActivity.class);
+        return newIntent;
+    } 
+}
+</code></pre>
+
+<p>So the activity used to show the results of each ear is the results activity:</p>
+
+<pre><code>public class ResultActivity extends SherlockFragmentActivity {
+
+public static final String IS_RIGHT_EAR = "is_right_ear";
+private ArrayList<EarSrt> leftAnswerList;
+private ArrayList<EarSrt> rightAnswerList;
+
+private boolean isRightEarTab = true;
+
+private boolean bothEarsBad;
+private boolean leftEarBad;
+private boolean rightEarBad;
+
+@SuppressWarnings("unchecked")
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.result);
+
+    Intent intent = getIntent();
+    int rowId = intent.getIntExtra(ResultsDatabase._ID, -1);
+    if ( rowId != -1 ) {
+        ResultsDatabase db = new ResultsDatabase(this);
+        String select = "(" + ResultsDatabase._ID + " == " + rowId + ")";
+        Cursor c = db.getReadableDatabase().query(ResultsDatabase.TABLE_NAME, null, select, null, null, null,null);
+        if ( c.moveToFirst() ) {
+            int leftEarColumn = c.getColumnIndex(ResultsDatabase.LEFT_EAR);
+            byte[] leftEarByteArray = c.getBlob(leftEarColumn);
+            int rightEarColumn = c.getColumnIndex(ResultsDatabase.RIGHT_EAR);
+            byte[] rightEarByteArray = c.getBlob(rightEarColumn);
+            leftAnswerList = (ArrayList<EarSrt>) ResultsDatabase.deserializeObject(leftEarByteArray);
+            rightAnswerList = (ArrayList<EarSrt>) ResultsDatabase.deserializeObject(rightEarByteArray);
+        }
+
+    } else {
+        byte[] leftEarByteArray = getIntent().getByteArrayExtra(ResultsDatabase.LEFT_EAR);
+        byte[] rightEarByteArray = getIntent().getByteArrayExtra(ResultsDatabase.RIGHT_EAR);
+        leftAnswerList = (ArrayList<EarSrt>) ResultsDatabase.deserializeObject(leftEarByteArray);
+        rightAnswerList = (ArrayList<EarSrt>) ResultsDatabase.deserializeObject(rightEarByteArray);
+    }
+
+    isRightEarTab = getIntent().getBooleanExtra(IS_RIGHT_EAR, true);
+
+    setResults(leftAnswerList, rightAnswerList);
+
+    if (savedInstanceState == null) {
+        // Do first time initialization -- add initial fragment.
+        Fragment newFragment = new Results();
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.add(R.id.resultsContainer, newFragment).commit();
+    }
+}
+
+private float calculateAverage(List<EarSrt> steps) {
+    float srt = 0.0f;
+    int length = steps.size();
+
+    for (int i = (int)Math.ceil( (float)length/(float)2); i < length; i++) {
+        EarSrt es = steps.get(i);
+        srt += es.getSrt();
+
+        //printf("%f ," , [es srt]);
+    }
+
+    srt = srt / (length-(float)Math.ceil( (float)length/(float)2));
+
+ //         printf("\n%f\n" , srt);
+
+    return srt;
+}
+
+private void setResults(List<EarSrt> leftEar, List<EarSrt> rightEar) {
+    float esLeft = calculateAverage(leftEar);
+    float esRight = calculateAverage(rightEar);
+
+    leftEarBad = (esLeft > 24.0);
+    rightEarBad = (esRight > 24.0);
+    bothEarsBad = (leftEarBad && rightEarBad);
+
+    setResultCaption(bothEarsBad, leftEarBad, rightEarBad);
+}
+
+
+/**
+ * TODO: this needs finishing
+ */
+private void setResultCaption(boolean bothEarsBad, boolean leftEarBad, boolean rightEarBad) {
+    TextView resultsTextView = (TextView)findViewById(R.id.results_text);
+    StringBuilder resultsText = new StringBuilder();
+    if (bothEarsBad) {
+        resultsText.append(getString(R.string.The_test_indicates_a_possible_hearing_loss));
+        resultsText.append(getString(R.string.We_recommend_that_you_visit_a_Hearing_Care_Professional_for_a_comprehensive_hearing_check));
+    }else{
+        if (leftEarBad) {
+            resultsText.append(getString(R.string.The_test_indicates_a_possible_hearing_loss_for_your_left_ear));
+            resultsText.append(getString(R.string.We_recommend_that_you_visit_a_Hearing_Care_Professional_for_a_comprehensive_hearing_check));
+        } else if (rightEarBad) {
+            resultsText.append(getString(R.string.The_test_indicates_a_possible_hearing_loss_for_your_Right_ear));
+            resultsText.append(getString(R.string.We_recommend_that_you_visit_a_Hearing_Care_Professional_for_a_comprehensive_hearing_check));      
+        }else {
+            resultsText.append(getString(R.string.There_is_no_indication_of_hearing_loss));
+        }                               
+    }
+
+    resultsText.append(getString(R.string.The_results_of_the__hearing_test_are_not_to_be_utilized_as_an_official_outcome_for_assessing_levels_of_hearing_loss_True_hearing_loss_assessments_can_only_be_determined_by_a_licensed_hearing_healthcare_provider));                                 
+
+    resultsTextView.setText(resultsText.toString());
+}
+
+public void goToLocate(View aView){
+    Intent locate = new Intent( this, MapActivity.class);
+    startActivity(locate);
+    finish();
+}
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+      return MenuActivity.createMenu(this, menu);
+  }
+
+public static class Results extends SherlockFragment{
+//      @Override
+//      public void onCreate(Bundle savedInstanceState){
+//          super.onCreate(savedInstanceState);
+//          
+//      }
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.results_layout, container, false);
+        return rootView;
+    }
+}
+ }
+</code></pre>
+
+<p>Now this class uses the GraphView class to draw the graph:</p>
+
+<pre><code>public final class GraphView extends View {
+private static final float SCALE = 0.008f; // map (min,max) to ( 0, 1)
+private static final float WIDTH = 0.02f; // map (min,max) to ( 0, 1)
+
+ArrayList<EarSrt> mPoints;
+
+// drawing tools
+private RectF rimRect;
+private RectF rimRectTop;
+private RectF rimRectBottom;
+private float[] centreLine;
+
+private RectF topSideBar;
+private RectF bottomSideBar;
+
+private Paint rimPaintTop;
+private Paint rimPaintBottom;
+private Paint outerRimPaint;
+private Paint centreLinePaint;
+
+private Paint topSideBarPaint;
+private Paint bottomSideBarPaint;
+
+private Paint titlePaint;   
+private Paint keyPaint;
+
+private Paint correctPointPaint;
+private Paint incorrectPointPaint;
+private Paint linePaint;
+private Paint pointOutlinePaint;
+private Paint averagePaint;
+
+private Paint backgroundPaint; 
+// end drawing tools
+
+private Bitmap background; // holds the cached static part
+private float mAverage;
+
+public GraphView(Context context) {
+    super(context);
+    init();
+}
+
+public GraphView(Context context, AttributeSet attrs) {
+    super(context, attrs);
+    init();
+}
+
+public GraphView(Context context, AttributeSet attrs, int defStyle) {
+    super(context, attrs, defStyle);
+    init();
+}
+
+private void init() {
+    initDrawingTools();
+}
+
+private String getTitle() {
+    return getContext().getString(R.string.Normal_hearing);
+}
+
+private void initDrawingTools() {
+    rimRect = new RectF(0.0f, 0.0f, 1.0f, 1.0f);
+
+    rimRectTop = new RectF(0.0f, 0.5f, 1.0f, 1.0f);
+    rimRectBottom = new RectF(0.0f, 0.0f, 1.0f, 0.5f);
+    centreLine = new float[4];
+    centreLine[0]=0.0f;
+    centreLine[1]=0.5f;
+    centreLine[2]=1.0f;
+    centreLine[3]=0.5f;
+
+    topSideBar = new RectF(0.95f, 0.5f, 1.0f, 1.0f);
+    bottomSideBar  = new RectF(0.95f, 0.0f, 1.0f, 0.5f);
+
+    // the linear gradient is a bit skewed for realism
+    rimPaintTop = new Paint();
+    rimPaintTop.setFlags(Paint.ANTI_ALIAS_FLAG);
+    rimPaintTop.setShader(new LinearGradient(0.40f, 0.0f, 0.60f, 1.0f, 
+                                       0xff9ea3ac,
+                                       0xffc0c2c6,
+                                       TileMode.CLAMP));
+
+    rimPaintBottom = new Paint();
+    rimPaintBottom.setFlags(Paint.ANTI_ALIAS_FLAG);
+    rimPaintBottom.setShader(new LinearGradient(0.40f, 0.0f, 0.60f, 1.0f, 
+                                        0xffc5cbbd,
+                                        0xff3d4649,
+                                       TileMode.CLAMP));
+
+
+    outerRimPaint = new Paint();
+    outerRimPaint.setAntiAlias(true);
+    outerRimPaint.setStyle(Paint.Style.STROKE);
+    outerRimPaint.setColor(Color.argb(0x4f, 0x33, 0x36, 0x33));
+    outerRimPaint.setStrokeWidth(0.001f);
+
+    centreLinePaint = new Paint();
+    centreLinePaint.setStyle(Paint.Style.STROKE);
+    centreLinePaint.setColor(0xff90cc38);
+    centreLinePaint.setAntiAlias(true);
+    centreLinePaint.setStrokeWidth(0.02f);
+
+    topSideBarPaint = new Paint();
+    topSideBarPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+    topSideBarPaint.setShader(new LinearGradient(0.40f, 0.0f, 0.60f, 1.0f, 
+               0xffc5cbbd,
+               0xff3d4649,
+               TileMode.CLAMP));
+
+    bottomSideBarPaint = new Paint();
+    bottomSideBarPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+    bottomSideBarPaint.setShader(new LinearGradient(0.40f, 0.0f, 0.60f, 1.0f, 
+                0xff4c9b3e,
+                0xffa0dd61,
+               TileMode.CLAMP));
+
+    titlePaint = new Paint();
+    titlePaint.setColor(0xffffffff);
+    titlePaint.setAntiAlias(true);
+    titlePaint.setTypeface(Typeface.DEFAULT_BOLD);
+    titlePaint.setTextAlign(Paint.Align.CENTER);
+    titlePaint.setTextSize(0.05f);
+    titlePaint.setTextScaleX(0.8f);
+
+    keyPaint = new Paint();
+    keyPaint.setColor(0xff000000);
+    keyPaint.setAntiAlias(true);
+    keyPaint.setTypeface(Typeface.DEFAULT_BOLD);
+    keyPaint.setTextAlign(Paint.Align.LEFT);
+    keyPaint.setTextSize(0.05f);
+    keyPaint.setTextScaleX(0.8f);
+
+    backgroundPaint = new Paint();
+    backgroundPaint.setFilterBitmap(true);
+
+    linePaint = new Paint();
+    linePaint.setColor(0xffffffff);
+    linePaint.setStrokeWidth(0);
+
+    averagePaint = new Paint();
+    averagePaint.setColor(0xff000000);
+    averagePaint.setStyle(Paint.Style.FILL);
+
+    correctPointPaint = new Paint();
+    correctPointPaint.setColor(0xff90cc38);
+    correctPointPaint.setStyle(Paint.Style.FILL);
+
+
+    incorrectPointPaint = new Paint();
+    incorrectPointPaint.setColor(0xffb1b3ba);
+    correctPointPaint.setStyle(Paint.Style.FILL);
+
+    pointOutlinePaint = new Paint();
+    pointOutlinePaint.setStyle(Paint.Style.STROKE);
+    pointOutlinePaint.setColor(0xffffffff);
+    pointOutlinePaint.setAntiAlias(true);
+    pointOutlinePaint.setStrokeWidth(0.0f);
+}
+
+private void drawRim(Canvas canvas) {
+    // first, draw the metallic body
+    canvas.drawRect(rimRectTop, rimPaintTop);
+    canvas.drawRect(rimRectBottom, rimPaintBottom);
+
+    // now the outer rim circle
+    canvas.drawRect(rimRect, outerRimPaint);
+
+    // Draw middleline
+    canvas.drawLines(centreLine, centreLinePaint);
+
+    // Draw sidebars
+    canvas.drawRect(topSideBar, topSideBarPaint);
+    canvas.drawRect(bottomSideBar, bottomSideBarPaint);
+
+}
+
+public void setPoints( ArrayList<EarSrt> aPoints){
+    mPoints = aPoints;
+}
+
+private void drawTitle(Canvas canvas) {
+    String title = getTitle();  
+    canvas.drawText(title, 0.2f, 0.1f, titlePaint);
+}
+
+private void drawBackground(Canvas canvas) {
+    if (background == null) {
+    } else {
+        canvas.drawBitmap(background, 0, 0, backgroundPaint);
+    }
+}
+
+protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    // We purposely disregard child measurements because act as a
+    // wrapper to a SurfaceView that centers the camera preview instead
+    // of stretching it.
+    final int width = resolveSize(getSuggestedMinimumWidth(), widthMeasureSpec);
+    final int height = (int)(width * 0.8f);
+    setMeasuredDimension(width, height);
+}
+
+@Override
+protected void onDraw(Canvas canvas) {
+    drawBackground(canvas);
+
+    canvas.restore();
+}
+
+@Override
+protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    regenerateBackground();
+}
+
+private void regenerateBackground() {
+    // free the old bitmap
+    if (background != null) {
+        background.recycle();
+    }
+
+    background = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+    Canvas backgroundCanvas = new Canvas(background);
+    float scaleWidth = (float) getWidth();
+    float scaleHeight = (float) getHeight();        
+    backgroundCanvas.scale(scaleWidth, scaleHeight/1.23f);
+
+    drawRim(backgroundCanvas);
+    drawTitle(backgroundCanvas);    
+    drawPoints(backgroundCanvas);
+
+    drawKey(backgroundCanvas);
+}
+
+private void drawPoints(Canvas canvas) {    
+    float gap = 1.0f/((float)mPoints.size()+2);
+
+    // Iterate though the points twice, once to
+    // draw the line and one to draw the points
+    // doesn't appear to be the most efficient 
+    // method, but calculations of point size etc
+
+    // Draw line
+    int count = 1;
+    float prev_x = 0.0f;
+    float prev_y = 0.0f;
+    for ( EarSrt vo : mPoints){
+        float y_pos = 0.5f + 2*( vo.getSrt() - 24.0f)*SCALE;
+        float x_pos = gap*count;
+
+
+        if ( count != 1 ){
+            canvas.drawLine(prev_x, prev_y, x_pos, y_pos, linePaint);
+        }
+
+        count++;
+
+        prev_x = x_pos;
+        prev_y = y_pos;     
+    }
+
+    // draw points
+    count = 1;
+    for ( EarSrt vo : mPoints){
+        float y_pos = 0.5f + 2*( vo.getSrt() - 24.0f)*SCALE;
+        float x_pos = gap*count;
+        count++;
+
+        RectF rect = new RectF(x_pos - WIDTH, y_pos - WIDTH, x_pos + WIDTH, y_pos + WIDTH);
+
+        if ( vo.isCorrect() ) {
+            canvas.drawRect(rect, correctPointPaint);
+        } else {
+            canvas.drawRect(rect, incorrectPointPaint);
+        }
+
+        canvas.drawRect(rect, pointOutlinePaint);
+    }
+
+    // Plot average line
+    float yAverage = 0.5f + 2*( mAverage - 24.0f)*SCALE;
+    RectF averageRect  = new RectF(0.95f, yAverage - WIDTH/2.0f, 1.0f, yAverage + WIDTH/2.0f);
+    canvas.drawRect(averageRect, averagePaint);
+ }
+
+private void drawKey(Canvas canvas) {
+    float rightEdge = 0.05f;
+    float leftEdge = 0.05f + 4 * WIDTH;
+
+    // Example correct square
+    RectF rect = new RectF(rightEdge, 1.1f - WIDTH, rightEdge + 2 * WIDTH, 1.1f + WIDTH);
+    canvas.drawRect(rect, correctPointPaint);   
+    canvas.drawRect(rect, pointOutlinePaint);
+
+    String correctResults = getContext().getString(R.string.Correct_results);
+    canvas.drawText(correctResults, leftEdge, 1.1f + WIDTH, keyPaint);
+
+    // Test result line
+    RectF averageRect  = new RectF(rightEdge, 1.2f - WIDTH/2.0f, rightEdge + 2 * WIDTH, 1.2f + WIDTH/2.0f);
+    canvas.drawRect(averageRect, averagePaint);
+
+    String testResults = getContext().getString(R.string.Your_test_result);
+    canvas.drawText(testResults, leftEdge, 1.2f + WIDTH/2.0f, keyPaint);
+}
+
+public void setAverage(float aAverage) {
+    mAverage = aAverage;
+
+}
+ }
+</code></pre>
+
+<p>the issues I'm getting are on the GraphView class in the drawPoints, regenerateBackground and onSizeChanged methods. </p>
+
+<p>Another issue I have is showing the correct information in the correct tab. So for one tab it only shows the results from the left are and vice versa. Any help on these issues would be massively grateful as I've been trying to get this to work for ages!!</p>
+
+<p>Thanks again for any help thats given.</p>

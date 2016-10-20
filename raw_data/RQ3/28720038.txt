@@ -1,0 +1,110 @@
+<p>I'm creating a listview from a database of people. When I click on the person I want to bring up the persons details. I want to set my own id for the person then bring up the details corresponding from this id.</p>
+
+<p>I tried to do this by adding a int id to the tag object and getting the views tag in the onItemClick() method...This worked for the first three items in the list (position 0,1,2) but the fourth and fifth items brought up details for position 0 and the sixth item brought up the details for position 1. It did however occasionally bring up the correct details for these items which seems strange.</p>
+
+<p>Here is my baseadapter:</p>
+
+<pre><code>public class ItemListBaseAdapter extends BaseAdapter {
+    private static ArrayList<PersonObject> itemDetailsrrayList;
+    private LayoutInflater l_Inflater;
+
+    public ItemListBaseAdapter(Context context, ArrayList<PersonObject> results) {
+        itemDetailsrrayList = results;
+        l_Inflater = LayoutInflater.from(context);
+
+    }
+
+    public int getCount() {
+        return itemDetailsrrayList.size();
+    }
+
+    public Object getItem(int position) {
+        return itemDetailsrrayList.get(position);
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+
+        if (convertView == null) {
+            convertView = l_Inflater.inflate(R.layout.personlist, null);
+            holder = new ViewHolder();
+
+            holder.Name = (TextView) convertView.findViewById(R.id.namespace);
+            holder.id=itemDetailsrrayList.get(position).getId();
+            convertView.setTag(holder);
+
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+
+        holder.Name.setText(itemDetailsrrayList.get(position).getName());
+
+        return convertView;
+    }
+}
+</code></pre>
+
+<p>Here is the fragment which displays the listview:</p>
+
+<pre><code>public class HomeFragment extends Fragment {
+
+
+    private ListView lv1;
+    private DatabaseHandler db;
+    ArrayList<PersonObject> contacts;
+    private ViewHolder myTag;
+    private ViewHolder vh;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.item_main, container, false);
+
+       lv1 = (ListView) view.findViewById(R.id.listV_main);
+        db = new DatabaseHandler(getActivity());
+        contacts=db.getAllPersonItems();
+
+
+        lv1.setAdapter(new ItemListBaseAdapter(getActivity(), contacts));
+
+
+        lv1.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                vh=(ViewHolder)view.getTag();
+                Intent i=new Intent(getActivity(),TabActivityPersonPage.class);
+
+                i.putExtra("id",Integer.toString(vh.id));
+
+                startActivity(i);
+
+
+            }
+        });
+return view;
+    }
+
+    }
+</code></pre>
+
+<p>And here is my ViewHolder class:</p>
+
+<p>public class ViewHolder {</p>
+
+<pre><code>TextView Name;
+TextView ReportedMissing;
+ImageView itemImage;
+TextView Age;
+TextView Contact;
+TextView Distance;
+int id;
+</code></pre>
+
+<p>}</p>
+
+<p>I may be approaching this in the entirely wrong way, I' not sure. Any help is much appreciated.</p>

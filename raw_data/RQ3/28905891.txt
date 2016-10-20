@@ -1,0 +1,45 @@
+<p>I have the following code in an AsyncTask that retrieves a list of notifications from a DB.</p>
+
+<pre><code>protected void onPostExecute(List<NotificationItem> result) {
+    super.onPostExecute(result);
+    if (dialog.isShowing()) 
+        dialog.dismiss();
+    if (adpt != null) {
+        if (result != null && result.size() > 0)
+            adpt.setItemList(result);
+        else if (adpt.getItemList() != null) 
+            adpt.clear();
+        adpt.notifyDataSetChanged();
+    }
+    srl.setRefreshing(false);
+}
+</code></pre>
+
+<p>As you can see, I check the result, the adapter (adpt) and its items (adpt.getItemList()) for being null, before making the relevant action such as .clear(). I want to clear the list when the result size is 0 meaning nothing should be shown to the user (before, it did). When the debug is on the .clear() line, all three objects are not null but still I get NullPointerException.</p>
+
+<p>When debugging inside clear(), I got inside ArrayAdapter.java:</p>
+
+<pre><code>public void clear() {
+        synchronized (mLock) {
+            if (mOriginalValues != null) {
+                mOriginalValues.clear();
+            } else {
+                mObjects.clear();
+            }
+        }
+        if (mNotifyOnChange) notifyDataSetChanged();
+    }
+</code></pre>
+
+<p>And both mOriginalValues and mObjects are null, hence the error. Not sure what am I doing wrong, can you see the problem?</p>
+
+<p>Update: I instantiate the adapter like this: <code>notificationsAdapter = new NotificationsAdapter(null);</code> ofcourse I do this as first step when I still don't have any items.</p>
+
+<p>The error is:</p>
+
+<blockquote>
+  <p>java.lang.NullPointerException: Attempt to invoke interface method
+  'void java.util.List.clear()' on a null object reference at
+  android.widget.ArrayAdapter.clear(ArrayAdapter.java:258) at
+  com.example.example.fragments.NotificationsList$NotificationsRetriever.onPostExecute(NotificationsList.java:184)</p>
+</blockquote>

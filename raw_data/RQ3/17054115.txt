@@ -1,0 +1,186 @@
+<p>)
+I am beginner in Android programming and I have little problem.
+I wrote simple DataBase app(I have ready Data Base) and I need to copy it to app folder on phone. I have method for this. When I run app on emulator, all works but when I copy this app to my phone, app have crash. Can you help me?
+This is dbAdapter:</p>
+
+<pre><code>import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import android.app.Application;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class dbAdapter {
+private static final String DB_NAME = "names2.db";
+private static final int DB_VERSION = 1;
+private static final String DB_TABLE = "names";
+String DB_PATH;
+public static final String KEY_ID = "_id";
+public static final String KEY_NAME = "name";
+public static final int NAME_COLUMN = 1;
+public static final String KEY_SEX = "sex";
+public static final int SEX_COLUMN = 2;
+public static final String KEY_RACE = "race";
+public static final int RACE_COLUMN = 3;
+private SQLiteDatabase db;
+private final Context context;
+private DatabaseHelper myDatabaseHelper;
+
+public dbAdapter(Context _context){
+    context = _context;
+    //DB_PATH = context.getApplicationContext().getFilesDir().getPath();
+
+    DB_PATH = context.getFilesDir().getPath()+"/databases/";
+    myDatabaseHelper = new DatabaseHelper(_context,DB_NAME,null,DB_VERSION);
+}
+
+public dbAdapter open(){
+    db = myDatabaseHelper.getReadableDatabase();
+    return this;
+}
+
+public void close(){
+    db.close();
+}
+
+public long insert(rekord _rekord){
+    ContentValues newRekord = new ContentValues();
+    newRekord.put(KEY_NAME, _rekord.getName());
+    newRekord.put(KEY_SEX, _rekord.getSex());
+    newRekord.put(KEY_RACE, _rekord.getRace());
+    return db.insert(DB_TABLE, null, newRekord);
+}
+public String getData(String sex, String race) {
+    Cursor mycursor = db.rawQuery("SELECT name FROM names WHERE sex ="+sex+" AND race="+race+" ORDER BY RANDOM() LIMIT 1", null);
+      if(mycursor.moveToFirst()){ //Edited based on suggestion from SAM
+          String strCatName = mycursor.getString(mycursor.getColumnIndex(KEY_NAME));
+                  return strCatName;
+        } else {
+        return null;
+         }
+      // return db.rawQuery("SELECT name FROM names WHERE sex =1 ORDER BY RANDOM() LIMIT 1", new String[]{"name"});
+    }
+public void copyDatabase() throws IOException{ //niby kopiowanie bazy danych. Nie wiem czy dobre bo nie chce działać
+
+    //Open your local db as the input stream
+    InputStream myInput = context.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+public void del(){
+    File file = new File(DB_PATH+DB_NAME);
+    if(file.exists())
+        file.delete();
+}
+
+
+
+public SQLiteDatabase assetOpenDatabase() {
+    File dbFile = context.getDatabasePath(DB_NAME);
+    if (!dbFile.exists()) {
+        try {
+            assetCopyDatabase(dbFile);
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating source database", e);
+        }
+    }
+
+    return SQLiteDatabase.openDatabase(dbFile.getPath(), null, SQLiteDatabase.OPEN_READONLY);
+}
+
+private void assetCopyDatabase(File dbFile) throws IOException {
+    InputStream is = context.getAssets().open(DB_NAME);
+    OutputStream os = new FileOutputStream(dbFile);
+
+    byte[] buffer = new byte[1024];
+    while (is.read(buffer) > 0) {
+        os.write(buffer);
+    }
+
+    os.flush();
+    os.close();
+    is.close();
+}
+//--------------------------------------------------------
+class DatabaseHelper extends SQLiteOpenHelper{
+    public DatabaseHelper(Context context, String name, CursorFactory factory, int version){
+        super(context,name,factory,version);
+    }
+    @Override
+    public void onCreate(SQLiteDatabase _db){
+        //_db.execSQL("CREATE TABLE names(_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, sex NUMERIC NOT NULL, race NUMERIC NOT NULL)");
+    }
+    @Override
+    public void onUpgrade(SQLiteDatabase _db, int oldVer, int newVer){
+        _db.execSQL("DROP TABLE IF EXISTS "+DB_TABLE);
+        onCreate(_db);
+    }
+}
+}
+</code></pre>
+
+<p>And that's how I copying file:</p>
+
+<pre><code>dbAdapter baza = new dbAdapter(this);
+baza.copyDatabase();
+</code></pre>
+
+<p>or
+    baza.assetOpenDatabase();
+Same effect.</p>
+
+<hr>
+
+<pre><code>Ehh, now I have error on emulator too...
+06-11 21:31:20.510: E/AndroidRuntime(537): FATAL EXCEPTION: main
+06-11 21:31:20.510: E/AndroidRuntime(537): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.namesgenerator/com.example.namesgenerator.sex}: java.lang.RuntimeException: Error creating source database
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1647)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1663)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:931)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.os.Handler.dispatchMessage(Handler.java:99)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.os.Looper.loop(Looper.java:123)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.ActivityThread.main(ActivityThread.java:3683)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at java.lang.reflect.Method.invokeNative(Native Method)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at java.lang.reflect.Method.invoke(Method.java:507)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at dalvik.system.NativeStart.main(Native Method)
+06-11 21:31:20.510: E/AndroidRuntime(537): Caused by: java.lang.RuntimeException: Error creating source database
+06-11 21:31:20.510: E/AndroidRuntime(537):  at com.example.namesgenerator.dbAdapter.assetOpenDatabase(dbAdapter.java:108)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at com.example.namesgenerator.sex.onCreate(sex.java:39)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1611)
+06-11 21:31:20.510: E/AndroidRuntime(537):  ... 11 more
+06-11 21:31:20.510: E/AndroidRuntime(537): Caused by: java.io.FileNotFoundException: /data/data/com.example.namesgenerator/databases/names2.db (No such file or directory)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at org.apache.harmony.luni.platform.OSFileSystem.open(Native Method)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at dalvik.system.BlockGuard$WrappedFileSystem.open(BlockGuard.java:232)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at java.io.FileOutputStream.<init>(FileOutputStream.java:94)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at java.io.FileOutputStream.<init>(FileOutputStream.java:66)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at com.example.namesgenerator.dbAdapter.assetCopyDatabase(dbAdapter.java:117)
+06-11 21:31:20.510: E/AndroidRuntime(537):  at com.example.namesgenerator.dbAdapter.assetOpenDatabase(dbAdapter.java:106)
+06-11 21:31:20.510: E/AndroidRuntime(537):  ... 14 more
+</code></pre>

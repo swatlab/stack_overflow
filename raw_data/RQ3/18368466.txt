@@ -1,0 +1,123 @@
+<p>I am a bit confused about this so I would really appreciate somebody's help.</p>
+
+<p>I have an activity - MainActivity, inside of the activity I have two classes - RetrieveThumbnailsTask (AsyncTask) and an adapter ImageAdapter (extends BaseAdapter). I am basically just retrieving the thumbnails of the images from the external storage and showing them in a gridview. Now this proved to be quite slow (for hundreds of images it takes quite a time) so I decided to create the thumbnails in an AsyncTask.</p>
+
+<p>The code is /irrelevant parts left out/:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    private Cursor cursor;
+    private Bitmap[] thumbnails;
+    private ProgressDialog pd;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        init();
+    }
+
+    private void init() {
+        createProgressDialog();
+        new RetrieveThumbnailsTask(this).execute();
+    }
+
+    private void createProgressDialog() {
+        //...
+    }
+
+    private void createThumbnails() {
+        //...
+    }
+
+    private class ImageAdapter extends BaseAdapter {
+
+        private Context mContext;
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return thumbnails.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {  // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(120, 120));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            }
+            else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageBitmap(thumbnails[position]);
+            return imageView;   
+        }
+    }
+
+    private class RetrieveThumbnailsTask extends AsyncTask<Void, Void, Boolean> {
+
+        private MainActivity activity;
+
+        public RetrieveThumbnailsTask(MainActivity a) {
+            activity = a;
+        }
+
+        protected void onPreExecute() {
+            pd.show();
+        }
+
+        protected Boolean doInBackground(Void... params) {
+            activity.createThumbnails(); //This is the slow process that creates the thumbnails
+            return true;
+        }
+
+        protected void onPostExecute(Boolean b) {
+            pd.dismiss();
+            GridView gridview = (GridView) findViewById(R.id.gridview);
+            gridview.setAdapter(new ImageAdapter(activity));
+
+            gridview.setOnItemClickListener(new OnItemClickListener() {
+                public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                    Toast.makeText(MainActivity.this, "" + position, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+}
+</code></pre>
+
+<p>The part I don't understand is this:</p>
+
+<pre><code>GridView gridview = (GridView) findViewById(R.id.gridview);
+gridview.setAdapter(new ImageAdapter(activity));
+
+gridview.setOnItemClickListener(new OnItemClickListener() {
+public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                Toast.makeText(MainActivity.this, "" + position, Toast.LENGTH_SHORT).show();
+            }
+});
+</code></pre>
+
+<p>Now when this code is inside of onPostExecute, everything works alright. But when it is inside doInBackground (right above the return true statement), the code hangs on  gridview.setAdapter(new ImageAdapter(activity)); and the app force closes.
+So my question is - why does this happen? What is the explanation? I guess I must be missing something big time. Thank you!</p>

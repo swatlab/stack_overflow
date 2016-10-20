@@ -1,0 +1,290 @@
+<p>So i´m learning android on my gridview app and i have a few problems with it like that loading time of the gridview is to long for example. So i was thinking about to give universal image loader a chance.
+But my problem is that i don´t find a nice step by step tutorial for how to use it with array in drawable folder...</p>
+
+<p>Maybe somebody could help me to change my code so i can use UIL.</p>
+
+<p><strong>MainActivity</strong></p>
+
+<pre><code>  public class MainActivity extends Activity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_main);
+
+        GridView gridView = (GridView) findViewById(R.id.gridview);
+
+        // Instance of ImageAdapter Class
+        gridView.setAdapter(new ImageAdapter(this));
+
+        /**
+         * On Click event for Single Gridview Item
+         * */
+        gridView.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View v,
+                    int position, long id) {
+
+                // Sending image id to FullScreenActivity
+                Intent i = new Intent(getApplicationContext(), FullImageActivity.class);
+                // passing array index
+                i.putExtra("id", position);
+                startActivity(i);
+            }
+        });
+    }
+
+
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container,
+                    false);
+            return rootView;
+        }
+
+    }
+
+
+
+}
+</code></pre>
+
+<p><strong>ImageAdapter</strong></p>
+
+<pre><code>    public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    // Keep all Images in array
+    public Integer[] mThumbIds = {
+
+            R.drawable.new19,                                       R.drawable.new2,
+            R.drawable.new20,                                       R.drawable.new21,
+            R.drawable.new22,                                       R.drawable.new23,
+            R.drawable.new24,                                       R.drawable.new25,
+            R.drawable.new26,                                       R.drawable.new27,
+            R.drawable.new28,                                       R.drawable.new29,
+            R.drawable.new3,                                        R.drawable.new31,
+            R.drawable.new33,                                       R.drawable.new34,
+            R.drawable.new35,                                       R.drawable.new36,
+            R.drawable.new37,                                       R.drawable.new38,
+            R.drawable.new39,                                       R.drawable.new4,
+            R.drawable.new40,                                       R.drawable.new41,
+            R.drawable.new42,                                       R.drawable.new43,
+            R.drawable.new44,                                       R.drawable.new45,
+            R.drawable.new46,                                       R.drawable.new47,
+            R.drawable.new48,                                       R.drawable.new49,
+            R.drawable.new5,                                        R.drawable.new50,
+            R.drawable.new53,                                       R.drawable.new54,
+            R.drawable.sample_7,                                    R.drawable.one_does_not_simply,
+            R.drawable.new55,                                       R.drawable.new56,
+            R.drawable.new57,                                       R.drawable.new58,
+            R.drawable.new59,                                       R.drawable.new6,
+            R.drawable.new60,                                       R.drawable.new61,
+            R.drawable.new62,                                       R.drawable.new63,
+            R.drawable.new64,                                       R.drawable.new65,
+            R.drawable.new66,                                       R.drawable.new67,
+            R.drawable.new68,                                       R.drawable.new69,
+            R.drawable.new70,                                       R.drawable.new71,
+            R.drawable.new72,                                       R.drawable.new73,
+            R.drawable.new74,                                       R.drawable.new75,
+            R.drawable.new76,                                       R.drawable.new77,
+            R.drawable.new78,                                       
+            R.drawable.new80,                                       R.drawable.new81,
+            R.drawable.new82,                                       R.drawable.new83,
+            R.drawable.new84,                                       R.drawable.new85,
+            R.drawable.new86,                                       R.drawable.new87,
+            R.drawable.new88,                                       R.drawable.new89,
+            R.drawable.new90,                                       R.drawable.new91,
+            R.drawable.new92,                                       R.drawable.new93,
+            R.drawable.new94,                                       R.drawable.new95,
+            R.drawable.new96,                                       R.drawable.new97,
+                                                                    R.drawable.new99   
+
+
+    };
+
+
+    // Constructor
+    public ImageAdapter(Context c){
+        mContext = c;
+    }
+
+    @Override
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return mThumbIds[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
+
+
+public View getView(int position, View convertView, ViewGroup parent) {
+
+    ImageView imageView = null;
+
+    if (convertView == null) {
+        imageView = new ImageView(this.mContext);
+        new BitmapWorkerTask(imageView).execute(mThumbIds[position]);
+        //create new ImageView if it is not present and populate it with some image
+    } else {
+        imageView = (ImageView) convertView;
+        //re-use ImageView that already exists in memory
+    }// clean up your old bitmap first, if there is one.
+    if(imageView.getDrawable() instanceof BitmapDrawable){
+        BitmapDrawable bd = (BitmapDrawable) imageView.getDrawable();
+        imageView.setImageDrawable(null);
+        if(bd.getBitmap() != null){
+            bd.getBitmap().recycle();
+        }
+        bd = null;
+    }
+
+    new BitmapWorkerTask(imageView).execute(mThumbIds[position]);
+
+return imageView;
+}
+
+
+class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
+        private final WeakReference<ImageView> imageViewReference;
+        private int data = 0;
+
+        public BitmapWorkerTask(ImageView imageView) {
+            // Use a WeakReference to ensure the ImageView can be garbage collected
+            imageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        // Decode image in background.
+        @Override
+        protected Bitmap doInBackground(Integer... params) {
+            data = params[0];
+            return decodeSampledBitmapFromResource(ImageAdapter.this.mContext.getResources(), data, 100, 100);
+        }
+
+        // Once complete, see if ImageView is still around and set bitmap.
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (isCancelled()) {
+                bitmap = null;
+            }
+
+            if (imageViewReference != null && bitmap != null) {
+                final ImageView imageView = imageViewReference.get();
+                if (imageView != null) {
+                    imageView.setImageBitmap(bitmap);
+                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    imageView.setLayoutParams(new GridView.LayoutParams(105, 105));
+
+                }
+            }
+        }
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                                                         int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+}
+</code></pre>
+
+<p><strong>FullImageActivity</strong></p>
+
+<pre><code>public class FullImageActivity extends Activity {
+
+
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.full_image);
+
+    // get intent data
+    Intent i = getIntent();
+
+    // Selected image id
+    int position = i.getExtras().getInt("id");
+    ImageAdapter imageAdapter = new ImageAdapter(this);
+
+    ImageView imageView = (ImageView) findViewById(R.id.full_image_view);
+    imageView.setImageResource(imageAdapter.mThumbIds[position]);
+    BitmapDrawable bm = (BitmapDrawable) imageView.getDrawable();
+    Bitmap mysharebmp = bm.getBitmap();
+    String path = Images.Media.insertImage(getContentResolver(),
+                        mysharebmp, "MyImage", null);
+    Uri uri = Uri.parse(path);
+    Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+    sharingIntent.setType("image/*");
+    sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
+    startActivity(Intent.createChooser(sharingIntent,
+                        "Share image using"));
+}
+</code></pre>
+
+<p>}</p>
+
+<p>Thank you dudes for your help!</p>

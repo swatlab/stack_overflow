@@ -1,0 +1,133 @@
+<p>i get an error when i'm calling the adapter:</p>
+
+<p>in my main class i have:</p>
+
+<pre><code>    public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.discotecas_layout);
+
+    // Hashmap for ListView
+    discotecaslist = new ArrayList<HashMap<String, String>>();
+    gridView = (GridView) findViewById(R.id.gridview);
+            // Loading products in Background Thread
+    new LoadAllProducts().execute();
+</code></pre>
+
+<p>and in background i have on postexecute this:</p>
+
+<pre><code>  protected void onPostExecute(String file_url) {
+    // dismiss the dialog after getting all products
+      pDialog.dismiss();
+      gridView.setAdapter(new Gridadapter(activity.this, imagenes));
+      // updating UI from Background Thread
+   }
+</code></pre>
+
+<p>and my adapter is this one:</p>
+
+<pre><code>public class Gridadapter extends BaseAdapter {
+
+    private Context mContext;
+    private Bitmap[] imagenes;
+
+    public Gridadapter(Context c, Bitmap[] imagenes) {
+        this.mContext = c;
+        this.imagenes = imagenes;
+    }
+
+    public int getCount() {
+        return imagenes.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(200, 150));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(0, 0, 0, 0);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+        imageView.setImageBitmap(imagenes[position]);
+        return imageView;
+    }
+
+}
+</code></pre>
+
+<p>what i'm doing wrong? i think it's something with the adapter but i don't know what</p>
+
+<p>the error is:</p>
+
+<pre><code>01-14 18:32:20.149: E/AndroidRuntime(16322): FATAL EXCEPTION: AsyncTask #1
+01-14 18:32:20.149: E/AndroidRuntime(16322): java.lang.RuntimeException: An error occured while executing doInBackground()
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at android.os.AsyncTask$3.done(AsyncTask.java:299)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.util.concurrent.FutureTask.finishCompletion(FutureTask.java:352)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.util.concurrent.FutureTask.setException(FutureTask.java:219)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.util.concurrent.FutureTask.run(FutureTask.java:239)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at android.os.AsyncTask$SerialExecutor$1.run(AsyncTask.java:230)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.lang.Thread.run(Thread.java:864)
+01-14 18:32:20.149: E/AndroidRuntime(16322): Caused by: java.lang.NullPointerException
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at com.example.apparty.TabDiscotecas$LoadAllProducts.doInBackground(TabDiscotecas.java:192)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at com.example.apparty.TabDiscotecas$LoadAllProducts.doInBackground(TabDiscotecas.java:1)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at android.os.AsyncTask$2.call(AsyncTask.java:287)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+01-14 18:32:20.149: E/AndroidRuntime(16322):    ... 4 more
+01-14 18:32:20.399: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cd53000 size:1216512
+01-14 18:32:20.399: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cadc000 size:4096
+01-14 18:32:20.399: D/qdmemalloc(16322): ion: Unmap buf  base:0x6d98e000 size:1216512
+01-14 18:32:20.399: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cbfd000 size:4096
+01-14 18:32:20.399: D/qdmemalloc(16322): ion: Unmap buf  base:0x6e2af000 size:1216512
+01-14 18:32:20.399: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cbff000 size:4096
+01-14 18:32:20.409: D/qdmemalloc(16322): ion: Unmap buf  base:0x6d052000 size:8355840
+01-14 18:32:20.409: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cb3e000 size:4096
+01-14 18:32:20.409: D/qdmemalloc(16322): ion: Unmap buf  base:0x6dab7000 size:8355840
+01-14 18:32:20.409: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cbfe000 size:4096
+01-14 18:32:20.409: D/qdmemalloc(16322): ion: Unmap buf  base:0x6e3d8000 size:8355840
+01-14 18:32:20.409: D/qdmemalloc(16322): ion: Unmap buf  base:0x6cc26000 size:4096
+01-14 18:32:20.439: E/WindowManager(16322): Activity com.example.apparty.MainActivity    has leaked window com.android.internal.policy.impl.PhoneWindow$DecorView{41b0c038 V.E..... R......D 0,0-1026,288} that was originally added here
+01-14 18:32:20.439: E/WindowManager(16322): android.view.WindowLeaked: Activity com.example.apparty.MainActivity has leaked window com.android.internal.policy.impl.PhoneWindow$DecorView{41b0c038 V.E..... R......D 0,0-1026,288} that was originally added here
+01-14 18:32:20.439: E/WindowManager(16322):     at android.view.ViewRootImpl.<init>(ViewRootImpl.java:394)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:239)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:94)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.Dialog.show(Dialog.java:286)
+01-14 18:32:20.439: E/WindowManager(16322):     at com.example.apparty.TabDiscotecas$LoadAllProducts.onPreExecute(TabDiscotecas.java:142)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.os.AsyncTask.executeOnExecutor(AsyncTask.java:586)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.os.AsyncTask.execute(AsyncTask.java:534)
+01-14 18:32:20.439: E/WindowManager(16322):     at com.example.apparty.TabDiscotecas.onCreate(TabDiscotecas.java:81)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.Activity.performCreate(Activity.java:5195)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1111)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2473)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread.startActivityNow(ActivityThread.java:2298)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.LocalActivityManager.moveToState(LocalActivityManager.java:135)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.LocalActivityManager.startActivity(LocalActivityManager.java:347)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.widget.TabHost$IntentContentStrategy.getContentView(TabHost.java:759)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.widget.TabHost.setCurrentTab(TabHost.java:413)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.widget.TabHost.addTab(TabHost.java:240)
+01-14 18:32:20.439: E/WindowManager(16322):     at com.example.apparty.MainActivity.onCreate(MainActivity.java:88)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.Activity.performCreate(Activity.java:5195)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1111)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2473)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2574)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread.access$600(ActivityThread.java:162)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1413)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.os.Handler.dispatchMessage(Handler.java:99)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.os.Looper.loop(Looper.java:158)
+01-14 18:32:20.439: E/WindowManager(16322):     at android.app.ActivityThread.main(ActivityThread.java:5789)
+01-14 18:32:20.439: E/WindowManager(16322):     at java.lang.reflect.Method.invokeNative(Native Method)
+01-14 18:32:20.439: E/WindowManager(16322):     at java.lang.reflect.Method.invoke(Method.java:525)
+01-14 18:32:20.439: E/WindowManager(16322):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1027)
+01-14 18:32:20.439: E/WindowManager(16322):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:843)
+01-14 18:32:20.439: E/WindowManager(16322):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

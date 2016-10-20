@@ -1,0 +1,98 @@
+<p>At the moment I am fiddling myself into working with sql databases in android and created my first app. now i wanted to update this app and the including database in the assets folder. I overwrote the old database with the new one but on my phone it doesnt show the new entries.</p>
+
+<p>It somehow is saving the old entries/queries or entirely the old Db. I checked on the net but couldnt really find a solution. Below my dbhelper code. Do i have to do something in <code>onUpgrade</code> or what would be the procedure?</p>
+
+<p>Many thanks for helping!</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+private static String DB_PATH;
+
+private static String DB_NAME;
+
+private SQLiteDatabase db_object;
+
+private final Context context;
+
+public DataBaseHelper(Context context, String db) {
+    super(context, db, null, 80);
+    this.context = context;
+    DB_PATH = "/data/data/" + context.getPackageName() + "/databases/";
+ //   DB_PATH = "/data/data/com.comp.appname/databases/";
+    DB_NAME = "mydatabase.sqlite";
+    try {
+        createDataBase();
+    } catch (IOException ioe) {
+        throw new Error("Unable to create database");
+    }
+    try {
+        openDataBase();
+    } catch (SQLException sqle) {
+        throw sqle;
+    }
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+}
+
+public void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();
+    if (dbExist) {
+    } else {
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+    } catch (SQLiteException e) {
+    }
+    if (checkDB != null) {
+        checkDB.close();
+    }
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException {
+    InputStream myInput = context.getAssets().open(DB_NAME);
+    String outFileName = DB_PATH + DB_NAME;
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public void openDataBase() throws SQLException {
+    String myPath = DB_PATH + DB_NAME;
+    db_object = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READONLY);
+}
+
+@Override
+public synchronized void close() {
+    if (db_object != null)
+        db_object.close();
+    super.close();
+}
+}
+</code></pre>

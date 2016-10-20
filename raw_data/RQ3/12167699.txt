@@ -1,0 +1,197 @@
+<p>What I am trying to do is to copy the database that I made through SQLite manager in my app.</p>
+
+<p>I've checked database does gets created but the database is only of 3 KB (my db is not getting copied). The code of the setupdb is <a href="http://mfarhan133.wordpress.com/2010/10/14/list-view-tutorial-for-android/" rel="nofollow">from here</a></p>
+
+<p>Setupdb.java</p>
+
+<pre><code>public class Setupdb extends SQLiteOpenHelper {
+
+  private static String DB_PATH = "";
+    private static final String DB_NAME = "fergi.sqlite";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+
+    private static Setupdb mDBConnection;
+
+
+public Setupdb(Context context) {
+    super(context, DB_NAME, null, 1);
+    this.myContext=context;
+    DB_PATH="/data/data/"
+          + context.getApplicationContext().getPackageName()
+          + "/databases/";
+    Log.e(DB_NAME, DB_PATH);
+}
+public static synchronized Setupdb getDBAdapterInstance(Context context) {
+  if (mDBConnection == null) {
+      mDBConnection = new Setupdb(context);
+  }
+     return mDBConnection;
+}
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+            Log.e("db","exist");
+            // do nothing - database already exist
+        } else {
+            // By calling following method
+            // 1) an empty database will be created into the default system path of your application
+            // 2) than we overwrite that database with our database.
+            this.getReadableDatabase();
+            try {
+                Log.e("calling", "copy");
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+
+
+
+
+}
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+            // database does't exist yet.
+        }
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException {
+        Log.e("copy", "coppying db");
+      // Open your local db as the input stream
+  InputStream myInput = myContext.getAssets().open(DB_NAME);
+      // Path to the just created empty db
+  String outFileName = DB_PATH + DB_NAME;
+      // Open the empty db as the output stream
+  OutputStream myOutput = new FileOutputStream(outFileName);
+      // transfer bytes from the inputfile to the outputfile
+  byte[] buffer = new byte[1024];
+  int length;
+  while ((length = myInput.read(buffer)) > 0) {
+      myOutput.write(buffer, 0, length);
+  }
+      // Close the streams
+  myOutput.flush();
+  myOutput.close();
+  myInput.close();
+  } 
+
+
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+       }
+    public synchronized void close() {
+        if (myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+
+}
+ }
+</code></pre>
+
+<p>MainActivity.java</p>
+
+<pre><code>public class MainActivity extends Activity {
+String CNAME=" ques",TABLE_NAME=" JAVAQ";
+Context context;
+Setupdb  myDbHelper;
+
+
+
+/* public MainActivity(Context someContext){
+     context=someContext;
+     startSQL();
+ }  */
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    context=this;
+    startSQL();
+
+}
+
+
+
+
+ private void startSQL() {
+        myDbHelper = new Setupdb(context);
+        try {
+
+            myDbHelper.createDataBase();
+
+        } catch (IOException ioe) {
+
+            throw new Error(ioe);
+
+        }
+
+        open();
+    }
+    public void open()throws SQLException{
+        myDbHelper.openDataBase();
+    }
+
+
+
+
+
+   /* 
+
+    Setupdb dbobj=new Setupdb(this); 
+
+    SQLiteDatabase sqobj=dbobj.getWritableDatabase();
+
+
+    try {
+        dbobj.createDataBase();
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace(); 
+    }  
+   try{
+   String query = "SELECT " + CNAME + " FROM " + TABLE_NAME+ " WHERE"+" _id=1";
+   Log.e("ghgh", query);
+            Cursor c2 = sqobj.rawQuery(query, null);
+
+            while (c2.moveToNext()) {
+
+            String name =
+            c2.getString(c2.getColumnIndex(CNAME));
+            Log.i("LOG_TAG", " HAS NAME " + name);
+            }}
+            catch(Exception e){
+
+                Log.e("err", e.toString());
+            }
+}
+
+*/
+
+}
+</code></pre>

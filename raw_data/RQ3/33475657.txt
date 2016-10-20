@@ -1,0 +1,113 @@
+<p>How do I have to update the following classes to get the one-to-many relationship between parent and child working?</p>
+
+<p>Parent:</p>
+
+<pre><code>@Entity
+public class Parent {
+
+    @Embeddedid
+    private ParentId id;
+
+    @OneToMany
+    private List<Child> children;
+
+    public Parent() {
+    }
+
+    public Parent(final ParentId id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "Parent [id=" + this.id + ", children=" + this.children + "]";
+    }
+
+    // (Getters and setters)
+}
+</code></pre>
+
+<p>ParentId:</p>
+
+<pre><code>@Embeddable
+public class ParentId implements Serializable {
+
+    private Integer key1;
+
+    private Integer key2;
+
+    public ParentId() {
+    }
+
+    public ParentId(final Integer key1, final Integer key2) {
+        this.key1 = key1;
+        this.key2 = key2;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ParentId other = (ParentId) obj;
+        if (this.key1 != other.key1) {
+            return false;
+        }
+        if (this.key2 != other.key2) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + this.key1;
+        result = prime * result + this.key2;
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ParentId [key1=" + this.key1 + ", key2=" + this.key2 + "]";
+    }
+
+    // (Getters for key1 and key2)
+}
+</code></pre>
+
+<p>Child:</p>
+
+<pre><code>@Entity
+public class Child {
+
+    private Integer id;
+
+    @ManyToOne
+    private Parent parent;
+
+    public Child() {
+    }
+
+    public Child(final Integer id, final Parent parent) {
+        this.id = id;
+        this.parent = parent;
+    }
+
+    @Override
+    public String toString() {
+        return "Child [id=" + this.id + ", parent.getId()=" + this.parent.getId() + "]";
+    }
+
+    // (Getters and setters)
+}
+</code></pre>
+
+<p>Because we fought a bit with this problem in our current project, I will post our solution as an answer to this question.</p>

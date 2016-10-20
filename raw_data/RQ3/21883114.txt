@@ -1,0 +1,97 @@
+<p>I'm using AChartEngine library for plotting graphs in my application. In the implementation of the Bar Graph, I've enabled the horizontal pan. Also, I'm displaying the graph in a Relative layout of one of my activity. Problem is that, when I scroll horizontally towards Y axis, bars travel beyond Y axis, which appears to be very awkward. Code is shown below.</p>
+
+<pre><code>public GraphicalView setTheBarGraph(String title) {
+        String[] titles = new String[] { "WiFi", "Mobile Network" };
+        int[] colors = new int[] { Color.rgb(51, 102, 153),
+                Color.rgb(153, 51, 102) };
+        double[] limits = new double[] { 0, 12, 0, 0 };
+        XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+        if (title.equals("Month"))
+            setChartSettings(renderer, "", title, "Usage" + "(" + monthSize
+                    + ")", 0, usageValues.size() + 1, 0, totalMax,
+                    Color.rgb(108, 122, 125), Color.rgb(108, 122, 125));
+        else if (title.equals("Day"))
+            setChartSettings(renderer, "", title,
+                    "Usage" + "(" + daySize + ")", 0, usageValues.size() + 1,
+                    0, totalMax, Color.rgb(108, 122, 125),
+                    Color.rgb(108, 122, 125));
+        renderer.getSeriesRendererAt(0).setDisplayChartValues(true);
+        renderer.getSeriesRendererAt(1).setDisplayChartValues(true);
+        renderer.getSeriesRendererAt(0).setChartValuesTextSize(18);
+        renderer.getSeriesRendererAt(1).setChartValuesTextSize(18);
+        renderer.setPanLimits(limits);
+        renderer.setXLabels(0);
+        renderer.setYLabels(12);
+        for (int i = 0; i < monthList.size(); i++) {
+            renderer.addXTextLabel(i + 1, monthList.get(i));
+        }
+        renderer.setInScroll(true);
+        renderer.setXLabelsAlign(Align.LEFT);
+        renderer.setYLabelsAlign(Align.RIGHT);
+        renderer.setXLabelsColor(Color.rgb(108, 122, 125));
+        renderer.setYLabelsColor(0, Color.rgb(108, 122, 125));
+        renderer.setXLabelsPadding(5);
+        renderer.setYLabelsPadding(5);
+        renderer.setPanEnabled(true, false);
+        renderer.setApplyBackgroundColor(true);
+        renderer.setBackgroundColor(Color.TRANSPARENT);
+        renderer.setMarginsColor(Color.argb(0x00, 0x01, 0x01, 0x01));
+        renderer.setZoomEnabled(false);
+        renderer.setYLabelsAngle(20);
+        // renderer.setZoomRate(1.1f);
+        renderer.setBarSpacing(0.5);
+        return ChartFactory.getBarChartView(mbcContext,
+                buildBarDataset(titles, usageValues), renderer, Type.DEFAULT);
+    }
+
+    protected void setChartSettings(XYMultipleSeriesRenderer renderer,
+            String title, String xTitle, String yTitle, double xMin,
+            double xMax, double yMin, double yMax, int axesColor,
+            int labelsColor) {
+        renderer.setChartTitle(title);
+        renderer.setXTitle(xTitle);
+        renderer.setYTitle(yTitle);
+        renderer.setXAxisMin(xMin);
+        renderer.setXAxisMax(xMax);
+        renderer.setYAxisMin(yMin);
+        renderer.setYAxisMax(yMax);
+        renderer.setAxesColor(axesColor);
+        renderer.setLabelsColor(labelsColor);
+        renderer.setMargins(new int[] { 35, 60, 30, 20 });
+    }
+
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titles,
+            List<double[]> values) {
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+        int length = titles.length;
+        for (int i = 0; i < length; i++) {
+            CategorySeries series = new CategorySeries(titles[i]);
+            double[] v = values.get(i);
+            int seriesLength = v.length;
+            for (int k = 0; k < seriesLength; k++) {
+                series.add(v[k]);
+            }
+            dataset.addSeries(series.toXYSeries());
+        }
+        return dataset;
+    }
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+        renderer.setAxisTitleTextSize(22);
+        renderer.setChartTitleTextSize(22);
+        renderer.setLabelsTextSize(17);
+        renderer.setLegendTextSize(22);
+        int length = colors.length;
+        for (int i = 0; i < length; i++) {
+            SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+            r.setColor(colors[i]);
+            renderer.addSeriesRenderer(r);
+        }
+        return renderer;
+    }
+</code></pre>
+
+<p>I've uploaded a snapshot of this problem. Please help.</p>
+
+<p><img src="http://i.stack.imgur.com/boWfX.png" alt="enter image description here"></p>

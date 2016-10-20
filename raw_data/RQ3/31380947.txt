@@ -1,0 +1,41 @@
+<p>I have one activity and five fragments.I have a navigation drawer button in option menu which helps me to navigate through fragment.But on one fragment i want to change that to back button.Currently back button is working correctly.But together with that the activity option menu also working and it will bring navigation drawer up.How to stop that?</p>
+
+<p>Here is my drawer</p>
+
+<p>MainActivity</p>
+
+<pre><code>    @Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case R.id.action_settings:
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.container, new SettingsFragment());
+            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+            break;       
+        case android.R.id.home:
+            mDrawerLayout.openDrawer(GravityCompat.START);
+            break;
+        default:
+            break;
+    }
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>Fragment</p>
+
+<pre><code>    @Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            getFragmentManager().popBackStack();
+            return true;
+        default:
+            break;
+    }
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>Actually when i select option menu home code in both option menu is working i want only fragment option menu to work. how can i stop it?Please help</p>

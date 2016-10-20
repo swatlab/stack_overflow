@@ -1,0 +1,140 @@
+<p>I wanted to select records from sqlite database and simply display on my application. But when I run my program I got debug error: -<code>[2013-01-18 14:39:28 - ddms] Can't bind to local 8649 for debugger and table not found error.</code> I'm posting my code over here please someone check and tell me the solution. </p>
+
+<p>DatabaseMain class:</p>
+
+<pre><code>    public class DatabaseMain extends SQLiteOpenHelper{
+
+
+    private static String DB_PATH = "/data/data/com.ocs.employeedetails/databases/";
+
+    private static String DB_NAME = "EMPLOYEE_DB.sqlite";
+    private static int VERSION = 1;
+    private final Context mycontext;
+    private SQLiteDatabase sqliteDb;
+
+    public DatabaseMain(Context context) {
+        super(context,DB_NAME,null,VERSION);
+        this.mycontext = context;
+
+    }
+
+
+    public void createDataBase() throws IOException{
+
+        boolean databaseExist = checkDataBase();
+         if(databaseExist){
+
+        }else{
+
+            this.getReadableDatabase();
+            //this.getWritableDatabase(); 
+            try{
+            copyDataBase();
+            }catch(IOException e){
+                throw new Error("Error copying database");
+
+            }
+        }
+    } 
+
+
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, 
+        SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+             e.printStackTrace();
+        }
+        if(checkDB != null){
+            checkDB.close();
+          }
+
+        return checkDB != null ? true : false;
+
+    }
+
+
+    private void copyDataBase() throws IOException{ 
+
+        InputStream myInput = mycontext.getAssets().open(DB_NAME); 
+        String outFileName = DB_PATH +DB_NAME; 
+        OutputStream myOutput = new FileOutputStream(outFileName); 
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+        myOutput.flush();
+        myOutput.close();
+        myInput.close(); 
+    }
+
+    public void openDataBase() throws SQLException{      
+        String myPath = DB_PATH + DB_NAME;
+        sqliteDb = SQLiteDatabase.openDatabase(myPath, null,   SQLiteDatabase.OPEN_READWRITE);  
+    }
+    public Cursor queryExec(){
+        openDataBase();
+        String qry = "Select * from employee_tab";
+        Cursor cur = null;
+        cur = sqliteDb.rawQuery(qry,null);
+        close();
+        return cur;
+
+    }
+    @Override
+    public synchronized void close() {
+
+            if(sqliteDb != null)
+                sqliteDb.close();
+
+            super.close();
+
+    }
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        try {
+            createDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
+
+
+    }
+</code></pre>
+
+<p>My Activityclass where I'm using DatabaseMain class:</p>
+
+<pre><code>    @Override
+    public void onClick(View v) {
+        if(v.getId() == R.id.buttonOk){
+            Toast.makeText(getBaseContext(), "Hi ",Toast.LENGTH_SHORT).show();
+        try {
+                       dm.createDataBase();
+        } catch (IOException e) {
+             e.printStackTrace();
+        }
+        dm.openDataBase();
+        Cursor cr = dm.queryExec();
+        if(cr.moveToFirst())
+        {
+
+            while(cr.isFirst())
+            {
+                id[0] = cr.getInt(0);
+                name.setText(cr.getString(1)); 
+                ph.setText(cr.getInt(2));
+                doj.setText(cr.getString(2));
+            }
+        }
+
+        }
+</code></pre>

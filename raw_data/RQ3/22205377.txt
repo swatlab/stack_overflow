@@ -1,0 +1,274 @@
+<p>I have created a Listview using sqlite. ( In my XML file i have 1 listview and 1 edittext. If i type name partially in the edittext then it should check against the sqllite database and brings the data. Initially the Listbox shows only one entry from SQLITE database. If i typed something then it should check against the database and display that data in the Listview.</p>
+
+<p>My App showing one record first time, but when i entered the character in textbox i am invoking the select query, but its giving the below error:</p>
+
+<pre><code>03-05 23:19:12.926: E/Database(203): sqlite3_open_v2("/data/data/com.androidhive.androidlistviewwithsearch/databasessample", &handle, 1, NULL) failed
+03-05 23:19:13.005: E/MainActivity(203): Could not create or Open the database
+</code></pre>
+
+<p>MainActivity.java</p>
+
+<pre><code>package com.androidhive.androidlistviewwithsearch;
+import com.androidhive.androidlistviewwithsearch.DBHelper;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import android.app.Activity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends Activity {
+
+    private ArrayList<String> results = new ArrayList<String>();
+    private String tableName = DBHelper.tableName;
+    private SQLiteDatabase newDB;
+
+    // List view
+    private ListView lv;
+        // Listview Adapter
+    ArrayAdapter<String> adapter;
+
+    // Search EditText
+    EditText inputSearch;
+
+    // ArrayList for Listview
+    ArrayList<HashMap<String, String>> productList;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Listview Data
+        String products[] = {"Dell Inspiron", "HTC One X", "HTC Wildfire S", "HTC Sense", "HTC Sensation XE",
+                                "iPhone 4S", "Samsung Galaxy Note 800",
+                                "Samsung Galaxy S3", "MacBook Air", "Mac Mini", "MacBook Pro"};
+
+        lv = (ListView) findViewById(R.id.list_view);
+        inputSearch = (EditText) findViewById(R.id.inputSearch);
+
+        openAndQueryDatabase();
+        // Adding items to listview
+        adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.product_name, results);
+        lv.setAdapter(adapter);
+
+        lv.setOnItemClickListener(new OnItemClickListener() {
+                    @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                    long arg3) {
+                // TODO Auto-generated method stub
+                        int itemPosition     = arg2;
+
+                        // ListView Clicked item value
+                        String  itemValue    = (String) lv.getItemAtPosition(arg2);
+
+                         // Show Alert 
+                         Toast.makeText(getApplicationContext(),
+                           "Position :"+itemPosition+"  ListItem : " +itemValue , Toast.LENGTH_LONG)
+                           .show();     
+
+            }
+
+       });        
+        /**
+         * Enabling Search Filter
+         * */
+        inputSearch.addTextChangedListener(new TextWatcher() {
+
+            @Override
+    public void onTextChanged(CharSequence cs, int arg1, int arg2, int arg3) {
+                // When user changed the Text
+                 Toast.makeText(getApplicationContext(),
+                         "Position :"+ cs +"  ListItem : "  , Toast.LENGTH_LONG)
+                         .show();
+                 FetchQueryDatabase(cs);
+
+                //MainActivity.this.adapter.getFilter().filter(cs); 
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence arg0, int arg1, int arg2,
+                    int arg3) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+                // TODO Auto-generated method stub                          
+            }
+        });
+    }
+
+    private void openAndQueryDatabase() {
+        try {
+            DBHelper dbHelper = new DBHelper(this.getApplicationContext());
+            newDB = dbHelper.getWritableDatabase();
+            Cursor c = newDB.rawQuery("SELECT FirstName, Age FROM " +
+                    tableName +
+                    " LIMIT 1", null);
+            Log.d("ingu","vanthen1");
+
+            if (c != null ) {
+                if  (c.moveToFirst()) {
+                    do {
+                        String firstName = c.getString(c.getColumnIndex("FirstName"));
+                        int age = c.getInt(c.getColumnIndex("Age"));
+                        results.add("Name: " + firstName + ",Age: " + age);
+                    }while (c.moveToNext());
+                } 
+            }           
+        } catch (SQLiteException se ) {
+            Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+        } finally {
+            if (newDB != null) 
+                newDB.execSQL("DELETE FROM " + tableName);
+                newDB.close();
+        }
+
+    }
+
+    private void FetchQueryDatabase(CharSequence cs) {
+        try {
+            DBHelper dbHelper = new DBHelper(this.getApplicationContext());
+            newDB = dbHelper.getWritableDatabase();
+            String val=cs.toString();
+            Cursor c = newDB.rawQuery("SELECT FirstName, Age FROM " +
+                     " where FirstName LIKE ? '%"+val+"%'", null);
+
+            if (c != null ) {
+                if  (c.moveToFirst()) {
+                    do {
+                        String firstName = c.getString(c.getColumnIndex("FirstName"));
+                        int age = c.getInt(c.getColumnIndex("Age"));
+                        String age1 = age+"";
+                        Log.d("age", age1);
+                        results.add("Name: " + firstName + ",Age: " + age);
+                    }while (c.moveToNext());
+                } 
+            }           
+        } catch (SQLiteException se ) {
+            Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+        } 
+
+
+        finally {
+            if (newDB != null) 
+                newDB.execSQL("DELETE FROM " + tableName);
+                newDB.close();
+        }
+    }
+}
+</code></pre>
+
+<p>DBHelper.Java</p>
+
+<pre><code>package com.androidhive.androidlistviewwithsearch;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+    public SQLiteDatabase DB;
+    public String DBPath;
+    public static String DBName = "sample";
+    public static final int version = '1';
+    public static Context currentContext;
+    public static String tableName = "Resource";
+
+
+    public DBHelper(Context context) {
+        super(context, DBName, null, version);
+        currentContext = context;
+        DBPath = "/data/data/" + context.getPackageName() + "/databases";
+        createDatabase();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+    private void createDatabase() {
+        boolean dbExists = checkDbExists();
+
+        if (dbExists) {
+            // do nothing
+        } else {
+            DB = currentContext.openOrCreateDatabase(DBName, 0, null);
+            DB.execSQL("CREATE TABLE IF NOT EXISTS " +
+                    tableName +
+                    " (LastName VARCHAR, FirstName VARCHAR," +
+                    " Country VARCHAR, Age INT(3));");
+
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('M','shumi','India',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('C','sarah','India',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('D','Lavya','USA',20);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('V','Avi','EU',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('T','Shenoi','Bangla',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('L','Lamha','Australia',20);");
+        }
+
+
+    }
+
+    private boolean checkDbExists() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DBPath + DBName;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            // database does't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+}
+</code></pre>

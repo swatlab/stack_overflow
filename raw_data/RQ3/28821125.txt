@@ -1,0 +1,117 @@
+<p>Hello everybody and thanks in advance for the help.</p>
+
+<p>I have two activities. I´m calling a dialog in activity two from activity one.
+The thing is that I want the dialog to restart activity one if positive button is pressed, but I can`t see how to do it.</p>
+
+<p>This is my code...</p>
+
+<p>Activity one:</p>
+
+<pre><code>    @Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings)
+    {
+        Funciones Funciones1 = new Funciones();
+
+        Funciones1.MuestraDialogo(CluefichaActivity.this);
+
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>Activity two:</p>
+
+<pre><code>public class Funciones extends Activity
+</code></pre>
+
+<p>{
+    private static final int DIALOGO = 1;</p>
+
+<pre><code>private AlertDialog.Builder ventana;
+
+Activity miActividad;
+
+
+
+
+
+@Override
+protected Dialog onCreateDialog(int id)
+{
+    switch (id)
+    {
+        case DIALOGO:
+            ventana = new AlertDialog.Builder(miActividad);
+
+            ventana.setIcon(miActividad.getResources().getIdentifier("my_icon", "drawable", miActividad.getPackageName()));
+            ventana.setTitle("title");
+            ventana.setMessage("message");
+
+            ventana.setPositiveButton("OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int boton)
+                    {
+                            Intent intent = miActividad.getIntent();
+                            miActividad.finish();
+                            startActivity(intent);
+                    }
+                });
+            }
+
+            ventana.setNegativeButton("CANCEL", new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog, int boton)
+                {
+                }
+            });
+
+            return ventana.create();
+    }
+
+    return null;
+}
+</code></pre>
+
+<p>...
+...</p>
+
+<pre><code>public void MuestraDialogo (Activity actividad)
+{
+    miActividad = actividad;
+
+    showDialog(DIALOGO);
+}
+</code></pre>
+
+<p>I get this error when I run it...</p>
+
+<pre><code>Process: com.myproject.projectname, PID: 1841
+java.lang.NullPointerException
+        at android.app.Activity.startActivityForResult(Activity.java:3511)
+        at android.app.Activity.startActivityForResult(Activity.java:3472)
+        at android.app.Activity.startActivity(Activity.java:3714)
+        at android.app.Activity.startActivity(Activity.java:3682)
+        at com.myproject.projectname.Funciones$1.onClick(Funciones.java:130)
+        at com.android.internal.app.AlertController$ButtonHandler.handleMessage(AlertController.java:167)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:157)
+        at android.app.ActivityThread.main(ActivityThread.java:5356)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1265)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1081)
+        at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>where "Funciones.java:130" is this line of code: "startActivity(intent);"</p>
+
+<p>Can anybody help, please? Thanks!</p>

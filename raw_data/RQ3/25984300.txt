@@ -1,0 +1,137 @@
+<p>I am trying to use an existing database and have realized just now that I have a very simple problem, though the answer may be not so simple:</p>
+
+<p>-App is called myApp
+-for some reason eclipse calls the package as follows:
+     package com.example.myapp;</p>
+
+<p>-db is called nn.sqlite
+-db is in assets folder</p>
+
+<p>However, when I try to open it, using a path I thought correct, I get: </p>
+
+<pre><code>09-22 18:48:33.180: I/System.out(838): java.io.FileNotFoundException: /data/data/com.example.myApp/databases/nn
+</code></pre>
+
+<p>I tried the path with myapp instead of myApp respectively, to no avail.</p>
+
+<p>My path seems to be wrong.</p>
+
+<p>What can I do to handle this, or rather, how to find the correct path?</p>
+
+<p>It was hinted that I should copy my database first - as far as I know, I am already doing this, so here is the code for that:</p>
+
+<pre><code> package com.example.myapp;
+
+
+ public class Helper extends SQLiteOpenHelper
+
+{
+private static String path = "/data/data/com.example.myapp/databases/";
+private static String db = "nn";
+private static String dbpath = path + db;
+ private SQLiteDatabase myDB;
+ private  Context con;
+
+public Helper(Context context) {
+
+ super(context, db, null, 1);
+ this.con = context;
+ }  
+
+public Context getContext(){
+   return this.con;
+}
+
+public void createDataBase() throws IOException{
+
+
+ if(!checkDataBase()){
+ this.getReadableDatabase();
+
+ try {
+
+ copyDataBase();
+
+ } catch (IOException e) {
+
+ System.out.println("no Database");
+
+ }
+ }
+
+ }
+
+
+   private boolean checkDataBase() {
+ SQLiteDatabase checkDB = null;
+
+ try{
+
+ checkDB = SQLiteDatabase.openDatabase(dbpath, null, SQLiteDatabase.OPEN_READONLY);
+
+ }catch(SQLiteException e){
+
+
+
+ }
+
+ if(checkDB != null){
+
+ checkDB.close();
+ return true;
+
+ } else {return false;}
+
+
+}
+
+
+ private void copyDataBase() throws IOException {
+
+InputStream myInput = con.getAssets().open(db);  
+OutputStream myOutput = new FileOutputStream(dbpath);
+byte[] buffer = new byte[1024];
+int length;
+while ((length = myInput.read(buffer))>0){
+myOutput.write(buffer, 0, length);
+}
+myOutput.flush();
+myOutput.close();
+myInput.close();
+
+
+}
+
+
+ public void openDataBase() throws SQLException{
+
+
+    myDB = SQLiteDatabase.openDatabase(dbpath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+ @Override
+ public synchronized void close() {
+ if(myDB != null)
+ myDB.close();    
+ super.close();
+
+  }   
+
+
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+// TODO Auto-generated method stub
+
+ }
+
+@Override
+ public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+// TODO Auto-generated method stub
+
+   }
+
+ }
+</code></pre>
+
+<p>Is there some other kind of copying which I omitted?</p>

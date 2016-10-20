@@ -1,0 +1,75 @@
+<p>We are building an App which using <a href="https://github.com/onepf/OpenIAB" rel="nofollow">OpenIAB</a> to interact with Yandex.Store. On the android client side, we can buy the In-App items successfully, The problem is that always failed to verify the purchase on server side(We have a Spring MVC based web server to verify the purchase), but it can verify success on Android code. Any helps would appreciate. It seems Signature.java in JAVA(JDK) and Android are different.</p>
+
+<p>Following are purchase verification code snippet:</p>
+
+<pre><code>public static boolean verifyPurchase(String base64PublicKey, String signedData, String signature) {
+    if (StringUtils.isEmpty(signedData) || StringUtils.isEmpty(base64PublicKey) ||
+    StringUtils.isEmpty(signature)) {
+
+    logger.info("Purchase verification failed: missing data.");
+
+        return false;
+
+    }
+
+    PublicKey key = Security.generatePublicKey(base64PublicKey);
+    return Security.verify(key, signedData, signature);
+}
+
+
+/**
+ * Generates a PublicKey instance from a string containing the
+ * Base64-encoded public key.
+ *
+ * @param encodedPublicKey Base64-encoded public key
+ * @throws IllegalArgumentException if encodedPublicKey is invalid
+ */
+
+public static PublicKey generatePublicKey(String encodedPublicKey) {
+    try {
+        byte[] decodedKey = Base64.decode(encodedPublicKey);
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_FACTORY_ALGORITHM);
+        return keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
+    } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+    } catch (InvalidKeySpecException e) {
+        logger.info("Invalid key specification.");
+        throw new IllegalArgumentException(e);
+    } catch (Base64DecoderException e) {
+        logger.info("Base64 decoding failed.");
+        throw new IllegalArgumentException(e);
+    }
+}
+
+/**
+ * Verifies that the signature from the server matches the computed
+ * signature on the data.  Returns true if the data is correctly signed.
+ *
+ * @param publicKey public key associated with the developer account
+ * @param signedData signed data from server
+ * @param signature server signature
+ * @return true if the data and signature match
+ */
+public static boolean verify(PublicKey publicKey, String signedData, String signature) {
+    Signature sig;
+    try {
+        sig = Signature.getInstance(SIGNATURE_ALGORITHM);
+        sig.initVerify(publicKey);
+        sig.update(signedData.getBytes());
+        if (!sig.verify(Base64.decode(signature))) {
+            logger.info("Signature verification failed.");
+            return false;
+        }
+        return true;
+    } catch (NoSuchAlgorithmException e) {
+        logger.info("NoSuchAlgorithmException.");
+    } catch (InvalidKeyException e) {
+        logger.info("Invalid key specification.");
+    } catch (SignatureException e) {
+        logger.info("Signature exception.");
+    } catch (Base64DecoderException e) {
+        logger.info("Base64 decoding failed.");
+    }
+    return false;
+}
+</code></pre>

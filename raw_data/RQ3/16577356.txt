@@ -1,0 +1,163 @@
+<p>I've been messing with this for two days now and still can't seem to figure it out. </p>
+
+<p>I''ve finally got the tabhost visible in all my activities however, in order to do so, I had to create a fragment activity. This messed up the layout of my tab buttons.  It worked perfectly when I was using tab activity but now, it looks like this:</p>
+
+<p><img src="http://i.stack.imgur.com/eJU4x.png" alt="enter image description here"></p>
+
+<p>I want the blue buttons to take up the entire bar. No background space like there is now. I don't know if it's a layout problem or scaling problem? Here is the code where I create the tabs and also where I size the tabe so that the middle one is twice as long as the outside tabs:  </p>
+
+<pre><code>protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.second);
+        initialiseTabHost(savedInstanceState);
+
+
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); //set the tab as per the saved state
+        }
+
+        // the following code is used to decrease the size of the two end tabs
+                Display display = getWindowManager().getDefaultDisplay();
+                int width = display.getWidth();
+
+                TabHost mth = (TabHost)findViewById(android.R.id.tabhost);
+
+                mth.getTabWidget()
+                        .getChildAt(0)
+                        .setLayoutParams(
+                                new LinearLayout.LayoutParams(width / 4,
+                                        (int) (width / 4 * .625)));
+
+                mth.getTabWidget()
+                        .getChildAt(1)
+                        .setLayoutParams(
+                                new LinearLayout.LayoutParams(width / 2,
+                                        (int) (width / 4 * .625)));
+                mth.getTabWidget()
+                        .getChildAt(2)
+                        .setLayoutParams(
+                                new LinearLayout.LayoutParams(width / 4,
+                                        (int) (width / 4 * .625)));
+
+
+    }
+
+    /** (non-Javadoc)
+     * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+     */
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); //save the tab selected
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Initialise the Tab Host
+     */
+
+
+
+    private void initialiseTabHost(Bundle args) {
+
+
+        mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+
+        Resources res = getResources();
+
+        fragactivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab1").setIndicator("", res.getDrawable(R.drawable.tab_home)), ( tabInfo = new TabInfo("Tab1",ArrowsActivity.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        fragactivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab2").setIndicator("", res.getDrawable(R.drawable.tab_search)), ( tabInfo = new TabInfo("Tab2", OptionsActivity.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        fragactivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab3").setIndicator("", res.getDrawable(R.drawable.twitter)), ( tabInfo = new TabInfo("Tab3", ArrowsActivity.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        // Default to first tab
+        this.onTabChanged("Tab1");
+        //
+        mTabHost.setOnTabChangedListener(this);
+
+
+        }
+
+    /*
+     * @param activity
+     * @param tabHost
+     * @param tabSpec
+     * @param clss
+     * @param args
+     * */
+
+    private static void addTab(fragactivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        // Attach a Tab view factory to the spec
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+
+
+        tabHost.addTab(tabSpec);
+}
+</code></pre>
+
+<p>This is the old code (When the buttons were sized properly.) It looks like the views were being passed through another .xml file that specified that the icon should match parent. I tried duplicating this in the new code but i think it's a little too complicated for me. Here's the code that worked along with the .xml:</p>
+
+<pre><code>private void setTabs() {
+
+        // add tabs
+        addTab("Home", R.drawable.tab_home, ArrowsActivity.class);
+        addTab("Attendance", R.drawable.tab_search, OptionsActivity.class);
+        addTab("@PSUStrength", R.drawable.twitter, OptionsActivity.class);
+        // addTab("Contact Us", R.drawable.contact, OptionsActivity.class);
+    }
+
+    private void addTab(String labelId, int drawableId, Class<?> c) {
+        TabHost tabHost = getTabHost();
+        Intent intent = new Intent(this, c);
+        TabHost.TabSpec spec = tabHost.newTabSpec("tab" + labelId);
+
+        View tabIndicator = LayoutInflater.from(this).inflate(
+                R.layout.tab_indicator, getTabWidget(), false);
+        // TextView title = (TextView) tabIndicator.findViewById(R.id.title);
+        // title.setText(labelId);
+
+        ImageView icon = (ImageView) tabIndicator.findViewById(R.id.icon);
+
+        // registerForContextMenu(icon);
+        icon.setImageResource(drawableId);
+        spec.setIndicator(tabIndicator);
+        spec.setContent(intent);
+        tabHost.addTab(spec);
+
+    }
+</code></pre>
+
+<p>tab_indicator.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dip"
+    android:layout_height="55dip"    
+    android:layout_weight="1"
+    android:orientation="vertical">
+
+    <ImageView android:id="@+id/icon"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/icon"
+
+    /> 
+
+</RelativeLayout>
+</code></pre>
+
+<p>I'd really appreciate some help with this. Thanks.</p>

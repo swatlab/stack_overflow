@@ -1,0 +1,620 @@
+<p>I get a NullPointerException everytime I use the back button at actionbar from RouteView Activity (which uses fragments) to RouteChoose Activity. The problem - where I get the Nullpointer - is the following value at RouteChoose at OnCreate: </p>
+
+<pre><code>citySave = b.getInt("stadt");
+</code></pre>
+
+<p>I don´t know why I get a Nullpointer, if I use the back button at actionbar (parent activity), but I get no Nullpointer, if I use the back button on my phone. I also get no NullPointer, if I use the actionbar menu item point. How have I to call the little back arrow an the left side at actionbar to send an Intent?</p>
+
+<p>P.S.: If anyone has a hint, how to simplify the if else condition to prevent the redundant code, you´re welcome :)</p>
+
+<p>RouteChoose:</p>
+
+<pre><code>public class RouteChooseActivity extends ActionBarActivity implements OnItemClickListener {
+
+    Integer citySave;
+    Integer routeSave;
+    String cityTitle;
+    ListView listView;
+    List<RowItem> cities;
+    CityParser parser = new CityParser();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_route_choose);
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        cityTitle = b.getString("titel_stadt");
+        TextView headingRoute = (TextView) findViewById(R.id.routeTitel);
+        headingRoute.setText(String.format(getResources().getString(R.string.route_text)) + " " + cityTitle + " aus:");
+        listView = (ListView) findViewById(R.id.listRoute);
+        if (citySave.equals(1)) {
+            try {
+                cities = parser.parse(getAssets().open("route_passau.xml"));
+                CityListViewAdapter adapter = new CityListViewAdapter(this, R.layout.row_items, (ArrayList<RowItem>) cities);
+                Collections.sort(cities, new Comparator<RowItem>() {
+                    public int compare(RowItem s1, RowItem s2) {
+                        return s1.getTitle().compareTo(s2.getTitle());
+                    }
+                });
+                listView.setAdapter(adapter);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (citySave.equals(2)) {
+            try {
+                cities = parser.parse(getAssets().open("route_bamberg.xml"));
+                CityListViewAdapter adapter = new CityListViewAdapter(this, R.layout.row_items, (ArrayList<RowItem>) cities);
+                Collections.sort(cities, new Comparator<RowItem>() {
+                    public int compare(RowItem s1, RowItem s2) {
+                        return s1.getTitle().compareTo(s2.getTitle());
+                    }
+                });
+                listView.setAdapter(adapter);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (citySave.equals(3)) {
+            try {
+                cities = parser.parse(getAssets().open("route_augsburg.xml"));
+                CityListViewAdapter adapter = new CityListViewAdapter(this, R.layout.row_items, (ArrayList<RowItem>) cities);
+                Collections.sort(cities, new Comparator<RowItem>() {
+                    public int compare(RowItem s1, RowItem s2) {
+                        return s1.getTitle().compareTo(s2.getTitle());
+                    }
+                });
+                listView.setAdapter(adapter);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                TextView errorMessage = (TextView) findViewById(R.id.routeTitel);
+                errorMessage.setText(R.string.errorroute);
+            } catch (NullPointerException e) {
+                Context context = getApplicationContext();
+                CharSequence text = getResources().getString(R.string.errorroute);
+                int duration = Toast.LENGTH_LONG;
+                Toast toast = Toast.makeText(context, text, duration);
+                toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+                toast.show();
+            }
+        }
+        listView.setOnItemClickListener(this);
+
+        final ActionBar actionBar = getSupportActionBar();
+        setTitle("Routen in" + " " + cityTitle);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Intent intent = new Intent();
+        intent.setClass(RouteChooseActivity.this, RouteView.class);
+        RowItem cities = (RowItem) parent.getItemAtPosition(position);
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        b.putString("titel_stadt", cityTitle);
+        b.putInt("route", cities.getID());
+        b.putString("titel_route", cities.getTitle());
+        intent.putExtras(b);
+        startActivity(intent);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        cityTitle = b.getString("titel_stadt");
+        savedInstanceState.putInt("stadt", citySave);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // Restore UI state from the savedInstanceState.
+        // This bundle has also been passed to onCreate.
+        citySave = savedInstanceState.getInt("stadt");
+        Log.i("debug", "saved data: " + citySave);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+            Bundle b = getIntent().getExtras();
+            citySave = b.getInt("stadt");
+            cityTitle = b.getString("titel_stadt");
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        b.putString("titel_stadt", cityTitle);
+        unbindDrawables(findViewById(R.id.Bild));
+        System.gc();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        b.putString("titel_stadt", cityTitle);
+        finish();
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        unbindDrawables(findViewById(R.id.Bild));
+        System.gc();
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        cityTitle = b.getString("titel_stadt");
+    }
+
+    private void unbindDrawables(View view)
+    {
+        if (view.getBackground() != null)
+        {
+            view.getBackground().setCallback(null);
+        }
+        if (view instanceof ViewGroup && !(view instanceof AdapterView))
+        {
+            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++)
+            {
+                unbindDrawables(((ViewGroup) view).getChildAt(i));
+            }
+            ((ViewGroup) view).removeAllViews();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.route, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        switch (item.getItemId()) {
+            case R.id.action_stadt:
+                setContentView(R.layout.activity_stadt);
+                Intent stadt = new Intent(RouteChooseActivity.this, StadtActivity.class);
+                startActivity(stadt);
+                return true;
+            case R.id.action_help:
+                setContentView(R.layout.activity_help);
+                Intent help = new Intent(RouteChooseActivity.this, Help.class);
+                startActivity(help);
+                return true;
+            case R.id.action_exit:
+                moveTaskToBack(true);
+                System.exit(0);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>
+
+<p>RouteView:</p>
+
+<pre><code>public class RouteView extends ActionBarActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     *
+     */
+
+    Integer citySave;
+    String cityTitle;
+    Integer routeSave;
+    String routeTitel;
+    private static int NUM_ITEMS = 2;
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ListView listView;
+    ArrayList<RowItem> pois;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_route_view);
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        cityTitle = b.getString("titel_stadt");
+        routeSave = b.getInt("route");
+        routeTitel = b.getString("titel_route");
+        b.putString("titel_route",routeTitel);
+        b.putInt("route", routeSave);
+        //RouteItemFragment fragobj = new RouteItemFragment();
+        //fragobj.setArguments(b);
+
+
+
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        setTitle("Route:" + " " + routeTitel);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.route_view, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            switch (position){
+                case 0:
+                    return RouteItemFragment.newInstance(position);
+                case 1:
+                    return MapFragment.newInstance(position);
+                default:
+                    return PlaceholderFragment.newInstance(position);
+            }
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return NUM_ITEMS;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    public static class RouteItemFragment extends ListFragment implements AdapterView.OnItemClickListener {
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        ListView listView;
+        List<RowItem> pois;
+        Integer routeSave;
+        String routeTitel;
+        private View rootView;
+
+        public static RouteItemFragment newInstance(int sectionNumber) {
+            RouteItemFragment fragment = new RouteItemFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public RouteItemFragment() {
+
+        }
+
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+
+            super.onActivityCreated(savedInstanceState);
+            routeSave = getActivity().getIntent().getExtras().getInt("route");
+            routeTitel = getActivity().getIntent().getStringExtra("titel_route");
+
+
+            //pois  = getActivity().getIntent().getParcelableArrayListExtra("pois");
+
+            if (routeSave.equals(1)) {
+                try {
+                    PoiParser parser = new PoiParser();
+                    pois = parser.parse(getActivity().getAssets().open("poi_passau1.xml"));
+                    CityListViewAdapter adapter = new CityListViewAdapter(getActivity(), R.layout.row_items, pois);
+                    listView.setAdapter(adapter);
+                    Collections.sort(pois, new Comparator<RowItem>() {
+                        public int compare(RowItem s1, RowItem s2) {
+                            return s1.getID() - s2.getID();
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (routeSave.equals(2)){
+                try {
+                    PoiParser parser = new PoiParser();
+                    pois = parser.parse(getActivity().getAssets().open("poi_passau1.xml"));
+                    CityListViewAdapter adapter = new CityListViewAdapter(getActivity(), R.layout.row_items, pois);
+                    listView.setAdapter(adapter);
+                    Collections.sort(pois, new Comparator<RowItem>() {
+                        public int compare(RowItem s1, RowItem s2) {
+                            return s1.getID() - s2.getID();
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (routeSave.equals(7)){
+                try {
+                    PoiParser parser = new PoiParser();
+                    pois = parser.parse(getActivity().getAssets().open("poi_passau1.xml"));
+                    CityListViewAdapter adapter = new CityListViewAdapter(getActivity(), R.layout.row_items, pois);
+                    listView.setAdapter(adapter);
+                    Collections.sort(pois, new Comparator<RowItem>() {
+                        public int compare(RowItem s1, RowItem s2) {
+                            return s1.getID() - s2.getID();
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (routeSave.equals(8)){
+                try {
+                    PoiParser parser = new PoiParser();
+                    pois = parser.parse(getActivity().getAssets().open("poi_passau1.xml"));
+                    CityListViewAdapter adapter = new CityListViewAdapter(getActivity(), R.layout.row_items, pois);
+                    listView.setAdapter(adapter);
+                    Collections.sort(pois, new Comparator<RowItem>() {
+                        public int compare(RowItem s1, RowItem s2) {
+                            return s1.getID() - s2.getID();
+                        }
+                    });
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (routeSave.equals(9)){
+                try {
+                    PoiParser parser = new PoiParser();
+                    pois = parser.parse(getActivity().getAssets().open("poi_passau1.xml"));
+                    CityListViewAdapter adapter = new CityListViewAdapter(getActivity(), R.layout.row_items, pois);
+                    listView.setAdapter(adapter);
+                    Collections.sort(pois, new Comparator<RowItem>() {
+                        public int compare(RowItem s1, RowItem s2) {
+                            return s1.getID() - s2.getID();
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                    try {
+                        TextView textView = (TextView) getView().findViewById(R.id.textRouteitem);
+                        textView.setText(String.format(getResources().getString(R.string.errorroute)));
+                    } catch (NullPointerException e) {
+                        Context context = getActivity().getApplicationContext();
+                        CharSequence text = getResources().getString(R.string.errorroute);
+                        int duration = Toast.LENGTH_LONG;
+                        Toast toast = Toast.makeText(context, text, duration);
+                        toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+                        toast.show();
+
+                }
+            }
+            Bundle b = new Bundle();
+            b.putParcelableArrayList("pois", (ArrayList<? extends android.os.Parcelable>) pois);
+            listView.setOnItemClickListener(this);
+
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setRetainInstance(true);
+        }
+
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+            rootView = null; // now cleaning up!
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            rootView = inflater.inflate(R.layout.fragment_route_item, container, false);
+            TextView textView = (TextView) rootView.findViewById(R.id.textRouteitem);
+            listView = (ListView) rootView.findViewById(android.R.id.list);
+            textView.setText(String.format(getResources().getString(R.string.routeViewfragment)) + " "
+                    + getActivity().getIntent().getStringExtra("titel_route"));
+            return rootView;
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View parent, int position, long l) {
+            Intent intent = new Intent();
+            intent.setClass(getActivity(), PoiView.class);
+            RowItem pois = (RowItem) getListView().getItemAtPosition(position);
+            Bundle b = new Bundle();
+            b.putInt("stadt", pois.getID());
+            b.putParcelableArrayList("pois", pois);
+            intent.putExtras(b);
+            startActivity(intent);
+        }
+
+    }
+
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent();
+        intent.setClass(RouteView.this, RouteChooseActivity.class);
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        b.putString("titel_stadt", cityTitle);
+        intent.putExtras(b);
+        startActivity(intent);
+        finish();
+    }
+
+    public void onPause() {
+        super.onPause();
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        b.putInt("route", routeSave);
+        b.putString("route_titel",routeTitel);
+        finish();
+    }
+
+    public void onResume() {
+        super.onResume();
+
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        routeSave = b.getInt("route");
+        routeTitel = b.getString("route_titel");
+
+    }
+
+    public void onStop() {
+        super.onStop();
+        finish();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_stadt:
+                setContentView(R.layout.activity_stadt);
+                Intent stadt = new Intent(RouteView.this, StadtActivity.class);
+                startActivity(stadt);
+                return true;
+            case R.id.action_route:
+                setContentView(R.layout.activity_route_choose);
+                Intent route = new Intent(RouteView.this, RouteChooseActivity.class);
+                Bundle b = new Bundle();
+                route.putExtra("stadt", citySave);
+                route.putExtra("stadt_titel", cityTitle);
+                startActivity(route);
+                return true;
+            case R.id.action_help:
+                setContentView(R.layout.activity_help);
+                Intent help = new Intent(RouteView.this, Help.class);
+                startActivity(help);
+                return true;
+            case R.id.action_exit:
+                moveTaskToBack(true);
+                System.exit(0);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+}
+</code></pre>
+
+<p>Logcat</p>
+
+<pre><code>java.lang.RuntimeException: Unable to start activity ComponentInfo{de.cityknight.app/de.cityknight.app.RouteChooseActivity}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+            at android.app.ActivityThread.access$800(ActivityThread.java:135)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5017)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at de.cityknight.app.RouteChooseActivity.onCreate(RouteChooseActivity.java:44)
+            at android.app.Activity.performCreate(Activity.java:5231)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+            at android.app.ActivityThread.access$800(ActivityThread.java:135)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5017)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

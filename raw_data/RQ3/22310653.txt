@@ -1,0 +1,118 @@
+<p>I have an activity with 3 tabs using fragments, it works fine when working in portrait mode, however, when I change it to landscape, it crashes. This is the code:</p>
+
+<pre><code>public class MainMenuActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main_menu);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        String label1 = getResources().getString(R.string.userMainTab);
+        Tab tab = actionBar.newTab();
+        tab.setText(label1);
+        TabListener<UserTabActivity> tl = new TabListener<UserTabActivity>(this, label1, UserTabActivity.class);
+        tab.setTabListener(tl);
+        actionBar.addTab(tab);
+
+        String label2 = getResources().getString(R.string.credentialGroupMainTab);
+        Tab tab2 = actionBar.newTab();
+        tab2.setText(label2);
+        TabListener<CredentialGroupActivity> tl2 = new TabListener<CredentialGroupActivity>(this, label2, CredentialGroupActivity.class);
+        tab2.setTabListener(tl2);
+        actionBar.addTab(tab2);
+
+        String label3 = getResources().getString(R.string.credentialTabHeader);
+        Tab tab3 = actionBar.newTab();
+        tab3.setText(label3);
+        TabListener<CredentialTabActivity> tl3 = new TabListener<CredentialTabActivity>(this, label2, CredentialTabActivity.class);
+        tab3.setTabListener(tl3);
+        actionBar.addTab(tab3);     
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }   
+
+    public static class TabListener<T extends Fragment> implements ActionBar.TabListener{
+
+        private Fragment mFragment;
+        private final Activity mActivity;
+        private final String mTag;
+        private final Class<T> mClass;
+
+        public TabListener(Activity activity, String tag, Class<T> clz){
+            mActivity = activity;
+            mTag = tag;
+            mClass = clz;
+
+            mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
+            if(mFragment != null && !mFragment.isDetached()){
+                FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
+                ft.detach(mFragment);
+                ft.commit();
+            }
+        }
+
+        @Override
+        public void onTabReselected(Tab arg0, FragmentTransaction arg1) {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void onTabSelected(Tab arg0, FragmentTransaction arg1) {
+            // TODO Auto-generated method stub
+            if(mFragment == null){
+                mFragment = Fragment.instantiate(mActivity, mClass.getName());
+                arg1.add(android.R.id.content, mFragment, mTag);
+            } else{
+                arg1.attach(mFragment);
+            }
+        }
+
+        @Override
+        public void onTabUnselected(Tab arg0, FragmentTransaction arg1) {
+            // TODO Auto-generated method stub
+            if(mFragment != null){
+                arg1.detach(mFragment);
+            }
+        }
+
+    }
+
+}
+</code></pre>
+
+<p>Could you tell me why is not working? The error is:</p>
+
+<pre><code>java.lang.RuntimeException: Unable to destroy activity{ACTIVITY_NAME} : java.lang.NullPointerException
+</code></pre>
+
+<p>I have noticed that it fails until I click on any of the tabs, and then try to change it to landscape, but I haven't been able to identify in the code what's happening, and also, when I change the view, it loses the tab where it was positioned.</p>
+
+<p>Thanks in advanced!</p>
+
+<p><strong>EDIT</strong></p>
+
+<p>In order to keep the selected tab after changing the orientation, I ended up doing this, thanks to the suggestions made by <strong>Nathaniel Waggoner</strong> and <strong>karthikk</strong>:</p>
+
+<pre><code>protected void onSaveInstanceState(Bundle outState) {
+    // TODO Auto-generated method stub
+    super.onSaveInstanceState(outState);
+
+    outState.putInt("tabState", actionBar.getSelectedTab().getPosition());
+}
+
+//In the onCreate method
+    if(savedInstanceState != null ){
+        actionBar.selectTab(actionBar.getTabAt(savedInstanceState.getInt("tabState")));
+    }
+</code></pre>
+
+<p>Thanks!!    </p>

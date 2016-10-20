@@ -1,0 +1,259 @@
+<p>First: Sorry for the wall of text/code, but I think most of it is needed to understand the problem.</p>
+
+<p>I am creating an app using <code>Fragments</code> in a <code>ViewPager</code> and a <code>TabHost</code>. The <code>ViewPager</code> has a custom <code>FragmentPagerAdapter</code> that will feed the various pages in the <code>ViewPager</code>. I have ran into a problem where the custom <code>FragmentPagerAdapter</code> starts adding the various <code>Fragments</code> to the <code>BackStack</code>, but it fails at a point where it checks that the container ID (in this case the ID of the <code>ViewPager</code>) against the ID of the <code>Fragments</code> to add. These are different, thus the program fails. I am fairly new to using <code>Fragments</code>, so I am not sure if my code follows best practice. What could be the error in the following?</p>
+
+<p><strong>The Activity, which inflates the main XML layout.</strong></p>
+
+<pre><code>public class MyActivity extends FragmentActivity implements TabHost.OnTabChangeListener, ViewPager.OnPageChangeListener{
+    private MyViewPager                 mViewPager;
+    private FragmentTabHost             mFragmentTabHost;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.my_activity);
+        setupViewPager();
+        setupFragmentTabHost();
+    }
+
+    private void setupViewPager()
+    {
+        mViewPager = (MyViewPager) findViewById(R.id.my_pager);
+    }
+
+    private void setupFragmentTabHost()
+    {
+        mFragmentTabHost = (FragmentTabHost) findViewById(android.R.id.tabhost);
+        mFragmentTabHost.setOnTabChangedListener(this);
+        mFragmentTabHost.setup(this, getSupportFragmentManager(), android.R.id.tabcontent);
+
+        mFragmentTabHost.addTab(mFragmentTabHost.newTabSpec("tab1").setIndicator("Tab 1", null), TabFragment.class, null);
+        mFragmentTabHost.addTab(mFragmentTabHost.newTabSpec("tab2").setIndicator("Tab 2", null), TabFragment.class, null);
+        mFragmentTabHost.addTab(mFragmentTabHost.newTabSpec("tab3").setIndicator("Tab 3", null), TabFragment.class, null);
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+    }
+
+    public MyViewPager getMyPager()
+    {
+        return mViewPager;
+    }
+
+    @Override
+    public void onTabChanged(String tabId) {
+        int position = mFragmentTabHost.getCurrentTab();
+        mViewPager.setCurrentItem(position);
+    }
+
+    @Override
+    public void onPageSelected(int position)
+    {
+        mFragmentTabHost.setCurrentTab(position);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int arg0) {}
+
+    @Override
+    public void onPageScrolled(int arg0, float arg1, int arg2) {}
+}
+</code></pre>
+
+<p><strong>The main XML file, my_activity.xml, containing the ViewPager, the TabHost and the Fragments for the ViewPager:</strong></p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <android.support.v4.app.FragmentTabHost
+        android:id="@android:id/tabhost"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="0" />
+
+            <com.mycompany.myapp.gui.mypager.MyViewPager
+                android:id="@+id/my_pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <TabWidget 
+                android:id="@android:id/tabs"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+    </android.support.v4.app.FragmentTabHost>
+
+    <fragment
+        android:name="com.mycompany.myapp.gui.mypager.FilteredRecipesFragment"
+        android:id="@+id/filtered_recipes_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true" />
+
+    <fragment
+        android:name="com.mycompany.myapp.gui.mypager.SelectedRecipesFragment"
+        android:id="@+id/selected_recipes_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true" />
+
+    <fragment
+        android:name="com.mycompany.myapp.gui.mypager.ShoppingListFragment"
+        android:id="@+id/shopping_list_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true" />
+
+</LinearLayout>
+</code></pre>
+
+<p>Note that <code>onCreateView</code> is called for each custom <code>Fragment</code>, they are inflated and the root <code>View</code> of each of them are returned. Here is one example, for <code>FilteredRecipesFragment</code>. The other custom <code>Fragments</code> are similar.</p>
+
+<pre><code>public class FilteredRecipesFragment extends Fragment {
+
+    private FilteredRecipesListFragment mFilteredRecipesListFragment;
+    private Button showRecipeFilterButton;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.filtered_recipes_fragment, container, false);
+        mFilteredRecipesListFragment = (FilteredRecipesListFragment)
+                getFragmentManager().findFragmentById(R.id.filtered_recipes_list_fragment);
+        showRecipeFilterButton = (Button) rootView.findViewById(R.id.show_recipe_filter_dialog_button);
+        showRecipeFilterButton.setOnClickListener(new RecipeFilterButtonListener());
+        return rootView;
+    }
+}
+</code></pre>
+
+<p>Finally, the custom <code>ViewPager</code> and its custom <code>FragmentPagerAdapter</code>, where the program fails.</p>
+
+<pre><code>public class MyViewPager extends ViewPager{
+
+    private MyActivity mMyActivity;
+    private MyPagerAdapter mMyPagerAdapter;
+
+    public MyViewPager(Context context, AttributeSet attrs)
+    {
+        super(context, attrs);
+        mMyActivity = (MyActivity) context;
+        mMyPagerAdapter = new MyPagerAdapter(mMyActivity.getSupportFragmentManager(), mMyActivity);
+        this.setAdapter(mMyPagerAdapter);
+        this.setOnPageChangeListener(mMyActivity);
+        this.setCurrentItem(PagerConstants.PAGE_SHOPPING_LIST); // Page 0
+    }
+}
+</code></pre>
+
+<p><strong>MyPagerAdapter.java:</strong></p>
+
+<pre><code>public class MyPagerAdapter extends FragmentPagerAdapter{
+
+    private MyActivity mMyActivity;
+
+    public MyPagerAdapter(FragmentManager fragmentManager, MyActivity myActivity)
+    {
+        super(fragmentManager);
+        mMyActivity = myActivity;
+    }
+
+    @Override
+    public Fragment getItem(int position)
+    {
+        switch (position) {
+        case PagerConstants.PAGE_FILTER_RECIPES: // 0
+            return mMyActivity.getSupportFragmentManager().findFragmentById(R.id.filtered_recipes_fragment);
+
+        case PagerConstants.PAGE_SELECTED_RECIPES: // 1
+            return mMyActivity.getSupportFragmentManager().findFragmentById(R.id.selected_recipes_fragment);
+
+        case PagerConstants.PAGE_SHOPPING_LIST: // 2
+            return mMyActivity.getSupportFragmentManager().findFragmentById(R.id.shopping_list_fragment);
+
+        default:
+            return null;
+        }
+    }
+
+    @Override
+    public int getCount()
+    {
+        return PagerConstants.NUMBER_OF_PAGES; // 3
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position)
+    {
+        return PagerConstants.PAGE_TITLES(position);
+    }
+
+}
+</code></pre>
+
+<p>Everything <em>seems</em> to be working ok, but after every custom <code>Fragment</code> is inflated, the custom <code>ViewPager</code> starts to add them too. Here is the stack output from <code>Eclipse</code>:</p>
+
+<pre><code>06-07 15:37:49.815: E/AndroidRuntime(793): java.lang.IllegalStateException: Can't change container ID of fragment FilteredRecipesFragment{4605b0e0 #0 id=0x7f09003f android:switcher:2131296318:0}: was 2131296319 now 2131296318
+BackStackRecord.doAddOp(int, Fragment, String, int) line: 407   
+BackStackRecord.add(int, Fragment, String) line: 389    
+MyPagerAdapter(FragmentPagerAdapter).instantiateItem(ViewGroup, int) line: 99   
+MyViewPager(ViewPager).addNewItem(int, int) line: 832   
+MyViewPager(ViewPager).populate(int) line: 982  
+MyViewPager(ViewPager).populate() line: 914 
+MyViewPager(ViewPager).onMeasure(int, int) line: 1436   
+MyViewPager(View).measure(int, int) line: 8171  
+LinearLayout(ViewGroup).measureChildWithMargins(View, int, int, int, int) line: 3132
+... More calls <snipped>
+</code></pre>
+
+<p>In <code>BackStackRecord.doAppOp</code> it fails because the container ID (i.e. the ID of the <code>MyViewPager</code> is different from the <code>Fragment</code> ID. Here is the code for that method:</p>
+
+<pre><code>private void doAddOp(int containerViewId, Fragment fragment, String tag, int opcmd) {
+    fragment.mFragmentManager = mManager;
+
+    if (tag != null) {
+        if (fragment.mTag != null && !tag.equals(fragment.mTag)) {
+            throw new IllegalStateException("Can't change tag of fragment "
+                    + fragment + ": was " + fragment.mTag
+                    + " now " + tag);
+        }
+        fragment.mTag = tag;
+    }
+
+    if (containerViewId != 0) {
+        if (fragment.mFragmentId != 0 && fragment.mFragmentId != containerViewId) {
+            // IT FAILS HERE!
+            throw new IllegalStateException("Can't change container ID of fragment "
+                    + fragment + ": was " + fragment.mFragmentId
+                    + " now " + containerViewId);
+        }
+        fragment.mContainerId = fragment.mFragmentId = containerViewId;
+    }
+
+    Op op = new Op();
+    op.cmd = opcmd;
+    op.fragment = fragment;
+    addOp(op);
+}
+</code></pre>
+
+<p>I know that the container ID is the ID of the custom <code>ViewPager</code> because it is its ID that is passed through in the <code>instantiateItem(ViewGroup, int)</code> call. In my case, the ID of the <code>MyViewPager</code> instance is 213129631<strong>9</strong> and the ID of the <code>Fragment</code> is 213129631<strong>8</strong>, hence it fails.</p>
+
+<p>Where am I taking the wrong turn here? What am I misunderstanding in the whole <code>ViewPager</code>/<code>FragmentPagerAdapter</code>/<code>Fragment</code> concept?</p>

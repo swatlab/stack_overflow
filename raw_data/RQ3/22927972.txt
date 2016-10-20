@@ -1,0 +1,149 @@
+<p>I wanna remove decimal number on Y axis in achartengine graph library as shown below :</p>
+
+<p><img src="http://i.stack.imgur.com/nxX39.png" alt="enter image description here"></p>
+
+<p>CODE :</p>
+
+<pre><code>public GraphicalView createIntent(List<double[]> values, float height_) {
+
+        height_ = (float) (height_ + 0.4);
+
+        String[] titles = new String[] { "Assignments" };
+
+        int[] colors = new int[] { getResources().getColor(
+                R.color.color_ff83ba20) };
+
+        XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+        renderer.setOrientation(Orientation.HORIZONTAL);
+
+        if (height_ < 0)
+            height_ = 1;
+        setChartSettings(renderer, " ", " ", " ", 0, 5, 0, height_,
+                Color.BLACK, Color.BLACK);
+        renderer.setXLabels(0);
+        renderer.setYLabels(10);
+        renderer.setYLabelsPadding(10);
+        renderer.setMargins(new int[] { 50, 50, 10, 10 });
+
+
+        renderer.setInScroll(true); // for inscoroll
+
+        renderer.setClickEnabled(true);
+        renderer.setSelectableBuffer(100); // for fixed chart
+
+        int length = renderer.getSeriesRendererCount();
+        for (int i = 0; i < length; i++) {
+            SimpleSeriesRenderer seriesRenderer = renderer
+                    .getSeriesRendererAt(i);
+
+            // seriesRenderer.setDisplayChartValues(true);
+
+        }
+
+        final GraphicalView grfv = ChartFactory.getBarChartView(getActivity(),
+                buildBarDataset(titles, values), renderer, Type.STACKED);
+        return grfv;
+    }
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+        renderer.setAxisTitleTextSize(13);
+        renderer.setChartTitleTextSize(20);
+        renderer.setLabelsTextSize(13);
+        renderer.setLegendTextSize(13);
+        renderer.setBarSpacing(0.6);
+        renderer.setShowGridX(true);
+        renderer.setShowGridY(true);
+        renderer.setGridColor(getResources().getColor(R.color.color_0dffffff));
+
+        renderer.setMarginsColor(getResources().getColor(R.color.color_eeeded));
+
+        renderer.setXLabelsColor(getResources().getColor(R.color.color_black));
+        renderer.setYLabelsColor(0, getResources()
+                .getColor(R.color.color_black));
+        renderer.setBarWidth(60);
+        renderer.setApplyBackgroundColor(true);
+
+        renderer.setBackgroundColor(getResources().getColor(
+                R.color.color_fbfbfc));
+
+        renderer.setMarginsColor(getResources().getColor(R.color.color_fbfbfc));
+
+        renderer.setInScroll(true); // for inscoroll
+
+        renderer.setClickEnabled(true);
+        renderer.setSelectableBuffer(100); // for fixed chart
+
+        int length = colors.length;
+        for (int i = 0; i < length; i++) {
+            SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+            r.setColor(colors[i]);
+
+            r.setChartValuesSpacing(15);
+            renderer.addSeriesRenderer(r);
+        }
+        return renderer;
+    }
+
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titles,
+            List<double[]> values) {
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+        int length = titles.length;
+        for (int i = 0; i < length; i++) {
+            CategorySeries series = new CategorySeries(titles[i]);
+            double[] v = values.get(i);
+            int seriesLength = v.length;
+            for (int k = 0; k < seriesLength; k++) {
+                series.add(v[k]);
+                // series.add(v[k]);
+            }
+
+            XYSeries d = series.toXYSeries();
+
+            if (values.get(i)[0] > 0)
+                d.addAnnotation((int) (values.get(i)[0]) + "", 1,
+                        values.get(i)[0] + 0.05);
+            if (values.get(i)[1] > 0)
+                d.addAnnotation((int) (values.get(i)[1]) + "", 2,
+                        values.get(i)[1] + 0.05);
+            if (values.get(i)[2] > 0)
+                d.addAnnotation((int) (values.get(i)[2]) + "", 3,
+                        values.get(i)[2] + 0.05);
+            if (values.get(i)[3] > 0)
+                d.addAnnotation((int) (values.get(i)[3]) + "", 4,
+                        values.get(i)[3] + 0.05);
+
+            // d.addAnnotation("hi", 3.4, 5);
+            // d.addAnnotation("hi", 4.4, 4);
+
+            dataset.addSeries(d);
+        }
+        return dataset;
+    }
+
+    protected void setChartSettings(XYMultipleSeriesRenderer renderer,
+            String title, String xTitle, String yTitle, double xMin,
+            double xMax, double yMin, double yMax, int axesColor,
+            int labelsColor) {
+        renderer.setChartTitle(title);
+        renderer.setYLabelsAlign(Align.RIGHT);
+        renderer.setXTitle(xTitle);
+        renderer.setYTitle(yTitle);
+        renderer.setXAxisMin(xMin);
+        renderer.setXAxisMax(xMax);
+        renderer.setYAxisMin(yMin);
+        renderer.setYAxisMax(yMax);
+
+        renderer.setMargins(new int[] { 10, 65, 10, 0 });
+        renderer.setAxesColor(axesColor);
+        renderer.setLabelsColor(Color.BLACK);
+        renderer.setInScroll(true); // for inscoroll
+
+        renderer.setClickEnabled(true);
+        renderer.setSelectableBuffer(100); // for fixed chart
+
+    }
+</code></pre>
+
+<p>I want Y axis to show complete Integer numbers only ,
+any help will be appreciated. </p>

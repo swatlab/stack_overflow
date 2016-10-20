@@ -1,0 +1,213 @@
+<p>I have an ImageAdapter class for GridView which is filled by local images.I want to update it by the movie databse api.
+here is my ImageAdapter class - </p>
+
+<pre><code>package jindal5.mayank.popular_movies_14ce10032_gsc;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {
+            // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7,
+            R.drawable.sample_0, R.drawable.sample_1,
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7,
+            R.drawable.sample_0, R.drawable.sample_1,
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7
+    };
+}
+</code></pre>
+
+<p>This is my MainActivityFragment which contains AscyncTask - </p>
+
+<pre><code>package jindal5.mayank.popular_movies_14ce10032_gsc;
+
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public class MainActivityFragment extends Fragment {
+    private ImageAdapter imag_adap;
+
+    public MainActivityFragment() {
+    }
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Add this line in order for this fragment to handle menu events.
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_fragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_refresh) {
+            getimage imageTask = new getimage();
+            imageTask.execute("popularity.desc");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootview = inflater.inflate(R.layout.fragment_main, container, false);
+        GridView grid = (GridView) rootview.findViewById(R.id.gridView);
+        imag_adap = new ImageAdapter(getActivity());
+        grid.setAdapter(imag_adap);
+        return rootview;
+    }
+
+    public class getimage extends AsyncTask<String, Void, String[]> {
+        private final String LOG_TAG = getimage.class.getSimpleName();
+        public int count;
+        String[] pos_path;
+
+
+        @Override
+        protected String[] doInBackground(String... params) {
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            String movieJsonStr = null;
+            try {
+                final String movie_url_str = "http://api.themoviedb.org/3/discover/movie?sort_by="+ params[0] +"&api_key=8d7a48043ba1d3348181e2b6615cedc7";
+                URL movie_url = new URL(movie_url_str);
+                urlConnection = (HttpURLConnection) movie_url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line + "\n");
+                }
+                if (buffer.length() == 0) {
+                    return null;
+                }
+                movieJsonStr = buffer.toString();
+                Log.v(LOG_TAG, "Forecast string: " + movieJsonStr);
+                JSONObject movieJson = new JSONObject(movieJsonStr);
+                JSONArray movieJsonarray = movieJson.getJSONArray("results");
+                 count = movieJsonarray.length();
+                pos_path = new String[count];
+                for(int i=0;i<count;i++){
+                    JSONObject sin_movie = movieJsonarray.getJSONObject(i);
+                    pos_path[i] = sin_movie.getString("poster_path");
+                }
+            } catch (IOException | JSONException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                return null;
+            }
+            finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return pos_path;
+            }
+        @Override
+        protected void onPostExecute(String[] result) {
+            Uri.Builder url_for_poster = new Uri.Builder();
+            ImageView[] im_vi = new ImageView[count];
+            for(int j=0;j<count;j++) {
+                String pos_sin_path = pos_path[j];
+               Uri.Builder url_build =  url_for_poster.scheme("http").authority("image.tmdb.org/t/p").appendPath("w92").appendPath("pos_sin_path");
+                String url = url_build.toString();
+                Picasso.with(getActivity()).load("http://image.tmdb.org/t/p/w185//nBNZadXqJSdt05SHLqgT0HuC5Gm.jpg").into(im_vi[j]);  **probably this shows target must be null**
+                //imag_adap.getItem(j) = im_vi[j];  **after uncommenting it shows variable expexted**
+            }
+        }
+    }
+}
+</code></pre>

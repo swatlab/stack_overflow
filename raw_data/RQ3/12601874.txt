@@ -1,0 +1,230 @@
+<p>I am working on an application in which I am using SQlite database. My application works good in each and every OS version and in all emulators but it only creates problem in device with <strong>OS version 2.3.3</strong>.  I am getting CREATE TABLE android_metadata messages and my database code crashes.</p>
+
+<p><strong>I am Using Google Nexus with Android OS 2.3.3</strong></p>
+
+<p>Please suggest me what is the actual problem and what I can do to solve this device dependent problem. I am also posting my code below.:</p>
+
+<pre><code>public class ECatalogueDatabase {
+
+    private static final String DB_PATH = "/data/data/com.weg.ecatalogue/databases/";
+    public static final String DATABASE_NAME = "ECatalogue";
+    public static final String DATABASE_TABLE = "T_Electrical";
+    public static final int DATABASE_VERSION = 1;
+
+    public static final String KEY_ROWID="id";
+    public static final String KEY_PRODUCT_LINE="productline";
+
+    public static final String KEY_VOLTAGE="voltage";
+    public static final String KEY_OUTPUTHP="outputhp";
+
+    public static final String KEY_FRAME="frame";
+    public static final String KEY_RPM="rpm";
+
+    private Context context=null;
+    private DatabaseHelper DBHelper;
+    private SQLiteDatabase db;
+
+    /**
+     * Database creation sql statement
+     */
+    private static final String CREAT_DATABASE="Create Table if not exists "+ DATABASE_TABLE+"("+ KEY_ROWID +" INTEGER PRIMARY KEY NOT NULL,"
+    +KEY_PRODUCT_LINE +" nvarchar ,"+ KEY_OUTPUTHP+" numeric ,"+ KEY_RPM +" nvarchar ,"+KEY_VOLTAGE +" nvarchar ," +KEY_FRAME +" nvarchar"+")";
+
+    /**
+     * Constructor - takes the context to allow the database to be
+     * opened/created
+     *
+     * @param ctx the Context within which to work
+     */
+    public ECatalogueDatabase(Context ctx) {
+        this.context = ctx;
+        DBHelper = new DatabaseHelper(context);
+    }
+    //Helper class
+    private static class DatabaseHelper extends SQLiteOpenHelper
+    {
+        public DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL(CREAT_DATABASE);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            db.execSQL("DROP TABLE IF EXISTS titles");
+            onCreate(db);
+        }
+
+    }
+
+    public ECatalogueDatabase open() //throws SQLException
+    {
+        try
+        {
+            db=DBHelper.getWritableDatabase();
+
+        }catch(Exception exception)
+        {
+            exception.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public void close()
+    {
+        DBHelper.close();
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        @SuppressWarnings("unused")
+        boolean dbExist = checkDataBase();
+
+
+        SQLiteDatabase db_Read = null;
+        if(dbExist){
+        //DO NOTHING IN THIS CASE
+        }else{
+
+        db_Read = DBHelper.getReadableDatabase();
+        db_Read.close();
+        }
+        //=================================
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+
+    }
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+        try{
+            String myPath = DB_PATH + DATABASE_NAME;
+            db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+        }
+
+        if(db != null){
+
+            db.close();
+
+        }
+
+        return db != null ? true : false;
+    }
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+
+        InputStream myInput = context.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DATABASE_NAME;
+
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public int getDatabaseCount(){
+        int count = 0;
+        Cursor cursor = db.rawQuery("Select * from " + DATABASE_TABLE, null);
+        if(cursor!=null){
+            count = cursor.getCount();
+        }
+        cursor.deactivate();
+        cursor.close();
+        return count;
+    }
+
+}
+</code></pre>
+
+<p><strong>My Logcates</strong>:</p>
+
+<pre><code>5CREATE TABLE android_metadata failed
+Failed to setLocale() when constructing, closing the database
+a
+    at android.database.sqlite.SQLiteDatabase.native_setLocale(Native Method)
+    at android.database.sqlite.SQLiteDatabase.setLocale(SQLiteDatabase.java1987)
+    at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java1855)
+    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java820)
+    at android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(SQLiteDatabase.java854)
+    at android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(SQLiteDatabase.java847)
+    at android.app.ContextImpl.openOrCreateDatabase(ContextImpl.java567)
+    at android.content.ContextWrapper.openOrCreateDatabase(ContextWrapper.java203)
+    at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java118)
+    at com.weg.ecatalogue.database.ECatalogueDatabase.open(ECatalogueDatabase.java76)
+    at com.weg.ecatalogue.HomeScreen.onCreate(HomeScreen.java219)
+    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java1047)
+    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java1722)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java1784)
+    at android.app.ActivityThread.access$00(ActivityThread.java123)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java939)
+    at android.os.Handler.dispatchMessage(Handler.java99)
+    at android.os.Looper.loop(Looper.java123)
+    at android.app.ActivityThread.main(ActivityThread.java3839)
+    at java.lang.reflect.Method.invokeNative(Native Method)
+    at java.lang.reflect.Method.invoke(Method.java507)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java841)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java599)
+    at dalvik.system.NativeStart.main(Native Method)
+Deleting and re-creating corrupt database /data/data/com.weg.ecatalogus/ECatalogue
+a
+    at android.database.sqlite.SQLiteDatabase.native_setLocale(Native Method)
+    at android.database.sqlite.SQLiteDatabase.setLocale(SQLiteDatabase.java1987)
+    at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java1855)
+    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java820)
+    at android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(SQLiteDatabase.java854)
+    at android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(SQLiteDatabase.java847)
+    at android.app.ContextImpl.openOrCreateDatabase(ContextImpl.java567)
+    at android.content.ContextWrapper.openOrCreateDatabase(ContextWrapper.java203)
+    at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java118)
+    at com.weg.ecatalogue.database.ECatalogueDatabase.open(ECatalogueDatabase.java76)
+    at com.weg.ecatalogue.HomeScreen.onCreate(HomeScreen.java219)
+    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java1047)
+    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java1722)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java1784)
+    at android.app.ActivityThread.access$00(ActivityThread.java123)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java939)
+    at android.os.Handler.dispatchMessage(Handler.java99)
+    at android.os.Looper.loop(Looper.java123)
+    at android.app.ActivityThread.main(ActivityThread.java3839)
+    at java.lang.reflect.Method.invokeNative(Native Method)
+    at java.lang.reflect.Method.invoke(Method.java507)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java841)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java599)
+    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

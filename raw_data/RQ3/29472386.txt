@@ -1,0 +1,217 @@
+<p>i am working on an android app which contains a user login page. i have created a database named "database.db" and the database is saved at location "/data/data/com.example.ERP/databases/". The app is working fine except for the login part because when i try to login with the already created database, this error shows up (see title). posted below is some code fragments that might be of some use to you all, any kind of help is appreciated:</p>
+
+<pre><code>package com.example.ambuj.erp;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.SQLException;
+
+public class Database_Helper extends SQLiteOpenHelper {
+private static String DB_PATH = "/data/data/com.example.ERP/databases/";
+private static String DB_NAME = "database";
+private SQLiteDatabase myDataBase;
+private final Context myContext;
+
+public Database_Helper(Context context) {
+    super(context,DB_NAME,null,1);
+    this.myContext = context;
+
+}
+
+public void createDataBase() throws IOException{
+    boolean DBExist = checkDataBase();
+
+    if (DBExist) {
+    }
+    else{
+        this.getReadableDatabase();
+
+        try {
+            copyDataBase();
+        }catch (IOException e){
+            throw new Error("Error copying DataBase");
+        }
+    }
+}
+
+
+private boolean checkDataBase(){
+    SQLiteDatabase checkDB = null;
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READONLY);
+    }catch (SQLiteException e){
+
+    }
+    if(checkDB != null){
+        checkDB.close();
+    }
+    return checkDB !=null ? true : false;
+
+
+}
+
+
+private void copyDataBase() throws IOException{
+
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    String outFileName = DB_PATH + DB_NAME;
+
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer,0,length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public void openDataBase() throws SQLException{
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READONLY);
+}
+
+@Override
+public synchronized void close(){
+
+    if (myDataBase != null)
+        myDataBase.close();
+    super.close();
+}
+@Override
+public void onCreate(SQLiteDatabase db){
+
+}
+
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+
+}
+
+public boolean Login(String username, String password) throws SQLException
+{
+    Cursor mCursor = myDataBase.rawQuery("SELECT * FROM userinfo WHERE username=? AND password=?", new String[]{username,password});
+    if (mCursor != null) {
+        if(mCursor.getCount() > 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+}
+</code></pre>
+
+<p>if the login credentials are valid, a new activity must open:
+activity_successful_login.xml is as follows:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+</code></pre>
+
+<p></p>
+
+<pre><code><TextView
+    android:id="@+id/ForgotPassword"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_marginTop="10dp"
+    android:text="Login Successfull!!!"/>
+</code></pre>
+
+<p></p>
+
+<p>this is loginPage.java:
+    package com.example.ambuj.erp;</p>
+
+<pre><code>import android.content.DialogInterface;
+import android.database.sqlite.SQLiteDatabase;
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import java.sql.SQLException;
+
+
+public class loginPage extends ActionBarActivity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_login_page);
+
+    final EditText usernamefield = (EditText)findViewById(R.id.usernamefield);
+    final EditText passwordfield = (EditText)findViewById(R.id.passwordfield);
+
+    final Button loginbutton = (Button)findViewById(R.id.LoginButton);
+    loginbutton.setOnClickListener(new View.OnClickListener(){
+
+        @Override
+        public void onClick(View v) {
+            String username = usernamefield.getText().toString();
+            String password = passwordfield.getText().toString();
+            try{
+                if(username.length() > 0 && password.length() >0)
+                {
+                    Database_Helper dbUser = new Database_Helper(loginPage.this);
+                    dbUser.openDataBase();
+
+                    if(dbUser.Login(username, password))
+                    {
+                        Toast.makeText(loginPage.this,"Successfully Logged In", Toast.LENGTH_LONG).show();
+                    }else{
+                        Toast.makeText(loginPage.this,"Invalid Username/Password", Toast.LENGTH_LONG).show();
+                    }
+                    dbUser.close();
+                }
+
+            }catch(Exception e)
+            {
+                Toast.makeText(loginPage.this,e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+
+    });
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_login_page, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>

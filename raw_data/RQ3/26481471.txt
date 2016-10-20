@@ -1,0 +1,122 @@
+<p>I know that there are plenty of similar questions but I really can't figure out this problem.
+I'm using AppPresser as Wordpress plugin/theme to "appify" an existing WP blog. This uses PhoneGap to bridge the blog with the device. My Cordova installation version is 3.6.3-0.2.13 . 
+I'm having troubles creating a simple file onto the device. I'm using Cordova File APIs to accomplish the thing. The File API version I'm using is 1.1.1-dev (the PhoneGap build provided by AppPresser comes with the basic plugins already set up).
+My Javascript file is as follows:</p>
+
+<pre><code>window.requestFileSystem(window.LocalFileSystem.PERSISTENT, 0, gotFS, fail1);
+
+function gotFS(fileSystem) {
+    fileSystem.root.getFile( "dummy.html", {create: true, exclusive: false}, gotFileEntry, fail2);
+}
+
+function gotFileEntry(fileEntry) {
+    alert("Got file Entry!!");
+}
+
+function fail1(e) {
+    console.log("fail1: "+e);
+}    
+function fail2(e) {
+    console.log(e);
+    var msg = '';
+    switch ( e.code ) {
+        case FileError.ENCODING_ERR:
+            msg = 'ENCODING_ERR';
+            break;
+        case FileError.INVALID_MODIFICATION_ERR:
+            msg = 'INVALID_MODIFICATION_ERR';
+            break;
+        case FileError.INVALID_STATE_ERR:
+            msg = 'INVALID_STATE_ERR';
+            break;
+        case FileError.NO_MODIFICATION_ALLOWED_ERR:
+            msg = 'NO_MODIFICATION_ALLOWED_ERR';
+            break;
+        case FileError.NOT_FOUND_ERR:
+            msg = 'NOT_FOUND_ERR';
+            break;
+        case FileError.NOT_READABLE_ERR:
+            msg = 'NOT_READABLE_ERR';
+            break;
+        case FileError.PATH_EXISTS_ERR:
+            msg = 'PATH_EXISTS_ERR';
+            break;
+        case FileError.QUOTA_EXCEEDED_ERR:
+            msg = 'QUOTA_EXCEEDED_ERR';
+            break;
+        case FileError.SECURITY_ERR:
+            msg = 'SECURITY_ERR';
+            break;
+        case FileError.TYPE_MISMATCH_ERR:
+            msg = 'TYPE_MISMATCH_ERR';
+            break;
+        default:
+            msg = 'Unknown Error';
+            break;
+    };
+    alert( 'Error: ' + msg );
+}
+</code></pre>
+
+<p>The function fileSystem.root.getFile fails (fail2 get called) with error FileError.ENCODING_ERR. Notice that I don't wait the app to fire the onDeviceReady event because the window.requestFileSystem is called after the user has performed a number of operations in the page. I'm testing primarily on my LG Nexus 4, but the error happens in my iOS simulator too.
+I've done a bunch of debug. The core error in cordova.js is when calling the native service:</p>
+
+<pre><code> var messages = nativeApiProvider.get().exec(service, action, callbackId, argsJson);
+</code></pre>
+
+<p>var messages is null. Hence I've made some debug into the native Android app, and the native exception is:</p>
+
+<pre><code>java.net.MalformedURLException: No installed handlers for this URL
+</code></pre>
+
+<p>Affected method is in class FileUtils.java :</p>
+
+<pre><code>private JSONObject getFile(String baseURLstr, String path, JSONObject options, boolean directory) throws FileExistsException, IOException, TypeMismatchException, EncodingException, JSONException {
+    try {
+        LocalFilesystemURL inputURL = new LocalFilesystemURL(baseURLstr);
+        Filesystem fs = this.filesystemForURL(inputURL);
+        if (fs == null) {
+            throw new MalformedURLException("No installed handlers for this URL");
+        }
+        return fs.getFileForLocalURL(inputURL, path, options, directory);
+
+    } catch (IllegalArgumentException e) {
+        throw new MalformedURLException("Unrecognized filesystem URL");
+    }
+
+}
+</code></pre>
+
+<p>In this method, this.filesystemForURL(inputURL) returns null.
+Method parameters are: baseURLstr="/", path="dummy.html", options='{"create":true,"exclusive":false}', boolean directory=false .
+LocalFilesystemURL inputURL get equals to cdvfile://localhost/nullnull .
+This means that the fileSystemName and fullPath variables in LocalFileSystemURL object are both null . Consequently, this.filesystemForURL(inputURL) get equals to nulland exception get fired. The problem is with the class constructor:</p>
+
+<pre><code>public LocalFilesystemURL(Uri URL) {
+    this.URL = URL;
+    this.filesystemName = this.filesystemNameForLocalURL(URL);
+    this.fullPath = this.fullPathForLocalURL(URL);
+}
+</code></pre>
+
+<p>URL is "/", and both this.filesystemNameForLocalURL(URL) and this.fullPathForLocalURL(URL) returns null.
+This is for example the fileSystemNameForLocalURL method:</p>
+
+<pre><code>private String filesystemNameForLocalURL(Uri URL) {
+    if (FILESYSTEM_PROTOCOL.equals(URL.getScheme()) && "localhost".equals(URL.getHost())) {
+        List<String> pathComponents = URL.getPathSegments();
+        if (pathComponents != null && pathComponents.size() > 0) {
+            return pathComponents.get(0);
+        }
+        return null;
+    } else if ("content".equals(URL.getScheme())) {
+        return "content";
+    }
+    return null;
+}
+</code></pre>
+
+<p>which obviously returns null because URL is "/". So maybe the problem is with the baseURLstr passed by the JavaScript function.
+Could you please provide some hints?</p>
+
+<p>Many thanks, Roberto</p>

@@ -1,0 +1,142 @@
+<p>I have an adapter which takes items from Drawable and put them into a GridView. The adapter works great with Drawables. However, I'm in need of getting TextViews from Layout instead of Drawables.</p>
+
+<p>This works great with Drawable:</p>
+
+<pre><code>    private Integer[] mThumbIds = {
+        R.drawable.carrot, R.drawable.emerald,
+        R.drawable.turquoise, R.drawable.greensea,
+    };
+</code></pre>
+
+<p>However, I tried simply changing the items paths to the ID's of the TextViews:</p>
+
+<pre><code>    private Integer[] mThumbIds = {
+        R.id.text_test,R.id.text_test,
+        R.id.text_test,R.id.text_test,      
+    };
+</code></pre>
+
+<p>The app runs fine but I don't see the TextViews, instead the GridView appears, however with items filled with nothing. The adapter seems to be able to import the TextViews as they are clickable, however without any content.</p>
+
+<p>What am I missing out?</p>
+
+<p>My XML for the TextView:</p>
+
+<pre><code><GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical" 
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+<TextView
+    android:id="@+id/text_test"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:text="Hello World!"
+    android:background="#ff0000"/>
+
+</GridLayout>
+</code></pre>
+
+<p><strong>EDIT:</strong> </p>
+
+<p><strong>ImageAdapter:</strong></p>
+
+<pre><code>    public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+private int mItemHeight = 300;
+
+// set photo item height
+public void setItemHeight(int height) {
+    if (height == mItemHeight) {
+        return;
+    }
+    mItemHeight = height;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+
+
+
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(LayoutParams.MATCH_PARENT, mItemHeight));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(0, 0, 0, 0);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        R.drawable.carrot, R.drawable.emerald,
+        R.drawable.turquoise, R.drawable.greensea,
+        R.drawable.nephritis, R.drawable.peterriver,
+        R.drawable.carrot, R.drawable.emerald,
+        R.drawable.turquoise, R.drawable.greensea,
+        R.drawable.nephritis, R.drawable.peterriver,
+        R.drawable.carrot, R.drawable.emerald,
+        R.drawable.turquoise, R.drawable.greensea,
+        R.drawable.nephritis, R.drawable.peterriver,
+
+
+
+};
+}
+</code></pre>
+
+<p>I tried to change the ImageView to TextView instead changing it to this. However, it now returns "false" in every view in the GridView. Am I getting close?</p>
+
+<p><strong>TextView Adapter:</strong></p>
+
+<pre><code>    public View getView(int position, View convertView, ViewGroup parent) {
+
+    TextView textView;
+
+
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        textView = new TextView(mContext);
+        textView.setLayoutParams(new GridView.LayoutParams(300, 300));
+        //textView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        textView.setPadding(0, 0, 0, 0);
+    } else {
+        textView = (TextView) convertView;
+    }
+
+    textView.setText(mThumbIds[position]);
+    return textView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        R.id.text_test,R.id.text_test,
+        R.id.text_test,R.id.text_test,
+        R.id.text_test,R.id.text_test,
+        R.id.text_test,R.id.text_test,
+
+};
+
+}
+</code></pre>

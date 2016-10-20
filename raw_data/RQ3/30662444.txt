@@ -1,0 +1,217 @@
+<p>I am a beginner in android, and I tried to make a <code>Navigation Drawer</code> by following tutorials. But I got an error here, please help me to continue further</p>
+
+<p>MainActivity:</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+private Toolbar toolbar;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    toolbar = (Toolbar) findViewById(R.id.app_bar);
+    setSupportActionBar(toolbar);
+    getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+    NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
+            getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+    drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawerlayout), toolbar);
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    if (id == R.id.navigate) {
+        startActivity(new Intent(this, SubActivity.class));
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p>activity_main.xml:</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout
+android:id="@+id/drawerlayout"
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <include
+        android:id="@+id/app_bar"
+        layout="@layout/app_bar" />
+
+    <TextView
+        android:id="@+id/textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/app_bar"
+        android:text="@string/hello_world" />
+</RelativeLayout>
+
+<fragment
+    android:id="@+id/fragment_navigation_drawer"
+    android:name="com.example.kitty.emo.NavigationDrawerFragment"
+    android:layout_width="280dp"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    app:layout="@layout/fragment_navigation_drawer"
+    tools:layout="@layout/fragment_navigation_drawer" />
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>NavigationDrawerFragment.java:</p>
+
+<pre><code>public class NavigationDrawerFragment extends Fragment {
+public static final String PREF_FILE_NAME = "testpref";
+public static final String KEY_USER_LEARNED_DRAWER = "user_learned_drawer";
+
+private ActionBarDrawerToggle mDrawerToggle;
+private DrawerLayout mDrawerLayout;
+private Boolean mUserLearnedDrawer;
+private Boolean mFromSavedInstanceState;
+private View containerView;
+
+public NavigationDrawerFragment() {
+    // Required empty public constructor
+
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    mUserLearnedDrawer = Boolean.valueOf(readFromPreferences(getActivity(), KEY_USER_LEARNED_DRAWER, "false"));
+    if (savedInstanceState != null) {
+        mFromSavedInstanceState = true;
+    }
+
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+    // Inflate the layout for this fragment
+    return inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+}
+
+
+public void setUp(int fragmentId, DrawerLayout drawerLayout, Toolbar toolbar) {
+    containerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+    mDrawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close) {
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!mUserLearnedDrawer) {
+                mUserLearnedDrawer = true;
+                saveToPreferences(getActivity(), KEY_USER_LEARNED_DRAWER, mUserLearnedDrawer + "");
+
+
+            }
+            getActivity().invalidateOptionsMenu();
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            getActivity().invalidateOptionsMenu();
+        }
+
+    };
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(containerView);
+    }
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+}
+
+public static void saveToPreferences(Context context, String preferenceName, String preferenceValue) {
+    SharedPreferences sharedPreferences = context.getSharedPreferences(PREF_FILE_NAME, context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.putString(preferenceName, preferenceValue);
+    editor.apply();
+}
+
+public static String readFromPreferences(Context context, String prefernceName, String defaultValue) {
+    SharedPreferences sharedPreferences = context.getSharedPreferences(PREF_FILE_NAME, context.MODE_PRIVATE);
+    return sharedPreferences.getString(prefernceName, defaultValue);
+}
+
+}
+</code></pre>
+
+<p>fragment_navigation_drawer.xml:</p>
+
+<pre><code><FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context="com.example.kitty.emo.NavigationDrawerFragment">
+
+<!-- TODO: Update blank fragment layout -->
+<TextView android:layout_width="match_parent" android:layout_height="match_parent"
+    android:text="@string/hello_blank_fragment" />
+
+</FrameLayout>
+</code></pre>
+
+<p>and last 
+logcat:</p>
+
+<pre><code>06-05 14:20:11.806  13896-13896/com.example.kitty.emo E/AndroidRuntime﹕ FATAL EXCEPTION: main
+Process: com.example.kitty.emo, PID: 13896
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.kitty.emo/com.example.kitty.emo.MainActivity}: java.lang.NullPointerException
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+        at android.app.ActivityThread.access$800(ActivityThread.java:135)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:136)
+        at android.app.ActivityThread.main(ActivityThread.java:5021)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:827)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:643)
+        at dalvik.system.NativeStart.main(Native Method)
+ Caused by: java.lang.NullPointerException
+        at com.example.kitty.emo.NavigationDrawerFragment.setUp(NavigationDrawerFragment.java:79)
+        at com.example.kitty.emo.MainActivity.onCreate(MainActivity.java:25)
+        at android.app.Activity.performCreate(Activity.java:5231)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1090)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+        at android.app.ActivityThread.access$800(ActivityThread.java:135)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:136)
+        at android.app.ActivityThread.main(ActivityThread.java:5021)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:827)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:643)
+        at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

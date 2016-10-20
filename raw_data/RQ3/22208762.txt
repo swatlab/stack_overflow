@@ -1,0 +1,436 @@
+<p>Intro: I have an IOIO-OTG Board that is attached to an android device via a USB connection. My IOIO-OTG board is supposed to launch a looper upon connection, however this never seems to happen.</p>
+
+<p>The only reason I believe it doesn't seem to happen is because when I implement fragments into the class it won't launch the looper, however if I just use a regular IOIOActivity instead of a IOIOFragmentActivity (which I created); it all works fine. However then I cannot use fragments.</p>
+
+<p>If anyone has any ideas on this matter about what could be blocking my inner looper class from being created and called that'd be appreciate.</p>
+
+<p>My Code:</p>
+
+<pre><code>package com.example.ioiofinal;
+
+import ioio.lib.api.AnalogInput;
+import ioio.lib.api.DigitalInput;
+import ioio.lib.api.DigitalOutput;
+import ioio.lib.api.IOIO;
+import ioio.lib.api.IOIOFactory;
+import ioio.lib.api.PwmOutput;
+import ioio.lib.api.TwiMaster;
+import ioio.lib.api.exception.ConnectionLostException;
+import ioio.lib.api.exception.IncompatibilityException;
+import ioio.lib.util.BaseIOIOLooper;
+import ioio.lib.util.IOIOLooper;
+import ioio.lib.util.android.IOIOFragmentActivity;
+
+import java.util.Locale;
+
+
+import android.annotation.SuppressLint;
+import android.app.ActionBar;
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.TableLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends IOIOFragmentActivity implements
+        ActionBar.TabListener {
+    IOIO ioio;
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            Fragment fragment = new DigitalFragment();
+            Bundle args = new Bundle();
+            args.putInt(DigitalFragment.ARG_SECTION_NUMBER, position + 1);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            case 2:
+                return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A dummy fragment representing a section of the app, but that simply
+     * displays dummy text.
+     */
+    public static class DigitalFragment extends Fragment {
+        public static final String ARG_SECTION_NUMBER = "Digital";
+        String TAG;
+        // Declare all the UI Variables
+        TableLayout centralDigitalTable;
+        View digitalfragmentview;
+
+        Switch digitalIO0Power;
+        Switch digitalIO1Power;
+        Switch digitalIO2Power;
+        Switch digitalIO3Power;
+        Switch digitalIO4Power;
+        Switch digitalIO5Power;
+        Switch digitalIO6Power;
+        Switch digitalIO7Power;
+        Switch digitalIO8Power;
+        Switch digitalIO9Power;
+
+        Switch digitalInput0Power;
+        Switch digitalInput1Power;
+        Switch digitalInput2Power;
+        Switch digitalInput3Power;
+
+        Switch[] digitalIOPowerSwitchArray = new Switch[10];
+        Switch[] digitalInputPowerSwitchArray = new Switch[4];
+
+        Context superContext;
+
+        public View onCreateView(LayoutInflater viewInflation, ViewGroup container,
+                Bundle SavedInstantState) {
+            superContext = getActivity().getApplicationContext();
+            digitalfragmentview = viewInflation.inflate(
+                    R.layout.digitalfragment_page, container, false);
+
+            digitalIO0Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio0power);
+            digitalIO1Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio1power);
+            digitalIO2Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio2power);
+            digitalIO3Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio3power);
+            digitalIO4Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio4power);
+            digitalIO5Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio5power);
+            digitalIO6Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio6power);
+            digitalIO7Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio7power);
+            digitalIO8Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio8power);
+            digitalIO9Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalio9power);
+
+            digitalInput0Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput0power);
+            digitalInput1Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput1power);
+            digitalInput2Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput2power);
+            digitalInput3Power = (Switch) digitalfragmentview
+                    .findViewById(R.id.digitalinput3power);
+
+            centralDigitalTable = (TableLayout) digitalfragmentview
+                    .findViewById(R.id.digitalTable);
+
+            digitalInputPowerSwitchArray[0] = digitalInput0Power;
+            digitalIOPowerSwitchArray[0] = digitalIO0Power;
+            digitalInputPowerSwitchArray[1] = digitalInput1Power;
+            digitalIOPowerSwitchArray[1] = digitalIO1Power;
+            digitalInputPowerSwitchArray[2] = digitalInput2Power;
+            digitalIOPowerSwitchArray[2] = digitalIO2Power;
+            digitalInputPowerSwitchArray[3] = digitalInput3Power;
+            digitalIOPowerSwitchArray[3] = digitalIO3Power;
+            digitalIOPowerSwitchArray[4] = digitalIO4Power;
+            digitalIOPowerSwitchArray[5] = digitalIO5Power;
+            digitalIOPowerSwitchArray[6] = digitalIO6Power;
+            digitalIOPowerSwitchArray[7] = digitalIO7Power;
+            digitalIOPowerSwitchArray[8] = digitalIO8Power;
+            digitalIOPowerSwitchArray[9] = digitalIO9Power;
+
+            return digitalfragmentview;
+        }
+
+        // BEGIN SWITCH RELATED METHODS 
+        public Switch getIOPowerSwitch(int index) {
+            return digitalIOPowerSwitchArray[index];
+        }
+
+        public Switch getInputPowerSwitch(int index) {
+            return digitalInputPowerSwitchArray[index];
+        }
+        // END SWITCH RELATED METHODS
+
+        public TableLayout getCentralDigitalTable() {
+            return centralDigitalTable;
+        }
+
+        public void setCentralDigitalTable(TableLayout centralDigitalTable) {
+            this.centralDigitalTable = centralDigitalTable;
+        }
+
+        public View getDigitalFragmentView() {
+            return digitalfragmentview;
+        }
+
+        public void setDigitalFragmentView(View digitalfragmentview) {
+            this.digitalfragmentview = digitalfragmentview;
+        }
+
+    }
+
+    class Looper extends BaseIOIOLooper {
+
+        DigitalFragment digfrag = new DigitalFragment();
+        /** The on-board LED. */
+        private DigitalOutput led_;
+
+        // TWI Corresponds to the pins with CLx and DAx
+        private TwiMaster t1;
+        private TwiMaster d1;
+        private TwiMaster t2;
+        private TwiMaster d2;
+
+        // Corresponds to UI Switches DO 0-11
+        private DigitalOutput DO1;
+        private DigitalOutput DO2;
+        private DigitalOutput DO3;
+        private DigitalOutput DO4;
+        private DigitalOutput DO5;
+        private DigitalOutput DO6;
+        private DigitalOutput DO7;
+        private DigitalOutput DO8;
+        private DigitalOutput DO9;
+        private DigitalOutput DO10;
+        private DigitalOutput DO11;
+        private DigitalOutput DO12;
+
+        // Corresponds to UI Switches DI 0-8
+        private DigitalInput DI1;
+        private DigitalInput DI2;
+        private DigitalInput DI3;
+        private DigitalInput DI4;
+        private DigitalInput DI5;
+        private DigitalInput DI6;
+        private DigitalInput DI7;
+        private DigitalInput DI8;
+        private DigitalInput DI9;
+
+        // PWM corresponds to pins 27-30
+        private PwmOutput PWM1;
+        private PwmOutput PWM2;
+        private PwmOutput PWM3;
+        private PwmOutput PWM4;
+
+        // Analog Inputs correspond to pins 31-46
+
+        private AnalogInput AI1;// 31
+        private AnalogInput AI2;// 32
+        private AnalogInput AI3;// 33
+        private AnalogInput AI4;// 34
+        private AnalogInput AI5;// 35
+        private AnalogInput AI6;
+        private AnalogInput AI7;
+        private AnalogInput AI8;
+        private AnalogInput AI9;
+        private AnalogInput AI10;
+        private AnalogInput AI11;
+        private AnalogInput AI12;
+        private AnalogInput AI13;
+        private AnalogInput AI14;
+        private AnalogInput AI15;
+        private AnalogInput AI16;
+
+        private DigitalOutput[] DOA = { DO1, DO2, DO3, DO4, DO5, DO6, DO7, DO8,
+                DO9, DO10, DO11, DO12 };
+
+        private DigitalInput[] DIA = { DI1, DI2, DI3, DI4, DI5, DI6, DI7, DI8,
+                DI9 };
+
+        private TwiMaster[] TWIA = { t1, d1, t2, d2 };
+
+        private PwmOutput[] PWMA = { PWM1, PWM2, PWM3, PWM4 };
+
+        private AnalogInput[] AIA = { AI1, AI2, AI3, AI4, AI5, AI6, AI7, AI8,
+                AI9, AI10, AI11, AI12, AI13, AI14, AI15, AI16 };
+
+        /**
+         * Called every time a connection with IOIO has been established.
+         * Typically used to open pins.
+         * 
+         * @throws ConnectionLostException
+         *             When IOIO connection is lost.
+         * 
+         * @see ioio.lib.util.AbstractIOIOActivity.IOIOThread#setup()
+         */
+        @Override
+        protected void setup() throws ConnectionLostException {
+            Toast.makeText(getBaseContext(),
+                    "LOOP WAS SET UP",
+                    Toast.LENGTH_LONG).show();
+            led_ = ioio_.openDigitalOutput(0,true);
+
+//          led_ = ioio_.openDigitalOutput(0, true);
+//
+//          for (int i = 0; i < DOA.length; i++) {
+//              DOA[i] = ioio_.openDigitalOutput(i + 6);
+//          }
+//          for (int i = 0; i < DIA.length; i++) {
+//              DIA[i] = ioio_.openDigitalInput(i + 18);
+//          }
+//          for (int i = 0; i < PWMA.length; i++) {
+//              PWMA[i] = ioio_.openPwmOutput(i + 27, 10000);
+//          }
+//
+//          for (int i = 0; i < AIA.length; i++) {
+//              AIA[i] = ioio_.openAnalogInput(i + 31);
+//          }
+//          TWIA[0] = ioio_.openTwiMaster(1, TwiMaster.Rate.RATE_1MHz, false);
+//          TWIA[1] = ioio_.openTwiMaster(2, TwiMaster.Rate.RATE_1MHz, false);
+//          TWIA[2] = ioio_.openTwiMaster(4, TwiMaster.Rate.RATE_1MHz, false);
+//          TWIA[3] = ioio_.openTwiMaster(5, TwiMaster.Rate.RATE_1MHz, false);
+        }
+
+        /**
+         * Called repetitively while the IOIO is connected.
+         * 
+         * @throws ConnectionLostException
+         *             When IOIO connection is lost.
+         * @throws InterruptedException
+         * 
+         * @see ioio.lib.util.AbstractIOIOActivity.IOIOThread#loop()
+         */
+        @Override
+        public void loop() throws ConnectionLostException {
+            led_.write(true);
+            for (int i = 0; i < DOA.length; i++) {
+                DOA[i].write(true);
+            }
+        }
+    }
+
+    /**
+     * A method to create our IOIO thread.
+     * 
+     * @see ioio.lib.util.AbstractIOIOActivity#createIOIOThread()
+     */
+    @Override
+    protected IOIOLooper createIOIOLooper() {
+        return new Looper();
+    }
+
+}
+</code></pre>
+
+<p><strong>Again, my problem is that if I simply change MainActivity extends IOIOFragmentActivity to MainActivity extends IOIOActivity all works well and the looper is created and called; however then I am unable to use fragments!</strong></p>

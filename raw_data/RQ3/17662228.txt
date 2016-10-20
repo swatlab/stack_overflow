@@ -1,0 +1,113 @@
+<p>Recently, I wrote a simple client server program for file transfer over standard TCP sockets. The average throughput was around 2.2Mbps over WiFi channel. My question is:
+Is it possible to transfer a large file (say 5 GB) over multiple data IO streams so that each stream could transfer several parts of the same file in a parallel manner (different threads could be used for this purpose)? These file parts could be re-assembled at the receiving end.
+I tried to split a small file and transfered it over a dataoutputstream. The first segment works fine, but I don't know how to read a file input stream in selective manner (I also tried mark() and reset() methods for selective reading but no use)</p>
+
+<p>Here is my code (for testing purpose, I have redirected the output to fileoutputstream):</p>
+
+<pre><code>    public static void main(String[] args) {
+    // TODO Auto-generated method stub
+    final File myFile=new File("/home/evinish/Documents/Android/testPicture.jpg");
+    long N=myFile.length();
+    try {
+        FileInputStream in=new FileInputStream(myFile);
+        FileOutputStream f0=new FileOutputStream("/home/evinish/Documents/Android/File1.jpg");
+        FileOutputStream f1=new FileOutputStream("/home/evinish/Documents/Android/File2.jpg");
+        FileOutputStream f2=new FileOutputStream("/home/evinish/Documents/Android/File3.jpg");
+
+        byte[] buffer=new byte[4096];
+        int i=1, noofbytes;
+        long acc=0;
+        while(acc<=(N/3)) {
+            noofbytes=in.read(buffer, 0, 4096);
+            f0.write(buffer, 0, noofbytes);
+            acc=i*noofbytes;
+            i++;
+        }
+        f0.close();
+</code></pre>
+
+<p>I got the first segment of my file (this can be copied to a DataOutputStream in one thread). Can any one suggest, how to read remaining part of the file (after N/3 byte) in a segment of N/3 so that three streams could be used in three threads for concurrent operation?</p>
+
+<p>Here is the code to merge file segments at receiver end:</p>
+
+<pre><code>    package com.mergefilespackage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class MergeFiles {
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws Exception{
+        // TODO Auto-generated method stub
+        IOCopier.joinFiles(new File("/home/evinish/Documents/Android/File1.jpg"), new File[] {
+            new File("/home/evinish/Documents/Android/File2.jpg"), new File("/home/evinish/Documents/Android/File3.jpg")});
+    }
+}
+class IOCopier {
+    public static void joinFiles(File destination, File[] sources)
+            throws IOException {
+        OutputStream output = null;
+        try {
+            output = createAppendableStream(destination);
+            for (File source : sources) {
+                appendFile(output, source);
+            }
+        } finally {
+            IOUtils.closeQuietly(output);
+        }
+    }
+
+    private static BufferedOutputStream createAppendableStream(File destination)
+            throws FileNotFoundException {
+        return new BufferedOutputStream(new FileOutputStream(destination, true));
+    }
+
+    private static void appendFile(OutputStream output, File source)
+            throws IOException {
+        InputStream input = null;
+        try {
+            input = new BufferedInputStream(new FileInputStream(source));
+            IOUtils.copy(input, output);
+        } finally {
+            IOUtils.closeQuietly(input);
+        }
+    }
+}
+class IOUtils {
+    private static final int BUFFER_SIZE = 1024 * 4;
+
+    public static long copy(InputStream input, OutputStream output)
+            throws IOException {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        long count = 0;
+        int n = 0;
+        while (-1 != (n = input.read(buffer))) {
+            output.write(buffer, 0, n);
+            count += n;
+        }
+        return count;
+    }
+
+    public static void closeQuietly(Closeable output) {
+        try {
+            if (output != null) {
+                output.close();
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+    }
+}
+</code></pre>
+
+<p>Any help would be highly appreciated! Thanks in advance!</p>

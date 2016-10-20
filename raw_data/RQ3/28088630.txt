@@ -1,0 +1,706 @@
+<p>I created a tabactivity and the problem is that, the activity I intent never showed. in short, it's blank white page and when i clicked on the second tab, the app forces closes leaving an error of a NullPointerExcpetion. How can I fix this?</p>
+
+<p>This is the TabActivity</p>
+
+<pre><code>public class FMSTab extends TabActivity {
+ /** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.tablistener);
+Resources res = getResources();
+TabHost tb = getTabHost();
+TabHost.TabSpec spec;
+Intent inten;
+inten = new Intent().setClass(this, FileManagingSystemDetails.class);
+spec = tb.newTabSpec("tab1").setIndicator("Command",res.getDrawable(R.drawable.ic_lcomm))
+.setContent(inten);
+tb.addTab(spec);
+inten = new Intent().setClass(this, Terminal.class);
+spec =    tb.newTabSpec("tab2").setIndicator("Terminal",res.getDrawable(R.drawable.ic_terminal))
+.setContent(inten);
+tb.addTab(spec);
+
+tb.setCurrentTab(0);
+}
+}
+</code></pre>
+
+<p>Here is my xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@android:id/tabhost"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent">
+<LinearLayout
+android:orientation="vertical"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:padding="5dp">
+<TabWidget
+android:id="@android:id/tabs"
+android:layout_width="fill_parent"
+android:layout_height="wrap_content" />
+<FrameLayout
+android:id="@android:id/tabcontent"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:padding="5dp" />
+</LinearLayout>
+</TabHost>
+</code></pre>
+
+<p>Updated logcat</p>
+
+<pre><code>01-22 21:16:20.817: E/Term(8753): onCreate
+01-22 21:16:20.994: E/AndroidRuntime(8753): FATAL EXCEPTION: main
+01-22 21:16:20.994: E/AndroidRuntime(8753): java.lang.RuntimeException: Unable to start activity ComponentInfo{jackpal.androidterm/jackpal.androidterm.Term}: java.lang.NullPointerException
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2234)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.ActivityThread.startActivityNow(ActivityThread.java:2075)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.LocalActivityManager.moveToState(LocalActivityManager.java:135)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.LocalActivityManager.startActivity(LocalActivityManager.java:347)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.widget.TabHost$IntentContentStrategy.getContentView(TabHost.java:694)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.widget.TabHost.setCurrentTab(TabHost.java:358)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.widget.TabHost$2.onTabSelectionChanged(TabHost.java:150)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.widget.TabWidget$TabClickListener.onClick(TabWidget.java:546)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.view.View.performClick(View.java:4091)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.view.View$PerformClick.run(View.java:17072)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.os.Handler.handleCallback(Handler.java:615)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.os.Handler.dispatchMessage(Handler.java:92)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.os.Looper.loop(Looper.java:153)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.ActivityThread.main(ActivityThread.java:5042)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at java.lang.reflect.Method.invokeNative(Native Method)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at java.lang.reflect.Method.invoke(Method.java:511)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:821)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:584)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at dalvik.system.NativeStart.main(Native Method)
+01-22 21:16:20.994: E/AndroidRuntime(8753): Caused by: java.lang.NullPointerException
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at jackpal.androidterm.Term.onCreate(Term.java:274)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.Activity.performCreate(Activity.java:5020)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2198)
+01-22 21:16:20.994: E/AndroidRuntime(8753):     ... 18 more
+</code></pre>
+
+<p>Here is the code in my first tab.</p>
+
+<pre><code>public class FileManagingSystemDetails extends Activity {
+TextView name,desc,syntax,option;
+int id;
+DBHelper dbhelper;  
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+     setContentView(R.layout.command_desc);
+
+        //database
+        id = getIntent().getIntExtra("COMMAND_ID", 0);
+        SQLiteDatabase db = (new DBHelper(this)).getWritableDatabase();
+
+       Cursor cursor = db.rawQuery("SELECT comm_filems.name, comm_filems.desc, comm_filems.syntax, comm_filems.option FROM comm_filems WHERE comm_filems._id = ?", 
+                new String[]{""+id});
+
+        if (cursor.getCount() == 1)
+        {
+                cursor.moveToFirst();
+
+                name = (TextView) findViewById (R.id.name);
+                name.setText(cursor.getString(cursor.getColumnIndex("name")));
+                Typeface custom_font_name = Typeface.createFromAsset(getAssets(),
+                        "fonts/segoeui.ttf");
+                        name.setTypeface(custom_font_name);
+
+                desc = (TextView) findViewById (R.id.desc);
+                desc.setText(cursor.getString(cursor.getColumnIndex("desc")));
+                Typeface custom_font_desc = Typeface.createFromAsset(getAssets(),
+                        "fonts/segoeui.ttf");
+                        desc.setTypeface(custom_font_desc);
+
+                syntax = (TextView) findViewById (R.id.syntax);
+                syntax.setText(cursor.getString(cursor.getColumnIndex("syntax")));
+                Typeface custom_font_syntax = Typeface.createFromAsset(getAssets(),
+                        "fonts/segoeui.ttf");
+                        syntax.setTypeface(custom_font_syntax);
+
+                option = (TextView) findViewById (R.id.option);
+                option.setText(cursor.getString(cursor.getColumnIndex("option")));
+                Typeface custom_font_option = Typeface.createFromAsset(getAssets(),
+                        "fonts/segoeui.ttf");
+                        option.setTypeface(custom_font_option);
+
+        }
+
+    }
+
+    }
+</code></pre>
+
+<p>Here is the code for my second tab</p>
+
+<pre><code>public class Term extends Activity {
+/**
+ * The ViewFlipper which holds the collection of EmulatorView widgets.
+ */
+private TermViewFlipper mViewFlipper;
+
+/**
+ * The name of the ViewFlipper in the resources.
+ */
+private static final int VIEW_FLIPPER = R.id.view_flipper;
+
+private SessionList mTermSessions;
+
+private SharedPreferences mPrefs;
+private TermSettings mSettings;
+
+private final static int SELECT_TEXT_ID = 0;
+private final static int COPY_ALL_ID = 1;
+private final static int PASTE_ID = 2;
+private final static int SEND_CONTROL_KEY_ID = 3;
+private final static int SEND_FN_KEY_ID = 4;
+
+private boolean mAlreadyStarted = false;
+private boolean mStopServiceOnFinish = false;
+
+private Intent TSIntent;
+
+public static final int REQUEST_CHOOSE_WINDOW = 1;
+public static final String EXTRA_WINDOW_ID = "jackpal.androidterm.window_id";
+private int onResumeSelectWindow = -1;
+
+private PowerManager.WakeLock mWakeLock;
+private WifiManager.WifiLock mWifiLock;
+// Available on API 12 and later
+private static final int WIFI_MODE_FULL_HIGH_PERF = 3;
+
+private boolean mBackKeyPressed;
+
+private static final String ACTION_PATH_BROADCAST = "jackpal.androidterm.broadcast.APPEND_TO_PATH";
+private static final String ACTION_PATH_PREPEND_BROADCAST = "jackpal.androidterm.broadcast.PREPEND_TO_PATH";
+private static final String PERMISSION_PATH_BROADCAST = "jackpal.androidterm.permission.APPEND_TO_PATH";
+private static final String PERMISSION_PATH_PREPEND_BROADCAST = "jackpal.androidterm.permission.PREPEND_TO_PATH";
+private int mPendingPathBroadcasts = 0;
+private BroadcastReceiver mPathReceiver = new BroadcastReceiver() {
+    public void onReceive(Context context, Intent intent) {
+        String path = makePathFromBundle(getResultExtras(false));
+        if (intent.getAction().equals(ACTION_PATH_PREPEND_BROADCAST)) {
+            mSettings.setPrependPath(path);
+        } else {
+            mSettings.setAppendPath(path);
+        }
+        mPendingPathBroadcasts--;
+
+        if (mPendingPathBroadcasts <= 0 && mTermService != null) {
+            populateViewFlipper();
+           // populateWindowList();
+        }
+    }
+};
+// Available on API 12 and later
+private static final int FLAG_INCLUDE_STOPPED_PACKAGES = 0x20;
+
+private TermService mTermService;
+private ServiceConnection mTSConnection = new ServiceConnection() {
+    public void onServiceConnected(ComponentName className, IBinder service) {
+        Log.i(TermDebug.LOG_TAG, "Bound to TermService");
+        TermService.TSBinder binder = (TermService.TSBinder) service;
+        mTermService = binder.getService();
+        if (mPendingPathBroadcasts <= 0) {
+            populateViewFlipper();
+           // populateWindowList();
+        }
+    }
+
+    public void onServiceDisconnected(ComponentName arg0) {
+        mTermService = null;
+    }
+};
+
+private boolean mHaveFullHwKeyboard = false;
+
+private class EmulatorViewGestureListener extends SimpleOnGestureListener {
+    private EmulatorView view;
+
+    public EmulatorViewGestureListener(EmulatorView view) {
+        this.view = view;
+    }
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        float absVelocityX = Math.abs(velocityX);
+        float absVelocityY = Math.abs(velocityY);
+        if (absVelocityX > Math.max(1000.0f, 2.0 * absVelocityY)) {
+            // Assume user wanted side to side movement
+            if (velocityX > 0) {
+                // Left to right swipe -- previous window
+                mViewFlipper.showPrevious();
+            } else {
+                // Right to left swipe -- next window
+                mViewFlipper.showNext();
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+private boolean mUseKeyboardShortcuts;
+
+private View.OnKeyListener mKeyListener = new View.OnKeyListener() {
+    public boolean onKey(View v, int keyCode, KeyEvent event) {
+        return backkeyInterceptor(keyCode, event) || keyboardShortcuts(keyCode, event);
+    }
+
+    private boolean backkeyInterceptor(int keyCode, KeyEvent event) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    /**
+     * Keyboard shortcuts (tab management, paste)
+     */
+    private boolean keyboardShortcuts(int keyCode, KeyEvent event) {
+        if (event.getAction() != KeyEvent.ACTION_DOWN) {
+            return false;
+        }
+        if (!mUseKeyboardShortcuts) {
+            return false;
+        }
+        boolean isCtrlPressed = (event.getMetaState() & KeycodeConstants.META_CTRL_ON) != 0;
+        boolean isShiftPressed = (event.getMetaState() & KeycodeConstants.META_SHIFT_ON) != 0;
+
+        if (keyCode == KeycodeConstants.KEYCODE_TAB && isCtrlPressed) {
+            if (isShiftPressed) {
+                mViewFlipper.showPrevious();
+            } else {
+                mViewFlipper.showNext();
+            }
+
+            return true;
+        } else if (keyCode == KeycodeConstants.KEYCODE_N && isCtrlPressed && isShiftPressed) {
+            doCreateNewWindow();
+
+            return true;
+        } else if (keyCode == KeycodeConstants.KEYCODE_V && isCtrlPressed && isShiftPressed) {
+            doPaste();
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+};
+
+private Handler mHandler = new Handler();
+
+@Override
+public void onCreate(Bundle icicle) {
+    super.onCreate(icicle);
+    Log.e(TermDebug.LOG_TAG, "onCreate");
+    mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+    mSettings = new TermSettings(getResources(), mPrefs);
+
+    Intent broadcast = new Intent(ACTION_PATH_BROADCAST);
+    if (AndroidCompat.SDK >= 12) {
+        broadcast.addFlags(FLAG_INCLUDE_STOPPED_PACKAGES);
+    }
+    mPendingPathBroadcasts++;
+    sendOrderedBroadcast(broadcast, PERMISSION_PATH_BROADCAST, mPathReceiver, null, RESULT_OK, null, null);
+
+    broadcast = new Intent(broadcast);
+    broadcast.setAction(ACTION_PATH_PREPEND_BROADCAST);
+    mPendingPathBroadcasts++;
+    sendOrderedBroadcast(broadcast, PERMISSION_PATH_PREPEND_BROADCAST, mPathReceiver, null, RESULT_OK, null, null);
+
+    TSIntent = new Intent(this, TermService.class);
+    startService(TSIntent);
+
+    if (!bindService(TSIntent, mTSConnection, BIND_AUTO_CREATE)) {
+        Log.w(TermDebug.LOG_TAG, "bind to service failed!");
+    }
+
+    setContentView(R.layout.term_activity);
+    mViewFlipper = (TermViewFlipper) findViewById(VIEW_FLIPPER);
+
+
+  //ActionBar
+    ActionBar mActionBar = this.getActionBar();
+    mActionBar.setDisplayShowHomeEnabled(false);
+    mActionBar.setDisplayShowTitleEnabled(false);
+    LayoutInflater mInflater = LayoutInflater.from(this);
+
+    View mCustomView = mInflater.inflate(R.layout.actionbar_ttg, null);
+    TextView mTextView = (TextView) mCustomView.findViewById(R.id.actionbar_ttg);
+    mTextView.setText("TERMINAL");
+    Typeface custom_font = Typeface.createFromAsset(getAssets(),
+              "fonts/segoeui.ttf");
+              mTextView.setTypeface(custom_font);
+
+    mTextView.setTextSize(18);
+    mTextView.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
+
+    mActionBar.setCustomView(mCustomView);
+    mActionBar.setDisplayShowCustomEnabled(true);
+
+
+    PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+    mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TermDebug.LOG_TAG);
+    WifiManager wm = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+    int wifiLockMode = WifiManager.WIFI_MODE_FULL;
+    if (AndroidCompat.SDK >= 12) {
+        wifiLockMode = WIFI_MODE_FULL_HIGH_PERF;
+    }
+    mWifiLock = wm.createWifiLock(wifiLockMode, TermDebug.LOG_TAG);
+
+    mHaveFullHwKeyboard = checkHaveFullHwKeyboard(getResources().getConfiguration());
+
+    updatePrefs();
+    mAlreadyStarted = true;
+}
+
+private String makePathFromBundle(Bundle extras) {
+    if (extras == null || extras.size() == 0) {
+        return "";
+    }
+
+    String[] keys = new String[extras.size()];
+    keys = extras.keySet().toArray(keys);
+    Collator collator = Collator.getInstance(Locale.US);
+    Arrays.sort(keys, collator);
+
+    StringBuilder path = new StringBuilder();
+    for (String key : keys) {
+        String dir = extras.getString(key);
+        if (dir != null && !dir.equals("")) {
+            path.append(dir);
+            path.append(":");
+        }
+    }
+
+    return path.substring(0, path.length()-1);
+}
+
+private void populateViewFlipper() {
+    if (mTermService != null) {
+        mTermSessions = mTermService.getSessions();
+       // mTermSessions.addCallback(this);
+
+        if (mTermSessions.size() == 0) {
+            mTermSessions.add(createTermSession());
+        }
+
+        for (TermSession session : mTermSessions) {
+            EmulatorView view = createEmulatorView(session);
+            mViewFlipper.addView(view);
+        }
+
+        updatePrefs();
+
+        Intent intent = getIntent();
+        int flags = intent.getFlags();
+        String action = intent.getAction();
+        if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0 &&
+                action != null) {
+            if (action.equals(RemoteInterface.PRIVACT_OPEN_NEW_WINDOW)) {
+                mViewFlipper.setDisplayedChild(mTermSessions.size()-1);
+            } else if (action.equals(RemoteInterface.PRIVACT_SWITCH_WINDOW)) {
+                int target = intent.getIntExtra(RemoteInterface.PRIVEXTRA_TARGET_WINDOW, -1);
+                if (target >= 0) {
+                    mViewFlipper.setDisplayedChild(target);
+                }
+            }
+        }
+
+        mViewFlipper.resumeCurrentView();
+    }
+}
+
+@Override
+public void onDestroy() {
+    super.onDestroy();
+    mViewFlipper.removeAllViews();
+    unbindService(mTSConnection);
+    if (mStopServiceOnFinish) {
+        stopService(TSIntent);
+    }
+    mTermService = null;
+    mTSConnection = null;
+    if (mWakeLock.isHeld()) {
+        mWakeLock.release();
+    }
+    if (mWifiLock.isHeld()) {
+        mWifiLock.release();
+    }
+}
+
+
+protected static TermSession createTermSession(Context context, TermSettings settings, String initialCommand) {
+    ShellTermSession session = new ShellTermSession(settings, initialCommand);
+    // XXX We should really be able to fetch this from within TermSession
+    session.setProcessExitMessage(context.getString(R.string.process_exit_message));
+
+    return session;
+}
+
+private TermSession createTermSession() {
+    TermSettings settings = mSettings;
+    TermSession session = createTermSession(this, settings, settings.getInitialCommand());
+    session.setFinishCallback(mTermService);
+    return session;
+}
+
+private TermView createEmulatorView(TermSession session) {
+    DisplayMetrics metrics = new DisplayMetrics();
+    getWindowManager().getDefaultDisplay().getMetrics(metrics);
+    TermView emulatorView = new TermView(this, session, metrics);
+
+    emulatorView.setExtGestureListener(new EmulatorViewGestureListener(emulatorView));
+    emulatorView.setOnKeyListener(mKeyListener);
+    registerForContextMenu(emulatorView);
+
+    return emulatorView;
+}
+
+private TermSession getCurrentTermSession() {
+    SessionList sessions = mTermSessions;
+    if (sessions == null) {
+        return null;
+    } else {
+        return sessions.get(mViewFlipper.getDisplayedChild());
+    }
+}
+
+private EmulatorView getCurrentEmulatorView() {
+    return (EmulatorView) mViewFlipper.getCurrentView();
+}
+
+private void updatePrefs() {
+    mUseKeyboardShortcuts = mSettings.getUseKeyboardShortcutsFlag();
+
+    DisplayMetrics metrics = new DisplayMetrics();
+    getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+    mViewFlipper.updatePrefs(mSettings);
+
+    for (View v : mViewFlipper) {
+        ((EmulatorView) v).setDensity(metrics);
+        ((TermView) v).updatePrefs(mSettings);
+    }
+
+    if (mTermSessions != null) {
+        for (TermSession session : mTermSessions) {
+            ((ShellTermSession) session).updatePrefs(mSettings);
+        }
+    }
+
+    {
+
+        Window win = getWindow();
+        WindowManager.LayoutParams params = win.getAttributes();
+
+    int orientation = mSettings.getScreenOrientation();
+    int o = 0;
+    if (orientation == 0) {
+        o = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    } else if (orientation == 1) {
+        o = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+    } else if (orientation == 2) {
+        o = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+    } else {
+        /* Shouldn't be happened. */
+    }
+    setRequestedOrientation(o);
+}
+    new Thread() {
+        @Override
+        public void run() {
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+          //  imm.hideSoftInputFromWindow(token, 0);
+        }
+    }.start();
+}
+
+private boolean checkHaveFullHwKeyboard(Configuration c) {
+    return (c.keyboard == Configuration.KEYBOARD_QWERTY) &&
+        (c.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO);
+}
+private void doCreateNewWindow() {
+    if (mTermSessions == null) {
+        Log.w(TermDebug.LOG_TAG, "Couldn't create new window because mTermSessions == null");
+        return;
+    }
+
+    TermSession session = createTermSession();
+    mTermSessions.add(session);
+
+    TermView view = createEmulatorView(session);
+    view.updatePrefs(mSettings);
+
+    mViewFlipper.addView(view);
+    mViewFlipper.setDisplayedChild(mViewFlipper.getChildCount()-1);
+}
+
+
+
+@Override
+protected void onActivityResult(int request, int result, Intent data) {
+    switch (request) {
+    case REQUEST_CHOOSE_WINDOW:
+        if (result == RESULT_OK && data != null) {
+            int position = data.getIntExtra(EXTRA_WINDOW_ID, -2);
+            if (position >= 0) {
+                onResumeSelectWindow = position;
+            } else if (position == -1) {
+                doCreateNewWindow();
+                onResumeSelectWindow = mTermSessions.size() - 1;
+            }
+        } else {
+            if (mTermSessions == null || mTermSessions.size() == 0) {
+                mStopServiceOnFinish = true;
+                finish();
+            }
+        }
+        break;
+    }
+}
+
+@Override
+protected void onNewIntent(Intent intent) {
+    if ((intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) {
+        return;
+    }
+
+    String action = intent.getAction();
+    if (action == null) {
+        return;
+    }
+
+    if (action.equals(RemoteInterface.PRIVACT_OPEN_NEW_WINDOW)) {
+        SessionList sessions = mTermSessions;
+        if (sessions == null) {
+            return;
+        }
+        int position = sessions.size() - 1;
+
+        TermSession session = sessions.get(position);
+        EmulatorView view = createEmulatorView(session);
+
+        mViewFlipper.addView(view);
+        onResumeSelectWindow = position;
+    } else if (action.equals(RemoteInterface.PRIVACT_SWITCH_WINDOW)) {
+        int target = intent.getIntExtra(RemoteInterface.PRIVEXTRA_TARGET_WINDOW, -1);
+        if (target >= 0) {
+            onResumeSelectWindow = target;
+        }
+    }
+}
+
+@Override
+public void onCreateContextMenu(ContextMenu menu, View v,
+        ContextMenuInfo menuInfo) {
+  super.onCreateContextMenu(menu, v, menuInfo);
+  menu.setHeaderTitle(R.string.edit_text);
+  menu.add(0, SELECT_TEXT_ID, 0, R.string.select_text);
+  menu.add(0, COPY_ALL_ID, 0, R.string.copy_all);
+  menu.add(0, PASTE_ID, 0,  R.string.paste);
+  menu.add(0, SEND_CONTROL_KEY_ID, 0, R.string.send_control_key);
+  menu.add(0, SEND_FN_KEY_ID, 0, R.string.send_fn_key);
+  if (!canPaste()) {
+      menu.getItem(PASTE_ID).setEnabled(false);
+  }
+}
+
+@Override
+public boolean onContextItemSelected(MenuItem item) {
+      switch (item.getItemId()) {
+      case SELECT_TEXT_ID:
+        getCurrentEmulatorView().toggleSelectingText();
+        return true;
+      case COPY_ALL_ID:
+        doCopyAll();
+        return true;
+      case PASTE_ID:
+        doPaste();
+        return true;
+      case SEND_CONTROL_KEY_ID:
+        doSendControlKey();
+        return true;
+      case SEND_FN_KEY_ID:
+        doSendFnKey();
+        return true;
+      default:
+        return super.onContextItemSelected(item);
+      }
+    }
+
+@Override
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (AndroidCompat.SDK < 5 && keyCode == KeyEvent.KEYCODE_BACK) {
+        mBackKeyPressed = true;
+        return true;
+    } else {
+        return super.onKeyDown(keyCode, event);
+    }
+}
+public void onUpdate() {
+    SessionList sessions = mTermSessions;
+    if (sessions == null) {
+        return;
+    }
+
+    if (sessions.size() == 0) {
+        mStopServiceOnFinish = true;
+        finish();
+    } else if (sessions.size() < mViewFlipper.getChildCount()) {
+        for (int i = 0; i < mViewFlipper.getChildCount(); ++i) {
+            EmulatorView v = (EmulatorView) mViewFlipper.getChildAt(i);
+            if (!sessions.contains(v.getTermSession())) {
+                v.onPause();
+                mViewFlipper.removeView(v);
+                --i;
+            }
+        }
+    }
+}
+
+private boolean canPaste() {
+    ClipboardManagerCompat clip = ClipboardManagerCompatFactory
+            .getManager(getApplicationContext());
+    if (clip.hasText()) {
+        return true;
+    }
+    return false;
+}
+
+
+
+private void doCopyAll() {
+    ClipboardManagerCompat clip = ClipboardManagerCompatFactory
+            .getManager(getApplicationContext());
+    clip.setText(getCurrentTermSession().getTranscriptText().trim());
+}
+
+private void doPaste() {
+    if (!canPaste()) {
+        return;
+    }
+    ClipboardManagerCompat clip = ClipboardManagerCompatFactory
+            .getManager(getApplicationContext());
+    CharSequence paste = clip.getText();
+    getCurrentTermSession().write(paste.toString());
+}
+
+private void doSendControlKey() {
+    getCurrentEmulatorView().sendControlKey();
+}
+
+private void doSendFnKey() {
+    getCurrentEmulatorView().sendFnKey();
+}
+
+}
+</code></pre>

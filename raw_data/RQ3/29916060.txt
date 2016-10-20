@@ -1,0 +1,250 @@
+<p>I have developed a gallery app in android.I am fetching the images form server & displaying on the viewpager.I have used universal image loader for this purpose.My viewpager works fine.But now i want to add the zoom feature such as <strong>zoomin/zoom out/pinch zoom</strong>.So for purpose i have replaced the image for view pager with <strong>TouchImageView</strong> but if i use <strong>TouchImageView</strong> then if progress bar is showing for image loading after progress bar is hidden then image does not appear.I don't know why this is happeinig if i use <strong>TouchImageView</strong>.Please tell me way out?</p>
+
+<p><strong>code for imageview pager activity</strong></p>
+
+<pre><code>package info.androidhive.slidingmenu;
+
+import info.androidhive.slidingmenu.R;
+import info.androidhive.slidingmenu.adapter.ImageAdapter;
+import info.androidhive.slidingmenu.adapter.ImagePagerAdapter;
+import info.androidhive.slidingmenu.util.TouchImageView;
+import android.annotation.SuppressLint;
+import android.app.ActionBar;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.KeyEvent;
+import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class ImageViewPager extends Activity {
+    // Declare Variable
+    int position;
+    Button delete, gimmy, done;
+    ViewPager viewpager;
+    ImageAdapter imageAdapter;
+    ImagePagerAdapter pageradapter;
+    TouchImageView imageView;
+    TextView text;
+    Runnable r;
+
+
+    @SuppressLint("NewApi")
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Set title for the ViewPager
+        setContentView(R.layout.view_pager);
+        ActionBar bar = getActionBar();
+        bar.setDisplayHomeAsUpEnabled(true);
+        bar.setHomeButtonEnabled(true);
+        setTitle("ViewPager");
+        Intent p = getIntent();
+        position = p.getExtras().getInt("id");
+        pageradapter = new ImagePagerAdapter(ImageViewPager.this);
+        viewpager = (ViewPager) findViewById(R.id.pager);
+        viewpager.setAdapter(pageradapter);
+        viewpager.setCurrentItem(position);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // TODO Auto-generated method stub
+
+        switch (item.getItemId()) {
+        case android.R.id.home:
+
+            finish();
+            overridePendingTransition(R.anim.slide_enter, R.anim.slide_exit);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+
+        }
+
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Intent p = new Intent(getApplicationContext(), SlideImages.class);
+            // p.putExtra("id", pos+1);
+            startActivity(p);
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+}
+</code></pre>
+
+<p><strong>view_pager.xml</strong></p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000" />
+</code></pre>
+
+<p><strong>Code for viewpager adapter</strong> </p>
+
+<pre><code>package info.androidhive.slidingmenu.adapter;
+
+import info.androidhive.slidingmenu.app.AppController;
+import info.androidhive.slidingmenu.bean.Wallpaper;
+import info.androidhive.slidingmenu.util.TouchImageView;
+
+import java.util.List;
+
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+
+import info.androidhive.slidingmenu.R;
+import uk.co.senab.photoview.PhotoViewAttacher;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Parcelable;
+import android.support.v4.view.PagerAdapter;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
+public class ImagePagerAdapter extends PagerAdapter {
+    LayoutInflater inflater;
+    PhotoViewAttacher attacher;
+    private DisplayImageOptions options;
+    private  List<Wallpaper>  IMAGES_LIST=AppController.getInstance().getPrefManger().getAllImages();
+
+
+        public ImagePagerAdapter(Context context) 
+        {
+                inflater = LayoutInflater.from(context);
+
+                options = new DisplayImageOptions.Builder()
+                .showImageForEmptyUri(R.drawable.ic_empty)
+                .showImageOnFail(R.drawable.ic_error)
+                .resetViewBeforeLoading(true)
+                .cacheOnDisk(true)
+                .imageScaleType(ImageScaleType.EXACTLY)
+                .bitmapConfig(Bitmap.Config.RGB_565)
+                .considerExifParams(true)
+                .displayer(new FadeInBitmapDisplayer(300))
+                .build();
+        }
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position)
+    {
+        View imageLayout = inflater.inflate(R.layout.item_pager_image, container, false);
+        assert imageLayout != null;
+        TouchImageView imageView = (TouchImageView) imageLayout.findViewById(R.id.image);
+        final ProgressBar spinner = (ProgressBar) imageLayout.findViewById(R.id.loading);
+
+        ImageLoader.getInstance().displayImage(IMAGES_LIST.get(position).getUrl(), imageView, options, new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingStarted(String imageUri, View view) {
+                spinner.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                String message = null;
+                switch (failReason.getType()) {
+                    case IO_ERROR:
+                        message = "Input/Output error";
+                        break;
+                    case DECODING_ERROR:
+                        message = "Image can't be decoded";
+                        break;
+                    case NETWORK_DENIED:
+                        message = "Downloads are denied";
+                        break;
+                    case OUT_OF_MEMORY:
+                        message = "Out Of Memory error";
+                        break;
+                    case UNKNOWN:
+                        message = "Unknown error";
+                        break;
+                }
+                Toast.makeText(view.getContext(), message, Toast.LENGTH_SHORT).show();
+
+                spinner.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                spinner.setVisibility(View.GONE);
+                Log.i("RAE", "Loading Completed");
+
+
+            }
+        });
+
+        container.addView(imageLayout, 0);
+        return imageLayout;
+    }
+
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        container.removeView((View) object);
+    }
+
+    @Override
+    public int getCount() {
+        return IMAGES_LIST.size();
+    }
+
+
+    @Override
+    public boolean isViewFromObject(View view, Object object) {
+        return view.equals(object);
+    }
+
+    @Override
+    public void restoreState(Parcelable state, ClassLoader loader) {
+    }
+
+    @Override
+    public Parcelable saveState() {
+        return null;
+    }
+}
+</code></pre>
+
+<p><strong>item_pager_image.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="1dip">
+
+    <info.androidhive.slidingmenu.util.TouchImageView
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/app_name" />
+
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+</FrameLayout>
+</code></pre>

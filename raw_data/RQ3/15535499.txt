@@ -1,0 +1,356 @@
+<p>the activity crashes when I try and set any imageview image (either setImageBitmap or setImageView) it does this anywhere but in the one getview.</p>
+
+<p>I am trying to get an imageview array that I can use in my adapter for my gridview (problem marked "problem here")</p>
+
+<pre><code>package joshpike.hsh.hsh_game;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Point;
+import android.os.Bundle;
+import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+
+public class DisplayActivity extends MainActivity
+{
+
+    int screenTileWidth = 3;
+    int nativeTileSize = 256;
+    int tileSize;
+    int numberColumn;
+    int numberRow;
+    int floorNum;
+
+    ImageView[][] topGridArray = null;
+    ImageView[][] bottomGridArray = null;
+
+    //sets tilesize, numberColumn and numberRow
+    @SuppressLint("NewApi")
+    public void setGridVars()
+    {
+        //set tileSize 
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        int screenWidth;
+
+        if (android.os.Build.VERSION.SDK_INT >= 13)
+        {
+            display.getSize(size);
+            screenWidth = size.x;
+        }
+        else
+        {
+            screenWidth = display.getWidth();
+        }
+
+        tileSize = screenWidth / screenTileWidth;
+
+        //set numberColumn and numberRow
+        try
+        {
+            String dataFilePath = "floors/" + floorNum + "/FloorData.txt";
+            InputStream dataInputStream = getAssets().open(dataFilePath);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(dataInputStream));
+
+            String line = reader.readLine();
+            line = reader.readLine();
+            numberColumn = Integer.parseInt(line);
+            line = reader.readLine();
+            numberRow = Integer.parseInt(line);
+            dataInputStream.close();
+        }
+        catch (IOException e) 
+        {
+            System.out.println("exception found in try/catch in DisplayActivity.setGridVars method");
+        }
+
+        for(int x = 0; x < numberColumn ; x++ )
+        {
+            for(int y = 0; y < numberRow ; y++ )
+            {
+                ///***PROBLEM HERE***///
+                bottomGridArray[x][y].setImageBitmap(currentImageView("bottom", x, y));
+                topGridArray[x][y].setImageBitmap(currentImageView("top", x, y));
+            }
+        }
+
+
+
+
+    }
+
+    //returns the one imageView for gridViewForadapter 
+    public Bitmap currentImageView(String layer, int X, int Y ) 
+    {
+        try 
+        {
+            Bitmap returnBitmap = null;
+            String imgDirectory = "floors/" + floorNum + "/" + layer + "/" + X + "," + Y + ".png";
+
+            InputStream imageInputStream = getAssets().open(imgDirectory);
+            returnBitmap = BitmapFactory.decodeStream(imageInputStream);
+            imageInputStream.close();
+            return returnBitmap;
+
+        } 
+        catch (IOException e) 
+        {
+            System.out.println("exception found in try/catch in DisplayActivity.currentImageView method");
+            return null;
+        }
+
+    }
+
+
+    public int returnGridCord (int position, char whatCord)
+    {
+        position = position + 1;
+
+        float rowFromTop = (float)  position / numberColumn;
+
+        if (rowFromTop != Math.round(rowFromTop))
+        {
+            rowFromTop = ((float) Math.ceil( rowFromTop));
+        }
+
+        int returnY = Math.abs( (int)rowFromTop - numberRow);
+        int returnX = (position - ( ( (int)rowFromTop -1 ) * numberColumn) ) - 1;
+
+        System.out.println(position + ":" + returnX + "x" + returnY);
+        if (whatCord == 'X')
+        {
+            return returnX;
+        }
+        else
+        {
+            return returnY;
+        }
+    }
+
+
+    public class ImageAdapter extends BaseAdapter 
+    {
+
+        private Context mContext;
+
+        // create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) 
+        {
+            ImageView imageView;
+            if (convertView == null) 
+            {  
+                // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(tileSize, tileSize));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(0, 0, 0, 0);
+            } 
+            else 
+            {
+                imageView = (ImageView) convertView;
+            }
+
+
+
+
+            System.out.println("endish of getview");    
+
+            imageView.setImageResource(R.drawable.ic_launcher);
+            return imageView;
+
+        }
+
+
+        public ImageAdapter(Context c) 
+        {
+            mContext = c;
+        }
+
+        @Override
+        public int getCount() 
+        {
+            return numberColumn * numberRow;
+        }
+
+        @Override
+        public Object getItem(int position) 
+        {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) 
+        {
+            return 0;
+        }
+
+    }
+
+
+
+
+    // Inflate the menu; this adds items to the action bar if it is present.
+    //makes the options menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) 
+    {
+        getMenuInflater().inflate(R.menu.display, menu);
+        return true;
+    }
+
+    //what happens if you select items from the options menu
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId() )
+        {
+            case R.id.miniMap:
+
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    //called when activity is started for first time either for first time or after destoryed
+    @Override
+    protected void onCreate(Bundle savedInstanceState) 
+    {
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.display);
+        setGridVars();
+
+
+
+
+
+        System.out.println("DisplayActivity test about to start");     
+        //ImageAdapter test = null;
+        //returnGridCord(0,"X");
+
+
+
+
+        GridView bottomMapGrid = (GridView)findViewById(R.id.bottomMapGrid);
+        bottomMapGrid.setNumColumns(numberColumn); 
+        bottomMapGrid.setColumnWidth( tileSize );
+        bottomMapGrid.setStretchMode( GridView.NO_STRETCH ) ;   
+        bottomMapGrid.setAdapter(new ImageAdapter(this));
+
+        System.out.println("DisplayActivity onCreate done");        
+    }
+
+
+
+    //called when Activity goes from paused to active
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        System.out.println("DisplayActivity onResume done");
+    }
+
+    //called when Activity goes from active to paused
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        System.out.println("DisplayActivity onPause done");
+
+    }
+
+    //called when Activity goes from paused to stopped
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        System.out.println("DisplayActivity onStop done");
+
+    }
+
+    //called when Activity goes from stopped to destroyed
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        System.out.println("DisplayActivity onDestroy done");
+
+    }
+
+    //called when Activity has been stopped, is going to be paused then active
+    @Override
+    protected void onRestart()
+    {
+        super.onRestart();
+        System.out.println("DisplayActivity onRestart done");
+
+    }
+
+    //called when Activity is transitioning to paused either for first time or after it has been stopped
+    @Override
+    protected void onStart()
+    {
+        super.onStart();
+        System.out.println("DisplayActivity onStart done");
+
+    }
+
+}
+</code></pre>
+
+<p>logcat:</p>
+
+<pre><code>03-20 17:16:43.437: I/System.out(22850): MainActivity onCreate done
+03-20 17:16:43.437: I/System.out(22850): MainActivity onStart done
+03-20 17:16:43.437: I/System.out(22850): MainActivity onResume done
+03-20 17:16:43.848: D/TextLayoutCache(22850): Using debug level: 0 - Debug Enabled: 0
+03-20 17:16:44.088: D/libEGL(22850): loaded /system/lib/egl/libGLES_android.so
+03-20 17:16:44.168: D/libEGL(22850): loaded /system/lib/egl/libEGL_mali.so
+03-20 17:16:44.208: D/libEGL(22850): loaded /system/lib/egl/libGLESv1_CM_mali.so
+03-20 17:16:44.218: D/libEGL(22850): loaded /system/lib/egl/libGLESv2_mali.so
+03-20 17:16:44.358: D/OpenGLRenderer(22850): Enabling debug mode 0
+03-20 17:16:48.973: I/System.out(22850): MainActivity onPause done
+03-20 17:16:49.974: D/OpenGLRenderer(22850): Flushing caches (mode 0)
+03-20 17:16:50.674: I/System.out(22850): MainActivity onCreate done
+03-20 17:16:50.915: D/AndroidRuntime(22850): Shutting down VM
+03-20 17:16:50.915: W/dalvikvm(22850): threadid=1: thread exiting with uncaught exception (group=0x40aa8210)
+03-20 17:16:51.005: E/AndroidRuntime(22850): FATAL EXCEPTION: main
+03-20 17:16:51.005: E/AndroidRuntime(22850): java.lang.RuntimeException: Unable to start activity ComponentInfo{joshpike.hsh.hsh_game/joshpike.hsh.hsh_game.DisplayActivity}: java.lang.NullPointerException
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1967)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1992)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.ActivityThread.access$600(ActivityThread.java:127)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1158)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.os.Handler.dispatchMessage(Handler.java:99)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.os.Looper.loop(Looper.java:137)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.ActivityThread.main(ActivityThread.java:4448)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at java.lang.reflect.Method.invokeNative(Native Method)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at java.lang.reflect.Method.invoke(Method.java:511)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:823)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:590)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at dalvik.system.NativeStart.main(Native Method)
+03-20 17:16:51.005: E/AndroidRuntime(22850): Caused by: java.lang.NullPointerException
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at joshpike.hsh.hsh_game.DisplayActivity.setGridVars(DisplayActivity.java:85)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at joshpike.hsh.hsh_game.DisplayActivity.onCreate(DisplayActivity.java:235)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.Activity.performCreate(Activity.java:4465)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1931)
+03-20 17:16:51.005: E/AndroidRuntime(22850):    ... 11 more
+03-20 17:16:56.510: I/Process(22850): Sending signal. PID: 22850 SIG: 9
+</code></pre>

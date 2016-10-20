@@ -1,0 +1,88 @@
+<p>Please find the below screenshots and code, i want to change "menu" icon to "close" icon when Menu is Open mode.</p>
+
+<p>When we click on Menu icon in Screen1, we want to show the screen with "close" icon at top left, but it is not working. How can i achieve this?</p>
+
+<p><img src="http://i.stack.imgur.com/L3fbx.png" alt="Screen1"></p>
+
+<p><img src="http://i.stack.imgur.com/L0aNq.png" alt="Screen2"></p>
+
+<pre><code>public void setUp(int fragmentId, DrawerLayout drawerLayout, final CharSequence mTitle) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        final ActionBar actionBar = getActionBar();
+
+//      actionBar.setIcon(R.drawable.ic_launcher);
+        actionBar.setTitle("");
+        actionBar.setIcon(R.drawable.ic_launcher);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        getActionBar().setIcon(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        LayoutInflater mInflater = LayoutInflater.from(getActivity());
+
+        View mCustomView = mInflater.inflate(R.layout.custom_actionbar, null);
+        final TextView mTitleTextView = (TextView) mCustomView.findViewById(R.id.title_text);
+
+        mTitleTextView.setText(mTitle);
+        ActionBar.LayoutParams params = new ActionBar.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT,
+                ActionBar.LayoutParams.MATCH_PARENT, Gravity.CENTER);
+        getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_HOME_AS_UP );
+        actionBar.setCustomView(mCustomView, params);
+        actionBar.setDisplayShowCustomEnabled(true);
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the navigation drawer and the action bar app icon.
+        mDrawerToggle = new ActionBarDrawerToggle(getActivity(),
+        mDrawerLayout, /* DrawerLayout object */
+        R.drawable.menu_icon, /* nav drawer image to replace 'Up' caret */
+        R.string.hello_world,
+        R.string.hello_world ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+
+            @SuppressLint("NewApi")
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+                mTitleTextView.setText("");
+                if (!mUserLearnedDrawer) {
+                    // The user manually opened the drawer; store this flag to
+                    // prevent auto-showing
+                    // the navigation drawer automatically in the future.
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+        // If the user hasn't 'learned' about the drawer, open it to introduce
+        // them to the drawer,
+        // per the navigation drawer design guidelines.
+        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(mFragmentContainerView);
+        }
+
+        // Defer code dependent on restoration of previous instance state.
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+</code></pre>

@@ -1,0 +1,96 @@
+<p>Making an app and streaming audio from site. I've got a menu and when I click the button to open the radio activity it can take from 8-20 seconds to load and sometimes force closes. Any help would be awesome thanks.</p>
+
+<p>Code:</p>
+
+<pre><code>  public class Radio extends Activity {
+
+private MediaPlayer mp;
+private ImageButton pauseicon;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.player_1);
+
+    pauseicon = (ImageButton) findViewById(R.id.pauseicon);
+    getActionBar().setDisplayHomeAsUpEnabled(true);
+
+    /**
+     * Play button click event plays a song and changes button to pause
+     * image pauses a song and changes button to play image
+     * */
+
+    String res = "http://216.235.91.36/play?s=magic24point7&d=LIVE365&r=0&membername=&session=magic24point7:0&AuthType=NORMAL&app_id=live365%3ABROWSER&SaneID=24.79.96.172-13316781890137014897763&tag=live365";
+
+    mp = new MediaPlayer();
+    try {
+        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mp.setDataSource(res);
+        mp.prepare();
+        mp.start();
+
+    } catch (IllegalArgumentException e) {
+        e.printStackTrace();
+    } catch (IllegalStateException e) {
+        e.printStackTrace();
+    } catch (IOException e) {
+
+    }
+
+
+
+    pauseicon.setOnClickListener(new View.OnClickListener() {
+
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+            // No need to check if it is pauseicon
+
+            if (mp.isPlaying()) {
+                mp.pause();
+                ((ImageButton) v).setImageResource(R.drawable.playicon);
+
+            } else {
+                mp.start();
+                ((ImageButton) v).setImageResource(R.drawable.pauseicon);
+            }
+        }
+    });
+
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        NavUtils.navigateUpFromSameTask(this);
+
+        if (mp != null)
+            if (mp.isPlaying())
+                mp.stop();
+
+        mp.release();
+
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+
+    }
+}
+
+@Override
+public void onBackPressed() {
+    if (mp != null) {
+        if (mp.isPlaying())
+            mp.stop();
+
+        mp.release();
+    }
+
+    // there is no reason to call super.finish(); here
+    // call super.onBackPressed(); and it will finish that activity for you
+    super.onBackPressed();
+
+}
+
+ }
+</code></pre>

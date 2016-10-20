@@ -1,0 +1,148 @@
+<p>1st Q: I have a database that I want to read from and I am pretty sure it is loading correctly since I don't get an error message except when I tried to load it the very first time but every other time it loaded with out errors, why is that?  Would this effect the app in any way on a device?</p>
+
+<p>2nd Q:  Is when I load the app and then click the back button to leave the app I get this error, </p>
+
+<pre><code>08-28 22:58:16.504: E/SQLiteDatabase(361): close() was never explicitly called on database '/data/data/com.example.databaseexample/databases/library_dev.db'
+</code></pre>
+
+<p>Am I not closing properly somewhere in my code?  Thank you in advance for any help.</p>
+
+<p>code:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    DataBaseHelper myDbHelper = new DataBaseHelper(this);
+
+    try{
+        myDbHelper.createDataBase();
+    }catch(IOException ioe){
+        throw new Error("You f'd up, the database wasn't created *crys*");
+    }
+
+    try{
+        myDbHelper.openDatabase();
+    }catch(SQLException sqle){
+        throw sqle;
+    }
+}
+
+public void createListFromDB() {
+    // TODO Auto-generated method stub
+
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.activity_main, menu);
+    return true;
+}
+}
+</code></pre>
+
+<p>Here is my other class I use:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+private static String DB_PATH = "/data/data/com.example.databaseexample/databases/";    
+private static String DB_NAME = "library_dev.db"; 
+private SQLiteDatabase myDataBase;  
+private final Context myContext;
+
+
+public DataBaseHelper(Context c){
+    super(c, DB_NAME, null, 1);
+    this.myContext = c;
+}
+
+public void createDataBase() throws IOException{
+
+    boolean dbExist =  checkDataBase();
+
+    if(dbExist){
+        //do nothing since the database already exist.
+    }
+    else{
+        this.getReadableDatabase();
+
+        try{
+            copyDataBase();
+        }catch(IOException e){
+            throw new Error("Error Copying Database");
+        }
+    }       
+}
+
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB =  SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }catch(SQLiteException e){
+        //database doesn't exist yet.
+    }
+
+    if(checkDB != null){
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase()throws IOException{
+
+    //Opens your local db as the input stream.
+    InputStream myInput =  myContext.getAssets().open(DB_NAME);
+
+    //Path to the just created empty DB.
+    String outFileName =  DB_PATH + DB_NAME;
+
+    //Opens the empty DB as the output stream.
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfiles.
+    byte[] buffer = new byte[1024];
+    int length;
+    while((length = myInput.read(buffer)) > 0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the Streams.
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();        
+}
+
+public void openDatabase() throws SQLException{
+
+    //Open the database.
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+}
+
+@Override
+public synchronized void close(){
+    if(myDataBase != null){
+        myDataBase.close();
+    }
+}
+
+@Override
+public void onCreate(SQLiteDatabase db){
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+
+}
+
+}
+</code></pre>

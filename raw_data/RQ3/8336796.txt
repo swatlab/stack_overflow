@@ -1,0 +1,405 @@
+<p>I am getting the following exception when I run the texter application in android.</p>
+
+<p>STACK_TRACE : </p>
+
+<blockquote>
+  <p>java.lang.NullPointerException    at
+  com.texter.messenger.SmsReceiverService$ServiceHandler.handleMessage(SmsReceiverService.java:116)
+    at android.os.Handler.dispatchMessage(Handler.java:99)  at
+  android.os.Looper.loop(Looper.java:123)   at
+  android.os.HandlerThread.run(HandlerThread.java:60)  , PHONE_MODEL :
+  GT-I9000 , ANDROID_VERSION : 2.2 , APP_VERSION_CODE : 10
+  30.Nov.2011 00:33:50 AM , CUSTOM_DATA :  , STACK_TRACE : java.lang.IllegalArgumentException: Receiver not registered:
+  android.widget.ViewFlipper$1@40597cc0     at
+  android.app.LoadedApk.forgetReceiverDispatcher(LoadedApk.java:634)    at
+  android.app.ContextImpl.unregisterReceiver(ContextImpl.java:881)  at
+  android.content.ContextWrapper.unregisterReceiver(ContextWrapper.java:331)
+    at
+  android.widget.ViewFlipper.onDetachedFromWindow(ViewFlipper.java:104)
+    at android.view.View.dispatchDetachedFromWindow(View.java:6235)     at
+  android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:1250)
+    at
+  android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:1248)
+    at
+  android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:1248)
+    at
+  android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:1248)
+    at
+  android.view.ViewRoot.dispatchDetachedFromWindow(ViewRoot.java:1838)
+    at android.view.ViewRoot.doDie(ViewRoot.java:2916)  at
+  android.view.ViewRoot.die(ViewRoot.java:2886)     at
+  android.view.WindowManagerImpl.removeViewImmediate(WindowManagerImpl.java:254)
+    at
+  android.view.Window$LocalWindowManager.removeViewImmediate(Window.java:445)
+    at
+  android.app.ActivityThread.handleDestroyActivity(ActivityThread.java:3182)
+    at
+  android.app.ActivityThread.handleRelaunchActivity(ActivityThread.java:3287)
+    at android.app.ActivityThread.access$1600(ActivityThread.java:132)
+    at
+  android.app.ActivityThread$H.handleMessage(ActivityThread.java:1042)
+    at android.os.Handler.dispatchMessage(Handler.java:99)  at
+  android.os.Looper.loop(Looper.java:150)   at
+  android.app.ActivityThread.main(ActivityThread.java:4293)     at
+  java.lang.reflect.Method.invokeNative(Native Method)  at
+  java.lang.reflect.Method.invoke(Method.java:507)  at
+  com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)     at
+  dalvik.system.NativeStart.main(Native Method).</p>
+</blockquote>
+
+<p>I am new to these errors. How to solve these errors. </p>
+
+<pre><code>package com.texter.messenger;
+
+import java.util.List;
+
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.app.PendingIntent.CanceledException;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
+import android.os.PowerManager;
+import android.os.Process;
+import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
+import android.telephony.SmsMessage.MessageClass;
+import android.telephony.TelephonyManager;
+import android.util.Log;
+
+import com.texter.common.TexterConstants;
+import com.texter.common.TexterNotification;
+import com.texter.common.Utils;
+import com.texter.data.TexterDB;
+import com.texter.data.TexterDB.Schedule;
+import com.texter.preferences.TexterPreferenceManager;
+import com.texterpro.app.ConversationList;
+import com.texterpro.app.R;
+import com.texterpro.app.SmsPopupView;
+
+public class SmsReceiverService extends Service {
+
+        private static final String LOG_TAG = TexterConstants.COMMON_TAG;
+
+        private static final String ACTION_SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
+        private static final String ACTION_MMS_RECEIVED = "android.provider.Telephony.WAP_PUSH_RECEIVED";
+        private static final String ACTION_MESSAGE_RECEIVED = "net.everythingandroid.smspopup.MESSAGE_RECEIVED";
+        private static final String MMS_DATA_TYPE = "application/vnd.wap.mms-message";
+
+        // http://android.git.kernel.org/?p=platform/packages/apps/Mms.git;a=blob;f=src/com/android/mms/transaction/SmsReceiverService.java
+        public static final String MESSAGE_SENT_ACTION = "com.android.mms.transaction.MESSAGE_SENT";
+
+        /*
+         * This is the number of retries and pause between retries that we will keep
+         * checking the system message database for the latest incoming message
+         */
+        private static final int MESSAGE_RETRY = 8;
+        private static final int MESSAGE_RETRY_PAUSE = 1000;
+
+        private Context context;
+        private ServiceHandler mServiceHandler;
+        private Looper mServiceLooper;
+        private int mResultCode;
+
+        private static final Object mStartingServiceSync = new Object();
+        private static PowerManager.WakeLock mStartingService;
+
+        private static final int TOAST_HANDLER_MESSAGE_SENT = 0;
+        private static final int TOAST_HANDLER_MESSAGE_SEND_LATER = 1;
+        private static final int TOAST_HANDLER_MESSAGE_FAILED = 2;
+
+        @Override
+        public void onCreate() {
+                HandlerThread thread = new HandlerThread("Log.LOGTAG",
+                                Process.THREAD_PRIORITY_BACKGROUND);
+                thread.start();
+                context = getApplicationContext();
+                mServiceLooper = thread.getLooper();
+                mServiceHandler = new ServiceHandler(mServiceLooper);
+                Log.v(LOG_TAG, "Oncreate");
+        }
+
+        @Override
+        public void onStart(Intent intent, int startId) {
+                Log.v(LOG_TAG, "OnStart");
+                mResultCode = intent != null ? intent.getIntExtra("result", 0) : 0;
+
+                Message msg = mServiceHandler.obtainMessage();
+                msg.arg1 = startId;
+                msg.obj = intent;
+                mServiceHandler.sendMessage(msg);
+        }
+
+        @Override
+        public void onDestroy() {
+                mServiceLooper.quit();
+        }
+
+        @Override
+        public IBinder onBind(Intent intent) {
+                return null;
+        }
+
+        private final class ServiceHandler extends Handler {
+                public ServiceHandler(Looper looper) {
+                        super(looper);
+                }
+
+                @Override
+                public void handleMessage(Message msg) {
+                        Log.v(LOG_TAG, "handlemessage:");
+                        Log.v(LOG_TAG, msg.toString());
+                        int serviceId = msg.arg1;
+                        Intent intent = (Intent) msg.obj;
+                        String action = intent.getAction();
+                        String dataType = intent.getType();
+
+                        if (ACTION_SMS_RECEIVED.equals(action)) {
+                                handleSmsReceived(intent);
+                        } else if (ACTION_MMS_RECEIVED.equals(action)
+                                        && MMS_DATA_TYPE.equals(dataType)) {
+                                handleMmsReceived(intent);
+                        } else if (MESSAGE_SENT_ACTION.equals(action)) {
+                                handleSmsSent(intent);
+                        } else if (ACTION_MESSAGE_RECEIVED.equals(action)) {
+                                handleMessageReceived(intent);
+                        }
+
+                        // NOTE: We MUST not call stopSelf() directly, since we need to
+                        // make sure the wake lock acquired by AlertReceiver is released.
+                        finishStartingService(SmsReceiverService.this, serviceId);
+                }
+        }
+
+        /**
+         * Handle receiving a SMS message
+         */
+        private void handleSmsReceived(Intent intent) {
+
+                Bundle bundle = intent.getExtras();
+                if (bundle != null) {
+                        SmsMessage[] messages = Utils.getMessagesFromIntent(intent);
+                        if (messages != null) {
+                                notifyMessageReceived(new SmsMmsMessage(context, messages,
+                                                System.currentTimeMillis()));
+                        }
+                }
+        }
+
+        private void notifyMessageReceived(SmsMmsMessage message) {
+
+                // Class 0 SMS, let the system handle this
+                if (message.getMessageType() == SmsMmsMessage.MESSAGE_TYPE_SMS
+                                && message.getMessageClass() == MessageClass.CLASS_0) {
+                        return;
+                }
+
+                TelephonyManager mTM = (TelephonyManager) context
+                                .getSystemService(Context.TELEPHONY_SERVICE);
+                boolean callStateIdle = mTM.getCallState() == TelephonyManager.CALL_STATE_IDLE;
+
+                /*
+                 * If popup is enabled for this user -AND- the user is not in a call
+                 * -AND- -AND- phone is not docked -AND- (screen is locked -OR- (setting
+                 * is OFF to only show on keyguard -AND- user is not in messaging app:
+                 * then show the popup activity, otherwise check if notifications are on
+                 * and just use the standard notification))
+                 */
+
+                boolean isApp = TexterPreferenceManager.getInstance(this)
+                                .isAppEnabled();
+                boolean showPop = TexterPreferenceManager.getInstance(this)
+                                .isPopupEnabled();
+                boolean showNotify = TexterPreferenceManager.getInstance(this)
+                                .isNotifyEnabled();
+
+                // Log.v(LOG_TAG," App = "+ isApp );
+                // Log.v(LOG_TAG," pop = "+showPop );
+                // Log.v(LOG_TAG," notify = "+showNotify );
+
+                // if conversationList is visible then do not show pop
+                if (!ConversationList.isVisible()) {
+                        if (isApp && callStateIdle && showPop) {
+                                // Log.v(LOG_TAG," showing popup = " );
+                                if (!SmsPopupView.isPopupVisible())
+                                        context.startActivity(message.getPopupIntent());
+                        }
+                }
+
+                if (isApp && showNotify) {
+                        TexterNotification.ShowMessageNotification(this, message);
+                }
+
+        }
+
+        /**
+         * Handle receiving a MMS message
+         */
+        private void handleMmsReceived(Intent intent) {
+
+        }
+
+        /**
+         * Handle receiving an arbitrary message (potentially coming from a 3rd
+         * party app)
+         */
+        private void handleMessageReceived(Intent intent) {
+
+                Bundle bundle = intent.getExtras();
+                if (bundle != null) {
+                }
+        }
+
+        /*
+         * Handler to deal with showing Toast messages for message sent status
+         */
+        public Handler mToastHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+
+                        if (msg != null) {
+                                switch (msg.what) {
+                                case TOAST_HANDLER_MESSAGE_SENT:
+                                        // TexterNotification.showToast(SmsReceiverService.this,R.string.quickreply_sent_toast);
+                                        break;
+                                case TOAST_HANDLER_MESSAGE_SEND_LATER:
+                                        TexterNotification.showToast(SmsReceiverService.this,
+                                                        R.string.quickreply_failed_send_later);
+                                        break;
+                                case TOAST_HANDLER_MESSAGE_FAILED:
+                                        TexterNotification.showToast(SmsReceiverService.this,
+                                                        R.string.quickreply_failed);
+                                        break;
+                                }
+                        }
+                }
+        };
+
+        /*
+         * Handle the result of a sms being sent
+         */
+        private void handleSmsSent(Intent intent) {
+
+                Log.v(LOG_TAG, "HandleSMSSent called");
+                PackageManager pm = getPackageManager();
+                Intent sysIntent = null;
+                Intent tempIntent;
+                List<ResolveInfo> receiverList;
+                boolean forwardToSystemApp = true;
+
+                // Search for system messaging app that will receive our
+                // "message sent complete" type intent
+                tempIntent = intent.setClassName(
+                                SmsMessageSender.MESSAGING_PACKAGE_NAME,
+                                SmsMessageSender.MESSAGING_RECEIVER_CLASS_NAME);
+
+                tempIntent.setAction(SmsReceiverService.MESSAGE_SENT_ACTION);
+
+                receiverList = pm.queryBroadcastReceivers(tempIntent, 0);
+
+                if (receiverList.size() > 0) {
+                        sysIntent = tempIntent;
+                }
+
+                Bundle b = intent.getExtras();
+                long rowid = 0;
+
+                rowid = b == null ? 0 : b.getLong("ROWID");
+
+                /*
+                 * No system messaging app was found to forward this intent to,
+                 * therefore we will need to do the final piece of this ourselves which
+                 * is basically moving the message to the correct folder depending on
+                 * the result.
+                 */
+                // TexterNotification.showToast(SmsReceiverService.this,
+                // "before moving folder");
+                if (sysIntent == null) {
+
+                        forwardToSystemApp = false;
+                        Uri uri = intent.getData();
+                        Log.v(LOG_TAG, "id = " + rowid);
+                        if (mResultCode == Activity.RESULT_OK) {
+                                SmsMessageSender.moveMessageToFolder(this, uri,
+                                                SmsMessageSender.MESSAGE_TYPE_SENT);
+                        } else if ((mResultCode == SmsManager.RESULT_ERROR_RADIO_OFF)
+                                        || (mResultCode == SmsManager.RESULT_ERROR_NO_SERVICE)) {
+                                SmsMessageSender.moveMessageToFolder(this, uri,
+                                                SmsMessageSender.MESSAGE_TYPE_QUEUED);
+                        } else {
+                                SmsMessageSender.moveMessageToFolder(this, uri,
+                                                SmsMessageSender.MESSAGE_TYPE_FAILED);
+                        }
+                }
+
+                // Check the result and notify the user using a toast
+                if (mResultCode == Activity.RESULT_OK) {
+                        mToastHandler.sendEmptyMessage(TOAST_HANDLER_MESSAGE_SENT);
+                        TexterDB.getInstance().updateStatus(rowid,
+                                        Schedule.STATUS_SCHEDULED_SENT, 0);
+                } else if ((mResultCode == SmsManager.RESULT_ERROR_RADIO_OFF)
+                                || (mResultCode == SmsManager.RESULT_ERROR_NO_SERVICE)) {
+                        TexterDB.getInstance().updateStatus(rowid,
+                                        Schedule.STATUS_NOT_SENT, -1);
+                } else {
+                        mToastHandler.sendEmptyMessage(TOAST_HANDLER_MESSAGE_FAILED);
+                        TexterDB.getInstance().updateStatus(rowid,
+                                        Schedule.STATUS_NOT_SENT, mResultCode);
+                }
+
+                if (forwardToSystemApp) {
+                        try {
+                                PendingIntent.getBroadcast(this, 0, sysIntent, 0).send(
+                                                mResultCode);
+                        } catch (CanceledException e) {
+                                e.printStackTrace();
+                        }
+                }
+        }
+
+        /**
+         * Start the service to process the current event notifications, acquiring
+         * the wake lock before returning to ensure that the service will run.
+         */
+        public static void beginStartingService(Context context, Intent intent) {
+                synchronized (mStartingServiceSync) {
+                        if (mStartingService == null) {
+                                PowerManager pm = (PowerManager) context
+                                                .getSystemService(Context.POWER_SERVICE);
+                                mStartingService = pm.newWakeLock(
+                                                PowerManager.PARTIAL_WAKE_LOCK,
+                                                "Texter.SmsReceiverService");
+                                mStartingService.setReferenceCounted(false);
+                        }
+                        mStartingService.acquire();
+                        context.startService(intent);
+                        Log.v(LOG_TAG, "service started");
+                }
+        }
+
+        /**
+         * Called back by the service when it has finished processing notifications,
+         * releasing the wake lock if the service is now stopping.
+         */
+        public static void finishStartingService(Service service, int startId) {
+                synchronized (mStartingServiceSync) {
+                        if (mStartingService != null) {
+                                if (service.stopSelfResult(startId)) {
+                                        mStartingService.release();
+                                }
+                        }
+                }
+        }
+
+}
+</code></pre>

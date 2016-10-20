@@ -1,0 +1,203 @@
+<p>I have a database file in assets folder.When i try to open this file from DBHelper class it throws <code>"java.lang.NullPointerException"</code> at copyDataBase() method following line,</p>
+
+<pre><code>myInput = myContext.getAssets().open(DB_NAME,AssetManager.ACCESS_STREAMING);
+</code></pre>
+
+<p><strong>In MyActivity:</strong></p>
+
+<pre><code>private AssetsDBHelper db;
+@Override
+    protected void onStart() {
+        super.onStart();
+        db = new AssetsDBHelper(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(db!=null)
+        {
+            db.close();
+        }
+    }
+</code></pre>
+
+<p><strong>AssetsDBHelper class:</strong></p>
+
+<pre><code>public class AssetsDBHelper extends SQLiteOpenHelper {
+
+    public static final String DB_PATH ="/data/data/com.innodea.money/databases/";
+    public static final String DB_NAME ="stocksdb";
+    public static final int DB_VERSION = 1;
+    public static final String TABLE_STOCKS = "stocks";
+    public static final String COL_ID="_id";
+    public static final String COL_SYMBOL="symbol";
+    public static final String COL_NAME="name";
+    public static final String COL_EXCHANGE="exchange";
+
+    private Context myContext;
+    private SQLiteDatabase myDataBase;
+
+    public AssetsDBHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        Log.i("AssetsDBHelper","AssetsDBHelper constructor");
+
+        Log.i("AssetsDBHelper","before createDataBase");
+        try {
+            createDataBase();
+            Log.i("AssetsDBHelper","after createDataBase");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        Log.i("AssetsDBHelper","inside createDataBase");
+        boolean dbExist = checkDataBase();
+
+        Log.i("AssetsDBHelper","dbExist->"+dbExist);
+        if (!dbExist) {
+            Log.i("AssetsDBHelper","dbExist not exist.So get database from assets");
+            this.getReadableDatabase();
+            // close up the database after we have created it.
+            this.close();
+
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+
+        }
+    }
+
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+            // database does't exist yet.
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        //Return true if DB exists,else return false
+        return checkDB != null ? true : false;
+    }
+
+
+    private void copyDataBase() throws IOException {
+        Log.i("AssetsDBHelper","inside copyDatabase");
+
+        // Open your local db as the input stream
+        InputStream myInput=null;
+        // Open the empty db as the output stream
+        OutputStream myOutput=null;
+
+        try {
+            Log.i("AssetsDBHelper","1");
+            myInput = myContext.getAssets().open(DB_NAME,AssetManager.ACCESS_STREAMING);
+            Log.i("AssetsDBHelper","2");
+
+            File dir = new File(DB_PATH);
+            dir.mkdirs();
+            Log.i("AssetsDBHelper","3");
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DB_NAME;
+            Log.i("AssetsDBHelper",outFileName);
+            myOutput = new FileOutputStream(outFileName);
+            Log.i("AssetsDBHelper","4");
+            // transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            Log.i("AssetsDBHelper","5");
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                Log.i("AssetsDBHelper","6");
+                myOutput.write(buffer, 0, length);
+            }
+            Log.i("AssetsDBHelper","write to "+outFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i("AssetsDBHelper","copyDatabase error->"+e.toString());
+        }
+        finally
+        {
+            // Close the streams
+            if(myOutput!=null)
+            {
+                myOutput.flush();
+                myOutput.close();
+            }
+
+            if(myInput!=null)
+            {
+                myInput.close();
+            }
+        }
+    }
+
+    public SQLiteDatabase openDataBase() throws SQLException {
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        try {
+            myDataBase = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+            Log.i("AssetsDBHelper", "Database Opened");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i("AssetsDBHelper", "Database not Opened.Error->"+e.toString());
+        }
+        return myDataBase;
+    }
+
+    @Override
+    public synchronized void close() {
+        if (myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    public Cursor getWordMatches(String query, String[] columns) {
+        String selection = COL_SYMBOL + " MATCH ?";
+        String[] selectionArgs = new String[] {query+"*"};
+        return query(selection, selectionArgs, columns);
+    }
+
+    private Cursor query(String selection, String[] selectionArgs, String[] columns) {
+        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        builder.setTables(TABLE_STOCKS);
+
+        Cursor cursor=null;
+        try {
+            cursor = builder.query(openDataBase(),columns, selection, selectionArgs, null, null, null);
+
+            if (cursor == null) {
+                return null;
+            } else if (!cursor.moveToFirst()) {
+                cursor.close();
+                return null;
+            }
+        } 
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return cursor;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>

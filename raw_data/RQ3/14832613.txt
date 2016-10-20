@@ -1,0 +1,183 @@
+<p>I have database with name: MyDb.sqlite</p>
+
+<p>then in my database file have 2 table</p>
+
+<p><strong>1 table of users</strong></p>
+
+<pre><code>row1 id_users (primary key,auto increment,int)
+
+row2 username (varchar)
+
+and value is empty
+</code></pre>
+
+<p><strong>2 table of android_metabata</strong></p>
+
+<pre><code>row1 locale (text) then values is en_US
+</code></pre>
+
+<p>I am putting my database into assets folder </p>
+
+<p><strong>JAVA Class</strong></p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+    private static String DB_PATH = "/data/data/com.example/databases/";
+
+    private static String DB_NAME = "MyDb.db";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    private static DataBaseHelper sInstance = null;
+
+
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+    public Cursor select(String query) throws SQLException {
+        return myDataBase.rawQuery(query, null);
+    }
+
+
+    public void insert(String table, ContentValues values) throws SQLException {
+        myDataBase.insert(table, null, values);
+    }
+
+
+    public void delete(String table, String where) throws SQLException {
+
+        myDataBase.delete(table, where, null);
+
+    }
+
+
+    public void update(String table, ContentValues values, String where) {
+
+        myDataBase.update(table, values, where, null);
+
+    }
+    public void sqlCommand(String command) {
+        myDataBase.execSQL(command);
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    public static DataBaseHelper instance() {
+        /*
+        if (sInstance == null) {
+            sInstance = new DataBaseManager();
+        }
+        */
+        return sInstance;
+    }
+
+}
+</code></pre>
+
+<p>process copying is successfull then i am look at folder data/data/my_package_name/databases
+using this <a href="http://www.coderzheaven.com/2011/04/18/sqlitemanager-plugin-for-eclipse/" rel="nofollow">tutorial </a></p>
+
+<p>but my table users can't copy and my table android_metadata copying successfull,why?</p>
+
+<p>thanks.</p>

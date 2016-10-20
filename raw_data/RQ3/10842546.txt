@@ -1,0 +1,119 @@
+<p>I am building an Android application. When i am running my Activity class I am getting the following errors.I am trying these from few days but not able to figure out.I am new to Android development. Please help me. The problems are given below.</p>
+
+<pre><code>DashboardActivity cannot be resolved to a type:
+FragmentActivity cannot be resolved to a type:
+TabTest1 cannot be resolved to a type:
+TabTest2 cannot be resolved to a type:
+TabTest3 cannot be resolved to a type:
+The constructor TabTestActivity.TabListener<TabTest1>(FragmentActivity, String, Class<TabTest1>, Bundle)   refers to the missing type TabTest1
+The constructor TabTestActivity.TabListener<TabTest2>(FragmentActivity, String, Class<TabTest2>, Bundle) refers to the missing type TabTest2
+The constructor TabTestActivity.TabListener<TabTest3>(FragmentActivity, String, Class<TabTest3>, Bundle) refers to the missing type TabTest3  
+The method onTabReselected(ActionBar.Tab, FragmentTransaction) of type TabTestActivity.TabListener<T> must override or implement a supertype method 
+The type TabTestActivity.TabListener<T> must implement the inherited abstract method ActionBar.TabListener.onTabReselected(ActionBar.Tab, FragmentTransaction)
+</code></pre>
+
+<p>The code is below</p>
+
+<pre><code>public class TabTestActivity extends SherlockFragmentActivity {
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+ActionBar bar = getSupportActionBar();
+bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+bar.setDisplayHomeAsUpEnabled(true);
+bar.setDisplayShowTitleEnabled(true);
+bar.setTitle("Activity Title");
+bar.addTab(bar.newTab().setText("Tab 1").setTabListener(new TabListener<TabTest1>(this,     "tab1",TabTest1.class, null)));
+
+bar.addTab(bar.newTab().setText("Tab 2").setTabListener(new TabListener<TabTest2>(this, "tab2",TabTest2.class, null)));
+bar.addTab(bar.newTab().setText("Tab 3").setTabListener(new TabListener<TabTest3>(this, "tab3", TabTest3.class, null)));
+
+if (savedInstanceState != null) {
+    bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
+}
+
+}
+
+  @Override
+ public boolean onOptionsItemSelected(MenuItem item) {
+ switch (item.getItemId()) {
+ case android.R.id.home:
+    // app icon in action bar clicked; go home
+                Intent intent = new Intent(this, DashboardActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                return true;
+default:
+    return super.onOptionsItemSelected(item);
+ }
+ }
+
+@Override
+ protected void onSaveInstanceState(Bundle outState) {
+super.onSaveInstanceState(outState);
+outState.putInt("tab", getSupportActionBar()
+        .getSelectedNavigationIndex());
+ }
+
+  public class TabListener<T extends Fragment> implements
+    ActionBar.TabListener {
+private final FragmentActivity mActivity;
+private final String mTag;
+private final Class<T> mClass;
+private final Bundle mArgs;
+private Fragment mFragment;
+
+public TabListener(FragmentActivity activity, String tag, Class<T> clz,
+        Bundle args) {
+    mActivity = activity;
+    mTag = tag;
+    mClass = clz;
+    mArgs = args;
+    FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+
+    // Check to see if we already have a fragment for this tab, probably
+    // from a previously saved state. If so, deactivate it, because our
+    // initial state is that a tab isn't shown.
+    mFragment = mActivity.getSupportFragmentManager().findFragmentByTag(mTag);
+    if (mFragment != null && !mFragment.isDetached()) {
+        ft.detach(mFragment);
+    }
+   }
+
+
+@Override
+public void onTabSelected(Tab tab, FragmentTransaction ft) {
+    ft = mActivity.getSupportFragmentManager().beginTransaction();
+
+    if (mFragment == null) {
+        mFragment = Fragment.instantiate(mActivity, mClass.getName(),
+                mArgs);
+        ft.add(android.R.id.content, mFragment, mTag);
+        ft.commit();
+    } else {
+        ft.attach(mFragment);
+        ft.commit();
+    }
+
+    }
+
+@Override
+public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+    ft = mActivity.getSupportFragmentManager().beginTransaction();
+
+    if (mFragment != null) {
+        ft.detach(mFragment);
+        ft.commitAllowingStateLoss();
+    }
+
+    }
+
+@Override
+public void onTabReselected(Tab tab, FragmentTransaction ft) {
+   }
+   }
+   }
+</code></pre>
+
+<p>Thanks for the help in advance</p>

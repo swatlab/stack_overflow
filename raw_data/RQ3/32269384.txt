@@ -1,0 +1,383 @@
+<p>I am trying to open a fragment from another fragment inside recyclerView but every time i select a recyclerViewItem i always get "No view found for id" for the fragment. I tried many solution, but my efforts failed so far.</p>
+
+<p>MainActivity</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+DrawerLayout drawerLayout;
+NavigationView navigationView;
+FragmentManager fragmentManager;
+android.support.v4.app.FragmentTransaction fragmentTransaction;
+ImageCache imageCache;
+List<Product> product = new Select().from(Product.class).queryList();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    FlowManager.init(getApplicationContext());
+    final MyApp app = new MyApp(this);
+    imageCache = new ImageCache();
+
+    /**
+     *Setup the DrawerLayout and NavigationView
+     */
+    drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+    navigationView = (NavigationView) findViewById(R.id.navigationView);
+
+    /**
+     * Lets inflate the very first fragment
+     * Here , we are inflating the TabFragment as the first Fragment
+     */
+    fragmentManager = getSupportFragmentManager();
+    fragmentTransaction = fragmentManager.beginTransaction();
+    fragmentTransaction.replace(R.id.containerView, new TabFragment()).commit();
+
+    /**
+     * Setup click events on the Navigation View Items.
+     */
+    navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(MenuItem menuItem) {
+            drawerLayout.closeDrawers();
+
+            if (menuItem.getItemId() == R.id.nav_item_home) {
+                android.support.v4.app.FragmentTransaction hfragmentTransaction = fragmentManager.beginTransaction();
+                hfragmentTransaction.replace(R.id.containerView, new TabFragment()).commit();
+            }
+            if (menuItem.getItemId() == R.id.nav_item_products) {
+                android.support.v4.app.FragmentTransaction pfragmentTransaction = fragmentManager.beginTransaction();
+                pfragmentTransaction.replace(R.id.containerView, new ProductsFragment()).commit();
+            }
+            if (menuItem.getItemId() == R.id.nav_item_news) {
+                android.support.v4.app.FragmentTransaction nfragmentTransaction = fragmentManager.beginTransaction();
+                nfragmentTransaction.replace(R.id.containerView, new NewsFragment()).commit();
+            }
+            if (menuItem.getItemId() == R.id.nav_item_companies) {
+                android.support.v4.app.FragmentTransaction cfragmentTransaction = fragmentManager.beginTransaction();
+                cfragmentTransaction.replace(R.id.containerView, new CompaniesFragment()).commit();
+            }
+            if (menuItem.getItemId() == R.id.nav_item_save_db) {
+                app.createDatabase();
+                app.setLastUpdatedDate();
+                imageCache.imageDownloader(getApplicationContext());
+            }
+            if (menuItem.getItemId() == R.id.nav_item_update_db) {
+                app.updateOutdatedDatabase(app.getLastUpdatedDate());
+            }
+            return false;
+        }
+    });
+
+    /**
+     * Setup Drawer Toggle of the Toolbar
+     */
+    android.support.v7.widget.Toolbar toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
+    ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,
+            R.string.app_name);
+    drawerLayout.setDrawerListener(drawerToggle);
+    drawerToggle.syncState();
+
+
+    for (int i = 0; i < product.size(); i++) {
+        //Log.i("Name", product.get(i).getProductName());
+        Log.i("dasd", product.get(i).getProductImage());
+    }
+    //app.createDatabase();
+    //ImageView imageView = (ImageView) findViewById(R.id.image);
+    /*Picasso.with(this)
+            .load(new File(product.get(2).getProductImage()))
+            .networkPolicy(NetworkPolicy.OFFLINE)
+            .memoryPolicy(MemoryPolicy.NO_CACHE)
+            .into(imageView);
+     */
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    if (id == R.id.action_refresh) {
+        imageCache.imageDownloader(this);
+    }
+
+    return super.onOptionsItemSelected(item);
+}}
+</code></pre>
+
+<p>MyRecyclerViewAdapter</p>
+
+<pre><code>public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.DataObjectHolder> {
+
+private ArrayList<HomeObject> mDataset;
+private Context context;
+private static MyClickListener myClickListener;
+private String[] postTypeRef = new String[] {"Νέα","Κίνδυνοι","Προειδοποιήσεις"};
+
+public MyRecyclerViewAdapter(Context context, MyClickListener myClickListener) {
+
+    this.context = context;
+    this.myClickListener = myClickListener;
+}
+public static class DataObjectHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+    TextView label;
+    TextView company;
+    TextView description;
+    ImageView imageDrawable;
+
+    public DataObjectHolder(View itemView) {
+        super(itemView);
+        label = (TextView) itemView.findViewById(R.id.textView);
+        company = (TextView) itemView.findViewById(R.id.textView2);
+        description = (TextView) itemView.findViewById(R.id.textView3);
+        imageDrawable = (ImageView) itemView.findViewById(R.id.imageView);
+
+        itemView.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        myClickListener.onItemClick(getLayoutPosition(), v);
+    }
+}
+
+public void setOnItemClickListener(MyClickListener myClickListener) {
+    this.myClickListener = myClickListener;
+}
+
+public MyRecyclerViewAdapter(ArrayList<HomeObject> myDataset) {
+    mDataset = myDataset;
+}
+
+@Override
+public DataObjectHolder onCreateViewHolder(ViewGroup parent,
+                                           int viewType) {
+    View view = LayoutInflater.from(parent.getContext())
+            .inflate(R.layout.recyclerview_home_item, parent, false);
+
+    DataObjectHolder dataObjectHolder = new DataObjectHolder(view);
+    return dataObjectHolder;
+}
+
+@Override
+public void onBindViewHolder(DataObjectHolder holder, int position) {
+    holder.label.setText(mDataset.get(position).getLabel());
+    holder.company.setText(mDataset.get(position).getCompany());
+    holder.description.setText(mDataset.get(position).getTextDescr());
+
+    if (Arrays.asList(postTypeRef).contains(mDataset.get(position).getLabel())){
+        Picasso.with(MyApp.applicationContext).load(mDataset.get(position)
+                .imageIDFetch()).into(holder.imageDrawable);
+    }
+    else{
+        Picasso.with(MyApp.applicationContext).load(new File(mDataset.get(position)
+                .getImageCached())).into(holder.imageDrawable);
+    }
+
+}
+
+public void addItem(HomeObject dataObj, int index) {
+    mDataset.add(dataObj);
+    notifyItemInserted(index);
+}
+
+public void deleteItem(int index) {
+    mDataset.remove(index);
+    notifyItemRemoved(index);
+}
+
+@Override
+public int getItemCount() {
+    return mDataset.size();
+}
+
+public interface MyClickListener {
+    public void onItemClick(int position, View v);
+}}
+</code></pre>
+
+<p>And last HomeFragment</p>
+
+<pre><code>public class HomeFragment extends Fragment {
+
+private int productsListCounter = 0;
+private int postsListCounter = 0;
+private RecyclerView mRecyclerView;
+private RecyclerView.Adapter mAdapter;
+private RecyclerView.LayoutManager mLayoutManager;
+private static String LOG_TAG = "RecyclerViewActivity";
+private Context context;
+
+@Nullable
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.home_layout, null);
+
+    context = container.getContext();
+    final SwipeRefreshLayout mSwipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.activity_main_swipe_refresh_layout);
+    mRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_recycler_view);
+    mRecyclerView.addItemDecoration(
+            new HorizontalDividerItemDecoration.Builder(getActivity())
+                    .color(Color.rgb(11, 122, 11))
+                    .margin(15, 15)
+                    .build());
+    mRecyclerView.setHasFixedSize(false);
+    mLayoutManager = new LinearLayoutManager(getActivity());
+    mRecyclerView.setLayoutManager(mLayoutManager);
+    mAdapter = new MyRecyclerViewAdapter(getDataSet());
+
+    PreCachingLayoutManager layoutManager = new PreCachingLayoutManager(getActivity());
+    layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+    layoutManager.setExtraLayoutSpace(DeviceUtils.getScreenHeight(getActivity()));
+
+    mRecyclerView.setLayoutManager(layoutManager);
+    mRecyclerView.setAdapter(mAdapter);
+    mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        @Override
+        public void onRefresh() {
+                mAdapter = new MyRecyclerViewAdapter(getDataSet());
+                mRecyclerView.setAdapter(mAdapter);
+                mSwipeRefreshLayout.setRefreshing(false);
+        }
+    });
+    return rootView;
+}
+
+
+@Override
+public void onResume() {
+    super.onResume();
+    ((MyRecyclerViewAdapter) mAdapter).setOnItemClickListener(new MyRecyclerViewAdapter.MyClickListener() {
+        @Override
+        public void onItemClick(int position, View v) {
+
+            Log.i(LOG_TAG, " Clicked on Item " + position);
+            Fragment fragment = new ProductFragment();
+            android.support.v4.app.FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.add(R.id.main_activity, fragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
+            mAdapter = new MyRecyclerViewAdapter(context,this);
+        }
+    });
+}
+
+
+
+private ArrayList<HomeObject> getDataSet() {
+
+    ArrayList results = new ArrayList<HomeObject>();
+    List<Product> products = new Select().from(Product.class).queryList();
+    List<Post> posts = new Select().from(Post.class).queryList();
+
+        for (productsListCounter = 0; productsListCounter<products.size(); productsListCounter++){
+            Company companyIDQuery = new Select().from(Company.class)
+                    .where(com.raizlabs.android.dbflow.sql.builder.Condition.column(Post$Table.COMPANYID)
+                            .eq(posts.get(productsListCounter).getCompanyID())).querySingle();
+
+            HomeObject homeContainer = new HomeObject(
+                    "Προίον: " + products.get(productsListCounter).getProductName(),
+                    "Εταιρεία : " + companyIDQuery.getCompanyName(),
+                    products.get(productsListCounter).getProductDescr(),
+                    products.get(productsListCounter).getProductImage(),
+                    products.get(productsListCounter).getUpdatedAT());
+            results.add(productsListCounter, homeContainer);
+        }
+
+        for (postsListCounter = 0; postsListCounter<posts.size(); postsListCounter++){
+            PostType postTypeIDQuery = new Select().from(PostType.class)
+                    .where(com.raizlabs.android.dbflow.sql.builder.Condition.column(Post$Table.POSTTYPEID)
+                            .eq(posts.get(postsListCounter).getPostTypeID())).querySingle();
+
+            Company companyIDQuery = new Select().from(Company.class)
+                    .where(com.raizlabs.android.dbflow.sql.builder.Condition.column(Post$Table.COMPANYID)
+                            .eq(posts.get(postsListCounter).getCompanyID())).querySingle();
+
+            HomeObject homeContainer = new HomeObject(
+                    postTypeIDQuery.getPostTypeDescr(),
+                    "Εταιρεία : " + companyIDQuery.getCompanyName(),
+                    posts.get(postsListCounter).getPostText(),
+                    "",
+                    posts.get(postsListCounter).getUpdatedAT());
+            results.add(productsListCounter + postsListCounter, homeContainer);
+        }
+
+    Collections.sort(results, Collections.reverseOrder());
+    return results;
+}}
+</code></pre>
+
+<p>So when i click on HomeFragment recyclerViewItem i want to open another fragment with data and position.Also all fragments belong to MainActivity layout </p>
+
+<pre><code><LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:fitsSystemWindows="true"
+android:orientation="vertical"
+android:id="@+id/main_activity">
+
+<android.support.v7.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/green"
+    android:id="@+id/toolbar"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+    app:title="Drawer With Swipe Tabs" />
+
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:id="@+id/drawerLayout"
+    >
+
+
+    <FrameLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/containerView">
+    </FrameLayout>
+
+
+
+    <android.support.design.widget.NavigationView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:id="@+id/navigationView"
+        app:itemTextColor="@color/black"
+        app:menu="@menu/drawermenu"
+        android:layout_marginTop="-24dp"
+        />
+
+
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p></p>
+
+<p>Thanks in advance!!</p>

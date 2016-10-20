@@ -1,0 +1,32 @@
+<p>I want to change the background color for specific item in GridView (by position).</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+
+    parent.getChildAt(1).setBackgroundColor(Color.RED);
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+</code></pre>
+
+<p>It doesn't work.</p>
+
+<p>If I use it in OnClickListener it works:</p>
+
+<pre><code>public void onItemClick(AdapterView<?> parent, View view,
+                int position, long id) {
+    view.setBackgroundResource(android.R.drawable.btn_default);
+}
+</code></pre>
+
+<p>but I want to change it without a click.</p>

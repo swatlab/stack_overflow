@@ -1,0 +1,60 @@
+<p>There is a bit of a pattern used when displaying a ListView or GridView. Given the XML file and my first method shown, what will my corresponding second method be? How it is now, I am getting an exception that a RelativeLayout cannot be cast to an ImageView at this line of the second method shown: <code>ImageView v = (ImageView) gridView.getChildAt(i);</code> I know my gridView is a bunch of relativeLayouts but not sure how to access their drawables.</p>
+
+<p>Here is myLayout.XML:</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:padding="8dp"
+            android:scaleType="fitCenter" />
+
+    </RelativeLayout>
+</code></pre>
+
+<p>ImageAdapter.getView()</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+              ViewHolder holder;
+              ImageHelper ih = new ImageHelper();
+              if (convertView == null) {
+              convertView = mInflater.inflate(R.layout.mylayout, null);
+
+              holder = new ViewHolder();
+              holder.icon = (ImageView) convertView.findViewById(R.id.icon);
+
+              convertView.setTag(holder);
+              } else {
+              holder = (ViewHolder) convertView.getTag();
+              }
+
+              holder.icon.setImageBitmap(ih.decodeSampledBitmapFromImagePath(mList.get(position), 150, 150));
+
+              return convertView;
+          }
+</code></pre>
+
+<p>ViewGridView.OnPause()</p>
+
+<pre><code>    @Override
+        protected void onPause() {
+            GridView gridView = (GridView) findViewById(R.id.gridviewViewOutfits);
+            int count = gridView.getCount();
+            for (int i = 0; i < count; i++) {
+                ImageView v = (ImageView) gridView.getChildAt(i);
+                if (v != null) {
+                    if (v.getDrawable() != null) v.getDrawable().setCallback(null);
+                }
+            }
+            super.onPause();
+        }
+</code></pre>
+
+<p>Thanks</p>

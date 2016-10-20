@@ -1,0 +1,164 @@
+<p>I have a listview where after a click download a pdf file that show to the user.
+But the app doesn't work well because in my logcat obtain error. I read forum, and other stackoverflow solutions but i doesn't resolve my problem.
+Thanks in advance for the responses.</p>
+
+<p>My logcat error:</p>
+
+<pre><code>    05-24 07:31:52.306: W/System.err(1003): java.io.IOException: write failed: ENOSPC (No space left on device)
+05-24 07:31:52.356: W/System.err(1003):     at libcore.io.IoBridge.write(IoBridge.java:462)
+05-24 07:31:52.605: W/System.err(1003):     at java.io.FileOutputStream.write(FileOutputStream.java:187)
+05-24 07:31:52.675: W/System.err(1003):     at com.example.impresainforma.GiornaliActivity.downloadURL(GiornaliActivity.java:108)
+05-24 07:31:52.775: W/System.err(1003):     at com.example.impresainforma.GiornaliActivity$LoadGiornale.doInBackground(GiornaliActivity.java:74)
+05-24 07:31:52.801: W/System.err(1003):     at com.example.impresainforma.GiornaliActivity$LoadGiornale.doInBackground(GiornaliActivity.java:1)
+05-24 07:31:52.856: W/System.err(1003):     at android.os.AsyncTask$2.call(AsyncTask.java:287)
+05-24 07:31:52.906: W/System.err(1003):     at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+05-24 07:31:52.916: W/System.err(1003):     at android.os.AsyncTask$SerialExecutor$1.run(AsyncTask.java:230)
+05-24 07:31:52.996: W/System.err(1003):     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+05-24 07:31:53.006: W/System.err(1003):     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+05-24 07:31:53.006: W/System.err(1003):     at java.lang.Thread.run(Thread.java:856)
+05-24 07:31:53.006: W/System.err(1003): Caused by: libcore.io.ErrnoException: write failed: ENOSPC (No space left on device)
+05-24 07:31:53.016: W/System.err(1003):     at libcore.io.Posix.writeBytes(Native Method)
+05-24 07:31:53.016: W/System.err(1003):     at libcore.io.Posix.write(Posix.java:187)
+05-24 07:31:53.046: W/System.err(1003):     at libcore.io.BlockGuardOs.write(BlockGuardOs.java:197)
+05-24 07:31:53.186: W/System.err(1003):     at libcore.io.IoBridge.write(IoBridge.java:457)
+05-24 07:31:53.186: W/System.err(1003):     ... 10 more
+05-24 07:31:53.376: A/libc(1003): Fatal signal 11 (SIGSEGV) at 0x000005d0 (code=1), thread 1003 (.impresainforma)
+</code></pre>
+
+<p>I paste my class for more information</p>
+
+<pre><code>public class GiornaliActivity extends Activity {
+
+    private Document m_doc = new Document();
+    private PDFViewer m_vPDF = null;
+    public static String dest = null;
+    public static boolean pdf_downloadable = true;
+    private Uri linkuri;
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        Intent intent = getIntent();
+        linkuri = intent.getData();
+        if (isOnline()) {
+            Global.Init(this);
+            Global.def_view=2;
+            new LoadGiornale().execute();
+
+        } else {
+            Toast.makeText(getApplicationContext(),
+                    "Nessuna connessione di rete disponibile.",
+                    Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
+    private class LoadGiornale extends AsyncTask<String, Void, String> {
+
+        Dialog progress;
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progress = ProgressDialog.show(GiornaliActivity.this, "Caricamento giornale", "Attendere...");
+        }
+
+        @Override
+        protected String doInBackground(String... arg0) {
+
+            try {
+                if (pdf_downloadable) {
+                    URL url = new URL(linkuri.toString());                  
+                    dest = downloadURL(url, "mypdf.pdf");
+                    pdf_downloadable = false;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return dest;
+        }
+
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            progress.dismiss();
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    m_doc.Open(dest, null);
+                    m_vPDF = new PDFViewer(GiornaliActivity.this);
+                    m_vPDF.Open(0, m_doc);
+                    setContentView(m_vPDF);
+                }
+            });
+        }
+    }
+
+    public String downloadURL(URL url, String fileName) throws IOException {
+        String destination = null;
+        try {
+            destination = Environment.getExternalStorageDirectory() + "/"
+                    + fileName;
+            InputStream input = new BufferedInputStream(url.openStream());
+            OutputStream output = new FileOutputStream(destination);
+            byte buffer[] = new byte[1024];
+            int bytes = 0;
+
+            while ((bytes = input.read(buffer)) != -1) {
+                output.write(buffer, 0, bytes);
+            }
+            output.flush();
+            output.close();
+            input.close();
+        }
+        catch(MalformedURLException e) {
+            e.printStackTrace();
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return destination;
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (GiornaliActivity.dest != null) {
+            File delFile = new File(GiornaliActivity.dest);
+            delFile.delete();
+            pdf_downloadable = true;
+            Global.RemoveTmp();
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            Intent intent = new Intent(this, CustomizedListView.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>

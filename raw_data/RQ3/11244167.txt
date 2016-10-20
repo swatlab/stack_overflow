@@ -1,0 +1,149 @@
+<p>my app experiences a crash when the sqlite database is updated the first time. Reloading the app, it works fine from then on. I'm guessing this has to do with the onUpgrade function then. I can't seem to locate where the problem is, any advice very appreciated. Thanks in advance.</p>
+
+<p>DatabaseHelper:</p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "/data/data/jp.atomicideas.ne/databases/";
+    private static String DB_NAME = "dataset";
+    public static final int DB_VERSION = 2;
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+    public static final String EXPRESSION_TABLE = "expression";
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access
+     * the assets and resources.
+     * 
+     * @param context
+    */
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        this.myContext = context;
+    }
+
+    /**
+     * Creates an empty database on the system and rewrites with database from app
+     * @throws IOException
+    */
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();  
+        // if the database already exists, do nothing
+        if(dbExist){
+            Log.v("DB Exists", "db exists");
+            // by calling this method here, onUpgrade will be called on a writeable db, if version number is bumped
+            this.getWritableDatabase();
+        } 
+        dbExist = checkDataBase();
+        // if the database doesn't exist, copy the application's database to be used
+        if(!dbExist) {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exists to avoid re-copying the file
+     * @return true only if it exists, falls if it doesnt
+    */
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String mypath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(mypath, null, SQLiteDatabase.OPEN_READONLY);
+        } catch(SQLiteException e) {
+            // database does not exist yet
+        }
+
+        if(checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies database from the local assets folder to the system folder
+     * @throws IOException
+    */
+    private void copyDataBase() throws IOException {
+
+        // Open the app database file as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the empty temporary database to be replaced
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty database file as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // Transfer bytes from the input file to the output file
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        Toast.makeText(myContext, "onUpgrade called!", Toast.LENGTH_LONG).show();
+
+        if (oldVersion < newVersion) {
+            Log.v("Database Upgrade", "Database version higher, upgrading");
+            myContext.deleteDatabase(DB_NAME);                          
+        }
+    }
+
+}
+</code></pre>
+
+<p>And here is the LogCat output:</p>
+
+<pre><code>06-28 20:52:07.638: V/DB Exists(26580): db exists
+06-28 20:52:07.658: V/Database Upgrade(26580): Database version higher, upgrading
+06-28 20:52:07.658: I/Database(26580): sqlite returned: error code = 1802, msg = statement aborts at 3: [PRAGMA user_version = 2] 
+06-28 20:52:07.658: E/Database(26580): Failure 10 (disk I/O error) on 0x33a3f0 when executing 'PRAGMA user_version = 2'
+06-28 20:52:07.658: I/Database(26580): sqlite returned: error code = 1, msg = statement aborts at 2: [ROLLBACK;] cannot rollback - no transaction is active
+06-28 20:52:07.658: E/Database(26580): Failure 1 (cannot rollback - no transaction is active) on 0x33a3f0 when executing 'ROLLBACK;'
+06-28 20:52:07.658: D/Database(26580): exception during rollback, maybe the DB previously performed an auto-rollback
+06-28 20:52:07.668: D/AndroidRuntime(26580): Shutting down VM
+06-28 20:52:07.668: W/dalvikvm(26580): threadid=1: thread exiting with uncaught exception (group=0x2aac8578)
+</code></pre>
+
+<p>AND</p>
+
+<pre><code>06-28 20:52:07.678: E/AndroidRuntime(26580): Caused by: android.database.sqlite.SQLiteDiskIOException: disk I/O error: PRAGMA user_version = 2
+</code></pre>

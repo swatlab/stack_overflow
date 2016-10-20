@@ -1,0 +1,173 @@
+<p>I'm implementing persistent search view like google play in my android application.here is my code.</p>
+
+<pre><code>public class NavigationDrawerActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
+
+    private EditText searchView;
+    private ActionBarDrawerToggle toggle;
+    private DrawerLayout drawer;
+    private TextView appName;
+    private boolean isNavigationDrawerOpened;
+
+    @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_navigation_drawer);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        CoordinatorLayout coordinatorLayout = (CoordinatorLayout)findViewById(R.id.mainLayout);
+        coordinatorLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if(isNavigationDrawerOpened){
+                    hideSearchAndEnableAppName();
+                }
+                return false;
+            }
+        });
+        searchView = (EditText) findViewById(R.id.searchView);
+        appName = (TextView) findViewById(R.id.appName);
+        searchView.setVisibility(View.GONE);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Toast.makeText(getApplicationContext(),"asdfasdfasdf",Toast.LENGTH_LONG).show();
+                return false;
+            }
+        });
+        drawer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getApplicationContext(), "asdfasfasdf", Toast.LENGTH_SHORT).show();
+            }
+        });
+        toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+
+
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+        toggle.setToolbarNavigationClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(NavigationDrawerActivity.this,"yayyy mani got it",Toast.LENGTH_LONG).show();
+            }
+        });
+
+        appName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (!isNavigationDrawerOpened) {
+
+                    searchView.setVisibility(View.VISIBLE);
+                    searchView.requestFocus();
+                    appName.setVisibility(View.GONE);
+                    isNavigationDrawerOpened = true;
+                    animateDrawerIndicator(true);
+                    InputMethodManager inputMethodManager=(InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    inputMethodManager.toggleSoftInputFromWindow(view.getApplicationWindowToken(), InputMethodManager.SHOW_FORCED, 0);
+
+                }
+            }
+        });
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void hideSearchAndEnableAppName() {
+        animateDrawerIndicator(false);
+        isNavigationDrawerOpened = false;
+        searchView.setVisibility(View.GONE);
+        appName.setVisibility(View.VISIBLE);
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        }
+        else if(isNavigationDrawerOpened){
+            hideSearchAndEnableAppName();
+        }else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                drawer.openDrawer(GravityCompat.START);
+                Toast.makeText(getApplicationContext(),"asdfasdf",Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_camera) {
+            // Handle the camera action
+        } else if (id == R.id.nav_gallery) {
+
+        } else if (id == R.id.nav_slideshow) {
+
+        } else if (id == R.id.nav_manage) {
+
+        } else if (id == R.id.nav_share) {
+
+        } else if (id == R.id.nav_send) {
+
+        }
+
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+
+    public void animateDrawerIndicator(boolean shouldAnimate) {
+        ValueAnimator anim;
+        if(shouldAnimate) {
+            anim = ValueAnimator.ofFloat(0, 1);
+        } else {
+            anim = ValueAnimator.ofFloat(1, 0);
+        }
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                float slideOffset = (Float) valueAnimator.getAnimatedValue();
+                // You should get the drawer layout and
+                // toggler from your fragment to make the animation
+                toggle
+                        .onDrawerSlide(drawer,
+                                slideOffset);
+            }
+        });
+        anim.setInterpolator(new DecelerateInterpolator());
+        anim.setDuration(500);
+        anim.start();
+    }
+}
+</code></pre>
+
+<p>Here everything is working fine, but when user has clicked on toolbar edittext(as per my code) i'm changing the hamburger icon to back button. Now if user clicks on back button, it should animate back to hamburger and edittext should be hidden(as per my requirement)</p>
+
+<p>But, for that to happen i need to handle hamburger click. I have tried onClickListners on toggle,actionbartoggle etc.But in vain please help.</p>

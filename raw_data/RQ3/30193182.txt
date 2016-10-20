@@ -1,0 +1,100 @@
+<p>I've been struggling all day trying to figure out what is the cause of "Grow heap" and "GC_FOR_ALLOC" messages that appearing at the very start of the logcat evreytime I run my app.</p>
+
+<pre><code>GC_FOR_ALLOC freed 173K, 6% free 12302K/12999K, paused 28ms, total 28ms 05-12 16:41:34.350  12838-12838/com.gpstracker.moveo.gpstracker I/dalvikvm-heap﹕ Grow heap (frag case) to 16.028MB for 3686416-byte allocation 05-12 16:41:34.365  12838-12870/com.gpstracker.moveo.gpstracker D/dalvikvm﹕ GC_FOR_ALLOC freed 1K, 5% free 15901K/16647K, paused 13ms, total 13ms 05-12 16:41:34.405  12838-12840/com.gpstracker.moveo.gpstracker D/dalvikvm﹕ GC_CONCURRENT freed 8K, 5% free 15911K/16647K, paused 12ms+12ms, total 42ms 05-12 16:41:34.410  12838-12870/com.gpstracker.moveo.gpstracker I/dalvikvm﹕ Could not find method android.database.Cursor.getNotificationUri, referenced from method com.parse.ParseSQLiteCursor.getNotificationUri 05-12 16:41:34.410  12838-12870/com.gpstracker.moveo.gpstracker W/dalvikvm﹕ VFY: unable to resolve interface method 499: Landroid/database/Cursor;.getNotificationUri ()Landroid/net/Uri; 05-12 16:41:34.410  12838-12870/com.gpstracker.moveo.gpstracker D/dalvikvm﹕ VFY: replacing opcode 0x72 at 0x0002 05-12 16:41:34.480  12838-12838/com.gpstracker.moveo.gpstracker D/dalvikvm﹕ GC_FOR_ALLOC freed 100K, 5% free 15932K/16647K, paused 22ms, total 22ms 05-12 16:41:34.505  12838-12838/com.gpstracker.moveo.gpstracker I/dalvikvm-heap﹕ Grow heap (frag case) to 30.119MB for 14745616-byte allocation 05-12 16:41:34.525  12838-12870/com.gpstracker.moveo.gpstracker D/dalvikvm﹕ GC_FOR_ALLOC freed 14K, 3% free 30317K/31111K, paused 22ms, total 22ms 05-12 16:41:34.555  12838-12840/com.gpstracker.moveo.gpstracker D/dalvikvm﹕ GC_CONCURRENT freed 27K, 3% free 30315K/31111K, paused 12ms+2ms, total 29ms
+</code></pre>
+
+<p>The app contains a 5 .PNG images at drawable folder (Already created other drawable folders as drawable-hdpi etc..). Currently the app has a background image, ImageButton and TextView. The parse .jar is in the libs, I use a really light GPS data, and I have a simple animation on that ImageButton, That's it! </p>
+
+<p>After digging into it, I've tried to remove the "src" tag from the xml and tried to use some Bitmap decoding as I assumed that the PNG images may be to heavy (even though their weight is about 15KB each).</p>
+
+<p>Here's an example of the Bitmap decoding:</p>
+
+<pre><code> public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                                                         int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+</code></pre>
+
+<p>This won't help much and the messages won't leave... I've changed strategy and tried the MAT - To be able to diagnose the leak. So after openning the log with MAT I can see 2 suspects as shown in the image:
+<img src="http://i.stack.imgur.com/dW9hX.png" alt="enter image description here"></p>
+
+<p>I'm really not sure how do I deal with this info - my RelativeLayout cause this issue? is it Resources? I would really like to get this done and clear to be able to solve it and also avoid it next times.</p>
+
+<p>Here's my XML:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/mainScreenBackground"
+    android:background="@drawable/bgnew"
+    >
+
+
+    <ImageButton
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:id="@+id/startendButton"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/startcircle"
+        android:scaleType="fitXY"
+        android:background="@null"/>
+
+       <ImageView
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/clockbg"
+            android:src="@drawable/main_clock_bg"
+            android:background="@null"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
+         />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:text="New Text"
+            android:id="@+id/clockText"
+            android:layout_centerHorizontal="true"
+            android:layout_alignBottom="@+id/clockbg"
+            android:layout_marginBottom="-5dp"
+            />
+</RelativeLayout>
+</code></pre>
+
+<p>If any further information is needed, lmk and I'll edit my question.</p>

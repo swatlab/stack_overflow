@@ -1,0 +1,30 @@
+<p>This sample code is taken from the official site :</p>
+
+<pre><code>PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
+    .getCurrentPlace(mGoogleApiClient, null);
+</code></pre>
+
+<p>The <code>getCurrentPlace</code>'s first parameter is an object of <code>GoogleApiClient</code> which i initialized in my <code>Activity</code>.</p>
+
+<p>And then (also in the <code>Activity</code>) theres a <code>callback</code> :</p>
+
+<pre><code>result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+  @Override
+  public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+      Log.i(TAG, String.format("Place '%s' has likelihood: %g",
+          placeLikelihood.getPlace().getName(),
+          placeLikelihood.getLikelihood()));
+    }
+    likelyPlaces.release();
+  }
+});
+</code></pre>
+
+<p>Is it possible to call <code>getCurrentPlace</code> and listening to <code>setResultCallback</code> on the background? (<code>Service/IntentService/BroadcastReceiver</code>)</p>
+
+<p>Could someone give me a clue how to do it? </p>
+
+<p>I got stuck because i cant pass <code>mGoogleApiClient</code> (not <code>Parcelable</code>) to <code>BroadcastReceiver</code></p>
+
+<p>Thanks a lot for your help</p>

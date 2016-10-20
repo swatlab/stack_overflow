@@ -1,0 +1,364 @@
+<p>I'm getting this error when I trying to open a timepicker or datepicker from a fragment. I know that it is a context problem, but I don't know how to solve it.</p>
+
+<pre><code>05-11 13:56:12.026  18397-18397/com.victor.martin.agenda.app E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.ClassCastException: com.victor.martin.agenda.app.AgendaActivity cannot be cast to com.victor.martin.agenda.app.TimePickerFragment$TimePickerFragmentListener
+            at com.victor.martin.agenda.app.TimePickerFragment.onTimeSet(TimePickerFragment.java:39)
+            at android.app.TimePickerDialog.tryNotifyTimeSet(TimePickerDialog.java)
+            at android.app.TimePickerDialog.onClick(TimePickerDialog.java)
+            at com.android.internal.app.AlertController$ButtonHandler.handleMessage(AlertController.java)
+            at android.os.Handler.dispatchMessage(Handler.java)
+            at android.os.Looper.loop(Looper.java)
+            at android.app.ActivityThread.main(ActivityThread.java)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java)
+            at de.robv.android.xposed.XposedBridge.main(XposedBridge.java:133)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p><strong>SOURCE CODE</strong></p>
+
+<p><strong>AgendaActivity.java</strong> <-- Main</p>
+
+<pre><code>package com.victor.martin.agenda.app;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.victor.martin.agenda.app.fragments.HistoryFragment;
+import com.victor.martin.agenda.app.fragments.NewEventFragment;
+
+import java.util.Locale;
+
+
+public class AgendaActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_agenda);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.agenda, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            switch(position) {
+
+                case 0: return HistoryFragment.newInstance("History" + position + 1);
+                case 1: return NewEventFragment.newInstance("New Event" + position + 1);
+
+                default: return HistoryFragment.newInstance("History, Default" + position + 1);
+            }
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.str_history).toUpperCase(l);
+                case 1:
+                    return getString(R.string.str_new_event).toUpperCase(l);
+                //case 2:
+                //    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_agenda, container, false);
+            return rootView;
+        }
+    }
+
+
+
+}
+</code></pre>
+
+<p><strong>NewEventFragment.java</strong></p>
+
+<pre><code>package com.victor.martin.agenda.app.fragments;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+
+import com.victor.martin.agenda.app.DatePickerFragment;
+import com.victor.martin.agenda.app.R;
+import com.victor.martin.agenda.app.TimePickerFragment;
+
+/**
+ * Created by McFly on 11/05/2014.
+ */
+public class NewEventFragment extends Fragment implements TimePickerFragment.TimePickerFragmentListener,DatePickerFragment.DatePickerFragmentListener {
+
+    Button bt_date, bt_time, bt_clear, bt_save;
+    EditText et_description, et_location;
+    Context _c;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_new_event, container, false);
+
+        _c = getActivity();
+
+        bt_date = (Button)v.findViewById(R.id.bt_date);
+        bt_time = (Button)v.findViewById(R.id.bt_date);
+        bt_clear = (Button)v.findViewById(R.id.bt_clear);
+        bt_save = (Button)v.findViewById(R.id.bt_save);
+        et_description = (EditText)v.findViewById(R.id.et_description);
+        et_location = (EditText)v.findViewById(R.id.et_location);
+
+        bt_date.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDatePickerDialog();
+            }
+        });
+
+        bt_time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTimePickerDialog();
+            }
+        });
+
+        return v;
+    }
+
+    public static NewEventFragment newInstance(String text) {
+
+        NewEventFragment f = new NewEventFragment();
+        Bundle b = new Bundle();
+        b.putString("msg", text);
+
+        f.setArguments(b);
+
+        return f;
+    }
+
+    // Methods
+
+    //Llamado cuando el usuario pulsa el botón de TimePicker
+    public void showTimePickerDialog() {
+        TimePickerFragment newFragment = new TimePickerFragment();
+        newFragment.show(this.getFragmentManager(), "timePicker");
+    }
+
+    //Llamado cuando el usuario pulsa el botón de DatePicker
+    public void showDatePickerDialog() {
+        DatePickerFragment newFragment = new DatePickerFragment();
+        newFragment.show(this.getFragmentManager(), "datePicker");
+    }
+
+    //Llamado cuando el usuario acaba la selección y los datos son enviados a la actividad
+    @Override
+    public void onFinishTimePickerDialog(int hourOfDay, int minute) {
+        // TODO Auto-generated method stub
+        //Toast.makeText(this, "Hora: " + hourOfDay + minute, Toast.LENGTH_SHORT).show();
+        bt_time.setText(hourOfDay + ":" + minute);
+    }
+
+    //Llamado cuando el usuario acaba la selección y los datos son enviados a la actividad
+    @Override
+    public void onFinishDatePickerDialog(int year, int month, int day) {
+        // TODO Auto-generated method stub
+        //Toast.makeText(this, "Fecha: " + year + month + day, Toast.LENGTH_SHORT).show();
+        bt_date.setText(day + "/" + month + "/" + year);
+    }
+}
+</code></pre>
+
+<p><strong>TimePickerFragment.java</strong></p>
+
+<pre><code>package com.victor.martin.agenda.app;
+
+import android.app.Dialog;
+import android.app.TimePickerDialog;
+import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.text.format.DateFormat;
+import android.widget.TimePicker;
+
+import java.util.Calendar;
+
+/**
+ * Created by McFly on 10/05/2014.
+ */
+public class TimePickerFragment extends DialogFragment implements TimePickerDialog.OnTimeSetListener {
+    //Interface creada para implementar un método que podamos utilizar como
+    //enlace de la actividad en curso y le enviemos la información
+    //seleccionada por el usuario.
+
+    public interface TimePickerFragmentListener{
+        void onFinishTimePickerDialog(int hourOfDay, int minute);
+    }
+
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        //Datos que seleccionara el usuario.
+        final Calendar c = Calendar.getInstance();
+        int hour = c.get(Calendar.HOUR_OF_DAY);
+        int minute = c.get(Calendar.MINUTE);
+
+        // Creamos la insntacia del TimePicke para devolverla.
+        return new TimePickerDialog(getActivity(), this, hour, minute, DateFormat.is24HourFormat(getActivity()));
+
+    }
+
+    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        // Do something with the time chosen by the user
+
+        TimePickerFragmentListener activity = (TimePickerFragmentListener) getActivity();
+        activity.onFinishTimePickerDialog(hourOfDay, minute);
+    }
+
+}
+</code></pre>

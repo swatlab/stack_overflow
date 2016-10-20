@@ -1,0 +1,98 @@
+<p>I am working on a project and I keep getting an error at <code>mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));</code>
+The error says that both <code>mPager</code> and <code>mTabs</code> are equal to null. Why does this occur? I have my fragment class inside my <code>MainActivity</code> as shown below</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+private Toolbar mToolbar;
+private ViewPager mPager;
+private SlidingTabLayout mTabs;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main_appbar);
+
+    mToolbar=(Toolbar)findViewById(R.id.app_bar);
+    setSupportActionBar(mToolbar);
+    getSupportActionBar().setDisplayShowHomeEnabled(true);
+    NavigationFragment drawerlayout=(NavigationFragment)
+            getSupportFragmentManager().findFragmentById(R.id.fragment_navigation);
+    drawerlayout.setUp(R.id.fragment_navigation,(DrawerLayout)findViewById(R.id.drawer_layout),mToolbar);
+    mPager=(ViewPager)findViewById(R.id.pager);
+    mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));(ERROR)
+    mTabs=(SlidingTabLayout)findViewById(R.id.tabs);
+    mTabs.setViewPager(mPager);
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    if(id==R.id.navigate){
+        startActivity(new Intent(this, NavigateTo.class));
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+
+class MyPagerAdapter extends FragmentPagerAdapter {
+    String[]tabs;
+
+    public MyPagerAdapter(FragmentManager fm) {
+        super(fm);
+        tabs=getResources().getStringArray(R.array.tabs);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        MyFragment myFragment=MyFragment.getInstance(position);
+
+        return myFragment;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        return tabs[position];
+    }
+
+    @Override
+    public int getCount() {
+        return 3;
+    }
+    //constructing a fragment class in the MainActivity
+}
+    public static class MyFragment extends Fragment{
+        private TextView textview;
+        //in position represents the position that is shown inside the fragment
+        public static MyFragment getInstance(int position){
+        MyFragment myFragment=new MyFragment();
+            Bundle args=new Bundle();
+            //UPDATE PUT A KEY IN FOR "position"
+            args.putInt("position",position);
+                    myFragment.setArguments(args);
+            return myFragment;
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater,@Nullable ViewGroup container,@Nullable Bundle savedInstanceState) {
+            View layout=inflater.inflate(R.layout.my_fragment, container, false);
+            textview=(TextView)layout.findViewById(R.id.my_fragment);
+            Bundle bundle=getArguments();
+            if(bundle!=null){
+                textview.setText("The Page Currently Selected is"+bundle.getInt("position"));
+            }
+            return layout;
+        }
+    }
+}
+</code></pre>

@@ -1,0 +1,533 @@
+<p>I'm writing an app for my church that uses ListFragments with Tabs + Swipe navigation. If I only have tab/listfragment, it displays just fine. However, if I have multiple tabs, the list in each ListFragments is the same as the list of the last fragment. For example, if have tabs/listfragments Alpha, Beta, Gamma, and Delta, each ListFragment would contain the array list specified for Gamma.</p>
+
+<p>Here is my code:</p>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends SherlockFragmentActivity implements
+        ActionBar.TabListener {
+
+    // The context used for the Updater class
+    public static Context context;
+
+    PagerAdapter pagerAdapter;
+
+    /*
+     * I'm not entirely sure what this does, but it's key in implementing the
+     * tab/swiping navigation. See documentation here:
+     * http://developer.android.com
+     * /reference/android/support/v4/view/ViewPager.html
+     */
+    ViewPager viewPager;
+
+    // The AsyncTask class Updater
+    public static Updater updater;
+
+    public static ProgressDialog pd = null;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        context = getApplicationContext();
+
+        // Sets up tabs
+        pagerAdapter = new PagerAdapter(getSupportFragmentManager());
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setHomeButtonEnabled(false);
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        viewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager.setAdapter(pagerAdapter);
+
+        // The method is called when a tab is clicked or the user swipes.
+        viewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // Creates tabs
+        actionBar.addTab(actionBar.newTab().setText("Life")
+                .setTabListener(this), true);
+        actionBar.addTab(actionBar.newTab().setText("Ministries")
+                .setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setText("About")
+                .setTabListener(this));
+        /*actionBar.addTab(actionBar.newTab().setText("Contact")
+                .setTabListener(this));*/
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getSupportMenuInflater();
+        menuInflater.inflate(R.menu.activity_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+        case R.id.menu_settings:
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Called when a tab is selected.
+    @Override
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        viewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p><strong>PagerAdapter.java</strong></p>
+
+<pre><code>public class PagerAdapter extends FragmentPagerAdapter {
+
+    public PagerAdapter(FragmentManager fm) {
+        super(fm);
+        // TODO Auto-generated constructor stub
+    }
+
+    /* Returns the correct fragment for each tab. */
+    @Override
+    public Fragment getItem(int i) {
+        Fragment returnFrag = null;
+        Log.i("test", Integer.toString(i));
+
+        switch (i) {
+        case 0:
+            returnFrag = new LifeFragment();
+        case 1:
+            returnFrag = new MinistriesFragment();
+        case 2:
+            returnFrag = new AboutFragment();
+            // case 3:
+            // returnFrag = new ContactFragment();
+        }
+
+        return returnFrag;
+    }
+
+    // I'm not quite sure why this method is here.
+    @Override
+    public int getCount() {
+        return 4;
+    }
+}
+</code></pre>
+
+<p><strong>LifeFragment.java</strong></p>
+
+<pre><code>public class LifeFragment extends SherlockListFragment {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+
+        /* Inflates view */
+        View lifeView = inflater.inflate(R.layout.fragment_list, container,
+                false);
+
+        return lifeView;
+    }
+
+    @Override
+    public void onResume() {
+
+        /*
+         * The code below lists the options available under the "Life" tab. I'm
+         * not sure why, but these have to go in the onResume() method.
+         */
+
+        /*
+         * Specifies the array in the resources to get the array of option names
+         * and the layout that the list is patterned after.
+         */
+        setListAdapter(ArrayAdapter.createFromResource(MainActivity.context,
+                R.array.lifeList, R.layout.fragment_list_item));
+
+        // Creates the actual list view
+        ListView listView = getListView();
+
+        // Disables searching through the list
+        listView.setTextFilterEnabled(false);
+
+        // The method called when a list item is clicked
+        listView.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                    int position, long id) {
+
+                // The intent to switch to
+                Intent intent = null;
+
+                switch ((int) id) {
+
+                case 0:
+                    intent = new Intent(MainActivity.context,
+                            NewsActivity.class);
+                    break;
+
+                case 1:
+                    intent = new Intent(MainActivity.context,
+                            DailyScriptureActivity.class);
+                    break;
+
+                case 2:
+                    intent = new Intent(MainActivity.context,
+                            PrayerRequestActivity.class);
+                    break;
+
+                case 3:
+                    intent = new Intent(MainActivity.context,
+                            SermonActivity.class);
+                    break;
+
+                case 4:
+                    intent = new Intent(MainActivity.context, WebActivity.class);
+                    intent.putExtra("type", "payload");
+
+                    // Getting data
+                    dbAdapter dba = new dbAdapter(MainActivity.context);
+                    dba.open();
+                    Cursor cursor = dba.read("html_info", null, null);
+
+                    while(cursor.moveToNext()) {
+                        if(cursor.getString(cursor.getColumnIndex("name")).equals("Plan-Of-Salvation")) {
+                            break;
+                        }
+                    }
+
+                    intent.putExtra("data", cursor.getString(cursor.getColumnIndex("html")));
+                    intent.putExtra("title", "Plan Of Salvation");
+                    break;
+                }
+
+                startActivity(intent);
+            }
+
+        });
+
+        super.onResume();
+    }
+}
+</code></pre>
+
+<p><strong>MinistriesFragment.java</strong></p>
+
+<pre><code>public class MinistriesFragment extends SherlockListFragment {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+
+        /* Inflates view */
+        View lifeView = inflater.inflate(R.layout.fragment_list, container,
+                false);
+
+        return lifeView;
+    }
+
+    /*
+     * The method below lists the options available under the "Ministries" tab.
+     */
+    @Override
+    public void onResume() {
+        /*
+         * Specifies the array in the resources to get the array of option names
+         * and the layout that the list is patterned after.
+         */
+        setListAdapter(ArrayAdapter.createFromResource(MainActivity.context,
+                R.array.ministriesList, R.layout.fragment_list_item));
+
+        // Creates the actual list view
+        ListView listView = getListView();
+
+        // Disables searching through the list
+        listView.setTextFilterEnabled(false);
+
+        // The method called when a list item is clicked
+        listView.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                    int position, long id) {
+
+                // The intent to switch to
+                Intent intent = new Intent(MainActivity.context,
+                        WebActivity.class);
+                Cursor cursor = null;
+                String where = null;
+                dbAdapter dba = new dbAdapter(MainActivity.context);
+                dba.open();
+
+                /*
+                 * This switch helps generate the "where" statement for the DB
+                 * query
+                 */
+                switch ((int) id) {
+
+                case 0:
+                    where = "childhood";
+                    break;
+
+                case 1:
+                    where = "royal-ambassadors";
+                    break;
+
+                case 2:
+                    where = "upward";
+                    break;
+
+                case 3:
+                    where = "high-school";
+                    break;
+
+                case 4:
+                    where = "acteens";
+                    break;
+
+                case 5:
+                    where = "MOPS";
+                    break;
+
+                case 6:
+                    where = "senior-adults";
+                    break;
+
+                case 7:
+                    where = "WMU";
+                    break;
+
+                case 8:
+                    where = "recreation";
+                    break;
+
+                case 9:
+                    where = "media-centers";
+                    break;
+                }
+
+                cursor = dba.read("html_info", new String[] { "html" },
+                        "'name'='" + where + "'");
+                cursor.moveToFirst();
+                intent.putExtra("type", "payload");
+                intent.putExtra("data",
+                        cursor.getString(cursor.getColumnIndex("html")));
+                intent.putExtra(
+                        "title",
+                        getResources().getStringArray(R.array.ministriesList)[(int) id]);
+                startActivity(intent);
+                cursor.close();
+                dba.close();
+            }
+
+        });
+
+        super.onResume();
+    }
+}
+</code></pre>
+
+<p><strong>AboutFragment.java</strong></p>
+
+<pre><code>public class AboutFragment extends SherlockListFragment {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+
+        /* Inflates view */
+        View aboutView = inflater.inflate(R.layout.fragment_list, container,
+                false);
+
+        return aboutView;
+    }
+
+    @Override
+    public void onResume() {
+
+        /*
+         * The code below lists the options available under the "Life" tab. I'm
+         * not sure why, but these have to go in the onResume() method.
+         */
+
+        /*
+         * Specifies the array in the resources to get the array of option names
+         * and the layout that the list is patterned after.
+         */
+        setListAdapter(ArrayAdapter.createFromResource(MainActivity.context,
+                R.array.aboutList, R.layout.fragment_list_item));
+
+        // Creates the actual list view
+        ListView listView = getListView();
+
+        // Disables searching through the list
+        listView.setTextFilterEnabled(false);
+
+        // The method called when a list item is clicked
+        listView.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                    int position, long id) {
+
+                // The intent to switch to
+                Intent intent = null;
+                dbAdapter dba = new dbAdapter(MainActivity.context);
+                dba.open();
+
+                switch ((int) id) {
+
+                case 0:
+                    intent = new Intent(MainActivity.context, WebActivity.class);
+
+                    Cursor serviceCursor = dba.read("html_info",
+                            new String[] { "html" }, "'name'='services'");
+                    serviceCursor.moveToFirst();
+                    String serviceHtml = serviceCursor.getString(serviceCursor
+                            .getColumnIndex("html"));
+                    serviceCursor.close();
+
+                    intent.putExtra("type", "payload");
+                    intent.putExtra("data", serviceHtml);
+                    break;
+
+                case 1:
+                    intent = new Intent(MainActivity.context,
+                            SundaySchoolActivity.class);
+                    break;
+
+                case 2:
+                    intent = new Intent(MainActivity.context, WebActivity.class);
+
+                    Cursor wednesdayCursor = dba.read("html_info",
+                            new String[] { "html" }, "'name'='wednesdays'");
+                    wednesdayCursor.moveToFirst();
+                    String wednesdayHtml = wednesdayCursor
+                            .getString(wednesdayCursor.getColumnIndex("html"));
+                    wednesdayCursor.close();
+
+                    intent.putExtra("type", "payload");
+                    intent.putExtra("data", wednesdayHtml);
+                    break;
+
+                case 3:
+                    intent = new Intent(
+                            android.content.Intent.ACTION_VIEW,
+                            Uri.parse("google.navigation:q=Lakeside+Baptist+Church,+2865+Old+Rocky+Ridge+Road,+Birmingham,+AL+35243"));
+                    break;
+
+                case 4:
+                    intent = new Intent(MainActivity.context,
+                            BlogActivity.class);
+                    break;
+
+                case 5:
+                    intent = new Intent(MainActivity.context, WebActivity.class);
+
+                    Cursor feedCursor = dba.read("html_info",
+                            new String[] { "html" }, "'name'='wednesdays'");
+                    feedCursor.moveToFirst();
+                    String feedHtml = feedCursor.getString(feedCursor
+                            .getColumnIndex("html"));
+                    feedCursor.close();
+
+                    intent.putExtra("type", "payload");
+                    intent.putExtra("data", feedHtml);
+                    break;
+
+                case 6:
+                    intent = new Intent(MainActivity.context, WebActivity.class);
+
+                    Cursor historyCursor = dba.read("html_info",
+                            new String[] { "html" }, "'name'='wednesdays'");
+                    historyCursor.moveToFirst();
+                    String historyHtml = historyCursor.getString(historyCursor
+                            .getColumnIndex("html"));
+                    historyCursor.close();
+
+                    intent.putExtra("type", "payload");
+                    intent.putExtra("data", historyHtml);
+                    break;
+                }
+
+                /*
+                 * Adding the title to every intent, whether it is needed or
+                 * not.
+                 */
+                intent.putExtra(
+                        "title",
+                        getResources().getStringArray(R.array.aboutList)[(int) id]);
+
+                startActivity(intent);
+                dba.close();
+            }
+
+        });
+
+        super.onResume();
+    }
+}
+</code></pre>
+
+<p><strong>fragment_list.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </ListView>
+
+</FrameLayout>
+</code></pre>
+
+<p><strong>fragment_list_item.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:linksClickable="true"
+    android:padding="10dp"
+    android:text="Value"
+    android:textAppearance="?android:attr/textAppearanceLarge"
+    android:textColor="#000000" />
+</code></pre>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+</code></pre>
+
+<p>Thank you in advance for the help! :)</p>

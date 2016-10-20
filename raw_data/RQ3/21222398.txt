@@ -1,0 +1,93 @@
+<p>I am trying to understand contains() along with equals and hashCode method of Object class</p>
+
+<p>Below is my class Test1</p>
+
+<pre><code>public class Test1 {
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((favoriteUID == null) ? 0 : favoriteUID.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof Test1)) {
+            return false;
+        }
+        Test1 other = (Test1) obj;
+        if (favoriteUID == null) {
+            if (other.favoriteUID != null) {
+                return false;
+            }
+        } else if (!favoriteUID.equals(other.favoriteUID)) {
+            return false;
+        }
+        return true;
+    }
+
+    private String favoriteUID;
+
+    public String getFavoriteUID() {
+        return favoriteUID;
+    }
+
+    public void setFavoriteUID(String favoriteUID) {
+        this.favoriteUID = favoriteUID;
+    }
+}
+</code></pre>
+
+<p>And that my main class</p>
+
+<pre><code>import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+public class FavoriteMain 
+{
+
+    public static void main(String[] args) 
+    {
+
+        Test1 obj1 = new Test1();
+        obj1.setFavoriteUID("1");
+
+        Test1 obj2 = new Test1();
+        obj2.setFavoriteUID("1");
+
+        List<Test1> list1 = new ArrayList<Test1>();
+        list1.add(obj1);
+        list1.add(obj2);
+
+        List<Test1> list2 = new ArrayList<Test1>();
+        list2.add(obj1);
+
+        System.out.println(obj1.equals(obj2 ));
+        System.out.println(list1.contains(list2));
+}
+}
+</code></pre>
+
+<p>Output is </p>
+
+<pre><code>true
+false
+</code></pre>
+
+<p>I m buzz , why I am getting false , even my hashCode and equals method are working correctly. That the reason , why my equals method is returning true.</p>
+
+<p>Any input would be helpful.</p>
+
+<p>Thanks !!!</p>

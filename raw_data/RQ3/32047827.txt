@@ -1,0 +1,53 @@
+<p>I am loading images from URL and showing on the imageview at runtime. </p>
+
+<p>My problem is sometimes my images are shown only HALF OF THE IMAGE and rest part of the image is shown white. Have read many posts on the net but none of them has helped me in the same..</p>
+
+<p>Kindly provide a good solution for the same and the real cause.</p>
+
+<p>Here is the code I have used to create the bitmap.</p>
+
+<pre><code>public static Bitmap getBitmapFromCard(String path, int reqWidth,
+            int reqHeight) {
+        try {
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            BitmapFactory.decodeFile(path, options);
+            options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                    reqHeight);
+            options.inJustDecodeBounds = false;
+            return BitmapFactory.decodeFile(path, options);
+        } catch (OutOfMemoryError e) {
+            System.gc();
+            System.gc();
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            BitmapFactory.decodeFile(path, options);
+            options.inSampleSize = 3;
+            options.inJustDecodeBounds = false;
+            return BitmapFactory.decodeFile(path, options);
+        }
+    }
+</code></pre>
+
+<p>Calculation - InSampleSize</p>
+
+<pre><code>public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+        return inSampleSize;
+    }
+</code></pre>
+
+<p>Screenshot attached.<a href="http://i.stack.imgur.com/hgjuQ.jpg" rel="nofollow"><img src="http://i.stack.imgur.com/hgjuQ.jpg" alt="enter image description here"></a></p>

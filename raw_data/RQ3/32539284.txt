@@ -1,0 +1,267 @@
+<p>I want to stop back button to close the navigation drawer. Please if there will be any solution for this then give me answer with example if you want.</p>
+
+<p>My code is here in which i have used expandable list view in which first there will be no child but when he click on any item then i just change the array of setAdapter and give them children. So Can you please tell what change i do to implement like myntra left menu.</p>
+
+<pre><code>import android.app.Activity;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ExpandableListView;
+
+import com.teamtreehouse.oslist.Adapter.ExpandableListAdapter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+
+public class MainActivity extends Activity {
+
+    private DrawerLayout mDrawerLayout;
+
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    private String mActivityTitle;
+    ExpandableListAdapter listAdapter;
+    ExpandableListView expListView;
+    List<String> listDataHeader;
+    List<String> listDataHeader1;
+    private ArrayAdapter<String> mAdapter;
+    HashMap<String, List<String>> listDataChild;
+    HashMap<String, List<String>> listDataChild1;
+    public static boolean isBack = true;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        expListView = (ExpandableListView)findViewById(R.id.navList);mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        expListView.setBackgroundColor(Color.WHITE);
+        expListView.setGroupIndicator(null);
+        mActivityTitle = getTitle().toString();
+        prepareListData();
+        prepareListData1();
+
+        setupDrawer();
+        addDrawerItems();
+
+
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);
+    }
+
+    private void addDrawerItems() {
+
+        listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);
+
+        // setting list adapter
+        expListView.setAdapter(listAdapter);
+
+        Log.d("tag", "here i am in addDrawerItems");
+
+        // Listview Group click listener
+        expListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+
+            @Override
+            public boolean onGroupClick(ExpandableListView parent, View v,
+                                        int groupPosition, long id) {
+                // Toast.makeText(getApplicationContext(),
+                // "Group Clicked " + listDataHeader.get(groupPosition),
+                // Toast.LENGTH_SHORT).show();
+                isBack = false;
+
+
+                listAdapter = new ExpandableListAdapter(MainActivity.this, listDataHeader1, listDataChild1);
+
+                // setting list adapter
+                expListView.setAdapter(listAdapter);
+
+                Log.d("tag", "here i am in setOngroupclick listitener");
+
+                return true;
+            }
+        });
+
+
+
+
+
+    }
+
+    private void setupDrawer() {
+
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getActionBar().setTitle("Navigation!");
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getActionBar().setTitle(mActivityTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)  {
+
+        Log.d("tag","the keydown button");
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
+                && keyCode == KeyEvent.KEYCODE_BACK
+                && event.getRepeatCount() == 0) {
+            // Take care of calling this method on earlier versions of
+            // the platform where it doesn't exist.
+            onBackPressed();
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            Log.d("tag","the back button is pressed");
+            return;
+        } else {
+            Log.d("tag","the back button is pressed2");
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        // Activate the navigation drawer toggle
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+                return  true;
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void prepareListData() {
+        listDataHeader = new ArrayList<String>();
+        listDataChild = new HashMap<String, List<String>>();
+
+        // Adding child data
+        listDataHeader.add("Top 250");
+        listDataHeader.add("Now Showing");
+        listDataHeader.add("Coming Soon..");
+
+        // Adding child data
+        List<String> top250 = new ArrayList<String>();
+        top250.add("The Shawshan");
+        top250.add("The Godfather");
+        top250.add("The Godfathe");
+        top250.add("Pulp Fiction");
+        top250.add("The Good, t");
+        top250.add("The Dark ");
+        top250.add("12 Angry");
+
+        List<String> nowShowing = new ArrayList<String>();
+        nowShowing.add("The Conjuring");
+        nowShowing.add("Despicable");
+        nowShowing.add("Turbo");
+        nowShowing.add("Grown U");
+        nowShowing.add("Red 2");
+        nowShowing.add("The Wolveri");
+
+        List<String> comingSoon = new ArrayList<String>();
+        comingSoon.add("2 Guns");
+        comingSoon.add("The Smurfs 2");
+        comingSoon.add("The Spectacu");
+        comingSoon.add("The Canyons");
+        comingSoon.add("Europa Report");
+
+        listDataChild.put(listDataHeader.get(0), top250); // Header, Child data
+        listDataChild.put(listDataHeader.get(1), nowShowing);
+        listDataChild.put(listDataHeader.get(2), comingSoon);
+    }
+
+    private void prepareListData1() {
+        listDataHeader1 = new ArrayList<String>();
+        listDataChild1 = new HashMap<String, List<String>>();
+
+        // Adding child data
+        listDataHeader1.add("Second List");
+        listDataHeader1.add("New List");
+        listDataHeader1.add("Old List");
+
+        // Adding child data
+        List<String> top250 = new ArrayList<String>();
+        top250.add("The Shawshan");
+        top250.add("The Godfather");
+        top250.add("The Godfathe");
+        top250.add("Pulp Fiction");
+        top250.add("The Good, t");
+        top250.add("The Dark ");
+        top250.add("12 Angry");
+
+        List<String> nowShowing = new ArrayList<String>();
+        nowShowing.add("The Conjuring");
+        nowShowing.add("Despicable");
+
+
+        List<String> comingSoon = new ArrayList<String>();
+        comingSoon.add("2 Guns");
+        comingSoon.add("The Smurfs 2");
+        comingSoon.add("The Spectacu");
+
+
+        listDataChild1.put(listDataHeader1.get(0), top250); // Header, Child data
+        listDataChild1.put(listDataHeader1.get(1), nowShowing);
+        listDataChild1.put(listDataHeader1.get(2), comingSoon);
+    }
+}
+</code></pre>

@@ -1,0 +1,19 @@
+<p>How can I add one TextView with the image in this.I want to add a TextView below the imageView.</p>
+
+<pre><code>   public View getView(int position, View convertView, ViewGroup parent) {
+     ImageView imageView;
+
+   if (convertView == null) {
+        imageView = new ImageView(mContext);
+       imageView.setLayoutParams(new GridView.LayoutParams(400, 400));
+       imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+        } else {
+      imageView = (ImageView) convertView;
+   }
+
+     imageView.setImageResource(mThumbIds[position]);
+
+     return imageView;
+    }
+</code></pre>

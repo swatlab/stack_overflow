@@ -1,0 +1,71 @@
+<p>Just for the test I've created two activities</p>
+
+<pre><code>public class TestActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setDisplayShowHomeEnabled(true);
+
+        setContentView(R.layout.activity_bpm);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent intent = new Intent(TestActivity.this, TestActivity2.class);
+                startActivity(intent);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+        return true;
+    }
+}
+</code></pre>
+
+<p>and</p>
+
+<pre><code>public class TestActivity2 extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setDisplayShowHomeEnabled(true);
+
+        setContentView(R.layout.activity_about);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent intent = new Intent(TestActivity2.this, TestActivity.class);
+                startActivity(intent);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+        return true;
+    }
+}
+</code></pre>
+
+<p>Then I just pressing on the home button frequently to switch between them and that what I see in the LogCat:</p>
+
+<pre><code>05-02 15:55:36.211: D/dalvikvm(15615): GC_CONCURRENT freed 116K, 4% free 7548K/7812K, paused 4ms+2ms, total 20ms
+05-02 15:55:40.301: D/dalvikvm(15615): GC_CONCURRENT freed 79K, 3% free 7853K/8080K, paused 2ms+2ms, total 24ms
+05-02 15:55:43.611: D/dalvikvm(15615): GC_CONCURRENT freed 97K, 3% free 8189K/8432K, paused 1ms+10ms, total 53ms
+05-02 15:55:50.171: D/dalvikvm(15615): GC_CONCURRENT freed 93K, 3% free 8492K/8732K, paused 5ms+9ms, total 44ms
+05-02 15:55:53.021: D/dalvikvm(15615): GC_CONCURRENT freed 93K, 3% free 8788K/9028K, paused 2ms+5ms, total 35ms
+05-02 15:55:54.861: D/dalvikvm(15615): GC_CONCURRENT freed 96K, 3% free 9116K/9360K, paused 2ms+9ms, total 48ms
+05-02 15:55:57.061: D/dalvikvm(15615): GC_CONCURRENT freed 116K, 3% free 9504K/9768K, paused 2ms+7ms, total 45ms
+</code></pre>
+
+<p>You can see that used memory grows up. So I have a question: How is this even possible???
+Please, explain if anyone have a clue.</p>

@@ -1,0 +1,82 @@
+<p>I've met annoying problem using <code>NetworkImageView</code>. It throws <code>ParseError</code> in <code>ImageRequest.doParse(NetworkResponse response)</code> library method.</p>
+
+<pre><code>private Response<Bitmap> doParse(NetworkResponse response) {
+    byte[] data = response.data;
+    BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
+    Bitmap bitmap = null;
+    if (mMaxWidth == 0 && mMaxHeight == 0) {
+        decodeOptions.inPreferredConfig = mDecodeConfig;
+        bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+    } else {
+        // If we have to resize this image, first get the natural bounds.
+        decodeOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+        int actualWidth = decodeOptions.outWidth;
+        int actualHeight = decodeOptions.outHeight;
+
+        // Then compute the dimensions we would ideally like to decode to.
+        int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
+                actualWidth, actualHeight);
+        int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth,
+                actualHeight, actualWidth);
+
+        // Decode to the nearest power of two scaling factor.
+        decodeOptions.inJustDecodeBounds = false;
+        // TODO(ficus): Do we need this or is it okay since API 8 doesn't support it?
+        // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
+        decodeOptions.inSampleSize =
+            findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
+        Bitmap tempBitmap =
+            BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+
+        // If necessary, scale down to the maximal acceptable size.
+        if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth ||
+                tempBitmap.getHeight() > desiredHeight)) {
+            bitmap = Bitmap.createScaledBitmap(tempBitmap,
+                    desiredWidth, desiredHeight, true);
+            tempBitmap.recycle();
+        } else {
+            bitmap = tempBitmap;
+        }
+    }
+
+    if (bitmap == null) {
+        return Response.error(new ParseError(response));
+    } else {
+        return Response.success(bitmap, HttpHeaderParser.parseCacheHeaders(response));
+    }
+}
+</code></pre>
+
+<p>It throws it because of </p>
+
+<blockquote>
+  <p>bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);</p>
+</blockquote>
+
+<p>returns null. But it <strong>returns null not on all devices.</strong></p>
+
+<p>I've tested it on :</p>
+
+<ul>
+<li>HTC <strong>Sensation XE</strong></li>
+<li>Nexus <strong>5</strong></li>
+<li>Samsung <strong>S4</strong></li>
+<li>Samsung <strong>Note</strong></li>
+</ul>
+
+<p>and only Samsung Note has this error.</p>
+
+<p><strong>Url</strong> is OK - I can open it in browser (and yes it's an image)<br>
+<strong>Data</strong> should be OK as it can be decoded in other devices</p>
+
+<p><code>decodeByteArray</code> documantaion says :</p>
+
+<blockquote>
+  <p><strong>Returns</strong><br>
+  The decoded bitmap, or null if the image data could not be decoded, or, if opts is non->null, if opts requested only the size be returned (in opts.outWidth and opts.outHeight)</p>
+</blockquote>
+
+<p>I've tried to pass <code>null</code> as opts parameter, but it still returns null. So anybody know what is happening here ?</p>
+
+<p>Thanks</p>

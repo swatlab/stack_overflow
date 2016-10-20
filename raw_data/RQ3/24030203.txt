@@ -1,0 +1,135 @@
+<p>Anyone know how to get the GridView, by loading the images and labels from the JSON that has the imageurls and labels. I 've done Image loading part, but every time I open the page, it duplicates the images and finding difficulties in setting the labels. Please let me know a way to solve this.below is adapter code</p>
+
+<pre><code>public class ImageAdapterGrid extends BaseAdapter implements ListAdapter{
+private Context mContext;
+
+public ImageAdapterGrid(Context c){
+    super();
+    this.mContext = c;
+    SymGridConfig.addImageUrls();        
+}
+
+  public int getCount() {
+   return SymGridConfig.getUrl_list().size();
+
+ }
+
+public Object getItem(int position) {
+   return SymGridConfig.getUrl_list().get(position);
+ }
+
+public long getItemId(int position) {
+   return position;
+ }
+
+ @Override
+ public View getView(int position, View convertView, ViewGroup parent) {      
+
+   View view = convertView;
+   ImageView imageView;
+   if(convertView==null)
+   {
+
+       imageView=new ImageView(mContext);
+       imageView.setLayoutParams(new GridView.LayoutParams(180,180));
+       imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+       imageView.setPadding(5,5,5,5);
+   }else{
+       imageView=(ImageView)convertView;
+
+   }
+   imageView.setImageDrawable(LoadImageFromURL(SymGridConfig.
+                            getUrl_list().get(position)));       
+   return imageView;
+
+ }
+
+  private Drawable LoadImageFromURL(String url)
+   {
+   try
+   {
+   InputStream is = (InputStream) new URL(url).getContent();
+   Drawable d = Drawable.createFromStream(is, "src");
+   return d;
+   }catch (Exception e) {
+   System.out.println(e);
+   return null;
+   }
+   }
+   }
+</code></pre>
+
+<p>and class SymGridConfig as follows:</p>
+
+<pre><code>public class SymGridConfig {
+
+
+ private static String url = "http://192.168.0.6/tele_medicine/index.php/symptoms/list";  
+
+   private static final String SYMP_ID = "symp_id";
+   private static final String SYMP_NAME = "symptom_name";
+   private static final String SYMP_LOGO_URL = "symptom_logo";
+
+  static ArrayList<String> url_list=new ArrayList<String>();
+  static ArrayList<String> title_list = new ArrayList<String>();
+  static ArrayList<Item> gridArray = new ArrayList<Item>();
+
+  public static ArrayList<Item> getGridArray(){
+    return gridArray;
+
+  }
+  public static void setGridArray(ArrayList<Item> gridArray)
+  {
+      SymGridConfig.gridArray = gridArray;
+  }
+
+   public static ArrayList<String> getUrl_list() {
+       return url_list;
+    }
+
+   public static void setUrl_list(ArrayList<String> url_list) {
+       SymGridConfig.url_list = url_list;
+    }
+
+  public static ArrayList<String> getTitles(){
+        return title_list;
+    }
+
+   public static void setTitle_list(ArrayList<String> url_list) {
+       SymGridConfig.url_list = url_list;
+    }
+
+   public static void addImageUrls(){   
+     ServiceHandler sh = new ServiceHandler();
+
+       // Making a request to url and getting response
+       String jsonStr = sh.makeServiceCall(img_url, ServiceHandler.GET);
+
+       if (jsonStr != null) {
+           try {
+            JSONArray jsonArray = new JSONArray(jsonStr);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                   String diag_id = jsonObject.getString(SYMP_ID);   
+                   String diag_name = jsonObject.getString(SYMP_NAME);
+                   String img_url = jsonObject.getString(SYMP_LOGO_URL);
+                   String logo_url="http://m2mapps.co.in/images/symptoms/";                        
+                   img_url = logo_url.concat(img_url);
+                   title_list.add(diag_name);
+                   url_list.add(img_url);
+                   gridArray.add(new Item(img_url,diag_name));
+
+               }
+           } catch (JSONException e) {
+               e.printStackTrace();
+           }
+       } else {
+           Log.e("ServiceHandler", "Couldn't get any data from the url");
+       }    
+  }
+  }
+</code></pre>
+
+<p>the above code loads the image and duplicates whenever I reopen the page and facing trouble at setting labels for the images. The label should be symptom_name.</p>

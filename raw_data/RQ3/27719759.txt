@@ -1,0 +1,126 @@
+<p>I'm currently working on an application which has one activity and several fragments. Navigation between the fragments should be done with a toolbar button and the back button. </p>
+
+<p>But I'm getting some errors and I don't know why.</p>
+
+<p>Here is MainActivity.java:</p>
+
+<pre><code>package com.geapps.nottaptests.testone;
+
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+
+public class MainActivity extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        if (savedInstanceState == null)
+        {
+            getSupportFragmentManager().beginTransaction().add(R.id.main_container, OneFragment.newInstance(0), "One").commit();
+        }
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.action_add)
+        {
+            getSupportFragmentManager().beginTransaction().replace(R.id.main_container, TwoFragment.newInstance(0), "Two").addToBackStack(null).commit();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0)
+        {
+            getSupportFragmentManager().popBackStack();
+            getSupportFragmentManager().beginTransaction().commit();
+        }
+        else
+        {
+            super.onBackPressed();
+        }
+    }
+}
+</code></pre>
+
+<p>And OneFragment.java:</p>
+
+<pre><code>package com.geapps.nottaptests.testone;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class OneFragment extends Fragment 
+{
+    public static OneFragment newInstance(int index)
+    {
+        OneFragment fragment = new OneFragment();
+
+        Bundle args = new Bundle();
+        args.putInt("int", index);
+
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+    {
+        View view = inflater.inflate(R.layout.fragment_one, container, false);
+        return view;
+    }
+}
+</code></pre>
+
+<p>TwoFragment.java is exactly like OneFragment.java.</p>
+
+<p>I get the following errors when I press the back button in TwoFragment.java:</p>
+
+<pre><code>Thread [<1> main] (Suspended (exception ClassNotFoundException))    
+    <VM does not provide monitor information>   
+    PathClassLoader(BaseDexClassLoader).findClass(String) line: 61  
+    PathClassLoader(ClassLoader).loadClass(String, boolean) line: 501   
+    PathClassLoader(ClassLoader).loadClass(String) line: 461    
+    BackStackRecord.getEnterTransition(Fragment, boolean) line: 1056    
+    BackStackRecord.configureTransitions(int, BackStackRecord$TransitionState, boolean, SparseArray, SparseArray) line: 1138    
+    BackStackRecord.beginTransition(SparseArray, SparseArray, boolean) line: 1029   
+    BackStackRecord.popFromBackStack(boolean, BackStackRecord$TransitionState, SparseArray, SparseArray) line: 883  
+    FragmentManagerImpl.popBackStackState(Handler, String, int, int) line: 1541 
+    FragmentManagerImpl$2.run() line: 493   
+    FragmentManagerImpl.execPendingActions() line: 1489 
+    FragmentManagerImpl$1.run() line: 454   
+    Handler.handleCallback(Message) line: 615   
+    FragmentActivity$1(Handler).dispatchMessage(Message) line: 92   
+    Looper.loop() line: 137 
+    ActivityThread.main(String[]) line: 4921    
+    Method.invokeNative(Object, Object[], Class, Class[], Class, int, boolean) line: not available [native method]  
+    Method.invoke(Object, Object...) line: 511  
+    ZygoteInit$MethodAndArgsCaller.run() line: 1038 
+    ZygoteInit.main(String[]) line: 805 
+    NativeStart.main(String[]) line: not available [native method]  
+</code></pre>

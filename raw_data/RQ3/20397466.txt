@@ -1,0 +1,298 @@
+<p>I read a lot of questions here about my problem with service intent, but I didn't find any solution for this. </p>
+
+<p>So I decided to ask you again..</p>
+
+<p><strong>Widget Class:</strong></p>
+
+<pre><code>public class datacounter_widget extends AppWidgetProvider {
+
+private static PendingIntent service = null;
+
+@Override
+ public void onReceive(Context context, Intent intent) {
+  // TODO Auto-generated method stub
+  super.onReceive(context, intent);
+
+
+ }
+
+
+@Override
+public void onEnabled(Context context) {
+// TODO Auto-generated method stub
+//super.onEnabled(context);
+
+    killMe = false;
+
+Toast.makeText(context, "Widget erstellt!", Toast.LENGTH_LONG).show();
+}
+
+  @Override
+ public void onUpdate(Context context, AppWidgetManager appWidgetManager,
+   int[] appWidgetIds) {
+  // TODO Auto-generated method stub
+    super.onUpdate(context, appWidgetManager, appWidgetIds);
+
+    final int N = appWidgetIds.length;
+     for (int i=0; i<N; i++) {
+         int appWidgetId = appWidgetIds[i];
+
+             updateAppWidget(context, appWidgetManager, appWidgetId);
+
+     }
+ }
+
+
+
+ @Override
+    public void onDisabled(Context context) {
+    // TODO Auto-generated method stub
+    //super.onEnabled(context);
+
+        killMe = true;
+        final AlarmManager m = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);  
+        m.cancel(service); 
+    Toast.makeText(context, "Widget entfernt!", Toast.LENGTH_LONG).show();
+    }
+
+
+
+ public static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
+         int appWidgetId){
+         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, 0);
+         RemoteViews updateViews = new RemoteViews(context.getPackageName(), R.layout.widget_datacounter_main);
+
+
+
+
+
+         final AlarmManager m = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+         final Calendar TIME = Calendar.getInstance();
+         TIME.set(Calendar.MINUTE, 0);
+         TIME.set(Calendar.SECOND, 0);
+         TIME.set(Calendar.MILLISECOND, 0);
+
+         final Intent i = new Intent(context, datacounter_widget_service.class);
+
+         if (service == null)
+         {
+             service = PendingIntent.getService(context, 0, i, PendingIntent.FLAG_CANCEL_CURRENT);
+         }
+
+         int time = prefs.getInt("timeInt", 10);
+         m.setRepeating(AlarmManager.RTC, TIME.getTime().getTime(), 1000 * time, service);
+
+         Intent intent = new Intent(context, datacounter_widget_config.class);
+         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+
+
+         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+         updateViews.setOnClickPendingIntent(R.id.backgroundImageData, pendingIntent);
+
+          appWidgetManager.updateAppWidget(appWidgetId, updateViews);
+
+
+
+         }
+
+}
+</code></pre>
+
+<p><strong>Service Class:</strong></p>
+
+<pre><code>   public class datacounter_widget_service extends Service
+      {
+
+
+
+@Override
+public void onCreate()
+{
+    super.onCreate();
+}
+
+@Override
+public int onStartCommand(Intent intent, int flags, int startId)
+{
+    buildUpdate();
+
+    return super.onStartCommand(intent, flags, startId);
+}
+
+
+private static String CalcDataUsageSent()
+{
+
+    long txBytes = TrafficStats.getTotalTxBytes() / (1024*1024);
+
+
+    int sent = (int) (txBytes);
+
+    String sent_txt = String.valueOf(sent);
+
+ return  sent_txt;
+
+}
+private static String CalcDataUsageReceived()
+{
+
+    long rxBytes = TrafficStats.getTotalRxBytes() / (1024*1024);
+
+
+    int received = (int) (rxBytes);
+
+    String sent_txt = String.valueOf(received);
+
+ return  sent_txt;
+
+}
+
+private static String CalcDataUsageSum()
+{
+
+    int sum = (Integer.parseInt(CalcDataUsageReceived())) + (Integer.parseInt(CalcDataUsageSent()));
+
+    String sent_txt = String.valueOf(sum);
+
+ return  sent_txt;
+
+}
+
+
+
+
+private void buildUpdate()
+{
+
+     RemoteViews updateViews = new RemoteViews(getPackageName(), R.layout.widget_datacounter_main);
+
+     updateViews.setTextViewText(R.id.dataCounterTextSent, CalcDataUsageSent()+" MB");
+     updateViews.setTextViewText(R.id.dataCounterTextReceived, CalcDataUsageReceived()+" MB");
+     updateViews.setTextViewText(R.id.dataCounterTextSum, CalcDataUsageSum()+" MB");
+
+
+
+    // Push update for this widget to the home screen
+    ComponentName thisWidget = new ComponentName(this, datacounter_widget.class);
+    AppWidgetManager manager = AppWidgetManager.getInstance(this);
+    manager.updateAppWidget(thisWidget, updateViews);
+}
+
+@Override
+public IBinder onBind(Intent intent)
+{
+    return null;
+}
+}
+</code></pre>
+
+<p><strong>Config:</strong></p>
+
+<pre><code>     public class datacounter_widget_config extends Activity {
+String[] items_seconds, items_modes;
+
+
+   static final String PREFS_NAME = "de.marcusschreiter.sysinfo.datacounter_widget";
+    public static String MY_WIDGET_UPDATE = "MY_OWN_WIDGET_UPDATE";
+
+Button configOkButton;
+int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+// TODO Auto-generated method stub
+super.onCreate(savedInstanceState);
+
+
+setResult(RESULT_CANCELED);
+
+
+
+        setContentView(R.layout.widget_datacounter_config);
+
+        SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME, 0);
+        String time = prefs.getString("time", "nichts").trim();
+        int mode_setted = prefs.getInt("mode", 0);
+
+
+        Intent intent = getIntent();
+     Bundle extras = intent.getExtras();
+     if (extras != null) {
+         mAppWidgetId = extras.getInt(
+                 AppWidgetManager.EXTRA_APPWIDGET_ID,
+                 AppWidgetManager.INVALID_APPWIDGET_ID);
+     }
+
+
+     if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+         finish();
+     }
+
+}
+
+
+private Button.OnClickListener configOkButtonOnClickListener
+= new Button.OnClickListener(){
+
+public void onClick(View arg0) {
+ // TODO Auto-generated method stub
+
+ final Context context = datacounter_widget_config.this;
+
+
+
+    Intent resultValue = new Intent();
+    resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+    setResult(RESULT_OK, resultValue);
+
+
+
+
+ finish();
+}
+};
+
+}
+</code></pre>
+
+<p><strong>Manifest:</strong></p>
+
+<pre><code><receiver android:name=".datacounter_widget" android:label="@string/widget_datacounter_head">
+
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+
+    <meta-data android:name="android.appwidget.provider"    android:resource="@layout/widget_datacounter_provider" />
+</receiver>
+<service android:name=".datacounter_widget_service" />
+<activity android:name=".datacounter_widget_config"
+           android:label="DataCounter-Widget-Setup">
+
+
+     <intent-filter>
+         <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+     </intent-filter>
+ </activity>
+</code></pre>
+
+<p><strong>Logcat:</strong> </p>
+
+<pre><code>  Unable to start service Intent { flg=0x4 
+  cmp=de.marcusschreiter.sysinfo/.datacounter_widget (has extras) } U=0: not found
+</code></pre>
+
+<p>After hours of checking and testing it seems that I cannot fix this.
+The widget works, shows data usage. But after configuration (config class) the widget seems to be not refreshed. It should show the correct linearlayout (maybe the one for sum of download and upload or the one which shows download and uplad - show one of this and hide the other) after the save click. But it refreshes after some minutes.. </p>
+
+<p>Why my widget doesn't refresh itself after the configuration?
+I don't know if the service (refresh time of widget) works but logcat tells the error..</p>
+
+<p>So, could you help me making a data usage widget with correct refresh time and refresh after config?</p>
+
+<p>Thank you!</p>
+
+<p>Best regards</p>
+
+<p>Marcus</p>

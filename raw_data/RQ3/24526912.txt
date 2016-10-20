@@ -1,0 +1,951 @@
+<p>What i want to do is populate a new list in placeholder fragment each time a list item is clicked on fragment drawer.</p>
+
+<p>What i have done is, onClick on a list item in fragment drawer i get its position value from its position value i get its foreignkey_id in SQlite database. and run a query and get the results on basis of foreign key and pass them both position and foreign key to onNavigationDrawerItemSelected in MainActivity from NavigationDrawerFragment
+what i do not under stand is how to assign those values to the fragment and make the fragment manager display my values</p>
+
+<p>i'm unable to understand onNavigationDrawerItemSelected and placeholderFragments section of the code
+this is MainActivity class</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements
+    NavigationDrawerFragment.NavigationDrawerCallbacks {
+/**
+ * Fragment managing the behaviors, interactions and presentation of the
+ * navigation drawer.
+ */
+private NavigationDrawerFragment mNavigationDrawerFragment;
+
+/**
+ * Used to store the last screen title. For use in
+ * {@link #restoreActionBar()}.
+ */
+private CharSequence mTitle;
+private Context mContext = this;
+Activity mActivity;
+
+String toastMsg = null;
+DatabaseHelper db;
+TaskListAdapter mAdapter;
+
+ArrayList<Task> task_data = new ArrayList<Task>();
+
+ListView Task_listview;
+TaskAdapter taskAdapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.activity_main);
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment) getSupportFragmentManager()
+            .findFragmentById(R.id.navigation_drawer);
+    mTitle = getTitle();
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setUp(R.id.navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position, int selectItemid) {
+    // update the main content by replacing fragments
+    // FragmentManager fragmentManager = getSupportFragmentManager();
+    // fragmentManager
+    // .beginTransaction()
+    // .replace(R.id.container,
+    // PlaceholderFragment.newInstance(position + 1)).commit();
+
+    try {
+        task_data.clear();
+        db = new DatabaseHelper(getApplicationContext());
+        ArrayList<Task> task_array_from_db = db
+                .Get_Tasks_Where_FK(selectItemid);
+            for (int i = 0; i < contact_array_from_db.size(); i++) {
+            int task_id = task_array_from_db.get(i)._id;
+            String title = task_array_from_db.get(i).title;
+            String details = task_array_from_db.get(i).details;
+            String notes = task_array_from_db.get(i).notes;
+            Task task = new Task();
+            task._id = task_id ;
+            task.title = title;
+            task.details = details;
+            task.notes = notes;
+            task_data.add(task);
+
+        db.close();
+        taskAdapter = new TaskAdapter(mActivity, R.layout.listview_row,
+                task_data);
+        Task_listview.setAdapter(taskAdapter);
+        taskAdapter.notifyDataSetChanged();
+    }// try
+    catch (Exception e) {
+        Log.e("error on fragment", "creating the mainScreen");
+    }// catch
+    finally {
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction()
+                .replace(R.id.container, PlaceholderFragment.newInstance( ))
+                .commit();
+
+    }
+}
+
+public void onSectionAttached(int number) {
+    switch (number) {
+    case 1:
+        mTitle = getString(R.string.title_section1);
+        break;
+    case 2:
+        mTitle = getString(R.string.title_section2);
+        break;
+    case 3:
+        mTitle = getString(R.string.title_section3);
+        break;
+    }
+}
+
+public void restoreActionBar() {
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setTitle(mTitle);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    if (!mNavigationDrawerFragment.isDrawerOpen()) {
+        // Only show items in the action bar relevant to this screen
+        // if the drawer is not showing. Otherwise, let the drawer
+        // decide what to show in the action bar.
+        getMenuInflater().inflate(R.menu.main, menu);
+        restoreActionBar();
+        return true;
+    }
+    return super.onCreateOptionsMenu(menu);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }  else if (id == R.id.add_list_title) {
+        return true;
+    } 
+
+    return super.onOptionsItemSelected(item);
+}
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public static class PlaceholderFragment extends Fragment {
+    /**
+     * The fragment argument representing the section number for this
+     * fragment.
+     */
+    private static final String ARG_SECTION_NUMBER = "section_number";
+    /**
+     * Returns a new instance of this fragment for the given section number.
+     */
+    public static PlaceholderFragment newInstance(int sectionNumber) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static PlaceholderFragment newInstance(Task task) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+
+         //View rootView = inflater.inflate(R.layout.fragment_main, container,
+         //false);
+         View rootView = inflater.inflate(R.layout.main, container,
+         false);
+        TextView textView = (TextView) rootView
+                .findViewById(R.id.user_task_title);
+
+        TextView textView1 = (TextView) rootView
+                .findViewById(R.id.user_task_details);
+        TextView textView2 = (TextView) rootView
+                .findViewById(R.id.user_task_notes);
+        // TextView textView = (TextView)
+        // rootView.findViewById(R.id.section_label);
+        // textView.setText(Integer.toString(getArguments().getInt(
+        // ARG_SECTION_NUMBER)));
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        // ((MainActivity)
+        // activity).onSectionAttached(getArguments().getInt(
+        // ARG_SECTION_NUMBER));
+
+
+    }
+}
+
+}
+</code></pre>
+
+<p>this is NavigationDrawerFragment class</p>
+
+<pre><code>public class NavigationDrawerFragment extends Fragment {
+DatabaseHelper db;
+Activity mActivity;
+ArrayList<TaskList> task_title_list = new ArrayList<TaskList>();
+TaskListAdapterSimple mAdapter;
+Button AddTaskListbtn;
+String toastMsg = null;
+//private int selCount = 0; // for CAB multi select count
+/**
+ * Remember the position of the selected item.
+ */
+private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+/**
+ * Per the design guidelines, you should show the drawer on launch until the
+ * user manually expands it. This shared preference tracks this.
+ */
+private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+/**
+ * A pointer to the current callbacks instance (the Activity).
+ */
+private NavigationDrawerCallbacks mCallbacks;
+/**
+ * Helper component that ties the action bar to the navigation drawer.
+ */
+private ActionBarDrawerToggle mDrawerToggle;
+private DrawerLayout mDrawerLayout;
+private ListView mDrawerListView;
+private View mFragmentContainerView;
+private int mCurrentSelectedPosition = 0;
+private int itemSelectid = 1;
+private boolean mFromSavedInstanceState;
+private boolean mUserLearnedDrawer;
+
+public NavigationDrawerFragment() {
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    // Read in the flag indicating whether or not the user has demonstrated
+    // awareness of the
+    // drawer. See PREF_USER_LEARNED_DRAWER for details.
+    SharedPreferences sp = PreferenceManager
+            .getDefaultSharedPreferences(getActivity());
+    mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+    if (savedInstanceState != null) {
+        mCurrentSelectedPosition = savedInstanceState
+                .getInt(STATE_SELECTED_POSITION);
+        mFromSavedInstanceState = true;
+    }
+    // Select either the default item (0) or the last selected item.
+
+    selectItem(mCurrentSelectedPosition, itemSelectid);
+}
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    // Indicate that this fragment would like to influence the set of
+    // actions in the action bar.
+    setHasOptionsMenu(true);
+}
+
+public void Set_Refresh_Adapter_Data() { // when called assigns values to
+                                            // adapter
+    task_title_list.clear();
+    db = new DatabaseHelper(getActivity());
+    ArrayList<TaskList> task_array_from_db = db.Get_TaskTitleList();
+    for (int i = 0; i < task_array_from_db.size(); i++) {
+        int task_id = task_array_from_db.get(i)._id;
+        String title = task_array_from_db.get(i).title;
+        TaskList tasklist = new TaskList();
+        tasklist._id=task_id;
+        tasklist.title=title;
+        task_title_list.add(tasklist);
+    }
+    db.close();
+    mAdapter = new TaskListAdapterSimple(getActivity(), R.layout.tasklist_row,
+            task_title_list);
+    /**
+     * list view divider line, color and height
+     */
+    mDrawerListView.setDivider(new ColorDrawable(0x000000));
+    mDrawerListView.setDividerHeight(1);
+    mDrawerListView.setAdapter(mAdapter);
+    mAdapter.notifyDataSetChanged();
+}
+
+@SuppressLint({ "InlinedApi", "NewApi" })
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    mDrawerListView = (ListView) inflater.inflate(
+            R.layout.fragment_navigation_drawer, container, false);
+    /**
+     * adding a header to fragment
+     */
+    inflater = this.getLayoutInflater(savedInstanceState);
+    View header = inflater.inflate(R.layout.drawer_header, null);
+    mDrawerListView
+      .setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+      @Override
+      public void onItemClick(AdapterView<?> parent, View view,
+      int position, long id) {
+     position--;
+     int itemSelecteID =  mAdapter.getSelectedListId(position); 
+     selectItem(position, itemSelecteID);
+      }
+      });
+
+    mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+    return mDrawerListView;
+}
+
+
+public boolean isDrawerOpen() {
+    return mDrawerLayout != null
+            && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+}
+
+/**
+ * Users of this fragment must call this method to set up the navigation
+ * drawer interactions.
+ * 
+ * @param fragmentId
+ *            The android:id of this fragment in its activity's layout.
+ * @param drawerLayout
+ *            The DrawerLayout containing this fragment's UI.
+ */
+public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+    mActivity = getActivity();
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    // set a custom shadow that overlays the main content when the drawer
+    // opens
+    mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow,
+            GravityCompat.START);
+    // set up the drawer's list view with items and click listener
+
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setHomeButtonEnabled(true);
+
+    // ActionBarDrawerToggle ties together the the proper interactions
+    // between the navigation drawer and the action bar app icon.
+    mDrawerToggle = new ActionBarDrawerToggle(getActivity(), /* host Activity */
+    mDrawerLayout, /* DrawerLayout object */
+    R.drawable.ic_drawer, /* nav drawer image to replace 'Up' caret */
+    R.string.navigation_drawer_open, /*
+                                     * "open drawer" description for
+                                     * accessibility
+                                     */
+    R.string.navigation_drawer_close /*
+                                     * "close drawer" description for
+                                     * accessibility
+                                     */
+    ) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls
+                                                            // onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            if (!mUserLearnedDrawer) {
+                // The user manually opened the drawer; store this flag to
+                // prevent auto-showing
+                // the navigation drawer automatically in the future.
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true)
+                        .apply();
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls
+                                                            // onPrepareOptionsMenu()
+        }
+    };
+
+    // If the user hasn't 'learned' about the drawer, open it to introduce
+    // them to the drawer,
+    // per the navigation drawer design guidelines.
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+private void selectItem(int position, int selectItemid) {
+    mCurrentSelectedPosition = position;
+    if (mDrawerListView != null) {
+        mDrawerListView.setItemChecked(position, true);
+    }
+    if (mDrawerLayout != null) {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+    if (mCallbacks != null) {
+
+        mCallbacks.onNavigationDrawerItemSelected(position, selectItemid);
+    }
+
+}
+
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        mCallbacks = (NavigationDrawerCallbacks) activity;
+    } catch (ClassCastException e) {
+        throw new ClassCastException(
+                "Activity must implement NavigationDrawerCallbacks.");
+    }
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    mCallbacks = null;
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    // Forward the new configuration the drawer toggle component.
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+@Override
+public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    // If the drawer is open, show the global app actions in the action bar.
+    // See also
+    // showGlobalContextActionBar, which controls the top-left area of the
+    // action bar.
+    if (mDrawerLayout != null && isDrawerOpen()) {
+        inflater.inflate(R.menu.global, menu);
+        showGlobalContextActionBar();
+    }
+    super.onCreateOptionsMenu(menu, inflater);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+    if (item.getItemId() == R.id.action_example) {
+        Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+/**
+ * Per the navigation drawer design guidelines, updates the action bar to
+ * show the global app 'context', rather than just what's in the current
+ * screen.
+ */
+private void showGlobalContextActionBar() {
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    actionBar.setTitle(R.string.app_name);
+}
+
+private ActionBar getActionBar() {
+    return ((ActionBarActivity) getActivity()).getSupportActionBar();
+}
+
+/**
+ * Callbacks interface that all activities using this fragment must
+ * implement.
+ */
+public static interface NavigationDrawerCallbacks {
+    /**
+     * Called when an item in the navigation drawer is selected.
+     */
+    void onNavigationDrawerItemSelected(int position, int selectItem);
+
+}
+}
+</code></pre>
+
+<p>this is my database helper </p>
+
+<pre><code> public class DatabaseHelper extends SQLiteOpenHelper {
+
+// Database Version
+private static final int DATABASE_VERSION = 1;
+
+// Database Name
+private static final String DATABASE_NAME = "tasksManager";
+
+// TABLE NAMES
+// Tasks table
+// tasks has Auto inc. id, title, details and notes
+private static final String TABLE_TASKS = "tasks";
+// Task List Table
+// task list has Auto inc. id and a title
+private static final String TABLE_TASK_LIST = "task_list";
+// Users Table
+// task list has Auto inc. id name and a email
+private static final String TABLE_USERS = "users";
+// TABLE NAMES
+
+// Tasks Table Columns names
+private static final String KEY_PK = "_id";
+private static final String KEY_TITLE = "title";
+private static final String KEY_DETAILS = "details";
+private static final String KEY_NOTES = "notes";
+private static final String KEY_FK_TASKLIST_ID = "fk_tasklist_id";
+
+private final ArrayList<Task> task_list = new ArrayList<Task>();
+
+// Task List Table Columns names
+// id and title and as above
+
+private final ArrayList<TaskList> task_title_list = new ArrayList<TaskList>();
+
+// SQLite Create Queries
+// Tasks Table
+private static final String CREATE_TASKS_TABLE = "CREATE TABLE "
+        + TABLE_TASKS 
+        + "(" 
+        + KEY_PK
+        + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TITLE + " TEXT,"
+        + KEY_DETAILS + " TEXT," + KEY_NOTES + " TEXT," 
+        + KEY_FK_TASKLIST_ID + " INTEGER,"
+        + " FOREIGN KEY ("+ KEY_FK_TASKLIST_ID + ")" 
+        + "REFERENCES " 
+        + TABLE_TASK_LIST + "("+ KEY_PK + ")" 
+        + ")";
+
+private static final String CREATE_TASK_LIST_TABLE = "CREATE TABLE "
+        + TABLE_TASK_LIST + "(" + KEY_PK
+        + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TITLE + " TEXT" + ")";
+
+
+public DatabaseHelper(Context cContext) {
+    super(cContext, DATABASE_NAME, null, DATABASE_VERSION);
+}
+
+// Creating Tables
+@Override
+public void onCreate(SQLiteDatabase db) {
+    try {
+        db.execSQL(CREATE_TASKS_TABLE);// create task table
+    } catch (Exception e) {
+        Log.e("onCreate Error", "TASKS_TABLE not created");
+    }
+    try {
+        db.execSQL(CREATE_TASK_LIST_TABLE);// create task list table
+    } catch (Exception e) {
+        Log.e("onCreate Error", "TASK_LIST_TABLE not created");
+    }
+}
+
+// Upgrading database
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // Drop older table if existed
+    try {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASKS);// Drop Task Table
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASK_LIST);// Drop Task
+        onCreate(db);// Create tables again
+    } catch (Exception e) {
+        Log.e("Database onUpgrade", "not created");
+    }
+}
+
+/**
+ * All CRUD FOR TASK(Create, Read, Update, Delete) Operations
+ */
+// Add new Task
+public void Add_Task(Task task) {
+    SQLiteDatabase db = this.getWritableDatabase();
+    ContentValues values = new ContentValues();
+    values.put(KEY_TITLE, task.title);
+    values.put(KEY_DETAILS, task.details);
+    values.put(KEY_NOTES, task.notes);
+    values.put(KEY_FK_TASKLIST_ID, task.fk_tasklist_id);
+    db.insert(TABLE_TASKS, null, values);
+    db.close();
+}
+
+// Delete a Task
+public void Delete_Task(int id) {
+    SQLiteDatabase db = this.getWritableDatabase();
+    db.delete(TABLE_TASKS, KEY_PK + " = ?",
+            new String[] { String.valueOf(id) });
+    db.close();
+}
+
+// Updating a Task
+public int Update_Task(Task task) {
+    SQLiteDatabase db = this.getWritableDatabase();
+
+    ContentValues values = new ContentValues();
+    values.put(KEY_TITLE, task.title);
+    values.put(KEY_DETAILS, task.details);
+    values.put(KEY_NOTES, task.notes);
+    return db.update(TABLE_TASKS, values, KEY_PK + " = ?",
+            new String[] { String.valueOf(task._id) });// updating row
+}
+
+// Getting single Task
+Task Get_Task(int id) {
+    SQLiteDatabase db = this.getReadableDatabase();
+
+    Cursor cursor = db.query(TABLE_TASKS, new String[] { KEY_PK, KEY_TITLE,
+            KEY_DETAILS, KEY_NOTES,KEY_FK_TASKLIST_ID }, KEY_PK + "=?",
+            new String[] { String.valueOf(id) }, null, null, null, null);
+    if (cursor != null)
+        cursor.moveToFirst();
+    Task task = new Task(
+                        Integer.parseInt(cursor.getString(0)),
+                        cursor.getString(1),cursor.getString(2),
+                        cursor.getString(3),
+                        Integer.parseInt(cursor.getString(4))
+                        );
+    // return Task
+    cursor.close();
+    db.close();
+
+    return task;
+}
+
+// Getting All Tasks
+public ArrayList<Task> Get_Tasks() {
+    try {
+        task_list.clear();
+
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_TASKS;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                Task task = new Task();
+                task._id=(Integer.parseInt(cursor.getString(0)));
+                task.title=(cursor.getString(1));
+                task.details =(cursor.getString(2));
+                task.notes=(cursor.getString(3));
+            //  task.fk_tasklist_id=(cursor.getString(4));
+                // Adding Task to list
+                task_list.add(task);
+            } while (cursor.moveToNext());
+        }
+
+        // return Task list
+        cursor.close();
+        db.close();
+        return task_list;
+    } catch (Exception e) {
+        // TODO: handle exception
+        Log.e("all_Task", "DBHelper GetTasks" + e);
+    }
+
+    return task_list;
+}
+
+// Getting Tasks Count
+public int Get_Total_Tasks() {
+    String countQuery = "SELECT  * FROM " + TABLE_TASKS;
+    SQLiteDatabase db = this.getReadableDatabase();
+    Cursor cursor = db.rawQuery(countQuery, null);
+    cursor.close();
+    // return count
+    return cursor.getCount();
+}
+// Getting All Tasks
+public ArrayList<Task> Get_Tasks_Where_FK(int id) {
+    try {
+        task_list.clear();
+
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_TASKS + " WHERE " + KEY_FK_TASKLIST_ID + " = " + id;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                Task task = new Task();
+                task._id=(Integer.parseInt(cursor.getString(0)));
+                task.title=(cursor.getString(1));
+                task.details =(cursor.getString(2));
+                task.notes=(cursor.getString(3));
+                task.fk_tasklist_id=(Integer.parseInt(cursor.getString(4)));
+                // Adding Task to list
+                task_list.add(task);
+            } while (cursor.moveToNext());
+        }
+
+        // return Task list
+        cursor.close();
+        db.close();
+        return task_list;
+    } catch (Exception e) {
+        // TODO: handle exception
+        Log.e("all_Task", "DBHelper GetTasks" + e);
+    }
+
+    return task_list;
+}
+
+/**
+ * All CRUD FOR TASK LIST(Create, Read, Update, Delete) Operations
+ */
+// Add a TaskList
+public void Add_TaskList(TaskList tasklist) {
+    SQLiteDatabase db = this.getWritableDatabase();
+    ContentValues values = new ContentValues();
+    values.put(KEY_TITLE, tasklist.title);
+    db.insert(TABLE_TASK_LIST, null, values);
+    db.close();
+}
+
+// Delete a TaskList
+public void Delete_TaskList(int id) {//recento
+    SQLiteDatabase db = this.getWritableDatabase();
+    db.delete(TABLE_TASK_LIST, KEY_PK + " = ?",
+            new String[] { String.valueOf(id) });
+    db.close();
+}
+
+// Updating single Task
+public int Update_TaskList(TaskList tasklist) {
+    SQLiteDatabase db = this.getWritableDatabase();
+
+    ContentValues values = new ContentValues();
+    values.put(KEY_TITLE, tasklist.title);
+    return db.update(TABLE_TASK_LIST, values, KEY_PK + " = ?",
+            new String[] { String.valueOf(tasklist._id) });
+}
+
+// Getting All TasksLists
+public ArrayList<TaskList> Get_TaskTitleList() {
+    try {
+        task_title_list.clear();
+
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_TASK_LIST;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                TaskList tasklist = new TaskList();
+                tasklist._id=(Integer.parseInt(cursor.getString(0)));
+                tasklist.title=(cursor.getString(1));
+                // Adding Task to list
+                task_title_list.add(tasklist);
+            } while (cursor.moveToNext());
+        }
+
+        // return Task list
+        cursor.close();
+        db.close();
+        return task_title_list;
+    } catch (Exception e) {
+        // TODO: handle exception
+        Log.e("all_TaskTitleList", "DBHelper GetTaskTitleList" + e);
+    }
+
+    return task_title_list;
+}
+
+// Getting single TaskList
+TaskList Get_TaskList(int id) {
+    SQLiteDatabase db = this.getReadableDatabase();
+
+    Cursor cursor = db.query(TABLE_TASK_LIST, new String[] { KEY_PK,
+            KEY_TITLE }, KEY_PK + "=?",
+            new String[] { String.valueOf(id) }, null, null, null, null);
+    if (cursor != null)
+        cursor.moveToFirst();
+
+    TaskList tasklist = new TaskList(Integer.parseInt(cursor.getString(0)),
+            cursor.getString(1));// return TaskList
+    cursor.close();
+    db.close();
+    return tasklist;
+}
+
+// Getting Tasks Count
+public int Get_Total_TaskList() {
+    String countQuery = "SELECT  * FROM " + TABLE_TASK_LIST;
+    SQLiteDatabase db = this.getReadableDatabase();
+    Cursor cursor = db.rawQuery(countQuery, null);
+    cursor.close();
+    // return count
+    return cursor.getCount();
+}
+}
+</code></pre>
+
+<p>and this is my adapter</p>
+
+<pre><code>public class TaskAdapter extends ArrayAdapter<Task> {
+Activity activity;
+NavigationDrawerFragment navigationDrawerFragment;
+int layoutResourceId;
+Task user;
+ArrayList<Task> data = new ArrayList<Task>();
+private HashMap<Integer, Boolean> mSelection = new HashMap<Integer, Boolean>();
+
+public TaskAdapter(Activity act, int layoutResourceId, ArrayList<Task> data) {
+    super(act, layoutResourceId, data);
+    this.layoutResourceId = layoutResourceId;
+    this.activity = act;
+    this.data = data;
+    notifyDataSetChanged();
+}
+
+public Task getSingularSelectedTask() {
+    if (mSelection.size() == 1) {
+        for (Integer temp : getCurrentCheckedPosition())
+            return data.get(temp);
+    }
+    return null;
+}
+
+public ArrayList<Integer> getSelectedTasks() {
+    ArrayList<Integer> temp = new ArrayList<Integer>();
+    for (int i = 0; i < data.size(); i++) {
+        if (isPositionChecked(i)) {
+            temp.add(data.get(i)._id);
+        }
+    }
+    return temp;
+}
+
+public void setNewSelection(int position, boolean value) {
+    mSelection.put(position, value);
+    notifyDataSetChanged();
+}
+
+public boolean isPositionChecked(int position) {
+    Boolean result = mSelection.get(position);
+    return result == null ? false : result;
+}
+
+public Set<Integer> getCurrentCheckedPosition() {
+    return mSelection.keySet();
+}
+
+public void removeSelection(int position) {
+    mSelection.remove(position);
+    notifyDataSetChanged();
+}
+
+public void clearSelection() {
+    mSelection = new HashMap<Integer, Boolean>();
+    notifyDataSetChanged();
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    View row = convertView;
+    UserHolder holder = null;
+    if (row == null) {
+        LayoutInflater inflater = LayoutInflater.from(activity);
+        // LayoutInflater inflater =
+        // LayoutInflater.from(navigationDrawerFragment);
+        row = inflater.inflate(layoutResourceId, parent, false);
+        holder = new UserHolder();
+        holder.title = (TextView) row.findViewById(R.id.user_task_title);
+        holder.details = (TextView) row
+                .findViewById(R.id.user_task_details);
+        holder.notes = (TextView) row.findViewById(R.id.user_task_notes);
+
+        row.setTag(holder);
+    } else {
+        holder = (UserHolder) row.getTag();
+    }
+
+    row.setBackgroundColor(activity.getResources().getColor(
+            android.R.color.background_light)); // default color
+
+    if (mSelection.get(position) != null) {
+        row.setBackgroundColor(activity.getResources().getColor(
+                android.R.color.holo_blue_light));
+    }
+    user = data.get(position);
+    holder.title.setText(user.title);
+    holder.details.setText(user.details);
+    holder.notes.setText(user.notes);
+    return row;
+
+}
+
+class UserHolder {
+    TextView title;
+    TextView details;
+    TextView notes;
+}
+
+} 
+</code></pre>

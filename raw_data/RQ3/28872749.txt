@@ -1,0 +1,333 @@
+<p>I am working on a rock paper scissors game for my programming class and the professor wanted us to use a <code>hash map</code> to store the user's patterns and the <code>times</code> the pattern occurred in the <code>hash map</code>.</p>
+
+<p>So I created a <code>Pattern</code> class that holds an array of values and in the <code>Computer</code> class I store it inside a <code>hash map</code>. The way I intended for the program to work is that the program will first <code>generate a move</code> based on the <code>patterns</code> in the <code>hash map</code>. If the map is empty then it would just generate a random move. Then after the user has made his move, his move will be put into an array to make a new pattern and the pattern will be saved to the hash map. If the pattern is already inside the map then the number of times it occurred will increase.</p>
+
+<p>The predicted move is made by comparing the last three moves of the user with the patterns in the map and see which move will the user potentially throw next. So if the user last 4 moves were: <code>R P S R</code> then the program will take <code>P S R</code> and then add in <code>R</code> <code>P</code> <code>S</code> and see if those patterns are in the map. If they are, it will see which one is most likely to occur. Then if the user plays <code>R</code> next, the array will be updated into <code>P S R R</code> and the pattern continues.</p>
+
+<p>So beginner mode is to start with an empty map and veteran is to load a previously saved map. However, I ran into some problems:</p>
+
+<ol>
+<li>After I <code>put</code> the Pattern and times into the hash map, when I tried to iterate through it and see what patterns is it storing inside the map, I see that all patterns are the same and that does not suppose to happen. The pattern is suppose to be: <code>R -> R P - > R P S</code> (if the user throws rock, paper, scissors respectively) but now it just shows <code>R P S -> R P S -> R P S</code>. This can be seen in the getSize() in Computer.</li>
+<li>I ran into a <code>NullPointerException</code> after the 4th move. The problem might be solved if I can solve the previous question but I have no idea why it happens.</li>
+<li>I get a warning when I tried to read the map from a file so I was just wondering if the warning could potentially mess with the program.<br>
+<code>Unchecked cast from Object to HashMap<Pattern, Integer></code></li>
+</ol>
+
+<p>Some help or pointers of what went wrong in my program would be greatly appreciated.</p>
+
+<p>Computer:</p>
+
+<pre><code>import java.io.*;
+import java.util.*;
+
+public class Computer {
+    /**
+     * The hashmap that will holds the pattern and how many times it occured.
+     */
+    private HashMap<Pattern, Integer> map;
+
+    /**
+     * Constructor
+     */
+    public Computer() {
+        map = new HashMap<Pattern, Integer>();
+    }
+
+    /**
+     * Storing the pattern to the map.
+     * 
+     * @param p
+     *            The pattern that will be saved to the map.
+     */
+    public void storePattern(Pattern p) {
+        Integer time = map.get(p);
+        // If time is null then the Pattern is not yet in the hashmap
+        if (time == null) {
+            map.put(p, 1);
+        } else {
+            map.put(p, time + 1);
+        }
+    }
+
+    /**
+     * Generating the computer's next move.
+     * 
+     * @return The move that the computer will make.
+     */
+    public char generateMove(Pattern user) {
+        int r = 0, p = 0, s = 0;
+        char returns = 'a';
+        if (!map.isEmpty()) {
+            char[] userPatts = user.getPattern();
+            char[] patts = userPatts.clone();
+            patts[patts.length - 1] = 'R';
+            Pattern testPatt = new Pattern(patts);
+            if (map.containsKey(testPatt))
+                r = map.get(patts);
+            patts[patts.length - 1] = 'P';
+            testPatt = new Pattern(patts);
+            if (map.containsKey(testPatt))
+                p = map.get(patts);
+            patts[patts.length - 1] = 'S';
+            testPatt = new Pattern(patts);
+            if (map.containsKey(testPatt))
+                s = map.get(patts);
+            if ((s - r) > 0 && (s - p) > 0)
+                return 'R';
+            if ((p - s) > 0 && (p - r) > 0)
+                return 'S';
+            if ((r - s) > 0 && (r - p) > 0)
+                return 'P';
+            if (s == r && r != 0)
+                return 'P';
+            if (s == p && s != 0)
+                return 'R';
+            if (r == p && p != 0)
+                return 'S';
+        }
+        // Throwing a random move
+        int max = (int) (Math.random() * 3) + 1;
+        if (max == 1)
+            returns = 'P';
+        else if (max == 2)
+            returns = 'S';
+        else if (max == 3)
+            returns = 'R';
+        return returns;
+    }
+
+    /**
+     * Loading the hashmap from a file.
+     */
+    public void loadMap() {
+        File f = new File("HashMap.dat");
+        if (f.exists()) {
+            try {
+                ObjectInputStream in = new ObjectInputStream(
+                        new FileInputStream(f));
+                map = (HashMap<Pattern, Integer>) in.readObject();
+                System.out.println("Successfully loaded.");
+                in.close();
+            } catch (IOException e) {
+                System.out.println("Error processing file.");
+            } catch (ClassNotFoundException e) {
+                System.out.println("Could not find class.");
+            }
+        }
+    }
+
+    /**
+     * Saving the hashmap to a file.
+     */
+    public void saveMap() {
+        File f = new File("HashMap.dat");
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(
+                    new FileOutputStream(f));
+            out.writeObject(map);
+            System.out.println("Map saved.");
+            out.close();
+        } catch (IOException e) {
+            System.out.println("Error processing file.");
+        }
+    }
+
+    public void getSize() {
+        System.out.println("Map size: " + map.size());
+        for (Map.Entry<Pattern, Integer> entry : map.entrySet()) {
+            Pattern b = entry.getKey();
+            char[] a = b.getPattern();
+            for (int i = 0; i < a.length; i++) {// Why a.length allows i to go
+                                                // from 0 to 3 if a.length == 4?
+                System.out.print(a[i] + " ");// Why are all the patterns the
+                                                // same?
+            }
+            System.out.println();
+        }
+    }
+}
+</code></pre>
+
+<p>Pattern:</p>
+
+<pre><code>import java.io.Serializable;
+import java.util.Arrays;
+
+public class Pattern implements Serializable {
+    /**
+     * Array that holds the patterns.
+     */
+    private char[] pattern;
+
+    /**
+     * Constructor.
+     */
+    public Pattern(char[] patt) {
+        pattern = patt;
+    }
+
+    /**
+     * Getting the pattern array.
+     * 
+     * @return The pattern array.
+     */
+    public char[] getPattern() {
+        return pattern;
+    }
+
+    /**
+     * Override the hashCode().
+     */
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(pattern);
+    }
+
+    /**
+     * Override the equals()
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Pattern)) {
+            return false;
+        }
+        Pattern s = (Pattern) o;
+        return Arrays.equals(s.getPattern(), pattern);
+    }
+}
+</code></pre>
+
+<p>Main:</p>
+
+<pre><code>import java.util.Scanner;
+
+/**
+ * This program allows the user to play Rock Paper Scisors with a computer with
+ * a twist: The computer will try to predict the user's next move and try to
+ * beat it.
+ * 
+ * @author:
+ */
+public class RockPaperScisors {
+    public static void main(String[] args) {
+        char computer = 'S';
+        int playerScore = 0, compScore = 0, tie = 0, full = 0;
+        char[] patt = new char[4];
+        Computer comp = new Computer();
+        boolean stop = false;
+        System.out
+                .println("Do you want to play veteran or beginner mode?\n1. Veteran\n2. Beginner");
+        int mode = input(2, 1);
+        if (mode == 1)
+            comp.loadMap();
+        comp.getSize();
+        while (!stop) {
+            // Generate computer's move.
+            computer = comp.generateMove(new Pattern(patt));
+            System.out.println("Enter R P S. Enter Q to quit.");
+            char a = input();
+            if (a == 'Q') {
+                stop = true;
+                break;
+            }
+            System.out.println("You threw: " + a);
+            if (full <= (patt.length - 1)) {
+                patt[full] = a;
+                full++;
+            } else {
+                for (int i = 0; i <= patt.length - 2; i++) {
+                    patt[i] = patt[i + 1];
+                }
+                patt[patt.length - 1] = a;
+            }
+            for (int i = 0; i <= patt.length - 1; i++) {
+                System.out.print(patt[i]);
+            }
+            System.out.println();
+            // Store the new pattern
+            comp.storePattern(new Pattern(patt));
+            System.out.println("Computer plays: " + computer);
+            // Check for win or tie
+            if (a == computer) {
+                System.out.println("Tie.");
+                tie++;
+            } else {
+                if (a == 'R' && computer == 'P') {
+                    System.out.println("Computer wins.");
+                    compScore++;
+                }
+                if (a == 'R' && computer == 'S') {
+                    System.out.println("Player wins.");
+                    playerScore++;
+                }
+                if (a == 'P' && computer == 'S') {
+                    System.out.println("Computer wins.");
+                    compScore++;
+                }
+                if (a == 'P' && computer == 'R') {
+                    System.out.println("Player wins.");
+                    playerScore++;
+                }
+                if (a == 'S' && computer == 'R') {
+                    System.out.println("Computer wins.");
+                    compScore++;
+                }
+                if (a == 'S' && computer == 'P') {
+                    System.out.println("Player wins.");
+                    playerScore++;
+                }
+            }
+            // Saving the map
+            comp.saveMap();
+            comp.getSize();
+            System.out.println("Your score: " + playerScore + "\tTie: " + tie
+                    + "\tComputer score: " + compScore);
+        }
+        System.out.println("Thank you for playing.");
+    }
+
+    public static int input(int upper, int lower) {
+        Scanner in = new Scanner(System.in);
+        boolean valid = false;
+        int validInt = 0;
+        while (!valid) {
+            if (in.hasNextInt()) {
+                validInt = in.nextInt();
+                if (validInt <= upper && validInt >= lower) {
+                    valid = true;
+                } else {
+                    System.out.print("Invalid- Retry: ");
+                }
+            } else {
+                in.next();
+                System.out.print("Invalid input- Retry: ");
+            }
+        }
+        return validInt;
+    }
+
+    public static char input() {
+        Scanner in = new Scanner(System.in);
+        boolean valid = false;
+        char validChar = 'a';
+        while (!valid) {
+            if (in.hasNext()) {
+                validChar = in.next().charAt(0);
+                if (validChar == 'R' || validChar == 'P' || validChar == 'S'
+                        || validChar == 'Q') {
+                    valid = true;
+                } else {
+                    System.out.print("Invalid- Retry: ");
+                }
+            } else {
+                in.next();
+                System.out.print("Invalid input- Retry: ");
+            }
+        }
+        return validChar;
+    }
+}
+</code></pre>

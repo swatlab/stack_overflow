@@ -1,0 +1,51 @@
+<p>I have wrote this method before I noticed there is a compress method in Bitmap class.</p>
+
+<pre><code>/**
+ * Calcuate how much to compress the image
+ * @param options
+ * @param reqWidth
+ * @param reqHeight
+ * @return
+ */
+public static int calculateInSampleSize(BitmapFactory.Options options,int reqWidth, int reqHeight) {
+
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1; // default to not zoom image
+
+    if (height > reqHeight || width > reqWidth) {
+             final int heightRatio = Math.round((float) height/ (float) reqHeight);
+             final int widthRatio = Math.round((float) width / (float) reqWidth);
+             inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+        return inSampleSize;
+}
+
+/**
+ * resize image to 480x800
+ * @param filePath
+ * @return
+ */
+public static Bitmap getSmallBitmap(String filePath) {
+
+    File file = new File(filePath);
+    long originalSize = file.length();
+
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(filePath, options);
+
+    // Calculate inSampleSize based on a preset ratio
+    options.inSampleSize = calculateInSampleSize(options, 480, 800);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+
+    Bitmap compressedImage = BitmapFactory.decodeFile(filePath, options);
+
+
+    return compressedImage;
+}
+</code></pre>
+
+<p>I was wondering, compare to the built in <code>Compress</code> method, should I keep using this one, or switch to use the built in one? what is the difference?</p>

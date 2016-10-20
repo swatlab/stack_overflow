@@ -1,0 +1,154 @@
+<p>I created a database named dbase using SQLiteManager.It contains a table named comments.Its fields are id(primary key,integer autoincrement)and comment(text). And so its extension is .sqlite.I saved the database in assets folder of my app.i.e ex1\app\build\intermediates\assets.I want to retrieve the table contents to a textview.But,I can't open the database.Can anyone help me?</p>
+
+<p>My DBHElper class extending SQLiteOpenHelper is:</p>
+
+<pre><code>import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+
+
+ public class DBHElper extends SQLiteOpenHelper {
+
+
+private static String DB_PATH ="/data/data/com.example.iyas.ex1/databases/";
+private static String DB_NAME = "dbase.sqlite";
+private SQLiteDatabase myDataBase;
+private static final int DATABASE_VERSION = 1;
+//TABLE NAME : comments;column id integer autoincrement,comment text
+
+   public DBHElper(Context context) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
+                }
+
+public boolean checkDataBase(){
+    SQLiteDatabase checkDB = null;
+    try{
+
+        String myPath = DB_PATH + DB_NAME;
+        checkDB =SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+                    Log.d("checkDatabase", e.toString());
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+public void openDataBase() throws SQLException {
+
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public void close() {
+
+    if(myDataBase != null)
+        myDataBase.close();
+    super.close();
+
+}
+
+@Override
+    public void onCreate(SQLiteDatabase db) {
+
+
+
+}
+
+@Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+                }
+
+
+}
+</code></pre>
+
+<hr>
+
+<p>My Activity class:</p>
+
+<pre><code>import android.app.Activity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
+
+public class MyActivity extends Activity {
+
+TextView tv;
+SQLiteDatabase db;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_my);
+    dbQuery();
+}
+
+public void dbQuery() {
+    try {
+
+        DBHElper helper = new DBHElper(this.getApplicationContext());
+        boolean dbExist = helper.checkDataBase();
+
+        if (dbExist) {
+            helper.openDataBase();
+            Cursor c = db.rawQuery("SELECT comment from comments", null);
+
+            if (c != null) {
+                c.moveToFirst();
+                {
+                    do {
+                        String comment = c.getString(1);
+                        tv = (TextView) findViewById(R.id.labels);
+                        tv.setText(comment);
+                    } while (c.moveToNext());
+                }
+            }
+
+        } else {
+            Log.e("IN onStart()", "NO DATABASE EXISTS");
+        }
+
+    } catch (SQLiteException se) {
+
+        Log.e("myapp in my activity", se.toString());
+    }
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+
+    getMenuInflater().inflate(R.menu.my, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>

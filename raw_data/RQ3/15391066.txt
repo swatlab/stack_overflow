@@ -1,0 +1,196 @@
+<p>As I'm working with many tables in my Android application, I decide to create database(DB) in SQLite managers (such as firefox plugin or navicat for sqlite). I finished creating them and export the .sql file ! but I don't know how to use this file! 
+Of course I found some post about this  to put DB (on a rooted phone) in ...data/data/{your package name}/ ..etc but I don't understand what to do after this step!! (I know the code for introducing the db to the android app only!!)</p>
+
+<ul>
+<li><p>Can anyone tell me step by step How to use my created db with these methods in my Application??-</p></li>
+<li><p>Is it good way to use these SQLite managers or despite of being complicated to create multi tables in android with codes, you prefer it???</p></li>
+<li><p>What is the main differense between sqlite 2 and 3? Are they supported by different Android version or only updates for Sqlite?</p></li>
+</ul>
+
+<p>Edit: After copying the dB into assest folder and using the code for copying it:</p>
+
+<pre>
+
+03-16 11:32:20.370: I/SqliteDatabaseCpp(3999): sqlite returned: error code = 14, msg = cannot open file at line 27712 of [8609a15dfa], db=/data/data/com.androidhive.xmlparsing/databases/surveydb.sqlite
+03-16 11:32:20.370: I/SqliteDatabaseCpp(3999): sqlite returned: error code = 14, msg = os_unix.c: open() at line 27712 - "" errno=2 path=/data/data/com.androidhive.xmlparsing/databases/surveydb.sqlite, db=/data/data/com.androidhive.xmlparsing/databases/surveydb.sqlite
+03-16 11:32:20.370: E/SqliteDatabaseCpp(3999): sqlite3_open_v2("/data/data/com.androidhive.xmlparsing/databases/surveydb.sqlite", &handle, 1, NULL) failed
+03-16 11:32:20.380: E/SQLiteDatabase(3999): Failed to open the database. closing it.
+03-16 11:32:20.380: E/SQLiteDatabase(3999): android.database.sqlite.SQLiteCantOpenDatabaseException: unable to open database file
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:983)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:956)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:932)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at database.AssetDatabaseHelper.checkExist(AssetDatabaseHelper.java:55)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at database.AssetDatabaseHelper.importIfNotExist(AssetDatabaseHelper.java:81)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at com.androidhive.xmlparsing.AndroidXMLParsingActivity.onCreate(AndroidXMLParsingActivity.java:78)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1050)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1782)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1834)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.app.ActivityThread.access$500(ActivityThread.java:122)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1027)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.os.Handler.dispatchMessage(Handler.java:99)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.os.Looper.loop(Looper.java:132)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at android.app.ActivityThread.main(ActivityThread.java:4126)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at java.lang.reflect.Method.invokeNative(Native Method)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at java.lang.reflect.Method.invoke(Method.java:491)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:844)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:602)
+03-16 11:32:20.380: E/SQLiteDatabase(3999):     at dalvik.system.NativeStart.main(Native Method)
+03-16 11:32:20.380: W/System.err(3999): android.database.sqlite.SQLiteCantOpenDatabaseException: unable to open database file
+03-16 11:32:20.380: W/System.err(3999):     at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+03-16 11:32:20.380: W/System.err(3999):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:983)
+03-16 11:32:20.380: W/System.err(3999):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:956)
+03-16 11:32:20.380: W/System.err(3999):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:932)
+03-16 11:32:20.380: W/System.err(3999):     at database.AssetDatabaseHelper.checkExist(AssetDatabaseHelper.java:55)
+03-16 11:32:20.380: W/System.err(3999):     at database.AssetDatabaseHelper.importIfNotExist(AssetDatabaseHelper.java:81)
+03-16 11:32:20.380: W/System.err(3999):     at com.androidhive.xmlparsing.AndroidXMLParsingActivity.onCreate(AndroidXMLParsingActivity.java:78)
+03-16 11:32:20.380: W/System.err(3999):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1050)
+03-16 11:32:20.380: W/System.err(3999):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1782)
+03-16 11:32:20.380: W/System.err(3999):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1834)
+03-16 11:32:20.380: W/System.err(3999):     at android.app.ActivityThread.access$500(ActivityThread.java:122)
+03-16 11:32:20.380: W/System.err(3999):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1027)
+03-16 11:32:20.380: W/System.err(3999):     at android.os.Handler.dispatchMessage(Handler.java:99)
+03-16 11:32:20.380: W/System.err(3999):     at android.os.Looper.loop(Looper.java:132)
+03-16 11:32:20.380: W/System.err(3999):     at android.app.ActivityThread.main(ActivityThread.java:4126)
+03-16 11:32:20.380: W/System.err(3999):     at java.lang.reflect.Method.invokeNative(Native Method)
+03-16 11:32:20.380: W/System.err(3999):     at java.lang.reflect.Method.invoke(Method.java:491)
+03-16 11:32:20.380: W/System.err(3999):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:844)
+03-16 11:32:20.380: W/System.err(3999):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:602)
+03-16 11:32:20.380: W/System.err(3999):     at dalvik.system.NativeStart.main(Native Method)
+
+</pre>
+
+<p>I used this code:</p>
+
+<pre><code>public class AssetDatabaseHelper extends SQLiteOpenHelper{
+
+ private String dbName;
+    private String db_path;
+    private Context context;
+
+    /**
+     * A helpe r class to import db files.
+     * 
+     * @param context
+     *  base/app context
+     * @param dbName
+     *            The name of the db in asset folder .
+     */
+    public AssetDatabaseHelper(Context context, String dbName) {
+        super(context, dbName, null, 1);
+        this.dbName = dbName;
+        this.context = context;
+        db_path = "/data/data/" + context.getPackageName() + "/databases/";
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each
+     * time you open the application.
+     * 
+     * @return true if it exists, false if it doesn't
+     */
+    public boolean checkExist() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = db_path + dbName;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+
+
+        } catch (Exception ep) {
+            ep.printStackTrace();
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own
+     * database.
+     * */
+    public void importIfNotExist() throws IOException {
+
+        boolean dbExist = checkExist();
+
+        if (dbExist) {
+            // do nothing - database already exist
+        } else {
+            this.getReadableDatabase();
+
+            try {
+
+                copyDatabase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+    /**
+     * Creates copies the database from asset to the new database location.
+     * */
+    private void copyDatabase() throws IOException {
+        InputStream is = context.getAssets().open(dbName);
+
+        OutputStream os = new FileOutputStream(db_path + dbName);
+
+        byte[] buffer = new byte[4096];
+        int length;
+        while ((length = is.read(buffer)) > 0) {
+            os.write(buffer, 0, length);
+        }
+        os.flush();
+        os.close();
+        is.close();
+        this.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+
+}
+</code></pre>
+
+<p>UpdATE 2: db sCRIPTS:</p>
+
+<pre>
+CREATE TABLE "**" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "**" TEXT, "****" INTEGER);
+CREATE TABLE "***" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "***" INTEGER UNIQUE , "***" TEXT);
+CREATE TABLE "**" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "***" INTEGER UNIQUE , "**" INTEGER, "**" INTEGER, "**" TEXT, "impGender" TEXT, "**" TEXT, "***" INTEGER, "***" DATETIME DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "**" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "**" TEXT);
+CREATE TABLE "**" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "***" INTEGER UNIQUE , "***" TEXT, "srQType" INTEGER, "***" INTEGER, "**" BOOL, "**" FLOAT, "**" FLOAT, "**" INTEGER, "**"  UNIQUE );
+CREATE TABLE "*" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "**" INTEGER NOT NULL  UNIQUE , "***" INTEGER, "**" INTEGER, "**" INTEGER, "**" INTEGER, "**" TEXT, "**" TEXT);
+CREATE TABLE "**" ("_id" INTEGER PRIMARY KEY, "***" TEXT);
+CREATE TABLE "**" ("_id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "**" TEXT, "srDesc" TEXT, "***" INTEGER, "**" DATETIME, "**" DATETIME, "****" INTEGER, "srCode" INTEGER);
+CREATE TABLE "android_metadata" ("locale" TEXT DEFAULT 'en_US');
+</pre>
+
+<p>And at the end:</p>
+
+<pre><code>new AssetDatabaseHelper(this , "surveydb.sqlite").importIfNotExist();
+</code></pre>
+
+<p>what is the problem?</p>
+
+<p>Can you help me?</p>

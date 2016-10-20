@@ -1,0 +1,196 @@
+<p>I am fetching data from movie database API and sometimes images do not load and sometimes it loads slowly. I am decoding images url to bitmap and then setting them to image view using adapter.Please tell where i am making mistake.I am getting images url right from API.
+MainActivity.java:</p>
+
+<pre><code>package com.example.sahilshokeen.movie;
+
+public class MainActivity extends Activity {
+private RecyclerView recyclerView;
+private GridLayoutManager manager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    //checking network
+    ConnectivityManager connMgr = (ConnectivityManager)
+            getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+    if (networkInfo != null && networkInfo.isConnected()) {
+        // fetch data
+        new FetchData().execute();
+        new Convert().execute();
+    } else {
+        // display error
+        Toast toast = Toast.makeText(this, "No Network", Toast.LENGTH_LONG);
+        toast.show();
+    }
+    //setting adapter
+    recyclerView = (RecyclerView) findViewById(R.id.recyclers);
+    manager = new GridLayoutManager(MainActivity.this, 2);
+    recyclerView.setAdapter(new Adapter());
+    recyclerView.setHasFixedSize(true);
+    recyclerView.setLayoutManager(manager);
+}
+
+public class FetchData extends AsyncTask<Void, Void, Void> {
+    private HttpURLConnection connection = null;
+    private BufferedReader reader = null;
+    private String json;
+    private String urlString = "http://api.themoviedb.org/3/movie/popular?api_key=b6f6fcfbb225d8c500e4404655ccadcc&certification=G";
+    private String image = " http://image.tmdb.org/t/p/w92/";
+
+    @Override
+    protected Void doInBackground(Void... params) {
+        //connecting to network
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.connect();
+            StringBuffer buffer = new StringBuffer();
+            InputStream stream = connection.getInputStream();
+            reader = new BufferedReader(new InputStreamReader(stream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            json = buffer.toString();
+            //getting json data
+            try {
+                JSONObject object = new JSONObject(json);
+                JSONArray array = object.getJSONArray("results");
+                for (int i = 0; i < 6; i++) {
+                    Data.objects[i] = array.getJSONObject(i);
+                    Data.title[i] = Data.objects[i].getString("original_title");
+                    Data.overview[i] = Data.objects[i].getString("overview");
+                    Data.date[i] = Data.objects[i].getString("release_date");
+                    Data.image[i] = Data.objects[i].getString("poster_path");
+                    Data.vote[i] = Data.objects[i].getDouble("vote_average");
+                    Data.image[i] = image + Data.image[i];
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            connection.disconnect();
+        }
+        try {
+            if (reader != null) {
+                reader.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+}
+
+public class Convert extends AsyncTask<Void, Void, Void>{
+
+    @Override
+    protected Void doInBackground(Void... params) {
+        for(int i=0;i<6;i++) {
+            try {
+                URL url = new URL(Data.image[i]);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                Bitmap myBitmap = BitmapFactory.decodeStream(input);
+                Data.bImage[i] = myBitmap;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+}
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.action_refresh) {
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>Adapter.java:</p>
+
+<pre><code>package com.example.sahilshokeen.movie;
+
+public class Adapter extends RecyclerView.Adapter<Adapter.Holder> {
+
+public static class Holder extends RecyclerView.ViewHolder {
+    public CardView cardView;
+    public ImageView imageView;
+
+    public Holder(View itemView) {
+        super(itemView);
+        cardView = (CardView) itemView.findViewById(R.id.card);
+        imageView = (ImageView) itemView.findViewById(R.id.images);
+    }
+}
+
+@Override
+public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
+    View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.grid_item, parent, false);
+    Holder holder = new Holder(view);
+    return holder;
+}
+
+@Override
+public void onBindViewHolder(Holder holder, int position) {
+    holder.imageView.setImageBitmap(Data.bImage[position]);
+}
+
+@Override
+public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    super.onAttachedToRecyclerView(recyclerView);
+}
+
+@Override
+public int getItemCount() {
+    return Data.bImage.length;
+}
+
+ }
+</code></pre>
+
+<p>Data.java:</p>
+
+<pre><code>package com.example.sahilshokeen.movie;
+
+public class Data {
+public static JSONObject[] objects = new JSONObject[6];
+public static String[] title = new String[6];
+public static String[] overview = new String[6];
+public static String[] date = new String[6];
+public static String[] image = new String[6];
+public static Bitmap[] bImage = new Bitmap[6];
+public static Double[] vote = new Double[6];
+}
+</code></pre>

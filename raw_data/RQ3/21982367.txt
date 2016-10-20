@@ -1,0 +1,203 @@
+<p>This question has already been asked by the people but going through the steps from many of them I am still unable to fix the problem at my end, My app is working fine on emulator but not on the real device and gives the following 2 exceptions, the first exception is the major source of second exception and i guess there is some permission issue. I have added the </p>
+
+<pre><code><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+</code></pre>
+
+<p>to the manifest file but i got the same result. My database is very simple with one table. ALso i have added "android_metadata" table and edit my other table's id field to "_id". and I am sure my database is present in the assets folder.</p>
+
+<p>Any help would be appreciated.</p>
+
+<p>first exception</p>
+
+<pre><code>02-24 12:58:10.067: E/SQLiteAssetHelper(7107): Couldn't open Shajra for writing (will try read-only):
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107): com.readystatesoftware.sqliteasset.SQLiteAssetHelper$SQLiteAssetException: Missing databases/Shajra file (or .zip, .gz archive) in assets, or target folder not writable
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.content.res.AssetManager.openAsset(Native Method)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.content.res.AssetManager.open(AssetManager.java:325)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.content.res.AssetManager.open(AssetManager.java:299)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.copyDatabaseFromAssets(SQLiteAssetHelper.java:436)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.createOrOpenDatabase(SQLiteAssetHelper.java:400)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.getWritableDatabase(SQLiteAssetHelper.java:176)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.getReadableDatabase(SQLiteAssetHelper.java:254)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.nannandotcom.MainActivity.onCreate(MainActivity.java:27)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1072)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1836)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1893)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.app.ActivityThread.access$1500(ActivityThread.java:135)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1054)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.os.Handler.dispatchMessage(Handler.java:99)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.os.Looper.loop(Looper.java:150)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at android.app.ActivityThread.main(ActivityThread.java:4389)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at java.lang.reflect.Method.invokeNative(Native Method)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at java.lang.reflect.Method.invoke(Method.java:507)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:849)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:607)
+02-24 12:58:10.067: E/SQLiteAssetHelper(7107):  at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>second exception</p>
+
+<pre><code>02-24 12:58:10.077: E/Database(7107): dbopen(): sqlite3_open_v2("/data/data/com.example.nannandotcom/databases/Shajra", &handle, 1, NULL) failed
+02-24 12:58:10.077: E/Database(7107): dbopen(): errno = 2, error message = No such file or directory
+02-24 12:58:10.077: D/AndroidRuntime(7107): Shutting down VM
+02-24 12:58:10.077: W/dalvikvm(7107): threadid=1: thread exiting with uncaught exception (group=0x4011f5a0)
+02-24 12:58:10.108: E/AndroidRuntime(7107): FATAL EXCEPTION: main
+02-24 12:58:10.108: E/AndroidRuntime(7107): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.nannandotcom/com.nannandotcom.MainActivity}: android.database.sqlite.SQLiteException: unable to open database file
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1872)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1893)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.ActivityThread.access$1500(ActivityThread.java:135)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1054)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.os.Handler.dispatchMessage(Handler.java:99)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.os.Looper.loop(Looper.java:150)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.ActivityThread.main(ActivityThread.java:4389)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at java.lang.reflect.Method.invokeNative(Native Method)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at java.lang.reflect.Method.invoke(Method.java:507)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:849)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:607)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at dalvik.system.NativeStart.main(Native Method)
+02-24 12:58:10.108: E/AndroidRuntime(7107): Caused by: android.database.sqlite.SQLiteException: unable to open database file
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java:1962)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:906)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.getReadableDatabase(SQLiteAssetHelper.java:264)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at com.nannandotcom.MainActivity.onCreate(MainActivity.java:27)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1072)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1836)
+02-24 12:58:10.108: E/AndroidRuntime(7107):     ... 11 more
+</code></pre>
+
+<p>DatabaseHelper</p>
+
+<pre><code>package com.nannandotcom;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.nannandotcom.model.ProfileBean;
+import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
+
+public class DatabaseHelper extends SQLiteAssetHelper {
+
+    private static final String DATABASE_NAME = "Shajra";
+    private static final int DATABASE_VERSION = 1;
+
+    private Context context;
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
+    }
+
+    public void copyDatabase() throws IOException{
+    //  SQLiteDatabase checkDB = SQLiteDatabase.openDatabase(context.getAssets().+(DATABASE_NAME), null, SQLiteDatabase.OPEN_READONLY);
+    //  checkDB.close();
+    InputStream myInput = context.getAssets().open(DATABASE_NAME);      
+    String outFileName =  "/data/data/"+ context.getPackageName() + "/databases/" + DATABASE_NAME;     
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+    }
+
+    public ProfileBean getProfileBean(SQLiteDatabase database,int id){
+        ProfileBean profileBean = new ProfileBean();
+        try {
+            Cursor c = database.query("Profiles",
+                    new String[]{"_id","Name","Qualification","WorkingAt","LivesAt","MaritalStatus","NumberOfChildren",
+                    "Telephone","Email","Picture","MarriedTo","Father","Mother","DOB","Gender"},
+                    "_id=?",
+                    new String[]{Integer.toString(id)},null, null, null);
+            if (c != null ) {
+                if  (c.moveToFirst()) {
+                    do {
+
+                    }while (c.moveToNext());
+                } 
+            }   
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return profileBean;
+    }
+}
+</code></pre>
+
+<p>MainActivity</p>
+
+<pre><code>package com.nannandotcom;
+
+import java.io.IOException;
+import com.example.nannandotcom.R;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        DatabaseHelper databaseHelper = new DatabaseHelper(this);
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+        try {
+            databaseHelper.copyDatabase();
+    }   
+        }catch(SQLException sqle){
+
+            throw sqle;
+
+        }
+        }
+        catch(Exception e){
+            Log.e("MainActivity", e.getMessage());
+            e.printStackTrace();
+        }
+
+        final EditText enterName = (EditText) findViewById(R.id.editText1);
+        Button submit = (Button) findViewById(R.id.button1);
+        submit.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent mainActivityIntent = new   Intent(MainActivity.this, Welcome.class);
+                mainActivityIntent.putExtra("userName", enterName.getText().toString());
+                startActivity(mainActivityIntent);
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+}
+</code></pre>

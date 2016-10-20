@@ -1,0 +1,245 @@
+<p>I create a Sliding Menu, but the log shows me the mesage:</p>
+
+<pre><code> 08-13 18:19:08.064: E/AndroidRuntime(755): FATAL EXCEPTION: main
+08-13 18:19:08.064: E/AndroidRuntime(755): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.testeslidingmenuagvdnc/com.example.testeslidingmenuagvdnc.MainActivity}: android.view.InflateException: Binary XML file line #2: Error inflating class fragment
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1736)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1752)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.ActivityThread.access$1500(ActivityThread.java:123)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:993)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.os.Handler.dispatchMessage(Handler.java:99)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.os.Looper.loop(Looper.java:126)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.ActivityThread.main(ActivityThread.java:3997)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at java.lang.reflect.Method.invokeNative(Native Method)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at java.lang.reflect.Method.invoke(Method.java:491)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:841)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:599)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at dalvik.system.NativeStart.main(Native Method)
+08-13 18:19:08.064: E/AndroidRuntime(755): Caused by: android.view.InflateException: Binary XML file line #2: Error inflating class fragment
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:688)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.view.LayoutInflater.inflate(LayoutInflater.java:457)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.view.LayoutInflater.inflate(LayoutInflater.java:391)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.view.LayoutInflater.inflate(LayoutInflater.java:347)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.setMenu(SlidingMenu.java:375)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at com.example.testeslidingmenuagvdnc.MainActivity.onCreate(MainActivity.java:28)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1048)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1700)
+08-13 18:19:08.064: E/AndroidRuntime(755):  ... 11 more
+08-13 18:19:08.064: E/AndroidRuntime(755): Caused by: java.lang.ClassCastException: com.example.testeslidingmenuagvdnc.SlidingMenuFragment cannot be cast to android.app.Fragment
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.Fragment.instantiate(Fragment.java:493)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.Fragment.instantiate(Fragment.java:468)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.app.Activity.onCreateView(Activity.java:4081)
+08-13 18:19:08.064: E/AndroidRuntime(755):  at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:664)
+08-13 18:19:08.064: E/AndroidRuntime(755):  ... 18 more
+</code></pre>
+
+<p>Sliding Menu</p>
+
+<pre><code> public class SlidingMenuFragment extends Fragment implements ExpandableListView.OnChildClickListener {
+
+        private ExpandableListView sectionListView;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+
+            List<Section> sectionList = createMenu();
+
+            View view = inflater.inflate(R.layout.slidingmenu_fragment, container, false);
+            this.sectionListView = (ExpandableListView) view.findViewById(R.id.slidingmenu_view);
+            this.sectionListView.setGroupIndicator(null);
+
+            SectionListAdapter sectionListAdapter = new SectionListAdapter(this.getActivity(), sectionList);
+            this.sectionListView.setAdapter(sectionListAdapter); 
+
+            this.sectionListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+                  @Override
+                  public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+                    return true;
+                  }
+                });
+
+            this.sectionListView.setOnChildClickListener(this);
+
+            int count = sectionListAdapter.getGroupCount();
+            for (int position = 0; position < count; position++) {
+                this.sectionListView.expandGroup(position);
+            }
+
+            return view;
+        }
+
+        private List<Section> createMenu() {
+            List<Section> sectionList = new ArrayList<Section>();
+
+            Section oDemoSection = new Section("Demos");
+            oDemoSection.addSectionItem(101,"List/Detail (Fragment)", "slidingmenu_friends");
+            oDemoSection.addSectionItem(102, "Airport (AsyncTask)", "slidingmenu_airport");
+
+            Section oGeneralSection = new Section("General");
+            oGeneralSection.addSectionItem(201, "Settings", "slidingmenu_settings");
+            oGeneralSection.addSectionItem(202, "Rate this app", "slidingmenu_rating");
+            oGeneralSection.addSectionItem(203, "Eula", "slidingmenu_eula");
+            oGeneralSection.addSectionItem(204, "Quit", "slidingmenu_quit");
+
+            sectionList.add(oDemoSection);
+            sectionList.add(oGeneralSection);
+            return sectionList;
+        }
+
+        @Override
+        public boolean onChildClick(ExpandableListView parent, View v,
+                int groupPosition, int childPosition, long id) {
+
+            switch ((int)id) {
+            case 101:
+                //TODO
+                break;
+            case 102:
+                //TODO
+                break;
+            case 201:
+                //TODO
+                break;
+            case 202:
+                //TODO
+                break;
+            case 203:
+                //TODO
+                break;
+            case 204:
+                //TODO
+                break;
+            }
+
+            return false;
+        }
+    }
+</code></pre>
+
+<p>My Activity:</p>
+
+<p>public class MainActivity extends Activity  {
+    private SlidingMenu slidingMenu;</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    slidingMenu = new SlidingMenu(this);
+    slidingMenu.setMode(SlidingMenu.LEFT);
+    slidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+    slidingMenu.setShadowWidthRes(R.dimen.slidingmenu_shadow_width);
+    slidingMenu.setShadowDrawable(R.drawable.slidingmenu_shadow);
+    slidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
+    slidingMenu.setFadeDegree(0.35f);
+    slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
+    slidingMenu.setMenu(R.layout.slidingmenu);
+
+    getActionBar().setDisplayHomeAsUpEnabled(true);
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+@Override
+public void onBackPressed() {
+    if ( slidingMenu.isMenuShowing()) {
+        slidingMenu.toggle();
+    }
+    else {
+        super.onBackPressed();
+    }
+}
+@Override
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if ( keyCode == KeyEvent.KEYCODE_MENU ) {
+        this.slidingMenu.toggle();
+        return true;
+    }
+    return super.onKeyDown(keyCode, event);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        this.slidingMenu.toggle();
+        return true;
+
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>}</p>
+
+<p>XML of Activity:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hello_world" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>XML SliderMenu:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+   android:layout_width="match_parent"
+   android:layout_height="match_parent"
+   android:orientation="vertical"
+   android:background="@color/purple_dark" >
+
+     <ExpandableListView android:id="@+id/slidingmenu_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:transcriptMode="alwaysScroll"/>
+
+</LinearLayout>
+</code></pre>
+
+<p>XML item of ListView:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+   android:layout_width="fill_parent"
+   android:layout_height="wrap_content"
+   android:background="@drawable/slidingmenu_list_selector_background">
+
+    <ImageView
+       android:id="@+id/slidingmenu_sectionitem_icon"
+       android:layout_width="wrap_content"
+       android:layout_height="30dp"
+        android:layout_centerVertical="true"
+        android:paddingLeft="15dp"/>
+
+    <TextView
+       android:id="@+id/slidingmenu_sectionitem_label"
+       android:layout_width="match_parent"
+       android:layout_height="50dp"
+       android:layout_toRightOf="@id/slidingmenu_sectionitem_icon"
+       android:gravity="center_vertical"
+       android:text="TextView"
+       android:textColor="#FFFFFF"/>
+
+</RelativeLayout>
+</code></pre>

@@ -1,0 +1,124 @@
+<p>Below are my codes. I'm trying to retrieve images from my sd card into a gridview. I am having problems with my codes. I cant figure out how to set images into my imageview. I got the error "The method setImageResource(int) in the type ImageView is not applicable for the arguments (String)"in my ImageAdapter</p>
+
+<pre><code>public class GridViewActivity extends Activity {
+    private String[] mFileStrings;
+    private File[] listFile;
+    GridView grid;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Set title for the GridView
+        setTitle("GridView");
+        setContentView(R.layout.grid_view);
+
+        File file = new File(Environment.getExternalStorageDirectory()
+                + File.separator + "Tutorial");
+
+        if (file.isDirectory()) {
+            listFile = file.listFiles();
+            mFileStrings = new String[listFile.length];
+
+            for (int i = 0; i < listFile.length; i++) {
+                mFileStrings[i] = listFile[i].getAbsolutePath();
+            }
+        }
+
+        grid = (GridView) findViewById(R.id.gridview);
+
+        grid.setAdapter(new ImageAdapter(this, mFileStrings));
+    }
+</code></pre>
+
+<p>ImageAdapter</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+    private String[] data;
+    public ImageAdapter(Context c, String[] d) {
+        mContext = c;
+        data=d;
+    }
+
+    public int getCount() {
+        return data.length;
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    // Create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // If it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(data[position]); //The method setImageResource(int) in the type ImageView is not applicable for the arguments (String)
+        return imageView;
+    }
+
+
+}
+</code></pre>
+
+<p><strong>MY EDITS</strong></p>
+
+<pre><code> public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {
+            imageView = new ImageView(mContext);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        File imgFile = new File("" + data[position]);
+        Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+        imageView.setImageBitmap(myBitmap);
+        return imageView;
+
+    }
+</code></pre>
+
+<p>LOGCAT :</p>
+
+<pre><code>04-12 14:18:59.811: E/AndroidRuntime(27379): FATAL EXCEPTION: main
+04-12 14:18:59.811: E/AndroidRuntime(27379): java.lang.OutOfMemoryError
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.graphics.BitmapFactory.nativeDecodeStream(Native Method)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:587)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.graphics.BitmapFactory.decodeFile(BitmapFactory.java:389)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.graphics.BitmapFactory.decodeFile(BitmapFactory.java:418)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at com.androidbegin.gridview.ImageAdapter.getView(ImageAdapter.java:46)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.widget.AbsListView.obtainView(AbsListView.java:2201)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.widget.GridView.onMeasure(GridView.java:1026)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.View.measure(View.java:12892)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4698)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.widget.FrameLayout.onMeasure(FrameLayout.java:293)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.View.measure(View.java:12892)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.widget.LinearLayout.measureVertical(LinearLayout.java:812)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.widget.LinearLayout.onMeasure(LinearLayout.java:553)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.View.measure(View.java:12892)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4698)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.widget.FrameLayout.onMeasure(FrameLayout.java:293)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2265)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.View.measure(View.java:12892)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1624)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.view.ViewRootImpl.handleMessage(ViewRootImpl.java:2628)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.os.Handler.dispatchMessage(Handler.java:99)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.os.Looper.loop(Looper.java:137)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at android.app.ActivityThread.main(ActivityThread.java:4507)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at java.lang.reflect.Method.invokeNative(Native Method)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at java.lang.reflect.Method.invoke(Method.java:511)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:980)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:747)
+04-12 14:18:59.811: E/AndroidRuntime(27379):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

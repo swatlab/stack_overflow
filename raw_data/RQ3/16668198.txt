@@ -1,0 +1,25 @@
+<p>I'm trying to customize the "Navigate up" default <code>contentDescription</code> that is associated with the up button of the <code>ActionBar</code> (I'm using ActionBarSherlock).</p>
+
+<p>From <code>ActionBarView</code>'s source:</p>
+
+<pre><code>public void setHomeButtonEnabled(boolean enable) {
+    mHomeLayout.setEnabled(enable);
+    mHomeLayout.setFocusable(enable);
+    // Make sure the home button has an accurate content description for accessibility.
+    if (!enable) {
+        mHomeLayout.setContentDescription(null);
+    } else if ((mDisplayOptions & ActionBar.DISPLAY_HOME_AS_UP) != 0) {
+        mHomeLayout.setContentDescription(mContext.getResources().getText(
+                R.string.abs__action_bar_up_description));
+    } else {
+        mHomeLayout.setContentDescription(mContext.getResources().getText(
+                R.string.abs__action_bar_home_description));
+    }
+}
+</code></pre>
+
+<p>so the key would be how to get a reference to <code>mHomeLayout</code>. <code>getWindow().getDecorView().findViewById(android.R.id.home)</code> is not working, as it's returning an ImageView.</p>
+
+<p>How could I do?</p>
+
+<p>Thanks ;)</p>

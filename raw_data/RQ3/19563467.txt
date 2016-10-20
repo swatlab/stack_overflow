@@ -1,0 +1,138 @@
+<p>I have an external SQLite database name "RC".  This database contain two table one is "rc1" and other table name is "android_metadata".  "rc1" table contain all the data. I put "RC" in asset folder. I tried to access "rc1" using following code:</p>
+
+<pre><code> public class MainActivity extends SQLiteOpenHelper {
+
+ private static String DB_NAME = "RC";  
+ private SQLiteDatabase db;  
+ private  Context context;  
+ private String DB_PATH;
+ private static final int Version=1;
+
+public MainActivity(Context context) {
+    super(context, DB_NAME, null, Version);
+    //db = getReadableDatabase();
+    this.context = context;
+    Log.d("in mainactivity","constructor");
+
+     DB_PATH = "/data/data/" + context.getPackageName() + "/" + "databases/";
+     Log.d("database path",""+DB_PATH);
+}
+
+
+
+public void createDataBase() throws IOException {  
+
+      boolean dbExist = checkDataBase();  
+      if (dbExist) {  
+          Log.d("in if", "do nothing");
+      } else {  
+          Log.d("in if", "");
+       //this.getReadableDatabase();  
+
+
+       SQLiteDatabase db = this.getReadableDatabase();
+       if (db.isOpen()){
+           db.close();
+       }
+
+       try {  
+        copyDataBase();  
+       } catch (IOException e) {  
+        throw new Error("Error copying database");  
+       }  
+      }  
+     }  
+
+
+
+
+private boolean checkDataBase() {  
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,  SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+
+
+     }  
+
+
+
+private void copyDataBase() throws IOException { 
+    Log.d("in copy database", "msg");
+
+      InputStream myInput = context.getAssets().open(DB_NAME);
+      Log.d("after open call",""+myInput);
+      String outFileName = DB_PATH + DB_NAME;  
+      OutputStream myOutput = new FileOutputStream(outFileName);  
+      byte[] buffer = new byte[1024];  
+      int length;  
+      while ((length = myInput.read(buffer)) > 0) {  
+       myOutput.write(buffer, 0, length);  
+      }  
+
+      // Close the streams  
+      myOutput.flush();  
+      myOutput.close();  
+      myInput.close();  
+
+     }  
+
+
+
+public void getData() {  
+    Log.d("in getdata", "");          
+      String myPath = DB_PATH + DB_NAME;  
+      db = SQLiteDatabase.openDatabase(myPath, null,  
+        SQLiteDatabase.OPEN_READONLY);  
+      Log.d("after database open","");
+      Cursor c = db.rawQuery("SELECT * FROM rc1", null);    
+      int n=c.getCount();
+        Log.d("cursor length + column count",""+n+" "+c.getColumnCount()+" ");
+
+
+     }
+
+
+
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+    // TODO Auto-generated method stub
+
+    }
+
+ }
+</code></pre>
+
+<p>After this when I run this code logcat is showing following exception:</p>
+
+<pre><code>  10-24 06:14:24.610: E/SQLiteLog(16264): (1) no such table: rc1
+  10-24 06:14:24.666: E/AndroidRuntime(16264): android.database.sqlite.SQLiteException: no such table: rc1 (code 1): , while compiling: SELECT * FROM rc1
+</code></pre>
+
+<p>I am following this tutorial 
+<a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<p>Plz help me
+thnx</p>

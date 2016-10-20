@@ -1,0 +1,308 @@
+<p>I've problem with... I don't really recognise, what cause the problem...
+LogCat is giving me such error:</p>
+
+<p><img src="http://i.stack.imgur.com/jD2Gr.png" alt="from LogCat"></p>
+
+<p>What I can say...<br>
+Action in app is going in that way:</p>
+
+<blockquote>
+  <ol>
+  <li>I'm creating Intent chooser, putting to chooser options from packageManager.queryIntentActivities ... that's all</li>
+  <li>I'm getting photo from camera or another app</li>
+  <li>I'm returning to app, and at this moment I'm getting errors.</li>
+  </ol>
+</blockquote>
+
+<p>I can add, that getting a photo is induces from one of two fragments which are on activity.</p>
+
+<p>What I can say is that sometimes after I'm moving back to my app, app is stucking in loading.</p>
+
+<p>Please let me know if you'll need more Information.<br>
+Any tip for searching will be very helpful (I found nothing about that in the Internet)</p>
+
+<p>Edit:
+Fragment which calls for image:</p>
+
+<pre><code>public class AddAmbajFragment extends AbstractFragment implements View.OnClickListener {
+    Button addImageButton;
+    private Uri outputFileUri;
+
+    public AddAmbajFragment() {
+        // Required empty public constructor
+    }
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.fragment_add_ambaj, container, false);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        assignViews();
+        setListeners();
+    }
+
+    public void assignViews(){
+        addImageButton = (Button) getView().findViewById(R.id.add_ambaj_camera_button);
+    }
+
+    public void setListeners(){
+        addImageButton.setOnClickListener(this);
+    }
+
+    @Override
+    protected void changeView(FragmentPlaceEnum fragmentPlaceEnum, FragmentEnum fragmentEnum){
+        if(changeFragmentEventListener!=null)
+            changeFragmentEventListener.onFragmenChange(fragmentPlaceEnum, fragmentEnum);
+    };
+
+    @Override
+    public void onClick(View view) {
+        openImageIntent();
+    }
+
+    private void openImageIntent() {
+
+        // Determine Uri of camera image to save.
+        final File root = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + File.separator + "AmbajePhotos" + File.separator);
+        root.mkdirs();
+        final String fname = "img_"+ System.currentTimeMillis() + ".jpg";
+        final File sdImageMainDirectory = new File(root, fname);
+        outputFileUri = Uri.fromFile(sdImageMainDirectory);
+
+        // Camera.
+        final List<Intent> cameraIntents = new ArrayList<Intent>();
+        final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        final PackageManager packageManager = getActivity().getPackageManager();
+        final List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
+        for(ResolveInfo res : listCam) {
+            final String packageName = res.activityInfo.packageName;
+            final Intent intent = new Intent(captureIntent);
+            intent.setComponent(new ComponentName(packageName, res.activityInfo.name));
+            intent.setPackage(packageName);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            cameraIntents.add(intent);
+        }
+
+        // Filesystem.
+        final Intent galleryIntent = new Intent();
+        galleryIntent.setType("image/*");
+        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+
+        // Chooser of filesystem options.
+        final Intent chooserIntent = Intent.createChooser(galleryIntent, getResources().getString(R.string.add_ambaj_select_source));
+
+        // Add the camera options.
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[]{}));
+
+        startActivityForResult(chooserIntent, 1);
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        try {
+        if(resultCode == getActivity().RESULT_OK)
+        {
+            if(requestCode == 1)
+            {
+                final boolean isCamera;
+                if(data == null)
+                {
+                    isCamera = true;
+                }
+                else
+                {
+                    final String action = data.getAction();
+                    if(action == null)
+                    {
+                        isCamera = false;
+                    }
+                    else
+                    {
+                        isCamera = action.equals(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    }
+                }
+
+                    Uri selectedImageUri;
+                    if (isCamera) {
+                        selectedImageUri = outputFileUri;
+                        File imgFile = new File(selectedImageUri.getPath());
+                        if (imgFile.exists()) {
+
+                            Bitmap myBitmap = getScaledBitmap(imgFile.getAbsolutePath(), 800, 800);
+
+                            ImageView myImage = (ImageView) getView().findViewById(R.id.add_ambaj_image_view);
+                            myImage.setImageBitmap(myBitmap);
+
+                        }
+                    } else {
+                        selectedImageUri = data == null ? null : data.getData();
+                        File imgFile = new File(getRealPathFromURI(getActivity().getApplicationContext(), selectedImageUri));
+
+                        if (imgFile.exists()) {
+
+                            Bitmap myBitmap = getScaledBitmap(imgFile.getAbsolutePath(), 800, 800);
+
+                            ImageView myImage = (ImageView) getView().findViewById(R.id.add_ambaj_image_view);
+                            myImage.setImageBitmap(myBitmap);
+                        }
+                    }
+
+
+            }
+        }
+        }
+        catch(Exception e){
+            Log.w("KKK", "Error: "+e.toString());
+        }
+    }
+
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+
+            if("content".equals(contentUri.getScheme())) {
+                String[] proj = {MediaStore.Images.Media.DATA};
+                cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                return cursor.getString(column_index);
+            }
+            else{
+                return contentUri.getPath();
+            }
+
+
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private Bitmap getScaledBitmap(String picturePath, int width, int height) {
+        BitmapFactory.Options sizeOptions = new BitmapFactory.Options();
+        sizeOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(picturePath, sizeOptions);
+
+        int inSampleSize = calculateInSampleSize(sizeOptions, width, height);
+
+        sizeOptions.inJustDecodeBounds = false;
+        sizeOptions.inSampleSize = inSampleSize;
+
+        return BitmapFactory.decodeFile(picturePath, sizeOptions);
+    }
+
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+        return inSampleSize;
+    }
+}
+</code></pre>
+
+<p>Main activity which contains fragment</p>
+
+<pre><code>public class MainFragmentActivity extends Activity implements ChangeFragmentEventListener {
+    AbstractFragment menuFragment;
+    AbstractFragment contentFragment;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main_fragment);
+        assignViews();
+        setListeners();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onFragmenChange(FragmentPlaceEnum fragmentPlaceEnum, FragmentEnum fragmentEnum) {
+
+        AbstractFragment newFragment = null;
+        if(fragmentEnum.equals(FragmentEnum.MAIN_WALL_FRAGMENT))
+            newFragment = new MainWallFragment();
+        else if(fragmentEnum.equals(FragmentEnum.GROUPS_FRAGMENT))
+            newFragment = new GroupsFragment();
+        else if(fragmentEnum.equals(FragmentEnum.NOTIFICATIONS_FRAGMENT))
+            newFragment = new NotificationsFragment();
+        else if (fragmentEnum.equals(FragmentEnum.ADD_AMBAJ_FRAGMENT))
+            newFragment = new AddAmbajFragment();
+
+        contentFragment = newFragment;
+
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+// Replace whatever is in the fragment_container view with this fragment,
+// and add the transaction to the back stack
+        if(fragmentPlaceEnum.equals(FragmentPlaceEnum.MAIN_ACTIVITY_CONTENT))
+            transaction.replace(R.id.main_content_fragment, newFragment);
+        else if(fragmentPlaceEnum.equals(FragmentPlaceEnum.MAIN_ACTIVITY_MENU))
+            transaction.replace(R.id.main_menu_fragment, newFragment);
+        //transaction.addToBackStack(null);
+
+// Commit the transaction
+       transaction.commit();
+    }
+
+    private void assignViews(){
+
+        menuFragment = (AbstractFragment) getFragmentManager().findFragmentById(R.id.main_menu_fragment);
+        contentFragment = (AbstractFragment) getFragmentManager().findFragmentById(R.id.main_content_fragment);
+    }
+
+    private void setListeners(){
+        menuFragment.setChangeFragmentEventListener(this);
+        contentFragment.setChangeFragmentEventListener(this);
+    }
+
+}
+</code></pre>

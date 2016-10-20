@@ -1,0 +1,269 @@
+<p>I am trying to pass two values ie.,a & b values,to the x-axis and y-axis for creating a bar chart in android.But i am getting the a and b values from the web service by consuming it.Here i use SOAP method for consuming the web service.</p>
+
+<p>After trying of some code.i got these things on my log-cat.Can anyone let me know how to solve these issues? suggestions please..</p>
+
+<p><strong>LOGCAT</strong></p>
+
+<pre><code>10-03 11:35:25.285: W/KeyCharacterMap(404): No keyboard for id 0
+10-03 11:35:25.295: W/KeyCharacterMap(404): Using default keymap: /system/usr/keychars/qwerty.kcm.bin
+10-03 11:35:38.195: D/AndroidRuntime(404): Shutting down VM
+10-03 11:35:38.195: W/dalvikvm(404): threadid=1: thread exiting with uncaught exception (group=0x4001d800)
+10-03 11:35:38.205: E/AndroidRuntime(404): FATAL EXCEPTION: main
+10-03 11:35:38.205: E/AndroidRuntime(404): java.lang.RuntimeException: Unable to instantiate activity ComponentInfo{com.example.test_wb/com.example.test_wb.ResultActivity}: java.lang.NullPointerException
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2585)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2679)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.ActivityThread.access$2300(ActivityThread.java:125)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2033)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.os.Handler.dispatchMessage(Handler.java:99)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.os.Looper.loop(Looper.java:123)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.ActivityThread.main(ActivityThread.java:4627)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at java.lang.reflect.Method.invokeNative(Native Method)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at java.lang.reflect.Method.invoke(Method.java:521)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at dalvik.system.NativeStart.main(Native Method)
+10-03 11:35:38.205: E/AndroidRuntime(404): Caused by: java.lang.NullPointerException
+10-03 11:35:38.205: E/AndroidRuntime(404):  at org.apache.harmony.luni.util.FloatingPointParser.parseDouble(FloatingPointParser.java:263)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at java.lang.Double.parseDouble(Double.java:287)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at com.example.test_wb.ResultActivity.<init>(ResultActivity.java:25)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at java.lang.Class.newInstanceImpl(Native Method)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at java.lang.Class.newInstance(Class.java:1429)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.Instrumentation.newActivity(Instrumentation.java:1021)
+10-03 11:35:38.205: E/AndroidRuntime(404):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2577)
+10-03 11:35:38.205: E/AndroidRuntime(404):  ... 11 more
+</code></pre>
+
+<p><strong>Main_WB.java</strong></p>
+
+<pre><code>public class Main_WB extends Activity
+{
+EditText edt1, edt2;
+// TextView txt_1;
+
+Button btn;
+ArrayList<String> result;
+
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+super.onCreate(savedInstanceState);
+setContentView(R.layout.main);
+
+edt1 = (EditText) findViewById(R.id.editText1);
+edt2 = (EditText) findViewById(R.id.editText2);
+btn = (Button) findViewById(R.id.button1);
+
+result = new ArrayList<String>();
+
+btn.setOnClickListener(new View.OnClickListener() 
+{
+    public void onClick(View v) 
+    {
+        result.addAll(getTMSChart(edt1.getText().toString(), edt2.getText().toString()));
+
+        Intent in = new Intent(getApplicationContext(), ResultActivity.class);
+
+        in.putExtra("gotonextpageX", result.get(0));
+        in.putExtra("gotonextpageY", result.get(1));
+
+        startActivity(in);
+    }
+});
+}
+private ArrayList<String> getTMSChart(String FromDate, String ToDate) 
+{
+// txt_1 = (TextView)findViewById(R.id.textView1);
+
+System.setProperty("http.keepAlive", "false");
+SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+
+envelope.dotNet = true;
+
+String NAMESPACE = "http://tempuri.org/";
+String URL = "http://54.251.60.177/TMSOrdersService/TMSDetails.asmx";
+String METHOD = "GetTMSChart";
+
+SoapObject request = new SoapObject(NAMESPACE, METHOD);
+request.addProperty("FromDate", FromDate);
+request.addProperty("ToDate", ToDate);
+
+envelope.setOutputSoapObject(request);
+HttpTransportSE androidHttpTransport = new HttpTransportSE(URL);
+
+String x = "", y = "";
+
+ArrayList<String> stringResult = new ArrayList<String>();
+
+try 
+{
+    androidHttpTransport.call(NAMESPACE + METHOD, envelope);
+    SoapObject result = (SoapObject) envelope.bodyIn;
+    SoapObject root = (SoapObject) ((SoapObject) (result).getProperty(0)).getProperty("NewDataSet");
+    int tablesCount = root.getPropertyCount();
+
+    for (int i = 0; i < tablesCount; i++) 
+    {
+        SoapObject table = (SoapObject) root.getProperty(i);
+        int propertyCount = table.getPropertyCount();
+
+        for (int j = 0; j < propertyCount; j++) 
+        {
+
+            stringResult.add(table.getPropertyAsString("Order_No").toString());
+            stringResult.add(table.getPropertyAsString("Freight_Rate").toString());
+        }
+    }
+}
+catch (Exception e) 
+{
+}
+
+return stringResult; 
+} 
+}
+</code></pre>
+
+<p><strong>ResultActivity.java</strong></p>
+
+<pre><code>public class ResultActivity extends Activity 
+{   
+TextView txt1,txt2;
+
+String a,b;
+
+double x_axis = Double.parseDouble(a); // Type casting
+double y_axis = Double.parseDouble(b); // Type casting
+
+@Override
+public void onCreate(Bundle savedInstanceState)
+{   
+super.onCreate(savedInstanceState);
+setContentView(R.layout.main1);
+
+Bundle extras = getIntent().getExtras();
+
+if(extras != null)
+{   
+    a = extras.getString("gotonextpageX");
+    b = extras.getString("gotonextpageY");
+  }
+else
+{
+}
+draw();
+
+//txt1 = (TextView)findViewById(R.id.txtVw);
+//txt2 = (TextView)findViewById(R.id.txtVw2);
+//txt1.setText(x);
+//txt2.setText(y);
+
+}
+
+public void draw()
+{   
+
+String[] titles = new String[] { "Order's profit of the year", " " };
+
+List<double[]> values = new ArrayList<double[]>();
+
+values.add(new double[] { y_axis });
+
+int[] colors = new int[] { Color.BLACK, Color.WHITE};
+
+XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+renderer.setOrientation(Orientation.HORIZONTAL);
+
+ setChartSettings(renderer, "Profit for the year 2012", " ", " ",0,x_axis, 0,y_axis, Color.GRAY, Color.LTGRAY);
+
+renderer.setXLabels(1);
+renderer.addXTextLabel(100, "x");
+
+//renderer.addXTextLabel(200, "ord2");
+//renderer.addXTextLabel(300, "ord3");
+//renderer.addXTextLabel(400, "ord4");
+//renderer.setPanEnabled(true, false);
+
+int length = renderer.getSeriesRendererCount();
+
+for (int i = 0; i < length; i++) 
+{
+    SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+    seriesRenderer.setDisplayChartValues(true);
+    }
+
+ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+}
+
+protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+{   
+
+  // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+    XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+    renderer.setAxisTitleTextSize(15);
+    renderer.setChartTitleTextSize(20);
+    renderer.setLabelsTextSize(15);
+    renderer.setLegendTextSize(15);
+
+    int length = colors.length;
+
+    for (int i = 0; i < length; i++) 
+    {
+        SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+        r.setColor(colors[i]);
+        renderer.addSeriesRenderer(r);
+        }
+    return renderer;
+    }
+
+ protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+String yTitle, double xMin, double x_axis2, double yMin, double yMax, int axesColor,int labelsColor) 
+{   
+
+// sets lots of default values for this renderer
+
+renderer.setChartTitle(title);
+renderer.setXTitle(xTitle);
+renderer.setYTitle(yTitle);
+
+renderer.setXAxisMin(xMin);
+
+//renderer.setXAxisMax(x2);
+
+renderer.setYAxisMin(yMin);
+renderer.setYAxisMax(yMax);
+
+renderer.setAxesColor(axesColor);
+renderer.setLabelsColor(labelsColor);
+
+renderer.setApplyBackgroundColor(true);
+renderer.setBackgroundColor(Color.GRAY);
+}
+
+protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) 
+{   
+// adds the axis titles and values into the data-set
+
+XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+int length = titles.length;
+
+for (int i = 0; i < length; i++) 
+{
+    CategorySeries series = new CategorySeries(titles[i]);
+
+    double[] v = values.get(i);
+    int seriesLength = v.length;
+
+    for (int k = 0; k < seriesLength; k++) 
+    {
+        series.add(v[k]);
+    }
+
+    dataset.addSeries(series.toXYSeries());
+}
+return dataset;
+ }    }
+</code></pre>
+
+<p>Thanks for your precious time!..</p>

@@ -1,0 +1,225 @@
+<p>I am using a gridview to display some images.I did the code for but still i am not getting any images</p>
+
+<p>Custom Adapter</p>
+
+<pre><code>public class CustomAdapter extends BaseAdapter {
+
+    private Context context;
+    private int[] images;
+
+    public CustomAdapter(Context context, int[] images) {
+        this.context = context;
+        this.images = images;
+    }
+
+    @Override
+    public int getCount() {
+        return images.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return images[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = LayoutInflater.from(context).inflate(R.layout.custom_trips_frag_row, parent, false);
+//            holder.tvHeader = (TextView) convertView.findViewById(R.id.tv_trips_home_header);
+//            holder.tvDate = (TextView) convertView.findViewById(R.id.tv_trips_home_date);
+            holder.ivImage = (ImageView) convertView.findViewById(R.id.iv_trips_home_image);
+            convertView.setTag(holder);
+
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+//        
+
+        holder.ivImage.setImageResource(images[position]);
+
+
+        return convertView;
+    }
+
+
+    private class ViewHolder {
+        private TextView tvHeader;
+        private TextView tvDate;
+        private ImageView ivImage;
+    }
+} 
+</code></pre>
+
+<p>Main Activity</p>
+
+<pre><code>public class MainActivity extends MasterActivity {
+    private int[] images={R.drawable.images, R.drawable.images_2, R.drawable.images_1, R.drawable.images_4, R.drawable.images, R.drawable.images_2};
+    private GridView gridView;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.trips_frag);
+
+        gridView = (GridView) findViewById(R.id.grid);
+        gridView.setAdapter(new CustomAdapter(this, images));
+
+
+    }
+}
+</code></pre>
+
+<p>Custom Row Xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:id="@+id/iv_trips_home_image"
+        android:src="@drawable/images"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_below="@+id/iv_trips_home_image"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:id="@+id/tv_trips_home_header" />-->
+
+    <!--<triplogger.indiehustlers.com.triplogger.UTIL.CustomTextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/tv_trips_home_header"-->
+        <!--style="@style/textView"-->
+        <!--android:text="Berlin"-->
+        <!--android:textColor="#000"-->
+        <!--android:textStyle="bold"-->
+        <!--android:textSize="@dimen/header_text"-->
+        <!--android:layout_below="@+id/iv_trips_home_image"-->
+        <!--android:layout_centerHorizontal="true" />-->
+
+
+    <!--<triplogger.indiehustlers.com.triplogger.UTIL.CustomTextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="14-Sept-2014"-->
+        <!--style="@style/textView"-->
+        <!--android:visibility="gone"-->
+        <!--android:textColor="#23170e17"-->
+        <!--android:id="@+id/tv_trips_home_date"-->
+        <!--android:layout_below="@+id/tv_trips_home_header"-->
+        <!--android:layout_centerHorizontal="true" />-->
+</RelativeLayout>
+</code></pre>
+
+<p>Master Activity</p>
+
+<pre><code>public class MasterActivity extends Activity {
+    protected Context activityContext;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        activityContext = getApplicationContext();
+    }
+}
+</code></pre>
+
+<p>trips_frag</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_marginRight="@dimen/margin_right"
+    android:layout_marginLeft="@dimen/margin_left"
+
+    android:layout_height="match_parent">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/tab" />
+
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/tab" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+       >
+
+        <GridView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:numColumns="2"
+            android:id="@+id/grid"
+            android:verticalSpacing="5dp"
+            android:stretchMode="spacingWidthUniform"></GridView>
+
+    </LinearLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p>Manifest</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="triplogger.indiehustlers.com.triplogger">
+
+
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/TripLoggerTheme">
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>I did lot of research but still not getting any success
+I am not getting where i went wrong?Please do help me out</p>

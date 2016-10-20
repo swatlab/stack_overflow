@@ -1,0 +1,422 @@
+<p>I'm trying sample app. I'm populating listview data from sqlite db. DB stored under assets folder. Log cat shows DB couldn't open. My database name "mydb", contain one Table: "month" and three column: jan, feb and march.</p>
+
+<p>Check My code:</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>package test.lin.com.presqlitedb;
+
+
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+
+public class MainActivity extends ActionBarActivity {
+    private ListView lstMonthList;
+    private java.util.List<MonthObj> lst_Month_list = new java.util.ArrayList<MonthObj>();
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        DBHelper dbHelper = new DBHelper(getApplicationContext());
+        lstMonthList = (ListView) findViewById(R.id.listView);
+
+        lst_Month_list = dbHelper.getMonth();
+
+        lstMonthList.setAdapter(new LAdapter());
+
+    }
+
+
+    public class LAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return lst_Month_list.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return lst_Month_list.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            // TODO Auto-generated method stub
+            final ViewHolder holder;
+            final int pos;
+            LayoutInflater inflater = getLayoutInflater();
+            pos = position;
+            if (convertView == null) {
+
+                convertView = inflater.inflate(R.layout.row, null);
+                holder = new ViewHolder();
+                holder.txtJan = (TextView) convertView.findViewById(R.id.textView1);
+                holder.txtFeb = (TextView) convertView.findViewById(R.id.textView2);
+                holder.txtMarch = (TextView) convertView.findViewById(R.id.textView3);
+
+
+                convertView.setTag(holder);
+
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+
+            holder.txtJan.setText(lst_Month_list.get(position).getJan());
+            holder.txtFeb.setText(lst_Month_list.get(position).getFeb());
+            holder.txtMarch.setText(lst_Month_list.get(position).getMarch());
+
+
+            return convertView;
+        }
+
+
+        private class ViewHolder {
+            TextView txtJan;
+            TextView txtFeb;
+            TextView txtMarch;
+
+        }
+    }
+
+
+}
+</code></pre>
+
+<p>DBHelper.java</p>
+
+<pre><code>package test.lin.com.presqlitedb;
+
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class DBHelper extends SQLiteOpenHelper {
+    public static String DATABASE_NAME = "mydb";
+    public static String DATABASE_PATH = "/data/data/test.lin.com.presqlitedb/databases/";
+    private SQLiteDatabase myDataBase;
+    private static String myPath = DATABASE_PATH + DATABASE_NAME;
+    public static final String DATABASE_TABLE = "month";
+    private static final int DATABASE_VERSION = 1;
+    public static final int ver = 1;
+    private SQLiteDatabase db;
+    Context context;
+
+    public DBHelper(Context context) {
+
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
+        if (checkDataBase()) {
+            openDataBase();
+            Log.i("run", "open db");
+        } else {
+            try {
+                copyDatase();
+                openDataBase();
+            } catch (Exception ex) {
+
+            }
+
+        }
+    }
+
+    private void copyDatase() throws IOException {
+        // Open your local db as the input stream
+        InputStream myInput = context.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+        Log.i("run", "copy successful");
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLiteException {
+        // Open the database
+       db = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        boolean exist = false;
+        try {
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+            Log.i("db log", "database does't exist");
+        }
+
+        if (checkDB != null) {
+            exist = true;
+            checkDB.close();
+        }
+        return exist;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+
+            this.getWritableDatabase();
+        }
+        dbExist = checkDataBase();
+        if (!dbExist) {
+
+            this.getReadableDatabase();
+            try {
+                copyDatase();
+            } catch (IOException e) {
+
+            }
+        }
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+        try {
+            createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public java.util.List<MonthObj> getMonth() {
+        java.util.List<MonthObj> lst_month = new java.util.ArrayList<MonthObj>();
+        Cursor c = null;
+        try {
+            String sql = "select * from month";
+            c = db.rawQuery(sql, null);
+            if (c.getCount() > 0) {
+                c.moveToFirst();
+                while (!c.isAfterLast()) {
+                    MonthObj obj = new MonthObj();
+                    obj.setJan(c.getString(0));
+                    obj.setFeb(c.getString(1));
+                    obj.setMarch(c.getString(2));
+
+                    lst_month.add(obj);
+                    c.moveToNext();
+                }
+            }
+        } catch (Exception ex) {
+            ex.toString();
+            ex.printStackTrace();
+        }
+
+        return lst_month;
+    }
+
+
+
+}
+</code></pre>
+
+<p>MonthObj.java</p>
+
+<pre><code>package test.lin.com.presqlitedb;
+
+
+public class MonthObj {
+    private String jan, feb, march;
+
+
+    public String getJan() {
+        return jan;
+    }
+
+    public void setJan(String jan) {
+        this.jan = jan;
+    }
+
+    public String getFeb() {
+        return feb;
+    }
+
+    public void setFeb(String feb) {
+        this.feb = feb;
+    }
+
+    public String getMarch() {
+        return march;
+    }
+
+    public void setMarch(String march) {
+        this.march = march;
+    }
+}
+</code></pre>
+
+<p>activity_main.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity">
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+</RelativeLayout>
+</code></pre>
+
+<p>row.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Large Text"
+        android:id="@+id/textView1"
+        android:layout_alignParentTop="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/textView2"
+        android:layout_below="@+id/textView1"
+        android:layout_alignLeft="@+id/textView1"
+        android:layout_alignStart="@+id/textView1" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Small Text"
+        android:id="@+id/textView3"
+        android:layout_below="@+id/textView2" />
+</RelativeLayout>
+</code></pre>
+
+<p>Logcat:</p>
+
+<pre><code>01-25 17:00:27.305    5811-5811/? E/SQLiteLog? (14) cannot open file at line 30191 of [00bb9c9ce4]
+01-25 17:00:27.305    5811-5811/? E/SQLiteLog? (14) os_unix.c:30191: (2) open(/data/data/test.lin.com.presqlitedb;/databases/mydb) -
+01-25 17:00:27.315    5811-5811/? E/SQLiteDatabase? Failed to open database '/data/data/test.lin.com.presqlitedb;/databases/mydb'.
+    android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+            at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+            at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+            at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+            at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+            at test.lin.com.presqlitedb.DBHelper.checkDataBase(DBHelper.java:82)
+            at test.lin.com.presqlitedb.DBHelper.<init>(DBHelper.java:34)
+            at test.lin.com.presqlitedb.MainActivity.onCreate(MainActivity.java:23)
+            at android.app.Activity.performCreate(Activity.java:5242)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+            at com.lbe.security.service.core.client.b.x.callActivityOnCreate(Unknown Source)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2162)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2248)
+            at android.app.ActivityThread.access$800(ActivityThread.java:138)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1199)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5050)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:805)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:621)
+            at de.robv.android.xposed.XposedBridge.main(XposedBridge.java:132)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>AndroidManifest</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="test.lin.com.presqlitedb">
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>My complete code download link</p>
+
+<p><a href="https://www.dropbox.com/s/qjmzwwiybs4vvm8/presqlitedb.rar?dl=0" rel="nofollow">https://www.dropbox.com/s/qjmzwwiybs4vvm8/presqlitedb.rar?dl=0</a></p>

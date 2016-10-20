@@ -1,0 +1,133 @@
+<p>I've tried to to query of current user's friend list and add it to listview in android. The problem is the method keep showing errors</p>
+
+<p>This is my code</p>
+
+<pre><code>package com.example.krisanapongpoonsawat.chatit;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import com.parse.FindCallback;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.parse.FindCallback;
+import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseRelation;
+import com.parse.ParseUser;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class User extends AppCompatActivity {
+    private ArrayList<ParseUser> uList;
+
+    /** The user. */
+    public static ParseUser user;
+    ArrayList<String> friendlist;
+    ArrayAdapter<String> listAdapter;
+    ListView list;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.user);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(myToolbar);
+        final ParseUser currentUser = ParseUser.getCurrentUser();
+        list = (ListView) findViewById(R.id.listView);
+        listAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1);
+        list.setAdapter(listAdapter);
+
+    }
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        loadUserList();
+
+    }
+    private void loadUserList()
+    {
+        ParseQuery query = new ParseQuery("Friends");
+        query.whereEqualTo("owner", ParseUser.getCurrentUser().getObjectId().toString());
+        query.findInBackground(new FindCallback() {
+            public void done(List<ParseObject> friendList, ParseException e) {
+                if (e == null) {
+                    Log.d("score", "Retrieved " + friendList.size() + " scores");
+                    for (int i = 0; i < friendlist.size(); i++) {
+                        Object object = friendlist.get(i);
+                        String name = ((ParseObject) object).getObjectId().toString();
+                        listAdapter.add(name);
+
+
+                    }
+                } else {
+                    Log.d("score", "Error: " + e.getMessage());
+                }
+            }
+        });
+
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_favorite:
+                // User chose the "Settings" item, show the app settings UI...
+                Intent intent = new Intent(User.this, Search.class);
+                startActivity(intent);
+                finish();
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
+
+
+
+
+}
+</code></pre>
+
+<p>and the error shown is </p>
+
+<pre><code>    Error:(66, 51) error: <anonymous com.example.krisanapongpoonsawat.chatit.User$1> is not abstract and does not override abstract method done(List,ParseException) in FindCallback
+Error:(67, 25) error: name clash: done(List<ParseObject>,ParseException) in <anonymous com.example.krisanapongpoonsawat.chatit.User$1> and done(List<T>,ParseException) in FindCallback have the same erasure, yet neither overrides the other
+where T is a type-variable:
+T extends ParseObject declared in interface FindCallback
+</code></pre>
+
+<p>Can you solve this? I've been stuck with it for 3 days now</p>
+
+<p>let me know if you need any additional info!</p>
+
+<p>Thank you</p>

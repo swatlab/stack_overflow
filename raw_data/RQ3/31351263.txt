@@ -1,0 +1,210 @@
+<p>I have a servlet method that creates a JPA entity and assigns an existing JPA entity to a <code>@ManyToOne</code> field</p>
+
+<p>When I persist it, it saves the entity but the foreign key is NULL.  Why?</p>
+
+<p>Here are my entities:</p>
+
+<pre><code>@Entity
+public class SimpleEntity implements java.io.Serializable {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -5930519292861829894L;
+
+    @Id @GeneratedValue
+    Long id;
+    String name;
+
+    @ManyToOne()
+    @JoinColumn(name="simple_entity_group_id", insertable=false, updatable=false, nullable=true)
+    SimpleEntityGroup group;
+
+    /**
+     * 
+     */
+    public SimpleEntity() {
+    }
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return this.id;
+    }
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return this.name;
+    }
+    /**
+     * @param name the name to set
+     */
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "SimpleEntity [id=" + this.id + ", name=" + this.name + ", group=" + this.getGroup() + "]";
+    }
+    /**
+     * @return the group
+     */
+    public SimpleEntityGroup getGroup() {
+        return this.group;
+    }
+    /**
+     * @param group the group to set
+     */
+    public void setGroup(SimpleEntityGroup group) {
+        this.group = group;
+    }
+
+}
+
+@Entity
+public class SimpleEntityGroup implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -1680386377742600266L;
+
+    @Id @GeneratedValue
+    Long id;
+
+    String name;
+
+    @OneToMany(mappedBy="group")
+    java.util.List<SimpleEntity> simpleEntities;
+
+    /**
+     * 
+     */
+    public SimpleEntityGroup() {
+        simpleEntities = new ArrayList<SimpleEntity>();
+    }
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return this.id;
+    }
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return this.name;
+    }
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the simpleEntities
+     */
+    public java.util.List<SimpleEntity> getSimpleEntities() {
+        return this.simpleEntities;
+    }
+    /**
+     * @param simpleEntities the simpleEntities to set
+     */
+    public void setSimpleEntities(java.util.List<SimpleEntity> simpleEntities) {
+        this.simpleEntities = simpleEntities;
+    }
+
+    public void addSimpleEntity(SimpleEntity e) {
+        if(this.getSimpleEntities() != null) {
+            this.getSimpleEntities().add(e);
+            return;
+        }
+        throw new RuntimeException("Entity list is null!!!");
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "SimpleEntityGroup [id=" + this.id + ", name=" + this.name + "]";
+    }
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
+        return result;
+    }
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        SimpleEntityGroup other = (SimpleEntityGroup) obj;
+        if (this.id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!this.id.equals(other.id)) {
+            return false;
+        }
+        return true;
+    }
+
+
+}
+</code></pre>
+
+<p>Here is how I persist it:</p>
+
+<pre><code>     SimpleEntity e = new SimpleEntity();
+     e.setName("Mike");
+     SimpleEntityGroup g = dao.getGroupById(1l);
+     e.setGroup(g);
+     dao.persist(e);
+
+     System.out.println(e);
+     System.out.println(dao.findAll());
+</code></pre>
+
+<p>Here is the output from the Java code, the group is set on the entry but it is not saved.  Why?!?!</p>
+
+<blockquote>
+  <p>SimpleEntity [id=4, name=Mike, group=SimpleEntityGroup [id=1,
+  name=Group 1]]</p>
+  
+  <p>[SimpleEntity [id=4, name=Mike, group=null]]</p>
+</blockquote>

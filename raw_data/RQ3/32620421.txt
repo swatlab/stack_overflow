@@ -1,0 +1,95 @@
+<p>So I am trying to create a simple activity page that shows all contacts. Using the search view in the action bar, they should be able to filter the contacts. The contacts are correctly being populated into the ListView but the SearchView is not filtering the list. The list never updates.</p>
+
+<p>This is my contacts activity:</p>
+
+<pre><code>package com.example.android.whereyouat;
+
+import android.app.SearchManager;
+import android.content.Context;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.support.v4.app.NavUtils;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+
+public class Contacts extends AppCompatActivity {
+
+    Cursor cursor1;
+    SimpleCursorAdapter adapter;
+    SearchView searchView;
+    ListView lv;
+    MenuItem searchMenuItem;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contacts);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        lv = (ListView) findViewById(R.id.list);
+        cursor1 = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
+        startManagingCursor(cursor1);
+
+        String[] from = {ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER, ContactsContract.CommonDataKinds.Phone._ID};
+        int[] to = {android.R.id.text1, android.R.id.text2};
+
+        adapter = new SimpleCursorAdapter(this, android.R.layout.simple_list_item_multiple_choice, cursor1, from, to);
+        lv.setAdapter(adapter);
+        lv.setChoiceMode(lv.CHOICE_MODE_MULTIPLE);
+        lv.setTextFilterEnabled(true);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_contacts, menu);
+        searchMenuItem = menu.findItem(R.id.action_search);
+        searchView = (SearchView) MenuItemCompat.getActionView(searchMenuItem);
+
+        SearchManager SManager =  (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        android.support.v7.widget.SearchView searchViewAction = (android.support.v7.widget.SearchView) MenuItemCompat.getActionView(searchMenuItem);
+        searchViewAction.setSearchableInfo(SManager.getSearchableInfo(getComponentName()));
+        searchViewAction.setIconifiedByDefault(true);
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                adapter.getFilter().filter(newText);
+                return false;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+            case R.id.action_search:
+                //openSearch();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>

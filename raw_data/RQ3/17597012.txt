@@ -1,0 +1,285 @@
+<p>i've a sqlite file to use with my app and i follow this tutorial for using my sqlite file : <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">Link tutorial</a></p>
+
+<p>in this database i've many coordinates and for every coordinates, i mark it on a fragment map of my activity.
+when i start my application on my device (acer e330) give me this error:</p>
+
+<pre><code>07-11 16:47:15.928: E/AndroidRuntime(11095): FATAL EXCEPTION: main
+07-11 16:47:15.928: E/AndroidRuntime(11095): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.frank.nuova/com.frank.nuova.Offline}: android.database.sqlite.SQLiteException: no such table: linee: , while compiling: SELECT lat, long, via FROM linee
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1956)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.ActivityThread.access$600(ActivityThread.java:123)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.os.Handler.dispatchMessage(Handler.java:99)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.os.Looper.loop(Looper.java:137)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.ActivityThread.main(ActivityThread.java:4424)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at java.lang.reflect.Method.invokeNative(Native Method)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at java.lang.reflect.Method.invoke(Method.java:511)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:787)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:554)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at dalvik.system.NativeStart.main(Native Method)
+07-11 16:47:15.928: E/AndroidRuntime(11095): Caused by: android.database.sqlite.SQLiteException: no such table: linee: , while compiling: SELECT lat, long, via FROM linee
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:68)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteProgram.compileSql(SQLiteProgram.java:143)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteProgram.compileAndbindAllArgs(SQLiteProgram.java:361)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:127)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:94)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:53)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:47)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1564)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1449)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1405)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1485)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at com.frank.nuova.DataSource.vediCoordinate(DataSource.java:21)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at com.frank.nuova.Offline.onCreate(Offline.java:40)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.Activity.performCreate(Activity.java:4465)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1920)
+07-11 16:47:15.928: E/AndroidRuntime(11095):    ... 11 more
+</code></pre>
+
+<p>but after a while (10 seconds) it works, so it make visible marks on map with right coordinates of my database.
+Now with same code to connect database of this app i'm trying to use a spinner in which i list coordinates of my db.
+but this app crash immediately with the same error of app before.
+i've thought that is a problem of delay to connect on my database it is possible?</p>
+
+<p>This is Activity:</p>
+
+<pre><code>public class Offline extends Activity {
+MyOpenHelper o;
+DataSource db;
+LatLng pos;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_offline);
+    o=new MyOpenHelper(this);
+    try{
+        o.createDataBase();
+    }catch (IOException e){
+        throw new Error("Non posso creare il database");
+    }
+    try{
+        o.openDataBase();
+    }catch(SQLException sql){
+        sql.printStackTrace();
+    }
+    db=new DataSource(o);
+    ListView l=(ListView)findViewById(R.id.listView1);
+    Gps s=new Gps(getApplicationContext());
+    Location adesso=s.getLocation();
+    List<LatLng> vicini=db.piuvicino(adesso, db.vediCoordinate());
+    ArrayAdapter<LatLng> a=new ArrayAdapter<LatLng>(getApplicationContext(),android.R.layout.simple_list_item_1,vicini);
+    l.setAdapter(a);
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.offline, menu);
+    return true;
+}
+
+
+    }
+</code></pre>
+
+<p>this MyOpenHelper.java</p>
+
+<pre><code>public class MyOpenHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "";
+
+    private static String DB_NAME = "orari";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public MyOpenHelper(Context context) {
+        super(context, DB_NAME, null, 1);// 1? its Database Version
+        if(android.os.Build.VERSION.SDK_INT >= 4.2){
+            DB_PATH = context.getApplicationInfo().dataDir + "/databases/";         
+        } else {
+           DB_PATH = "/data/data/" + context.getPackageName() + "/databases/";
+        }
+        this.myContext = context; 
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+}
+</code></pre>
+
+<p>and DataSource.java</p>
+
+<pre><code>public class DataSource {
+private MyOpenHelper oh;
+private Cursor cu;
+public DataSource(MyOpenHelper o){
+    oh=o;
+}
+public List<Coordinate> vediCoordinate(){
+    SQLiteDatabase db=oh.getReadableDatabase();
+    String c[]=new String[]{"lat","long","via"};
+    cu=db.query("linee", c, null, null, null, null, null);
+    int rows=cu.getCount();
+    LinkedList<Coordinate> risultato=new LinkedList<Coordinate>();
+    cu.moveToFirst();
+    for(int i=0;i<rows;i++){
+        risultato.add(i,new Coordinate(cu.getDouble(cu.getColumnIndex("lat")),cu.getDouble(cu.getColumnIndex("long")),cu.getString(cu.getColumnIndex("via"))));
+        cu.moveToNext();
+    }
+    cu.close();
+    return risultato;   
+}
+public double distanza(Location l,LatLng m){
+    double startlat=l.getLatitude();
+    double startlon=l.getLongitude();
+    double endlat=l.getLatitude();
+    double endlon=l.getLongitude();
+    float[]res=new float[1];
+    Location.distanceBetween(startlat, startlon, endlat, endlon, res);
+    return res[0];
+}
+public List<LatLng> piuvicino(Location l,List<Coordinate> a){
+    LatLng b;
+    double dist=0;
+    LinkedList <LatLng> lista=new LinkedList<LatLng>();
+    for(int i=0;i<a.size();i++){
+        b=new LatLng(a.get(i).getLatitudine(), a.get(i).getLongitudine());
+        dist=distanza(l,b);
+        if (dist<0.5){
+            lista.add(new LatLng(a.get(i).getLatitudine(), a.get(i).getLongitudine()));
+        }
+    }
+    return lista;
+}
+    }
+</code></pre>

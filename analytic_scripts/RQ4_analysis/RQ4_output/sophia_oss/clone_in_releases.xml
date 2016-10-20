@@ -1,0 +1,56 @@
+<clones>
+<systeminfo processor="nicad3" system="snippets" granularity="functions" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="4045" npairs="10"/>
+<runinfo ncompares="314816" cputime="179588"/>
+
+<clone nlines="47" similarity="100">
+<source file="snippets/60@sophia_oss.java" startline="322" endline="374" pcid="18"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="322" endline="374" pcid="679"></source>
+</clone>
+
+<clone nlines="47" similarity="100">
+<source file="snippets/67@sophia_oss.java" startline="322" endline="374" pcid="36"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="322" endline="374" pcid="679"></source>
+</clone>
+
+<clone nlines="31" similarity="100">
+<source file="snippets/60@sophia_oss.java" startline="279" endline="313" pcid="16"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="279" endline="313" pcid="677"></source>
+</clone>
+
+<clone nlines="31" similarity="100">
+<source file="snippets/67@sophia_oss.java" startline="279" endline="313" pcid="34"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="279" endline="313" pcid="677"></source>
+</clone>
+
+<clone nlines="25" similarity="100">
+<source file="snippets/67@sophia_oss.java" startline="89" endline="137" pcid="22"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="89" endline="137" pcid="665"></source>
+</clone>
+
+<clone nlines="25" similarity="100">
+<source file="snippets/60@sophia_oss.java" startline="89" endline="137" pcid="4"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="89" endline="137" pcid="665"></source>
+</clone>
+
+<clone nlines="11" similarity="100">
+<source file="snippets/60@sophia_oss.java" startline="231" endline="241" pcid="13"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="231" endline="241" pcid="674"></source>
+</clone>
+
+<clone nlines="11" similarity="100">
+<source file="snippets/67@sophia_oss.java" startline="231" endline="241" pcid="31"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="231" endline="241" pcid="674"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/60@sophia_oss.java" startline="178" endline="189" pcid="8"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="178" endline="189" pcid="669"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/67@sophia_oss.java" startline="178" endline="189" pcid="26"></source>
+<source file="releases/master/sophia_oss-master/support-v4/src/android/support/v4/app/ListFragment.java" startline="178" endline="189" pcid="669"></source>
+</clone>
+
+</clones>

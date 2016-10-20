@@ -1,0 +1,315 @@
+<p>i am trying to create a prefrence acivity but it does not work .i don´t know if the isue is on the method   "addPreferencesFromResource(R.xml.preferencia);" which is depracated .</p>
+
+<p>EDIT:i was declaring at the manifest the wrong name .i was declaring preferencia.xml instead of the prefres.java.</p>
+
+<p>the main Activity:</p>
+
+<pre><code>public class Asteroides extends ActionBarActivity {
+
+    private MediaPlayer player;
+    private Button boton1;
+    private Button boton2;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+
+        boton1 = (Button) findViewById(R.id.button1);
+
+
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container, new PlaceholderFragment()).commit();
+             player = MediaPlayer.create(this, R.raw.audio);
+
+             player.start();    
+
+        }
+    }
+
+
+     @Override
+     protected void onPause() {
+            super.onPause();
+
+                player.stop();
+               if (isFinishing()){
+               player.stop();
+               player.release();
+                }
+
+        }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.asteroides, menu);
+        return true;
+    }
+
+
+    public void play(View v ){
+          Intent i = new Intent(Asteroides.this,prefers.class);
+            startActivity(i);
+
+
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+        case R.id.conf:
+            startActivity(new Intent(Asteroides.this, 
+                   prefers.class));
+
+
+            return true;
+        case R.id.about:
+            startActivity(new Intent(Asteroides.this, 
+                   MainActivity.class));
+
+
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+
+
+
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+
+    }
+
+}
+</code></pre>
+
+<p>the main xml:</p>
+
+<pre><code><FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="uf3.asteroides.Asteroides"
+    tools:ignore="MergeRootFrame" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="35dp"
+        android:background="@drawable/back"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="203dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="80dp"
+            android:layout_marginTop="80dp"
+            android:text="@string/asteroid"
+            android:textColor="#CC0000"
+            android:textSize="30sp" />
+
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="210dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="20dp"
+            android:drawableLeft="@drawable/play"
+            android:onClick="play"
+            android:text="@string/jugar"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="210dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="20dp"
+            android:drawableLeft="@drawable/p"
+            android:text="@string/puntuacion"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+</FrameLayout>
+</code></pre>
+
+<p>prefers.java</p>
+
+<pre><code> import android.os.Bundle;
+    import android.preference.PreferenceActivity;
+
+    public class prefers extends PreferenceActivity{
+
+        @SuppressWarnings("deprecation")
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            // TODO Auto-generated method stub
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.preferencia);
+        }
+
+
+
+    }
+</code></pre>
+
+<p>prefrencia.xml:</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+    <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+        <PreferenceCategory android:title="Category1" >
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="checkboxPref"
+                android:summary="True or False"
+                android:title="Checkbox" />
+        </PreferenceCategory>
+        <PreferenceCategory android:title="Category2" >
+            <EditTextPreference
+                android:defaultValue="[Introduce un string aqui]"
+                android:key="EditTextPref"
+                android:summary="Introduce un String"
+                android:title="EditText" />
+
+            <RingtonePreference
+                android:key="ringtonePref"
+                android:summary="Selecciona un Tono"
+                android:title="RingTones" />
+
+            <PreferenceScreen
+                android:key="secondPrefScreenPref"
+                android:summary="Pulse aquí para ir a la segunda pantalla de Preferencias"
+                android:title="Segunda Pantalla Preferencias" >
+                <EditTextPreference
+                    android:key="secondEditTextPref"
+                    android:summary="Introduce un String"
+                    android:title="EditText (Segunda Pantalla)" />
+            </PreferenceScreen>
+        </PreferenceCategory>
+
+    </PreferenceScreen>
+</code></pre>
+
+<p>the menu.xml</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="uf3.asteroides.Asteroides" >
+
+    <item
+        android:id="@+id/conf"
+        android:orderInCategory="100"
+        android:title="Configuración"
+        android:icon="@drawable/set"
+        app:showAsAction="never"
+        />
+
+     <item
+        android:id="@+id/about"
+        android:orderInCategory="100"
+        android:title="A cerca de..."
+        android:icon="@drawable/ic"
+        app:showAsAction="never"/>
+
+
+</menu>
+</code></pre>
+
+<p>the logcat:</p>
+
+<pre><code>05-03 17:23:50.076: E/AndroidRuntime(2095): FATAL EXCEPTION: main
+05-03 17:23:50.076: E/AndroidRuntime(2095): Process: uf3.asteroides, PID: 2095
+05-03 17:23:50.076: E/AndroidRuntime(2095): java.lang.IllegalStateException: Could not execute method of the activity
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.view.View$1.onClick(View.java:3823)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.view.View.performClick(View.java:4438)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.view.View$PerformClick.run(View.java:18422)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.os.Handler.handleCallback(Handler.java:733)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.os.Handler.dispatchMessage(Handler.java:95)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.os.Looper.loop(Looper.java:136)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at java.lang.reflect.Method.invokeNative(Native Method)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at java.lang.reflect.Method.invoke(Method.java:515)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at dalvik.system.NativeStart.main(Native Method)
+05-03 17:23:50.076: E/AndroidRuntime(2095): Caused by: java.lang.reflect.InvocationTargetException
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at java.lang.reflect.Method.invokeNative(Native Method)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at java.lang.reflect.Method.invoke(Method.java:515)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.view.View$1.onClick(View.java:3818)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     ... 11 more
+05-03 17:23:50.076: E/AndroidRuntime(2095): Caused by: android.content.ActivityNotFoundException: Unable to find explicit activity class {uf3.asteroides/uf3.asteroides.prefers}; have you declared this activity in your AndroidManifest.xml?
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.Instrumentation.checkStartActivityResult(Instrumentation.java:1628)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.Instrumentation.execStartActivity(Instrumentation.java:1424)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.Activity.startActivityForResult(Activity.java:3424)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.Activity.startActivityForResult(Activity.java:3385)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.support.v4.app.FragmentActivity.startActivityForResult(FragmentActivity.java:839)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.Activity.startActivity(Activity.java:3627)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at android.app.Activity.startActivity(Activity.java:3595)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     at uf3.asteroides.Asteroides.play(Asteroides.java:68)
+05-03 17:23:50.076: E/AndroidRuntime(2095):     ... 14 more
+</code></pre>
+
+<p>The manifest:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="uf3.asteroides"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="7"
+        android:targetSdkVersion="17" />
+
+    <uses-permission android:name="android.permission.GET_TASKS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="uf3.asteroides.Asteroides"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="uf3.asteroides.preferencia" />
+        <activity
+            android:name="uf3.asteroides.MainActivity"
+            android:label="@string/title_activity_main" >
+        </activity>
+        <activity
+            android:name="uf3.asteroides.Puntuaciones"
+            android:label="@string/title_activity_puntuaciones" >
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>Any help will be appreciated..</p>

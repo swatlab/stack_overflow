@@ -1,0 +1,552 @@
+<p>I have this applet and i cant figure out why it doesnt load on html page.I have added full permissions in java.policy file. I use the default html file from NetBeans Applet's output.</p>
+
+<pre><code>/* Hearts Cards Game with AI*/
+import java.applet.Applet;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Random;
+import javax.swing.JOptionPane;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.security.AccessController;
+import javax.swing.ImageIcon;
+import javax.swing.*;
+import javax.swing.JPanel;
+
+public class Game extends JApplet implements MouseListener, Runnable {
+
+    int initNoCards = 13;
+    int width, height;
+    boolean endGame = false;
+    int turn = -1;
+    int firstCard = 0;
+    int firstTrick = 0;
+    String leadingSuit = null;
+    Cards leadingCard = null;
+    Cards playCard = null;
+    String startCard = "c2";
+    Cards[] trickCards = new Cards[4];
+    ArrayList<Cards>[] playerCards = new ArrayList[4];
+    ArrayList<Cards>[] takenCards = new ArrayList[4];
+    boolean heartsBroken = false;
+    ArrayList<Cards> cards = new ArrayList<Cards>();
+
+    String[] hearts = {"h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10", "h12", "h13", "h14", "h15"};
+    String queen = "s13";
+    int cardHeight = 76;
+    int cardWidth = 48;
+    ArrayList<Rectangle> rectangles = new ArrayList<Rectangle>();
+    int selectedCard = -1;
+//set the background image
+    Image backImage = new ImageIcon("deck\\back2.png").getImage();
+
+    public void GetDataFromXML() {
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser saxParser = factory.newSAXParser();
+            DefaultHandler handler = new DefaultHandler() {
+
+                boolean name = false;
+                boolean image = false;
+
+                @Override
+                public void startElement(String uri, String localName, String qName,
+                        Attributes attributes) throws SAXException {
+                    if (qName.equalsIgnoreCase("NAME")) {
+                        name = true;
+                    }
+                    if (qName.equalsIgnoreCase("IMAGE")) {
+                        image = true;
+                    }
+                }
+
+                @Override
+                public void endElement(String uri, String localName,
+                        String qName) throws SAXException {
+                }
+
+                @Override
+                public void characters(char ch[], int start, int length) throws SAXException {
+                    String s = new String(ch, start, length);
+                    if (name) {
+                        cards.add(new Cards(s));
+                        name = false;
+                    }
+                    if (image) {
+                        image = false;
+                    }
+                }
+            };
+            saxParser.parse("deck\\deck.xml", handler);
+        } catch (Exception e) {
+        }
+    }
+    //function for comparing cards from same suite
+
+    public boolean lowerThan(Cards c1, Cards c2) {
+        int a, b;
+        a = Integer.parseInt(c1.getName().substring(1));
+        b = Integer.parseInt(c2.getName().substring(1));
+        return a < b;
+    }
+//checks if a card is valid to play
+    public boolean ValidMove(Cards c) {
+        if (firstCard == 0) {
+            if (c.getName().equals(startCard)) {
+                firstCard = 1;
+                return true;
+            }
+            return false;
+        }
+        boolean result = playerCards[turn].indexOf(c) >= 0;
+        if (leadingSuit == null) {
+            return result;
+        }
+        boolean found = false;
+        for (int i = 0; i < playerCards[turn].size(); i++) {
+            if (playerCards[turn].get(i).getName().charAt(0) == leadingSuit.charAt(0)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            boolean justHearts = true;
+            for (int i = 0; i < playerCards[turn].size(); i++) {
+                if (playerCards[turn].get(i).getName().charAt(0) != 'h') {
+                    justHearts = false;
+                    break;
+                }
+            }
+            if (firstTrick == 0) {
+                if (c.getName().equals(queen)) {
+                    return false;
+                }
+                if (!justHearts && c.getName().charAt(0) == 'h') {
+                    return false;
+                }
+            } else {
+                if (c.getName().charAt(0) == 'h' && leadingSuit == null && !heartsBroken && !justHearts) {
+                    return false;
+                }
+            }
+        } else {
+            if (c.getName().charAt(0) != leadingSuit.charAt(0)) {
+                return false;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void init() {
+        GetDataFromXML();
+        setSize(500, 500);
+        width = super.getSize().width;
+        height = super.getSize().height;
+        setBackground(Color.white);
+        addMouseListener(this);
+        for (int i = 0; i < cards.size(); i++) {
+            System.out.println(cards.get(i).getName());
+            System.out.println(cards.get(i).getImage());
+        }
+        Shuffle();
+    }
+
+    public int GetTrickCount() {
+        int count = 0;
+        for (int i = 0; i < trickCards.length; i++) {
+            if (trickCards[i] != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public void ResetTrick() {
+        for (int i = 0; i < trickCards.length; i++) {
+            trickCards[i] = null;
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            PlayTurn();
+        } catch (InterruptedException ex) {
+        }
+    }
+
+    public void start() {
+        Thread th = new Thread(this);
+        th.start();
+    }
+//function for shuffling cards and painting players cards
+    public void Shuffle() {
+
+        for (int i = 0; i < 4; i++) {
+            playerCards[i] = new ArrayList<Cards>();
+            takenCards[i] = new ArrayList<Cards>();
+        }
+        ArrayList<Cards> list = new ArrayList<Cards>();
+        list.addAll(cards);
+        Collections.shuffle(list);
+        for (int i = 0; i < list.size(); i++) {
+            System.out.print(list.get(i).getName() + " ");
+        }
+        //initializare liste carti
+        for (int i = 0; i < 4; i++) {
+            playerCards[i] = new ArrayList<Cards>();
+            takenCards[i] = new ArrayList<Cards>();
+            for (int j = 0; j < initNoCards; j++) {
+                playerCards[i].add((list.get(j + i * initNoCards)));
+                if (list.get(j + i * initNoCards).getName().equals(startCard)) {
+                    turn = i;
+                }
+            }
+            Collections.sort(playerCards[i], c);
+            ShowCards(i);
+        }
+        for (int i = 0; i < playerCards[0].size() - 1; i++) {
+            rectangles.add(new Rectangle((141 + 1) + 13 * i - 2, 350 + 1, 13 - 2, cardHeight - 1));
+        }
+        rectangles.add(new Rectangle((141 + 1) + 13 * 12 - 2, 350 + 1, cardWidth, cardHeight - 1));
+        ShowPlayersCards();
+    }
+    Comparator<Cards> c = new Comparator<Cards>() {
+
+        @Override
+        public int compare(Cards o1, Cards o2) {
+            if (o2.getName().charAt(0) != o1.getName().charAt(0)) {
+                return o2.getName().charAt(0) - o1.getName().charAt(0);
+            } else {
+                int a, b;
+                a = Integer.parseInt(o1.getName().substring(1));
+                b = Integer.parseInt(o2.getName().substring(1));
+                return a - b;
+            }
+        }
+    };
+
+    public void PlayTurn() throws InterruptedException {
+        endGame = true;
+        System.out.println("Its " + turn);
+        for (int i = 0; i < 4; i++) {
+            if (!playerCards[i].isEmpty()) {
+                endGame = false;
+            }
+        }
+        if (endGame) {
+            System.out.println("Game over!");
+            GetPlayersScore();
+            return;
+        }
+        if (turn != 0) {
+            Random r = new Random();
+            int k = r.nextInt(playerCards[turn].size());
+            Cards AIcard = playerCards[turn].get(k);
+            while (!ValidMove(AIcard)) {
+                k = r.nextInt(playerCards[turn].size());
+                AIcard = playerCards[turn].get(k);
+            }
+            leadingCard = AIcard;
+            playCard = AIcard;
+        } else {
+            System.out.println("\nIt is player's (" + turn + ") turn");
+            System.out.println("Player (" + turn + ") enter card to play:");
+            leadingCard = null;
+            playCard = null;//new Cards(read);
+            while (true) {
+                if (playCard != null) {
+                    break;
+                }
+                Thread.sleep(50);
+            }
+        }
+        repaint();
+        Thread.sleep(1000);
+        repaint();
+        if (playCard.getName().charAt(0) == 'h') {
+            heartsBroken = true;
+        }
+        playerCards[turn].remove(playCard);
+        trickCards[turn] = playCard;
+        if (GetTrickCount() == 1)//setez leading suit doar pentru trickCards[0]
+        {
+            leadingSuit = GetSuit(playCard);
+        }
+        System.out.println("Leading suit " + leadingSuit);
+        System.out.println("Player (" + turn + ") chose card " + playCard.getName() + " to play");
+        ShowTrickCards();
+        ShowPlayersCards();
+        if (GetTrickCount() < 4) {
+            turn = (turn + 1) % 4;
+        } else {
+            turn = GetTrickWinner();
+            leadingSuit = null;
+            firstTrick = 1;
+            playCard = null;
+            repaint();
+        }
+        PlayTurn();
+    }
+
+    public void ShowTrickCards() {
+        System.out.println("Cards in this trick are:");
+        for (int i = 0; i < 4; i++) {
+            if (trickCards[i] != null) {
+                System.out.print(trickCards[i].getName() + " ");
+            }
+        }
+    }
+
+    public String GetSuit(Cards c) {
+        if (c.getName().contains("c")) {
+            return "c";
+        }
+        if (c.getName().contains("s")) {
+            return "s";
+        }
+        if (c.getName().contains("h")) {
+            return "h";
+        }
+        if (c.getName().contains("d")) {
+            return "d";
+        }
+        return null;
+    }
+
+    public String GetValue(Cards c) {
+        String get = null;
+        get = c.getName().substring(1);
+        return get;
+    }
+
+    public int GetTrickWinner() {
+        int poz = 0;
+        for (int i = 1; i < 4; i++) {
+            if (trickCards[poz].getName().charAt(0) == trickCards[i].getName().charAt(0) && lowerThan(trickCards[poz], trickCards[i]) == true) {
+                poz = i;
+            }
+        }
+        System.out.println("\nPlayer (" + poz + ") won last trick with card " + trickCards[poz].getName());
+        ResetTrick();
+        return poz;
+    }
+
+    public void ShowPlayersCards() {
+        ShowCards(0);
+        ShowCards(1);
+        ShowCards(2);
+        ShowCards(3);
+    }
+
+    public void GetPlayersScore() {
+        GetScore(0);
+        GetScore(1);
+        GetScore(2);
+        GetScore(3);
+    }
+
+    public void ShowCards(int player) {
+        System.out.print("\nPlayer (" + player + ") cards: ");
+        for (int i = 0; i < playerCards[player].size(); i++) {
+            System.out.print(playerCards[player].get(i).getName() + " ");
+        }
+        System.out.println();
+    }
+
+    public int GetScore(int player) {
+        int score = 0;
+        for (int i = 0; i < takenCards[player].size(); i++) {
+            for (int j = 0; j < hearts.length; j++) {
+                if (takenCards[player].get(i).getName().equals(hearts[j])) {
+                    score++;
+                    break;
+                }
+            }
+            if (takenCards[player].get(i).getName().equals(queen)) {
+                score += 13;
+            }
+        }
+        return score;
+
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        g.drawImage(backImage, 0, 0, getWidth(), getHeight(), this);
+        for (int i = 0; i < playerCards[0].size(); i++) {
+            if (selectedCard == i) {
+                g.drawImage(playerCards[0].get(i).getImage(), 141 + i * 13, 340, null);
+            } else {
+                g.drawImage(playerCards[0].get(i).getImage(), 141 + i * 13, 350, null);
+            }
+            if (trickCards[0] != null) {
+                g.drawImage(trickCards[0].getImage(), 225, 250, 48, 76, null);
+            }
+            if (trickCards[1] != null) {
+                g.drawImage(trickCards[1].getImage(), 177, 174, 48, 76, null);
+            }
+            if (trickCards[2] != null) {
+                g.drawImage(trickCards[2].getImage(), 225, 98, 48, 76, null);
+            }
+            if (trickCards[3] != null) {
+                g.drawImage(trickCards[3].getImage(), 273, 174, 48, 76, null);
+            }
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (turn != 0) {
+            return;
+        }
+        for (int i = 0; i < rectangles.size(); i++) {
+            if (rectangles.get(i).contains(e.getPoint())) {
+                if (i == selectedCard) {
+                    if (ValidMove(playerCards[0].get(i))) {
+                        selectedCard = -1;
+                        rectangles.get(rectangles.size() - 2).width = rectangles.get(rectangles.size() - 1).width;
+                        playCard = playerCards[0].get(i);
+                        leadingCard = playCard;
+                        rectangles.remove(rectangles.size() - 1);
+                        trickCards[0] = playerCards[0].remove(i);
+                    } else {
+                        if (firstCard == 0) {
+                            JOptionPane.showMessageDialog(this, "You have to play 2 of clubs!");
+                        }
+                    }
+                } else {
+                    selectedCard = i;
+                    rectangles.get(i).y -= 10;
+                }
+                repaint();
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
+}
+
+class Cards extends JPanel {
+
+    private String name;
+    private String image;
+    private Image img;
+
+    public Cards(String name) {
+        super();
+        this.name = name;
+        this.image = "deck\\" + name + ".png";
+        this.img = new ImageIcon(image).getImage();
+
+    }
+
+    public Cards() {
+        super();
+        this.name = null;
+        this.image = null;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Image getImage() {
+        return img;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Cards)) {
+            return false;
+        }
+        Cards c = (Cards) obj;
+        return name.equals(c.getName()) && image.equals(c.getImage());
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + (this.name != null ? this.name.hashCode() : 0);
+        hash = 31 * hash + (this.image != null ? this.image.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        g.drawImage(img, WIDTH, HEIGHT, this);
+    }
+
+    public boolean lowerThan(Cards c1, Cards c2) {
+        int a, b;
+        a = Integer.parseInt(c1.getName().substring(1));
+        b = Integer.parseInt(c2.getName().substring(1));
+        return a < b;
+    }
+
+    public int compareTo(Cards c) {
+        if (c.getName().charAt(0) != name.charAt(0)) {
+            return c.getName().charAt(0) - name.charAt(0);
+        } else {
+            int a, b;
+            a = Integer.parseInt(name.substring(1));
+            b = Integer.parseInt(c.getName().substring(1));
+            return a - b;
+        }
+    }
+}
+</code></pre>
+
+<h2>HTML</h2>
+
+<pre><code><HTML>
+<HEAD>
+   <TITLE>Applet HTML Page</TITLE>
+</HEAD>
+<BODY>
+<H3><HR WIDTH="100%">Applet HTML Page<HR WIDTH="100%"></H3>
+
+<P>
+<APPLET codebase="classes" code="Game.class" width=350 height=200></APPLET>
+</P>
+
+<HR WIDTH="100%"><FONT SIZE=-1><I>Generated by NetBeans IDE</I></FONT>
+</BODY>
+</HTML>
+</code></pre>

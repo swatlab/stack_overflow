@@ -1,0 +1,498 @@
+<p>I am trying to implement a navigation drawer and use it in multiple activities. But when I try to start another activity (when I click on the item in the navigation drawer), the app crashes and displays a force close message.
+Here is my Main activity called Home:</p>
+
+<pre><code>package com.radoslav.socialreminder;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
+
+
+public class Home extends AppCompatActivity
+        implements NavigationDrawerCallbacks {
+
+    /**
+     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
+     */
+    private NavigationDrawerFragment mNavigationDrawerFragment;
+    private Toolbar mToolbar;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home_new);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar_actionbar);
+        setSupportActionBar(mToolbar);
+
+        mNavigationDrawerFragment = (NavigationDrawerFragment)
+                getFragmentManager().findFragmentById(R.id.fragment_drawer);
+
+        // Set up the drawer.
+        mNavigationDrawerFragment.setup(R.id.fragment_drawer, (DrawerLayout) findViewById(R.id.drawer), mToolbar);
+    }
+
+    @Override
+    public void onNavigationDrawerItemSelected(int position) {
+        // update the main content by replacing fragments
+        Toast.makeText(this, "Menu item selected -> " + position, Toast.LENGTH_SHORT).show();
+
+        Intent intent;
+
+        if(position == 0)
+        {
+
+        }
+
+       else if(position == 1)
+        {
+            try {
+                intent = new Intent(Home.this, MyTasks.class);
+                startActivity(intent);
+            }
+            catch (Exception e)
+            {
+                System.out.println("exception occurred: " + e);
+            }
+
+        }
+        else if(position == 2)
+        {
+            intent = new Intent(Home.this, Group_tasks.class);
+            startActivity(intent);
+
+        }
+        else if(position == 3)
+        {
+            intent = new Intent(Home.this, What_do_I_miss.class);
+            startActivity(intent);
+
+        }
+        else
+        {
+            Toast.makeText(this, "An error has occurred!", Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        if (mNavigationDrawerFragment.isDrawerOpen())
+            mNavigationDrawerFragment.closeDrawer();
+        else
+            super.onBackPressed();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+            // Only show items in the action bar relevant to this screen
+            // if the drawer is not showing. Otherwise, let the drawer
+            // decide what to show in the action bar.
+            getMenuInflater().inflate(R.menu.home_new, menu);
+            return true;
+        }
+        return super.onCreateOptionsMenu(menu);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+}
+</code></pre>
+
+<p>Here is my interface: </p>
+
+<pre><code>package com.radoslav.socialreminder;
+
+public interface NavigationDrawerCallbacks {
+    void onNavigationDrawerItemSelected(int position);
+}
+</code></pre>
+
+<p>NavigationDrawerAdapter:</p>
+
+<pre><code>package com.radoslav.socialreminder;
+
+
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import java.util.List;
+
+
+public class NavigationDrawerAdapter extends RecyclerView.Adapter<NavigationDrawerAdapter.ViewHolder> {
+
+    private List<NavigationItem> mData;
+    private NavigationDrawerCallbacks mNavigationDrawerCallbacks;
+    private View mSelectedView;
+    private int mSelectedPosition;
+
+    public NavigationDrawerAdapter(List<NavigationItem> data) {
+        mData = data;
+    }
+
+    public NavigationDrawerCallbacks getNavigationDrawerCallbacks() {
+        return mNavigationDrawerCallbacks;
+    }
+
+    public void setNavigationDrawerCallbacks(NavigationDrawerCallbacks navigationDrawerCallbacks) {
+        mNavigationDrawerCallbacks = navigationDrawerCallbacks;
+    }
+
+    @Override
+    public NavigationDrawerAdapter.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.drawer_row, viewGroup, false);
+        final ViewHolder viewHolder = new ViewHolder(v);
+        viewHolder.itemView.setClickable(true);
+        viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                                                   @Override
+                                                   public void onClick(View v) {
+                                                       if (mSelectedView != null) {
+                                                           mSelectedView.setSelected(false);
+                                                       }
+                                                       mSelectedPosition = viewHolder.getPosition();
+                                                       v.setSelected(true);
+                                                       mSelectedView = v;
+                                                       if (mNavigationDrawerCallbacks != null)
+                                                           mNavigationDrawerCallbacks.onNavigationDrawerItemSelected(viewHolder.getPosition());
+                                                   }
+                                               }
+        );
+        viewHolder.itemView.setBackgroundResource(R.drawable.row_selector);
+        return viewHolder;
+    }
+
+    @Override
+    public void onBindViewHolder(NavigationDrawerAdapter.ViewHolder viewHolder, int i) {
+        viewHolder.textView.setText(mData.get(i).getText());
+        viewHolder.textView.setCompoundDrawablesWithIntrinsicBounds(mData.get(i).getDrawable(), null, null, null);
+        if (mSelectedPosition == i) {
+            if (mSelectedView != null) {
+                mSelectedView.setSelected(false);
+            }
+            mSelectedPosition = i;
+            mSelectedView = viewHolder.itemView;
+            mSelectedView.setSelected(true);
+        }
+    }
+
+
+    public void selectPosition(int position) {
+        mSelectedPosition = position;
+        notifyItemChanged(position);
+    }
+
+    @Override
+    public int getItemCount() {
+        return mData != null ? mData.size() : 0;
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView textView;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            textView = (TextView) itemView.findViewById(R.id.item_name);
+        }
+    }
+}
+</code></pre>
+
+<p>And NavigationDrawerFragment:</p>
+
+<pre><code>package com.radoslav.socialreminder;
+
+import android.app.Activity;
+import android.app.Fragment;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import java.lang.String;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Fragment used for managing interactions for and presentation of a navigation drawer.
+ * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
+ * design guidelines</a> for a complete explanation of the behaviors implemented here.
+ */
+public class NavigationDrawerFragment extends Fragment implements NavigationDrawerCallbacks {
+
+    /**
+     * Remember the position of the selected item.
+     */
+    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+
+    /**
+     * Per the design guidelines, you should show the drawer on launch until the user manually
+     * expands it. This shared preference tracks this.
+     */
+    private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+    /**
+     * A pointer to the current callbacks instance (the Activity).
+     */
+    private NavigationDrawerCallbacks mCallbacks;
+
+    /**
+     * Helper component that ties the action bar to the navigation drawer.
+     */
+    private ActionBarDrawerToggle mActionBarDrawerToggle;
+
+    private DrawerLayout mDrawerLayout;
+    private RecyclerView mDrawerList;
+    private View mFragmentContainerView;
+
+    private int mCurrentSelectedPosition = 0;
+    private boolean mFromSavedInstanceState;
+    private boolean mUserLearnedDrawer;
+
+    private String item1 = "Home";
+    private String item2 = "My tasks";
+    private String item3 = "Group tasks";
+    private String item4 = "What do I miss?";
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        System.out.println(item1);
+
+        // Read in the flag indicating whether or not the user has demonstrated awareness of the
+        // drawer. See PREF_USER_LEARNED_DRAWER for details.
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+        if (savedInstanceState != null) {
+            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+            mFromSavedInstanceState = true;
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_navigation_drawer_new, container, false);
+        mDrawerList = (RecyclerView) view.findViewById(R.id.drawerList);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        mDrawerList.setLayoutManager(layoutManager);
+        mDrawerList.setHasFixedSize(true);
+
+        final List<NavigationItem> navigationItems = getMenu();
+        NavigationDrawerAdapter adapter = new NavigationDrawerAdapter(navigationItems);
+        adapter.setNavigationDrawerCallbacks(this);
+        mDrawerList.setAdapter(adapter);
+        selectItem(mCurrentSelectedPosition);
+        return view;
+    }
+
+    public boolean isDrawerOpen() {
+        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+    }
+
+    public ActionBarDrawerToggle getActionBarDrawerToggle() {
+        return mActionBarDrawerToggle;
+    }
+
+    public DrawerLayout getDrawerLayout() {
+        return mDrawerLayout;
+    }
+
+    @Override
+    public void onNavigationDrawerItemSelected(int position) {
+        selectItem(position);
+    }
+
+    public List<NavigationItem> getMenu() {
+
+
+        List<NavigationItem> items = new ArrayList<NavigationItem>();
+        items.add(new NavigationItem(item1, getResources().getDrawable(R.drawable.ic_menu_check)));
+        items.add(new NavigationItem(item2, getResources().getDrawable(R.drawable.ic_menu_check)));
+        items.add(new NavigationItem(item3, getResources().getDrawable(R.drawable.ic_menu_check)));
+        items.add(new NavigationItem(item4, getResources().getDrawable(R.drawable.ic_menu_check)));
+        return items;
+    }
+
+    /**
+     * Users of this fragment must call this method to set up the navigation drawer interactions.
+     *
+     * @param fragmentId   The android:id of this fragment in its activity's layout.
+     * @param drawerLayout The DrawerLayout containing this fragment's UI.
+     * @param toolbar      The Toolbar of the activity.
+     */
+    public void setup(int fragmentId, DrawerLayout drawerLayout, Toolbar toolbar) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        mDrawerLayout.setStatusBarBackgroundColor(getResources().getColor(R.color.myPrimaryDarkColor));
+
+        mActionBarDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) return;
+
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) return;
+                if (!mUserLearnedDrawer) {
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager
+                            .getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+        // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+        // per the navigation drawer design guidelines.
+        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(mFragmentContainerView);
+        }
+
+        // Defer code dependent on restoration of previous instance state.
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mActionBarDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
+    }
+
+    private void selectItem(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerLayout != null) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+        if (mCallbacks != null) {
+            mCallbacks.onNavigationDrawerItemSelected(position);
+        }
+        ((NavigationDrawerAdapter) mDrawerList.getAdapter()).selectPosition(position);
+    }
+
+    public void openDrawer() {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    public void closeDrawer() {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mCallbacks = (NavigationDrawerCallbacks) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Forward the new configuration the drawer toggle component.
+        mActionBarDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+}
+</code></pre>
+
+<p>This is what the logcat spits out when the app crashes:</p>
+
+<pre><code>08-07 14:42:16.765      941-941/com.radoslav.socialreminder I/System.out﹕ Home
+08-07 14:42:16.775      941-941/com.radoslav.socialreminder D/AndroidRuntime﹕ Shutting down VM
+08-07 14:42:16.775      941-941/com.radoslav.socialreminder W/dalvikvm﹕ threadid=1: thread exiting with uncaught exception (group=0x41b30700)
+08-07 14:42:16.790      941-941/com.radoslav.socialreminder E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.radoslav.socialreminder/com.radoslav.socialreminder.MyTasks}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2295)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2349)
+            at android.app.ActivityThread.access$700(ActivityThread.java:159)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1316)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:176)
+            at android.app.ActivityThread.main(ActivityThread.java:5419)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:525)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1046)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:862)
+            at de.robv.android.xposed.XposedBridge.main(XposedBridge.java:132)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at android.support.v7.internal.widget.ToolbarWidgetWrapper.<init>(ToolbarWidgetWrapper.java:94)
+            at android.support.v7.internal.widget.ToolbarWidgetWrapper.<init>(ToolbarWidgetWrapper.java:87)
+            at android.support.v7.internal.app.ToolbarActionBar.<init>(ToolbarActionBar.java:79)
+            at android.support.v7.app.AppCompatDelegateImplV7.setSupportActionBar(AppCompatDelegateImplV7.java:198)
+            at android.support.v7.app.AppCompatActivity.setSupportActionBar(AppCompatActivity.java:96)
+            at com.radoslav.socialreminder.MyTasks.onCreate(MyTasks.java:26)
+            at android.app.Activity.performCreate(Activity.java:5372)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1104)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2257)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2349)
+            at android.app.ActivityThread.access$700(ActivityThread.java:159)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1316)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:176)
+            at android.app.ActivityThread.main(ActivityThread.java:5419)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:525)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1046)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:862)
+            at de.robv.android.xposed.XposedBridge.main(XposedBridge.java:132)
+            at dalvik.system.NativeStart.main(Native Method)
+08-07 14:42:16.795    2430-2780/? I/ActivityManager﹕ Notify an ApplicationCrash
+</code></pre>

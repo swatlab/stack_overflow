@@ -1,0 +1,132 @@
+<p>I am tying to make a horizontal bar chart. I have 24 labels in total on the left axis. There are few issues that I am facing with drawing bar chart:</p>
+
+<p>1) I am showing limited number of entries when the bar chart starts. User can scroll to see other entries. As you can see in image 1, a bar is appearing 'below' the Y axis. I am unable to figure out How can I keep all the bar on top of the Axis. </p>
+
+<p>2) Second issue is that the values(or bars) are shifted downward by one. There is no bar in front of "00 AM" label but there is an extra bar below the last entry of 11 AM as shown on second Image. How to shift the bars?</p>
+
+<p>3) Instead of having tars for each label, is their a way in which I can show the bars in between those labels?</p>
+
+<p>Following is that chart that I am getting:</p>
+
+<p><img src="http://i.stack.imgur.com/jRRtR.png" alt="Image 1"></p>
+
+<p><img src="http://i.stack.imgur.com/XFFel.png" alt="Image 2"></p>
+
+<p>Here is the code the code sniplet:</p>
+
+<pre><code>public class TimeCravingBarChart extends Activity {    
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.timecraving_graph);
+        final GraphicalView gv =createIntent();
+        RelativeLayout rl=(RelativeLayout)findViewById(R.id.timegraph);
+
+        LayoutParams l1 = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);  
+        rl.addView(gv,l1);
+    }
+
+
+    public GraphicalView createIntent() {
+        String[] titles = new String[] { "Urge Level"};
+        List<double[]> values = new ArrayList<double[]>();
+
+        values.add(new double[] { 6, 5, 3, 2, 6, 1, 6, 5, 3, 2, 6, 1, 6, 5, 3, 2, 6, 1, 6, 5, 3, 2, 6, 1});
+
+        int[] colors = new int[] { Color.parseColor("#77c4d3")};
+        XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+        renderer.setOrientation(Orientation.VERTICAL);
+        setChartSettings(renderer, "Urge vs TimeOfTheDay Pattern", "Time of the day", "Urge", 1,
+            12, 0, 7, Color.WHITE, Color.WHITE);
+        renderer.setXLabels(0);
+        renderer.setYLabels(10);
+        renderer.setXRoundedLabels(false);
+        //renderer.setYRoundedLabels(false);
+        renderer.addXTextLabel(0, "00 AM  ");
+        renderer.addXTextLabel(1, "01 AM  ");
+        renderer.addXTextLabel(2, "02 AM  ");
+        renderer.addXTextLabel(3, "03 AM  ");
+        renderer.addXTextLabel(4, "04 AM  ");
+        renderer.addXTextLabel(5, "05 AM  ");
+        renderer.addXTextLabel(6, "06 AM  ");
+        renderer.addXTextLabel(7, "07 AM  ");
+        renderer.addXTextLabel(8, "08 AM  ");
+        renderer.addXTextLabel(9, "09 AM  ");
+        renderer.addXTextLabel(10, "10 AM  ");
+        renderer.addXTextLabel(11, "11 AM  ");
+        renderer.addXTextLabel(12, "12 Noon  ");
+        renderer.addXTextLabel(13, "1 PM  ");
+        renderer.addXTextLabel(14, "2 PM  ");
+        renderer.addXTextLabel(15, "3 PM  ");
+        renderer.addXTextLabel(16, "4 PM  ");
+        renderer.addXTextLabel(17, "5 PM  ");
+        renderer.addXTextLabel(18, "6 PM  ");
+        renderer.addXTextLabel(19, "7 PM  ");
+        renderer.addXTextLabel(20, "8 PM  ");
+        renderer.addXTextLabel(21, "9 PM  ");
+        renderer.addXTextLabel(22, "10 PM  ");
+        renderer.addXTextLabel(23, "11 PM  ");
+
+        int length = renderer.getSeriesRendererCount();
+        for (int i = 0; i < length; i++) {
+          SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+          seriesRenderer.setDisplayChartValues(true);
+        }
+
+        final GraphicalView grfv = ChartFactory.getBarChartView(TimeCravingBarChart.this, buildBarDataset(titles, values), renderer,Type.DEFAULT);   
+        return grfv;
+      }
+      protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+            XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+            renderer.setAxisTitleTextSize(20);
+            renderer.setLabelsTextSize(20);
+            renderer.setLegendTextSize(20);
+            renderer.setPanEnabled(true, false);
+            renderer.setBarSpacing(0);
+            renderer.setOrientation(Orientation.VERTICAL); 
+            renderer.setZoomEnabled(false, false);
+            renderer.setMarginsColor(Color.parseColor("#EEEDED"));
+            renderer.setXLabelsColor(Color.WHITE);
+            renderer.setYLabelsColor(0,Color.WHITE);
+
+            renderer.setApplyBackgroundColor(false);
+            int length = colors.length;
+            for (int i = 0; i < length; i++) {
+              SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+              r.setColor(colors[i]);
+              renderer.addSeriesRenderer(r);
+            }
+            return renderer;
+          }
+      protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) {
+            XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+            int length = titles.length;
+            for (int i = 0; i < length; i++) {
+              CategorySeries series = new CategorySeries(titles[i]);
+              double[] v = values.get(i);
+              int seriesLength = v.length;
+              for (int k = 0; k < seriesLength; k++) {
+                series.add(v[k]);
+              }
+              dataset.addSeries(series.toXYSeries());
+            }
+            return dataset;
+          }
+      protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+              String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,
+              int labelsColor) {
+            renderer.setYLabelsAlign(Align.RIGHT);
+            renderer.setYTitle(yTitle);
+            renderer.setXAxisMin(xMin);
+            renderer.setXAxisMax(xMax);
+            renderer.setYAxisMin(yMin);
+            renderer.setYAxisMax(yMax);
+            renderer.setMargins(new int[] { 0, 60, 50, 0 }); // top, left, bottom or right 
+            renderer.setAxesColor(axesColor);
+            renderer.setLabelsColor(labelsColor);
+          }
+}
+</code></pre>

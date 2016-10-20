@@ -1,0 +1,130 @@
+<p>I have a ViewPager and inside it contains 3 fragments.</p>
+
+<p>In Fragment 1, there is a button that when clicked opens a <code>FragmentActivity</code>.</p>
+
+<p>Inside <code>FragmentActivity</code>, there is also a button that when clicked sends a string to the previous fragment it was invoked from and update its UI.</p>
+
+<p>My question is how to return to the previous fragment to update its UI?</p>
+
+<p>In <code>MainActivity</code> that holds the 3 Fragments:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements
+        ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setOffscreenPageLimit(3); // doesn't reload menu items
+
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this)
+            );
+        }
+
+    }
+}
+</code></pre>
+
+<p>The PagerAdapter:</p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+
+    @Override
+    public Fragment getItem(int position) {
+
+        switch (position) {
+            case 0:
+                return new FirstFragment(); 
+            case 1:
+                return new SecondFragment();
+            case 2:
+                return new ThirdFragment();
+        }
+
+        return null;
+    }
+
+}
+</code></pre>
+
+<p>The FragmentActivity:</p>
+
+<pre><code>public static class TheFragmentActivity extends FragmentActivity {
+
+    private TextView text;
+    private Button btnToHome;
+
+    public TheFragmentActivity() {
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_login);
+
+        text = (TextView) findViewById(R.id.txt);
+        text.setText(getIntent().getStringExtra("something")); // should return 'shenanigans'
+        btnToHome = (Button) findViewById(R.id.btnToHome);
+        btnToHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // when clicked, return to FirstFragment
+                // updates FirstFragment UI with a String from this Activity
+            }
+        });
+
+    }
+}
+</code></pre>
+
+<p>FirstFragment that invokes <code>TheFragmentActivity</code>:</p>
+
+<pre><code>public static class FirstFragment extends Fragment {
+
+    private Button btnNew;
+
+    public FirstFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_placeholder, container, false);
+        btnNew = (Button) rootView.findViewById(R.id.btnNew);
+        btnNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(getActivity(), TheFragmentActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                i.putExtra("something", "shenanigans");
+                startActivity(i);
+            }
+        });
+
+        return rootView;
+    }
+}
+</code></pre>

@@ -1,0 +1,191 @@
+<p>My project's gridview shows only 5 photos and in one row while I have added 10 photos which should be diplayed in two rows.Why is my gridview not showing second row.Is this problem because of many layouts?I have posted xml code and java code....    </p>
+
+<pre><code><ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" >
+
+    <RelativeLayout
+        android:id="@+id/layout12"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" >
+    <RelativeLayout
+        android:id="@+id/layout13"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" >
+    <RelativeLayout
+        android:id="@+id/layout14"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" >
+    <RelativeLayout
+        android:id="@+id/layout15"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" >
+    <RelativeLayout
+        android:id="@+id/layout16"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" >
+    <RelativeLayout
+        android:id="@+id/layout17"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        >
+    <RelativeLayout
+        android:id="@+id/layout18"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+       >
+    <RelativeLayout
+        android:id="@+id/layout19"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:background="#FFD801">
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+
+        android:layout_alignParentTop="false"
+        android:layout_centerHorizontal="true"
+        android:text="Hyderabad Hotshots"
+        android:textSize="30dp"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+    </RelativeLayout>
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/layout19"
+
+            android:layout_alignParentTop="false"
+            android:layout_centerHorizontal="true"
+            android:text="@string/hello"
+
+            />
+    </RelativeLayout>
+        <TextView
+            android:id="@+id/textView11"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/layout18"
+            android:layout_centerHorizontal="true"
+            android:text="xyz"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+
+
+    </RelativeLayout>
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/layout17"
+        android:background="@android:color/darker_gray"/>
+</RelativeLayout>
+    <GridView
+        android:id="@+id/gridView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout16"
+        android:layout_margin="5dp"
+        android:columnWidth="100dp"
+        android:gravity="center"
+        android:numColumns="5"
+
+
+        android:verticalSpacing="5dp"
+        android:drawSelectorOnTop="true"        android:stretchMode="columnWidth"
+        >
+    </GridView>
+
+
+
+</RelativeLayout>
+
+    <TextView
+        android:id="@+id/textView12"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout15"
+        android:layout_centerHorizontal="true"
+        android:text="CAMPAIGN SCHEDULE"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+
+
+</RelativeLayout>
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/layout14"
+        android:background="@android:color/darker_gray"/>
+</RelativeLayout>
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout13"
+
+        android:layout_alignParentTop="false"
+        android:layout_centerHorizontal="false"
+        android:text="@string/hello3"
+
+        />
+</RelativeLayout>
+    </ScrollView>
+</code></pre>
+
+<p>TeamDetails.java</p>
+
+<pre><code>public class TeamDetails extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.team_popup);
+        GridView gridview = (GridView) findViewById(R.id.gridView);
+        gridview.setAdapter(new ImageAdapter(this));
+    }
+
+    public class ImageAdapter extends BaseAdapter{
+        private Context mContext;
+        public int getCount() {
+            return mThumbIds.length;
+        }
+        public Object getItem(int position) {
+            return mThumbIds[position];
+        }
+        public long getItemId(int position) {
+            return 0;
+        }
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null){
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            }
+            else{
+                imageView = (ImageView) convertView;
+            }
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        private Integer[] mThumbIds = {
+                R.drawable.ply1, R.drawable.ply2,
+                R.drawable.ply3, R.drawable.ply4,
+                R.drawable.ply5, R.drawable.ply6,
+                R.drawable.ply7, R.drawable.ply8,
+                R.drawable.ply9, R.drawable.ply10
+        };
+    }
+
+}
+</code></pre>

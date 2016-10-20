@@ -1,0 +1,110 @@
+<p>Could anyone tell me / explain how can I make a proper test of a Dequeue?
+I have implemented a Priority Queue and in order to verify it I have done some junit tests.
+I'm rather new to java so maybe I'm making some huge mistakes when trying to verify my implementation of a priority queue.</p>
+
+<h2>The test code :</h2>
+
+<pre><code>@Test
+public void testDequeue() throws MyException {
+
+    System.out.println("Dequeue");
+
+    PQueue q=new PQueue();
+    PQueue o=new PQueue();        
+
+    q.Enqueue("abc", 1); // Enqueue with an object and a priority
+    q.Dequeue();
+    System.out.println(q.dim()); // to see if the dequeue worked 
+
+    o.Enqueue("def", 2);
+
+    assertTrue(o.equals(q));
+}
+</code></pre>
+
+<h2>Pqueue Code:</h2>
+
+<pre><code>public class PQueue<E> implements IPQueue<E>,Serializable{
+
+    private int size,front,rear;
+    private LinkedList<ListNode> list;
+
+    public PQueue()
+    {
+        front=0;
+        rear=0;
+        list=new LinkedList<ListNode>();
+    }
+
+    public void Enqueue(E obj, int p) throws MyException
+    {
+        if (obj==null)  throw new MyException("Did not enqueued");
+
+        if (rear==0)
+        {
+            front=rear=1;
+            list.add(new ListNode(obj, p));
+        }
+        else
+        {
+            rear++;
+            int x=  list.size();
+            for(int i=0;i<x-1;++i)
+            {
+                if(list.get(i).GetPriority() < p) list.add(i, new ListNode(obj, p));
+            }
+        }
+    }
+
+    public E Dequeue() throws MyException
+    {
+        if(rear==0) throw new MyException("Cannot dequeue; queue is empty!");
+
+        rear--;
+        return (E) list.getLast();
+    }
+
+    public int IsEmpty()
+    {
+        if(rear==0)
+            return 1;
+        else
+            return 0;
+    }
+
+    public int IsFull()
+    {
+        if(rear-front+2>size)
+            return 1;
+        else
+            return 0;
+    }
+
+    public void MakeEmpty()
+    {
+        size=0;
+    }
+
+    public int dim()
+    {
+        return rear;
+    }
+
+    public LinkedList<ListNode> getList()
+    {
+        return list;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) {
+            return true;
+        }
+        if (!(obj instanceof PQueue)) {
+            return false; 
+        }
+        PQueue p = (PQueue)obj;
+        return (obj==p);
+    }       
+}
+</code></pre>

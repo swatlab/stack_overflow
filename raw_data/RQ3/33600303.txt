@@ -1,0 +1,118 @@
+<p>I am getting the error: <code>android.os.NetworkOnMainThreadException</code> , I know the fix is to run my code in <code>AsnycTask</code>. </p>
+
+<p>I do not know how to refactor the following code to use <code>AsnycTask</code>? Can I do all this in the one <code>activity</code>?</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+    @Bind(R.id.tvTitle)
+    TextView title;
+    @Bind(R.id.etName)
+    EditText name;
+    @Bind(R.id.etEmail)
+    EditText email;
+    @Bind(R.id.etIdea)
+    EditText idea;
+    @Bind(R.id.btnSubmit)
+    Button submit;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+
+        submit.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                //get input from editText boxes to send to php file on server
+                String  toSubmit = name.getText().toString() + " " + email.getText().toString() + " " + idea.getText().toString();
+
+                try{
+                    getData(toSubmit);
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public static InputStream toInputStream(String input, String encoding) throws IOException {
+        byte[] bytes = encoding != null ? input.getBytes(encoding) : input.getBytes();
+        return new ByteArrayInputStream(bytes);
+    }
+
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
+
+    public static long copyLarge(InputStream input, OutputStream output)
+            throws IOException {
+        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+        long count = 0;
+        int n = 0;
+        while (-1 != (n = input.read(buffer))) {
+            output.write(buffer, 0, n);
+            count += n;
+        }
+        return count;
+    }
+
+    public static int copy(InputStream input, OutputStream output) throws IOException {
+        long count = copyLarge(input, output);
+        if (count > Integer.MAX_VALUE) {
+            return -1;
+        }
+        return (int) count;
+    }
+
+    String getData(String postData) throws IOException {
+        StringBuilder respData = new StringBuilder();
+        URL url = new URL("MY_URL");
+        URLConnection conn = url.openConnection();
+        HttpURLConnection httpUrlConnection = (HttpURLConnection) conn;
+
+        httpUrlConnection.setUseCaches(false);
+        httpUrlConnection.setRequestProperty("User-Agent", "YourApp"); 
+        httpUrlConnection.setConnectTimeout(30000);
+        httpUrlConnection.setReadTimeout(30000);
+
+        httpUrlConnection.setRequestMethod("POST");
+        httpUrlConnection.setDoOutput(true);
+
+        OutputStream os = httpUrlConnection.getOutputStream();
+        InputStream postStream = toInputStream(postData, "UTF-8");
+        try {
+            copy(postStream, os);
+        } finally {
+            postStream.close();
+            os.flush();
+            os.close();
+        }
+
+        httpUrlConnection.connect();
+
+        int responseCode = httpUrlConnection.getResponseCode();
+
+        if (200 == responseCode) {
+            InputStream is = httpUrlConnection.getInputStream();
+            InputStreamReader isr = null;
+            try {
+                isr = new InputStreamReader(is);
+                char[] buffer = new char[1024];
+                int len;
+                while ((len = isr.read(buffer)) != -1) {
+                    respData.append(buffer, 0, len);
+                }
+            } finally {
+                if (isr != null)
+                    isr.close();
+                Toast toast = Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_SHORT);
+            }
+            is.close();
+        }
+        else {
+            // use below to get error stream
+            // inputStream = httpUrlConnection.getErrorStream();
+        }
+        return respData.toString();
+    }
+
+}
+</code></pre>

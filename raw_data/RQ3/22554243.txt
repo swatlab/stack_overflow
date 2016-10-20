@@ -1,0 +1,98 @@
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+</code></pre>
+
+<p></p>
+
+<pre><code><TextView
+    android:id="@+id/textView1"
+    android:layout_width="65dp"
+    android:layout_height="match_parent"
+    android:layout_margin="1dp"
+    android:background="#2D3031"
+    android:gravity="center"
+    android:text="3:00PM"
+    android:textColor="#fff" />
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="1dp"
+    android:layout_marginRight="1dp"
+    android:layout_marginTop="1dp"
+    android:background="#181819"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginTop="5dp"
+        android:text="MOVIE"
+        android:textColor="#fff" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:text="Surviving Jack"
+        android:textColor="#3D9C97"
+        android:textSize="20dp"
+        android:textStyle="bold" />
+</LinearLayout>
+</code></pre>
+
+<p></p>
+
+<p>Adapter Class</p>
+
+<pre><code>    public class Live extends BaseAdapter {
+    private ArrayList<String> mTitles;
+    private Activity activity;
+
+    public Live(ArrayList<String> list, Activity activity) {
+        mTitles = list;
+        this.activity = activity;
+
+    }
+
+    class ViewHolder {
+        TextView title;
+    }
+
+    @Override
+    public int getCount() {
+        return mTitles.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = activity.getLayoutInflater().inflate(R.layout.live_row, null);
+            holder.title = (TextView) convertView.findViewById(R.id.textView1);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+        holder.title.setText(mTitles.get(position));
+        return convertView;
+    }
+}
+</code></pre>
+
+<p>`<img src="http://i.stack.imgur.com/cgFVE.png" alt="am stuk with this currently"><img src="http://i.stack.imgur.com/FJmJT.png" alt=""></p>
+
+<p>i want to model a <code>ListView</code> based on the tv show name. I have written a base code for a <code>baseadapter</code>. content should increase its height according to similat tv shows</p>

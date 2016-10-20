@@ -1,0 +1,129 @@
+<p>I am making a quiz application. The database created for questions is working on pc but when I transfer the .apk file in the android phone it is not taking any data from the database and showing a force close.</p>
+
+<p>After searching on this site I found to put the database file in asset folder but that didn't work.</p>
+
+<p>I am not able to recognize why the application not running in the cellphone?
+below is the code for the database file. Do let me know if there is any chances to be made in it to run the application on devises.</p>
+
+<pre><code>public class DatabaseFile extends SQLiteOpenHelper {
+private static String DB_PATH = "/data/data/com.example.quizproject/databases/";
+public static final String DATABASE_NAME="Quiz.db";
+public static final String QUES="ques";
+public static final String OP1="op1";
+public static final String OP2="op2";
+public static final String OP3="op3";
+public static final String ANS="ans";
+public static final String NAME="name";
+public static final String CANS="cans";
+public static final String SCORE="score";
+private final Context myContext;
+private SQLiteDatabase myDataBase; 
+
+public DatabaseFile(Context context) {
+
+super(context, DATABASE_NAME, null, 1);
+this.myContext = context;
+}
+
+public void createDataBase() throws IOException{
+
+     boolean dbExist = checkDataBase();
+
+     if(dbExist){
+      //do nothing - database already exist
+     }else{
+         this.getReadableDatabase();
+
+         try {
+
+       copyDataBase();
+
+      } catch (IOException e) {
+
+          throw new RuntimeException(e);
+
+         }
+     }
+
+    }
+
+    private boolean checkDataBase(){
+
+     SQLiteDatabase checkDB = null;
+
+     try{
+      String myPath = DB_PATH + DATABASE_NAME;
+      checkDB = SQLiteDatabase.openDatabase(myPath, null,   SQLiteDatabase.OPEN_READONLY);
+
+     }catch(SQLiteException e){
+
+      //database does't exist yet.
+
+     }
+
+     if(checkDB != null){
+
+      checkDB.close();
+
+     }
+
+     return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+     //Open your local db as the input stream
+     InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+     // Path to the just created empty db
+     String outFileName = DB_PATH + DATABASE_NAME;
+
+     //Open the empty db as the output stream
+     OutputStream myOutput = new FileOutputStream(outFileName);
+
+     //transfer bytes from the inputfile to the outputfile
+     byte[] buffer = new byte[1024];
+     int length;
+     while ((length = myInput.read(buffer))>0){
+      myOutput.write(buffer, 0, length);
+     }
+
+     //Close the streams
+     myOutput.flush();
+     myOutput.close();
+     myInput.close();
+
+    }
+
+    public void openDataBase() {
+
+     //Open the database
+        String myPath = DB_PATH + DATABASE_NAME;
+     myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+    @Override
+     public synchronized void close() {
+             if(myDataBase != null)
+              myDataBase.close();
+             super.close();
+     }
+public void onCreate(SQLiteDatabase db) {
+
+//db.execSQL("CREATE TABLE quiztable (_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+    //  "ques TEXT, op1 TEXT, op2 TEXT, op3 TEXT, ans TEXT);");
+
+
+
+
+}
+
+
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+}
+
+}
+</code></pre>

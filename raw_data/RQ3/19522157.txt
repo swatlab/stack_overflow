@@ -1,0 +1,51 @@
+<p>I simply would like to animate different random drawables in each grid view, I've added some animation code but nothing seems to happen to the images in the gridview. What code should I use?</p>
+
+<pre><code>public class MyAdapter extends BaseAdapter {
+
+    private Context mContext;
+
+    public MyAdapter(Context c) {
+        mContext = c;
+    }
+
+    @Override
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    @Override
+    public Object getItem(int arg0) {
+        return mThumbIds[arg0];
+    }
+
+    @Override
+    public long getItemId(int arg0) {
+        return arg0;
+    }
+
+    @Override
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    public void onWindowFocusChanged(){
+        AnimationDrawable picAnimation;
+        setContentView(R.layout.main);
+        ImageView gridview = (ImageView) findViewById(R.id.gridview);
+        gridview.setBackgroundResource(R.drawable.pic1);
+        picAnimation = (AnimationDrawable) gridview.getBackground();
+    }
+}
+</code></pre>

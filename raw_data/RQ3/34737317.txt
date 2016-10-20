@@ -1,0 +1,25 @@
+<p>I have studied similar examples and override these methods like this, but still get added to the <code>HashSet<NamedObject></code> objects with the equal names BUT different id.</p>
+
+<pre><code>public class NamedObject {
+    String name;
+    BigInteger id;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        NamedObject that = (NamedObject) o;
+        return this.name.equals(that.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+}
+</code></pre>

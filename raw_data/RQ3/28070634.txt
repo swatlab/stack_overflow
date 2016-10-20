@@ -1,0 +1,355 @@
+<p>I am new to android i have a relative layout and i am implementing navigation drawer to it, so how to place it i dont know. Swipe in and out is not working... when i created a new project with DrawerLayout and FrameLayout it is working but when i implemented on my project it is malfunctioning</p>
+
+<pre><code>activity_main.xml
+ <android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+       android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/calc" >
+
+
+
+
+    <ListView
+        android:id="@+id/drawerlist"
+        android:background="#00a77f"
+
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left" />
+
+
+
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+            <LinearLayout
+                android:id="@+id/linearll1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="30dp"
+                android:orientation="horizontal" >
+
+                <Button
+                    android:id="@+id/cs"
+                    android:layout_width="100dp"
+                    android:layout_height="140dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:background="@drawable/roundbutton"
+                    android:text="@string/cs"
+                    android:textColor="@drawable/recbutcolor"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/cal"
+                    android:layout_width="100dp"
+                    android:layout_height="140dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:background="@drawable/roundbutton"
+                    android:text="@string/maincalc"
+                    android:textColor="@drawable/recbutcolor"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearll2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/linearll1"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="30dp"
+                android:orientation="horizontal" >
+
+                <Button
+                    android:id="@+id/interviewquestion"
+                    android:layout_width="100dp"
+                    android:layout_height="140dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:background="@drawable/roundbutton"
+                    android:text="@string/interview_ques"
+                    android:textColor="@drawable/recbutcolor"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/careerGuidance"
+                    android:layout_width="100dp"
+                    android:layout_height="140dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:background="@drawable/roundbutton"
+                    android:text="@string/career_guid"
+                    android:textColor="@drawable/recbutcolor"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/about"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/linearll2"
+                android:layout_gravity="center"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="30dp"
+                android:alpha="0.5"
+                android:background="@drawable/roundbutton"
+                android:gravity="center"
+                android:text="@string/aboutme"
+                android:textColor="@drawable/recbutcolor"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>This is my MainActivity:
+    MainActivity.java</p>
+
+<pre><code>import android.content.Intent;
+import android.content.res.Configuration;
+
+import android.os.Bundle;
+
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+
+import android.view.Menu;
+
+import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+
+public class MainActivity extends ActionBarActivity implements
+        OnItemClickListener {
+    private DrawerLayout drawerLayout;
+    private ListView listView;
+    private String[] navdra;
+    private ActionBarDrawerToggle drawerListner;
+
+    Intent shareintent;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        navdra = getResources().getStringArray(R.array.navdra);
+
+        listView = (ListView) findViewById(R.id.drawerlist);
+        listView.setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_expandable_list_item_1, navdra));
+        listView.setOnItemClickListener(this);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerListner = new ActionBarDrawerToggle(this, drawerLayout,
+                R.drawable.ic_drawer, R.string.dopen, R.string.dclose);
+
+
+
+        drawerLayout.setDrawerListener(drawerListner);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+        Button csv = (Button) findViewById(R.id.cs);
+        csv.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(), Semester.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        Button cal = (Button) findViewById(R.id.cal);
+        cal.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(), Calculator.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        Button iq = (Button) findViewById(R.id.interviewquestion);
+
+        iq.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(),
+                        InterviewQuestion.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        Button cg = (Button) findViewById(R.id.careerGuidance);
+        cg.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(), Careerguid.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        Button abt = (Button) findViewById(R.id.about);
+        abt.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "PKlabs!!!",
+                        Toast.LENGTH_SHORT).show();
+                // Intent intent = new Intent
+                // (v.getContext(),InterviewQuestion.class);
+                // startActivityForResult(intent,0);
+            }
+        });
+
+    }
+
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // TODO Auto-generated method stub
+        super.onConfigurationChanged(newConfig);
+        drawerListner.onConfigurationChanged(newConfig);
+    }
+
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onPostCreate(savedInstanceState);
+        drawerListner.syncState();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuItem item = menu.add("share"); // your desired title here
+        item.setIcon(R.drawable.share_icon); // your desired icon here
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                shareintent = new Intent(android.content.Intent.ACTION_SEND);
+                shareintent.setType("text/plain");
+                String shareBody = "Here is the share content body";
+                shareintent.putExtra(android.content.Intent.EXTRA_SUBJECT,
+                        "Subject Here");
+                shareintent.putExtra(Intent.EXTRA_TEXT, "Hi there");
+                startActivity(Intent.createChooser(shareintent, "Share via"));
+                return true;
+            }
+        });
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if(drawerListner.onOptionsItemSelected(item))
+        {
+            return true;
+        }
+
+
+
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position,
+            long id) {
+        // TODO Auto-generated method stub
+        Toast.makeText(this, navdra[position] + " selected",
+                Toast.LENGTH_SHORT).show();
+        selectItem(position);
+    }
+
+    public void selectItem(int position) {
+        // TODO Auto-generated method stub
+        listView.setItemChecked(position, true);
+        setTitle(navdra[position]);
+    }
+
+    public void setTitle(String title) {
+        getSupportActionBar().setTitle(title);
+    }
+
+
+
+
+    private Toast toast;
+    private long lastBackPressTime = 0;
+
+    @Override
+    public void onBackPressed() {
+        if (this.lastBackPressTime < System.currentTimeMillis() - 4000) {
+            toast = Toast.makeText(this, "Press back again to exit",
+                    Toast.LENGTH_LONG);
+            toast.show();
+            this.lastBackPressTime = System.currentTimeMillis();
+        } else {
+            if (toast != null) {
+                toast.cancel();
+            }
+            super.onBackPressed();
+        }
+    }
+
+
+}
+</code></pre>

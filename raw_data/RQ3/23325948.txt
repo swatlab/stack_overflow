@@ -1,0 +1,342 @@
+<p>This is my MainActivity file.</p>
+
+<pre><code>package com.example.applicationmy;
+
+import java.io.IOException;
+
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.Toast;
+
+public class MainActivity extends ActionBarActivity {
+public final static String EXTRA_MESSAGE = "com.example.ApplicationMy.MESSAGE";
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    DataBaseHelper myDbHelper = new DataBaseHelper(this);
+
+    try {
+     // check if database exists in app path, if not copy it from assets
+     myDbHelper.create();
+    } catch (IOException ioe) {
+     throw new Error("Unable to create database");
+    }
+
+    try {
+     // open the database
+     myDbHelper.open();
+     myDbHelper.getWritableDatabase();
+    } catch (SQLException sqle) {
+     throw sqle;
+    }
+
+    Cursor c = myDbHelper.getUser(1);
+    Toast.makeText(this,
+     "id: " + c.getInt(0)+ "\n NO: " + c.getString(1)
+     + "\n FROM: " + c.getString(2) + "\n TO: "
+     + c.getString(3) + "\n VIA: "
+             + c.getString(4) + "\n LENGTH "
+                     + c.getFloat(5), Toast.LENGTH_LONG).show();
+    c.close();
+
+    if (savedInstanceState == null) {
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.container, new PlaceholderFragment())
+                .commit();
+
+
+    }
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+
+
+public void sendMessage(View view) {
+    // Do something in response to button
+    Intent intent = new Intent(this, DisplayMessageActivity.class);
+    EditText editText = (EditText) findViewById(R.id.From);
+    String message = editText.getText().toString();
+    intent.putExtra(EXTRA_MESSAGE, message);
+    startActivity(intent);
+}
+
+public void sendAnotherMessage(View view) {
+    // Do something in response to button
+    Intent intent = new Intent(this, DisplayMessageActivity.class);
+    EditText editText = (EditText) findViewById(R.id.RouteNo);
+    String message = editText.getText().toString();
+    intent.putExtra(EXTRA_MESSAGE, message);
+    startActivity(intent);
+}
+
+
+
+
+
+
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public static class PlaceholderFragment extends Fragment {
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        return rootView;
+    }
+}
+
+}
+</code></pre>
+
+<p>and this is my DatabaseHelper class to read from the database.</p>
+
+<pre><code>package com.example.applicationmy;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataBaseHelper extends SQLiteOpenHelper {
+
+ private static final String DATABASE_NAME = "route.sqlite";
+ private static final int DATABASE_VERSION = 1;
+
+ private static final String TABLE_NAME = "Routedet";
+ private static final String COLUMN_ID = "_id";
+ private static final String COLUMN_Route_no = "Route_no";
+ private static final String COLUMN_Route_location = "Route_location";
+ private static final String COLUMN_Route_dest = "Route_dest";
+ private static final String COLUMN_Route_via = "Route_via";
+ private static final String COLUMN_Route_len = "Route_len";
+
+
+ private SQLiteDatabase database;
+
+ private final Context context;
+
+ // database path
+ private static String DATABASE_PATH;
+
+ /** construcRoute_destr */
+ public DataBaseHelper(Context ctx) {
+  super(ctx, DATABASE_NAME, null, DATABASE_VERSION);
+  this.context = ctx;
+  DATABASE_PATH = context.getFilesDir().getParentFile().getPath()
+    + "/databases/";
+
+ }
+
+ /**
+  * Creates a empty database on the system and rewrites it with your own
+  * database.
+  * */
+ public void create() throws IOException {
+  boolean check = checkDataBase();
+
+  SQLiteDatabase db_Read = null;
+
+  // Creates empty database default system path
+  db_Read = this.getWritableDatabase();
+  db_Read.close();
+  try {
+   if (!check) {
+    copyDataBase();
+   }
+  } catch (IOException e) {
+   throw new Error("Error copying database");
+  }
+ }
+
+ /**
+  * Check if the database already exist Route_dest avoid re-copying the file each
+  * time you open the application.
+  * 
+  * @return true if it exists, false if it doesn't
+  */
+ private boolean checkDataBase() {
+  SQLiteDatabase checkDB = null;
+  try {
+   String myPath = DATABASE_PATH + DATABASE_NAME;
+   checkDB = SQLiteDatabase.openDatabase(myPath, null,
+     SQLiteDatabase.OPEN_READWRITE);
+  } catch (SQLiteException e) {
+   // database does't exist yet.
+  }
+
+  if (checkDB != null) {
+   checkDB.close();
+  }
+  return checkDB != null ? true : false;
+ }
+
+ /**
+  * Copies your database Route_location your local assets-folder Route_dest the just created
+  * empty database in the system folder, Route_location where it can be accessed and
+  * handled. This is done by transfering bytestream.
+  * */
+ private void copyDataBase() throws IOException {
+
+  // Open your local db as the input stream
+  InputStream myInput = context.getAssets().open(DATABASE_NAME);
+
+  // Path Route_dest the just created empty db
+  String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+  // Open the empty db as the output stream
+  OutputStream myOutput = new FileOutputStream(outFileName);
+
+  // transfer bytes Route_location the inputfile Route_dest the outputfile
+  byte[] buffer = new byte[1024];
+  int Route_len;
+  while ((Route_len = myInput.read(buffer)) > 0) {
+   myOutput.write(buffer, 0, Route_len);
+  }
+
+  // Close the streams
+  myOutput.flush();
+  myOutput.close();
+  myInput.close();
+
+ }
+
+ /** open the database */
+ public void open() throws SQLException {
+  String myPath = DATABASE_PATH + DATABASE_NAME;
+  database = SQLiteDatabase.openDatabase(myPath, null,
+    SQLiteDatabase.OPEN_READWRITE);
+ }
+
+ /** close the database */
+ @Override
+ public synchronized void close() {
+  if (database != null)
+   database.close();
+  super.close();
+ }
+
+
+
+ // retrieves a particular user
+ public Cursor getUser(long rowId) throws SQLException {
+  Cursor mCursor = database.query(true, TABLE_NAME, new String[] {
+    COLUMN_ID, COLUMN_Route_no, COLUMN_Route_location, COLUMN_Route_dest, COLUMN_Route_via, COLUMN_Route_len},
+    COLUMN_ID + " = " + rowId, null, null, null, null, null);
+  if (mCursor != null) {
+   mCursor.moveToFirst();
+  }
+
+  return mCursor;
+ }
+
+ // delete a particular user
+ public boolean deleteContact(long rowId) {
+  return database.delete(TABLE_NAME, COLUMN_ID + "=" + rowId, null) > 0;
+ }
+
+ // retrieves all users
+ public Cursor getAllUsers() {
+  return database.query(TABLE_NAME, new String[] { COLUMN_ID, COLUMN_Route_no, COLUMN_Route_location, COLUMN_Route_dest, COLUMN_Route_via, COLUMN_Route_len }, null, null,
+    null, null, null);
+ }
+
+ @Override
+ public void onCreate(SQLiteDatabase arg0) {
+  // Route_destDO AuRoute_dest-generated method stub
+
+ }
+
+ @Override
+ public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  // Route_destDO AuRoute_dest-generated method stub
+
+ }
+
+}
+</code></pre>
+
+<p>and here is logcat ouput. Please help me as soon as possible. I am stuck on this from over a day. I have to submit my project tomorrow. Please help</p>
+
+<pre><code>04-27 12:27:33.339: E/SQLiteLog(2384): (1) no such column: Route_no
+04-27 12:27:33.349: D/AndroidRuntime(2384): Shutting down VM
+04-27 12:27:33.349: W/dalvikvm(2384): threadid=1: thread exiting with uncaught exception (group=0xb2a17ba8)
+04-27 12:27:33.369: E/AndroidRuntime(2384): FATAL EXCEPTION: main
+04-27 12:27:33.369: E/AndroidRuntime(2384): Process: com.example.applicationmy, PID: 2384
+04-27 12:27:33.369: E/AndroidRuntime(2384): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.applicationmy/com.example.applicationmy.MainActivity}: android.database.sqlite.SQLiteException: no such column: Route_no (code 1): , while compiling: SELECT DISTINCT _id, Route_no, Route_location, Route_dest, Route_via, Route_len FROM Routedet WHERE _id = 1
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.ActivityThread.access$800(ActivityThread.java:135)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.os.Handler.dispatchMessage(Handler.java:102)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.os.Looper.loop(Looper.java:136)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at dalvik.system.NativeStart.main(Native Method)
+04-27 12:27:33.369: E/AndroidRuntime(2384): Caused by: android.database.sqlite.SQLiteException: no such column: Route_no (code 1): , while compiling: SELECT DISTINCT _id, Route_no, Route_location, Route_dest, Route_via, Route_len FROM Routedet WHERE _id = 1
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1161)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1032)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at com.example.applicationmy.DataBaseHelper.getUser(DataBaseHelper.java:138)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at com.example.applicationmy.MainActivity.onCreate(MainActivity.java:44)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.Activity.performCreate(Activity.java:5231)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+04-27 12:27:33.369: E/AndroidRuntime(2384):     ... 11 more
+04-27 12:27:37.759: I/Process(2384): Sending signal. PID: 2384 SIG: 9
+</code></pre>

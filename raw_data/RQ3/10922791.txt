@@ -1,0 +1,144 @@
+<p>I am using code in <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">this article</a> to copy a pre-populated db I have into a freshly created db thus overwriting it. </p>
+
+<p>The overwrite is successful. I am able to see the correctly copied db in the right path data/data/my.package/databases/myDatabase. But this is ONLY if I look at the database before leaving getWritableDatabse().</p>
+
+<p>If I leave getWritableDatabse() the db is invalidated: it still keeps its right size BUT it has only the android_metadata instead of my tables that are then all gone. </p>
+
+<p>I didn't manage to get access to the Android source code for Eclipse (followed all the instructions but it still doesn't work) but using <a href="http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/4.0.3_r1/android/database/sqlite/SQLiteOpenHelper.java#SQLiteOpenHelper.getWritableDatabase%28%29" rel="nofollow">GrepCode</a> I managed to narrow down the problem to lines 173-176 in method <code>getWritableDatabase()</code>.</p>
+
+<pre><code>173 db.setVersion(mNewVersion);
+174 db.setTransactionSuccessful();
+175 } finally {
+176   db.endTransaction();
+</code></pre>
+
+<p>Anyone has a clue why this piece of code might rewrite my db and empty it?</p>
+
+<p>This is the relevant stack:</p>
+
+<pre><code>Thread [<1> main] (Suspended)   
+StournamentDbAdapter$DatabaseHelper(SQLiteOpenHelper).getWritableDatabase() line: 180   
+StournamentDbAdapter.open() line: 192   
+ActivityTournamentsList.onCreate(Bundle) line: 57   
+ActivityTournamentsList(Activity).performCreate(Bundle) line: 4465  
+Instrumentation.callActivityOnCreate(Activity, Bundle) line: 1049   
+ActivityThread.performLaunchActivity(ActivityThread$ActivityClientRecord, Intent) line: 1920    
+ActivityThread.handleLaunchActivity(ActivityThread$ActivityClientRecord, Intent) line: 1981 
+ActivityThread.access$600(ActivityThread, ActivityThread$ActivityClientRecord, Intent) line: 123    
+ActivityThread$H.handleMessage(Message) line: 1147  
+ActivityThread$H(Handler).dispatchMessage(Message) line: 99 
+Looper.loop() line: 137 
+ActivityThread.main(String[]) line: 4424    
+Method.invokeNative(Object, Object[], Class, Class[], Class, int, boolean) line: not available [native method]  
+Method.invoke(Object, Object...) line: 511  
+ZygoteInit$MethodAndArgsCaller.run() line: 784  
+ZygoteInit.main(String[]) line: 551 
+NativeStart.main(String[]) line: not available [native method]  
+</code></pre>
+
+<p>I fist use <code>mDb = mDbHelper.getWritableDatabase();</code> which calls to <code>DatabaseHelper.onCreate()</code>where the creation of the db actually happens. In <code>DatabaseHelper.onCreate()</code> I call only <code>copyDatabase();</code> which looks like this:</p>
+
+<pre><code>private void copyDatabase() throws IOException
+    {
+        //Open your local db as the input stream
+        InputStream myInput =  sContext.getAssets().open(StournamentConstants.Database.DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = StournamentConstants.Database.DB_PATH + StournamentConstants.Database.DATABASE_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0)
+        {
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    } 
+</code></pre>
+
+<p>All this goes fine and the db is correctly copied. Only when I climb out of the stack and return to <code>getWritableDatabase() line: 180</code> that something goes wrong: the size of the db stays the same but it loses all tables besides the àndroid_metadata`.</p>
+
+<hr>
+
+<p><strong>Intermediate conclusion</strong></p>
+
+<p>I dug a bit more into the code (the above mentioned GrepCode site was VERY helpful) because I wanted to get to the bottom of this. After going into <code>getWritableDatabase()</code>, on line 165 it will call <code>onCreate()</code>, where I replace to database by using <code>copyDatabase();</code>. The issue is that before, on <code>getWritableDatabase() line 162</code> <code>db.beginTransaction();</code> is called. Why is that a problem? I will explain by showing the sequence of events:</p>
+
+<ol>
+<li>call <code>getWritableDatabase()</code></li>
+<li><code>getWritableDatabase()</code> calls <code>db = SQLiteDatabase.create(null);</code> hence creating a db</li>
+<li><code>getWritableDatabase()</code> calls <code>db.beginTransaction();</code></li>
+<li><code>getWritableDatabase()</code> calls <code>onCreate()</code></li>
+<li>inside <code>onCreate()</code> I replace the database by calling <code>copyDatabase();</code> which copies the db from asset to the db location. Not sure why the already created db doesn't crash at that moment. Maybe because there is no lock on it?</li>
+<li>on line 176 <code>getWritableDatabase()</code> calls <code>db.endTransaction();</code> which is the crucial part: it is nice and well that I copied my db into the initially created db, BUT when <code>db.endTransaction();</code> is called, the system commits all the changes to my newly copied db. But remember: I did no changes, I created no tables - I just copied the db to the correct location. So the commit commits NOTHING thus rewriting the db with NOTHING. <strong>For that I get an empty db</strong>.</li>
+</ol>
+
+<p>I had the evil thought to:</p>
+
+<ol>
+<li>Copy the db in <code>onCreate()</code></li>
+<li>Open the newly copied db and replace the db <code>getWritableDatabase()</code> uses (<code>onCreate()</code> gets the db as parameter from <code>getWritableDatabase()</code>) with it.</li>
+</ol>
+
+<p>Something like that:</p>
+
+<pre><code>@Override
+public void onCreate(SQLiteDatabase db) 
+{
+    try 
+    {               
+        copyDatabase();
+
+        String dbPath = StournamentConstants.Database.DB_PATH + StournamentConstants.Database.DATABASE_NAME;
+        SQLiteDatabase activeDb = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY);              
+
+         db = activeDb;
+    } 
+       catch (IOException e) 
+    {
+       Log.i(getClass().getName() + ".onCreate ", e.getMessage());
+   }   
+}
+</code></pre>
+
+<p>The problem with that is that I get an <code>android.database.sqlite.SQLiteDatabaseLockedException: database is locked</code> so I can't get the newly copied db. And besides that - I am not sure what sinister consequences lurk behind such a devious deed. </p>
+
+<p>So I will do what @Barak suggests and move my copying into the constructor - way before the system tries to create the db. So when <code>getWritableDatabase()</code> is finally reached, the db is already there and the system will not attempt to touch it. I learned a lot today - am very pleased.</p>
+
+<p>Conclusion: if you can read (code), you have a definite advantage :^) </p>
+
+<p>Will keep you posted on how this worked for me. </p>
+
+<hr>
+
+<p><strong>Final conclusion</strong></p>
+
+<p>I solved the issue.</p>
+
+<p>Few differences:</p>
+
+<ol>
+<li>I DON'T do it inside <code>DatabaseHelper</code>'s constructor. That would have taken too many code changes. Instead I am doing it inside <code>open()</code> of my <code>private static class DatabaseHelper extends SQLiteOpenHelper</code> class</li>
+<li>I DON'T use <code>getReadableDatabase()</code> but <code>getWritableDatabase()</code>. The reason is simple: <code>getReadableDatabase()</code> will ALWAYS call <code>getWritableDatabase()</code> so I thought I save that one... </li>
+</ol>
+
+<p>I also tried to be a wiseguy and instead of calling <code>getWritableDatabase()</code> (which has some overhead of code) simply CREATING the db file on my own. I failed. I think it is due to permission issues or something. This is what I tried inside the <code>copyDatabase()</code>:</p>
+
+<pre><code>File f = new File(DB_PATH);
+if (!f.exists()) 
+{
+    f.mkdir();
+}
+</code></pre>
+
+<p>But it always fails. I later found out that <code>OutputStream myOutput = new FileOutputStream(outFileName);</code>actually should take care of the file creation.</p>
+
+<p>Hope this helps anyone! </p>

@@ -1,0 +1,336 @@
+<p>I am trying to make an app that has a login feature. The user enters a username and password, it is checked with a database that contains a list of acceptable usernames and passwords. If the login is successful the user is transferred to a different activity. If there is an unsuccessful login attempt, there will eventually be code that decreases an attempt_counter and locks the login button if too many attempts have been made. Before I implement the code for for just the username, I decided to test it and see if the password was being checked correctly. When I click my button to login though, the app crashes and says "Unfortunately, DrHelper has stopped." Please help me understand why this is happening. I am an amateur programmer and will gladly accept any constructive criticism.</p>
+
+<p>This is my Login.java:</p>
+
+<pre><code>package com.example.drhelper;
+/*
+This class is started on application launch. It has an EditText for user name, 
+an EditText for password, a TextView that is used to show the word attempts on screen,
+a counter that decreases every time there is a failed login attempt, and a login button.
+*/
+
+import android.support.v7.app.ActionBarActivity;
+import java.io.IOException;
+
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+
+//Declarations
+@SuppressWarnings("deprecation")
+public class Login extends ActionBarActivity {
+    private static EditText username;
+    private static EditText password;
+    private static TextView attempts;
+    private static Button login_button;
+    //This can be changed to increase or decrease amount of login attempts.
+    int attempt_counter = 5;
+    private DataBaseHelper mDbHelper;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //This sets my layout to my activity_login.xml on create.
+        setContentView(R.layout.activity_login);
+        //This calls my main method so that it is running then the user starts the app.
+        LoginButton();
+    }
+
+
+
+
+    public void LoginButton () {
+        username = (EditText)findViewById(R.id.editText_Username_Field);
+        password = (EditText)findViewById(R.id.editText_Password_Field);
+        attempts = (TextView)findViewById(R.id.textView_Attempts_Count);
+        login_button = (Button)findViewById(R.id.Button_Login);
+
+        final String u = username.getText().toString();
+        final String p = password.getText().toString();
+
+        attempts.setText(Integer.toString(attempt_counter));
+        /* 
+         * This is the handler for my button. When it is clicked I want the username
+         * and password to be checked with the id and password on the login database
+         * table.
+         */
+        login_button.setOnClickListener(
+
+
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        /*This is where I want to do the actual check to see if the database
+                         * information matches the information that was entered into the EditText.
+                         */
+                        Cursor AllIDs = mDbHelper.getID();
+
+                        AllIDs.moveToFirst();
+
+                        while (!AllIDs.isAfterLast()) {
+
+                        String id = AllIDs.getString(1);
+                        if (id == u) {
+                            Toast.makeText(Login.this, "Username and password are correct!",
+                                    Toast.LENGTH_SHORT).show();
+                            //This redirects the user to the Search activity.
+                            Intent intent = new Intent("com.example.drhelper.Search");
+                            startActivity(intent);
+
+
+
+                        } else {
+
+                            if (AllIDs.isLast() && id != username.toString()) {
+
+                                Toast.makeText(Login.this, "Username and password are incorrect.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                }
+            });
+    }}
+</code></pre>
+
+<p>This is my AndroidManifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.drhelper"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="11"
+        android:targetSdkVersion="23" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Base.Theme.AppCompat" >
+        <activity
+            android:name=".Login"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Search"
+            android:label="@string/title_activity_search" >
+            <intent-filter>
+                <action android:name="com.example.drhelper.Search" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Results"
+            android:label="@string/title_activity_results" >
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>This is my DataBaseHelper: </p>
+
+<pre><code>package com.example.drhelper;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataBaseHelper extends SQLiteOpenHelper {
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.example.drhelper/databases/";
+
+    private static String DB_NAME = "DrHelperDB";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+ }
+
+ /**
+  * Check if the database already exist to avoid re-copying the file each time you open the application.
+  * @return true if it exists, false if it doesn't
+  */
+ private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+ }
+
+ /**
+  * Copies your database from your local assets-folder to the just created empty database in the
+  * system folder, from where it can be accessed and handled.
+  * This is done by transfering bytestream.
+  * */
+ private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+ }
+
+ public void openDataBase() throws SQLException{
+
+    //Open the database
+     String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+ }
+
+ @Override
+    public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    public Cursor getID() {
+    Cursor cursor = getReadableDatabase().rawQuery("SELECT _id FROM login", null);
+    return cursor;
+    }
+
+    public Cursor getPassword() {
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT password FROM login", null);
+        return cursor;
+    }
+
+}
+</code></pre>
+
+<p>This is my LogCat from when the application is launched until the crash happens:</p>
+
+<pre><code>11-12 23:05:19.687: W/System(2119): ClassLoader referenced unknown path: /data/app/com.example.drhelper-1/lib/arm
+11-12 23:05:19.785: D/OpenGLRenderer(2119): Use EGL_SWAP_BEHAVIOR_PRESERVED: true
+11-12 23:05:19.862: I/Adreno-EGL(2119): <qeglDrvAPI_eglInitialize:379>: QUALCOMM Build: 09/02/15, 76f806e, Ibddc658e36
+11-12 23:05:19.865: I/OpenGLRenderer(2119): Initialized EGL, version 1.4
+11-12 23:05:28.063: D/AndroidRuntime(2119): Shutting down VM
+11-12 23:05:28.065: E/AndroidRuntime(2119): FATAL EXCEPTION: main
+11-12 23:05:28.065: E/AndroidRuntime(2119): Process: com.example.drhelper, PID: 2119
+11-12 23:05:28.065: E/AndroidRuntime(2119): java.lang.NullPointerException: Attempt to invoke virtual method 'android.database.Cursor com.example.drhelper.DataBaseHelper.getID()' on a null object reference
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at com.example.drhelper.Login$1.onClick(Login.java:74)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at android.view.View.performClick(View.java:5198)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at android.view.View$PerformClick.run(View.java:21147)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at android.os.Handler.handleCallback(Handler.java:739)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at android.os.Handler.dispatchMessage(Handler.java:95)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at android.os.Looper.loop(Looper.java:148)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at android.app.ActivityThread.main(ActivityThread.java:5417)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at java.lang.reflect.Method.invoke(Native Method)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+11-12 23:05:28.065: E/AndroidRuntime(2119):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+</code></pre>

@@ -1,0 +1,15 @@
+<p>I'm trying to install phonegap and the <a href="http://docs.phonegap.com/en/edge/guide_platforms_android_index.md.html" rel="nofollow">Android platform guide</a> says</p>
+
+<blockquote>
+  <p>You may also need to enable Java and Ant. Open a command prompt and
+  type java, and also type ant. Append to the PATH whichever fail to
+  run: ;%JAVA_HOME%\bin;%ANT_HOME%\bin</p>
+</blockquote>
+
+<p>But when I do so, I get:</p>
+
+<pre><code>C:\Users\Phillip>java
+Error: could not open `C:\cf_dev\JDK\lib\amd64\jvm.cfg'
+</code></pre>
+
+<p>I'm not sure where cf_dev came from, but apparently it's causing java to not run correctly from the command line.</p>

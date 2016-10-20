@@ -1,0 +1,352 @@
+<p>I want to import a CSV file which includes two table of data: one is account_master and second is category_master into SQlite database.<br>
+My code is as below</p>
+
+<pre><code>public class MainActivityextends Activity
+{
+   @Override
+protected void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.layout_setting); 
+
+          mButtonImport.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+
+
+
+            File exportDir = new File(Environment.getExternalStorageDirectory(), "");
+            if (!exportDir.exists()) {
+                exportDir.mkdirs();
+            }
+
+            file = new File(exportDir, "DemoFile.csv");
+              try {
+                CSVReader reader = new CSVReader(new FileReader(file));
+                String [] nextLine;
+                try {
+                    while ((nextLine = reader.readNext()) != null) {
+                        String acctitle=nextLine[1];
+                        String accname=nextLine[2];
+                        int value=mDatabaseConnectionAPI.addAccountData(new Account_Masters(acctitle,accname));
+
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
+    });
+
+    }
+}
+</code></pre>
+
+<p><strong>Account_Masters.java</strong></p>
+
+<pre><code>import com.j256.ormlite.field.DatabaseField;
+
+public class Account_Masters implements Serializable{
+
+@DatabaseField(generatedId=true)
+int acc_id;
+
+@DatabaseField
+String acc_title;
+
+@DatabaseField
+String acc_name;
+
+public int getAcc_id() {
+    return acc_id;
+}
+public void setAcc_id(int acc_id) {
+    this.acc_id = acc_id;
+}
+public Account_Masters() {
+    // TODO Auto-generated constructor stub
+}
+public Account_Masters(int accid, String acctitle, String accname) {
+    // TODO Auto-generated constructor stub
+    this.acc_id=accid;
+    this.acc_name=accname;
+    this.acc_title=acctitle;
+}
+public Account_Masters(String acctitle, String accname) {
+    // TODO Auto-generated constructor stub
+    this.acc_name=accname;
+    this.acc_title=acctitle;
+}
+
+public String getAcc_title() {
+    return acc_title;
+}
+public void setAcc_title(String acc_title) {
+    this.acc_title = acc_title;
+}
+public String getAcc_name() {
+    return acc_name;
+}
+public void setAcc_name(String acc_name) {
+    this.acc_name = acc_name;
+}
+</code></pre>
+
+<p><strong>Category_Master.java</strong></p>
+
+<pre><code>public class Category_Master implements Serializable{
+
+@DatabaseField(generatedId=true)
+int cat_id;
+
+@DatabaseField
+String acc_id;
+
+@DatabaseField
+String cat_name;
+
+@DatabaseField
+String cat_type;
+
+@DatabaseField
+String cat_mode;
+
+public Category_Master() {
+    // TODO Auto-generated constructor stub
+}
+public Category_Master(String acc_id,String cat_name,String cat_type,String cat_mode)
+{
+    this.acc_id=acc_id;
+    this.cat_name=cat_name;
+    this.cat_type=cat_type;
+    this.cat_mode=cat_mode;
+}
+
+
+
+public int getCat_id() {
+    return cat_id;
+}
+public void setCat_id(int cat_id) {
+    this.cat_id = cat_id;
+}
+public String getCat_name() {
+    return cat_name;
+}
+
+public void setCat_name(String cat_name) {
+    this.cat_name = cat_name;
+}
+
+public String getCat_type() {
+    return cat_type;
+}
+
+public void setCat_type(String cat_type) {
+    this.cat_type = cat_type;
+}
+
+public String getCat_mode() {
+    return cat_mode;
+}
+
+public void setCat_mode(String cat_mode) {
+    this.cat_mode = cat_mode;
+}
+
+public String getAcc_id() {
+    return acc_id;
+}
+
+public void setAcc_id(String acc_id) {
+    this.acc_id = acc_id;
+}
+
+ }
+</code></pre>
+
+<p><strong>DatabaseConnectionAPI.java</strong></p>
+
+<pre><code>public class DatabaseConnectionAPI extends OrmLiteSqliteOpenHelper {
+
+// The Android's default system path of your application database.
+// /mnt/sdcard/
+private final static String DB_PATH = "/data/data/pkg.android.rootways.rootmoney/databases/";
+
+// private final static String DB_PATH ="/mnt/sdcard/";
+
+private final static String DB_NAME = "RootMoney.sqlite";
+
+private final Context myContext;
+
+public static SQLiteDatabase db;
+private RuntimeExceptionDao<Account_Masters, String> personRuntimeDao=null;
+private RuntimeExceptionDao<Category_Master, String> categoryRuntimeDao=null;
+
+
+
+/**
+ * Constructor Takes and keeps a reference of the passed context in order to
+ * access to the application assets and resources.
+ * 
+ * @param context
+ */
+public DatabaseConnectionAPI(Context context) {
+
+    super(context, DB_PATH + DB_NAME, null, 1);
+    this.myContext = context;
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own
+ * database.
+ * */
+public void createDataBase() throws IOException {
+
+    boolean dbExist = checkDataBase();
+
+    if (dbExist) {
+        // do nothing - database already exist
+    } else {
+
+        // By calling this method and empty database will be created into
+        // the default system path
+        // of your application so we are gonna be able to overwrite that
+        // database with our database.
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            // e.printStackTrace();
+        }
+    }
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each
+ * time you open the application.
+ * 
+ * @return true if it exists, false if it doesn't
+ */
+
+private boolean checkDataBase() {
+
+    SQLiteDatabase checkDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+
+    } catch (SQLiteException e) {
+        // database does't exist yet.
+    }
+    if (checkDB != null) {
+        checkDB.close();
+    }
+    return checkDB != null ? true : false;
+}
+
+//  public boolean delete(String sql) {
+//
+//      
+//      db.execSQL(sql);
+//      return false;
+//
+//  }
+
+/**
+ * Copies your database from your local assets-0folder to the just created
+ * empty database in the system folder, from where it can be accessed and
+ * handled. This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException {
+
+    // Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[2048];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public  void openDataBase() throws SQLException {
+    try {
+        db.close();
+    } catch (Exception e) {
+        System.out.println("no database connected to close");
+    }
+    // Open the database
+    String myPath = DB_PATH + DB_NAME;
+    db = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READWRITE);
+    System.out.println("Databse opened...." + db);
+}
+
+@Override
+public synchronized void close() {
+    if (db != null)
+        db.close();
+    super.close();
+}
+   @Override
+public void onCreate(SQLiteDatabase arg0, ConnectionSource arg1) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase arg0, ConnectionSource arg1, int arg2,
+        int arg3) {
+    // TODO Auto-generated method stub
+
+}
+  public RuntimeExceptionDao<Account_Masters, String> getPersonDataDao() {
+
+    Log.v("s", "getTimeDataDao call");
+
+    if (personRuntimeDao == null) {
+        personRuntimeDao = getRuntimeExceptionDao(Account_Masters.class);
+    }
+    return personRuntimeDao;
+}
+   public int addAccountData(Account_Masters project)
+{
+    Log.v("Da", "addPersonData call");
+            RuntimeExceptionDao<Account_Masters, String> dao =   getPersonDataDao();
+    int i = dao.create(project);
+    return i;
+}
+
+}
+</code></pre>
+
+<p><strong>My CSV file Format</strong></p>
+
+<p><img src="http://i.stack.imgur.com/TTHXk.png" alt="enter image description here"></p>
+
+<p>When I run the above code in my SQLite Database, it stores the values like below </p>
+
+<p><img src="http://i.stack.imgur.com/qGhun.png" alt="enter image description here"> </p>
+
+<p>I want category data to go into Category_master and Account data to go into account master.<br>
+So, has anybody an idea on how can I do that?</p>

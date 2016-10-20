@@ -1,0 +1,377 @@
+<p>I am using database in my application, but I make database in SQLite browser and I tried it in my application with guide from this <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">link</a>, and  when I try in my eclipse running project to my phone , my application success call database but in another case i try to copy my apk application from folder bin in android and install it.. when i install apk file my application error cannot call database.. and never call database again.. please help me.. thanks here my code :</p>
+
+<p>DataBaseHelper.java</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.apps.visitkuningan/databases/";
+
+    private static String DB_NAME = "db_keterangan.sqlite3";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+}
+</code></pre>
+
+<p>This is code using query :</p>
+
+<pre><code>public class KetWisata extends Activity{
+    Intent arah;
+    String tampilarah;
+    String tempat;
+    Bundle bundel2 = new Bundle();
+    Cursor cur;
+    Cursor cur2;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.ket_data);
+        String tampil = getIntent().getExtras().getString("key");
+        ImageView img1 = (ImageView) findViewById(R.id.gambar);
+        TextView nama = (TextView) findViewById(R.id.nama);
+        TextView alamat = (TextView) findViewById(R.id.alamat);
+        TextView keterangan = (TextView) findViewById(R.id.keterangan);
+        Button arahkan = (Button) findViewById(R.id.arahkan);
+
+        // Create the database
+        DataBaseHelper myDbHelper = new DataBaseHelper(
+                this.getApplicationContext());
+        myDbHelper = new DataBaseHelper(this);
+        SQLiteDatabase db = myDbHelper.getReadableDatabase();           
+        arahkan.setOnClickListener(new OnClickListener() {  
+            @Override
+            public void onClick(View arg0) {
+                startActivity(arah);
+            }
+        });
+
+        if(tampil.equalsIgnoreCase("wis_balongdalem"))
+         {
+            img1.setBackgroundResource(R.drawable.wis_balong);
+            nama.setText("Balong Dalem");
+            tempat="Balong Dalem";
+            tampilarah ="Balong Dalem";     
+         }
+         if(tampil.equalsIgnoreCase("wis_curugbangkong"))
+         { 
+            img1.setBackgroundResource(R.drawable.wis_bangkong);
+            nama.setText("Curug Bangkong");
+            tempat="Curug Bangkong";
+            tampilarah ="Curug Bangkong";   
+
+         }
+         if(tampil.equalsIgnoreCase("wis_buperciberem"))
+         {
+            img1.setBackgroundResource(R.drawable.wis_ciberem);
+            nama.setText("Bumi Perkemahan Cibeureum");
+            tempat="Bumi Perkemahan Cibeureum";
+            tampilarah ="Bumi Perkemahan Cibeureum";    
+
+         }
+         if(tampil.equalsIgnoreCase("wis_cibulan"))
+         {
+            img1.setBackgroundResource(R.drawable.wis_cibulan);
+            nama.setText("Wisata Cibulan");
+            tempat="Cibulan";
+            tampilarah ="Cibulan";  
+         }
+         if(tampil.equalsIgnoreCase("wis_balongcicerem"))
+         { 
+            img1.setBackgroundResource(R.drawable.wis_situ);
+            nama.setText("Situ Cicereum");
+            tempat="Situ Ciceureum";
+            tampilarah ="Situ Ciceureum";   
+         }
+         if(tampil.equalsIgnoreCase("wis_balongcigugur"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_cigugur);
+             nama.setText("Wisata Cigugur");
+             tempat="Wisata Cigugur";
+             tampilarah ="Wisata Cigugur";  
+         }
+         if(tampil.equalsIgnoreCase("wis_curugcilengkrang"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_cilengkrang3);
+             nama.setText("Lembah Cilengkrang");
+             tempat="Lembah Cilengkrang";
+             tampilarah ="Lembah Cilengkrang";  
+         }
+         if(tampil.equalsIgnoreCase("wis_cipari"))
+         {           
+             img1.setBackgroundResource(R.drawable.wis_cipari2);
+             nama.setText("Taman Purbakala Cipari");
+             tempat="Taman Purbakala Cipari";
+             tampilarah ="Taman Purbakala Cipari";  
+         }
+         if(tampil.equalsIgnoreCase("wis_balongdarmaloka"))
+         {           
+             img1.setBackgroundResource(R.drawable.wis_darmaloka2);
+             nama.setText("Balong Darmaloka");
+             tempat="Balong Darmaloka";
+             tampilarah ="Balong Darmaloka";    
+         }
+         if(tampil.equalsIgnoreCase("wis_linggarjati"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_linggarjat2i);
+             nama.setText("Linggarjati Indah");
+             tempat="Linggarjati Indah";
+             tampilarah ="Linggarjati Indah";   
+         }
+         if(tampil.equalsIgnoreCase("wis_guamaria"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_guamaria);
+             nama.setText("Gua Maria");
+             tempat="Gua Maria";
+             tampilarah ="Gua Maria";   
+         }
+         if(tampil.equalsIgnoreCase("wis_gedungnaskah"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_muslinggar2);
+             nama.setText("Gedung Perundingan Linggarjati");
+             tempat="Gedung Perundingan Linggarjati";
+             tampilarah ="Gedung Perundingan Linggarjati";  
+         }
+         if(tampil.equalsIgnoreCase("wis_buperpalutungan"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_palutungan2);
+             nama.setText("Bumi Perkemahan Palutungan");
+             tempat="Bumi Perkemahan Palutungan";
+             tampilarah ="Bumi Perkemahan Palutungan";  
+         }
+         if(tampil.equalsIgnoreCase("wis_buperpaniis"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_paniis2);
+             nama.setText("Bumi Perkemahan Paniis");
+             tempat="Bumi Perkemahan Paniis";
+             tampilarah ="Bumi Perkemahan Paniis";  
+         }
+         if(tampil.equalsIgnoreCase("wis_paseban"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_paseban);
+             nama.setText("Gedung Merapat Lima");
+             tempat="Gedung Merapat Lima";
+             tampilarah ="Gedung Merapat Lima"; 
+         }
+         if(tampil.equalsIgnoreCase("wis_makamvanbeck"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_makamvanbeck);
+             nama.setText("Situs Makam Van Beck");
+             tempat="Situs Makam Van Beck";
+             tampilarah ="Situs Makam Van Back";    
+         }       
+         if(tampil.equalsIgnoreCase("wis_sanggariang"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_sanggariang2);
+             nama.setText("Sanggariang");
+             tempat="Sanggariang";
+             tampilarah ="Sanggariang"; 
+         }       
+         if(tampil.equalsIgnoreCase("wis_sangkanurip"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_sangkanurip);
+             nama.setText("Sangkanurip Alami");
+             tempat="Sangkanurip Alami";
+             tampilarah ="Sangkanurip Alami";   
+         }       
+         if(tampil.equalsIgnoreCase("wis_curugsidomba"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_sidomba2);
+             nama.setText("Sidomba");
+             tempat="Sidomba";
+             tampilarah ="Sidomba"; 
+         }      
+         if(tampil.equalsIgnoreCase("wis_talagaremis"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_talagaremis2);
+             nama.setText("Talagaremis");
+             tempat="Talagaremis";
+             tampilarah ="Talagaremis"; 
+         }   
+         if(tampil.equalsIgnoreCase("wis_tngc"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_tngc);
+             nama.setText("Taman Nasional Gunung Ciremai");
+             tempat="Taman Nasional Gunung Ciremai";
+             tampilarah ="Taman Nasional Gunung Ciremai";   
+         }       
+         if(tampil.equalsIgnoreCase("wis_wadukdarma"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_waduk);
+             nama.setText("Waduk Darma");
+             tempat="Waduk Darma";
+             tampilarah ="Waduk Darma"; 
+         }       
+         if(tampil.equalsIgnoreCase("wis_tirtaagung"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_tirtaagung);
+             nama.setText("Tirta Agung Mas");
+             tempat="Tirta Agung Mas";
+             tampilarah ="Tirta Agung Mas"; 
+         }       
+         if(tampil.equalsIgnoreCase("wis_sangkanaqua"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_sangkanaqua);
+             nama.setText("Sangkan Resort Aqua Park");
+             tempat="Sangkan Resort Aqua Park";
+             tampilarah ="Sangkan Resort Aqua Park";    
+         }       
+         if(tampil.equalsIgnoreCase("wis_talaganilem"))
+         {
+             img1.setBackgroundResource(R.drawable.wis_talaganilem);
+             nama.setText("Talaga Nilem");
+             tempat="Talaga Nilem";
+             tampilarah ="Talaga Nilem";    
+         }
+          cur = db.rawQuery("SELECT keterangan FROM KETERANGAN_WIS WHERE nama_tempat='"  + tempat +  "';", null);
+          cur2 = db.rawQuery("SELECT alamat FROM KETERANGAN_WIS WHERE nama_tempat='"  + tempat +  "';", null);
+          cur.moveToPosition(0);
+          cur2.moveToPosition(0);
+          keterangan.append(cur.getString(0));
+          alamat.append(cur2.getString(0));
+            // Close
+          myDbHelper.close();
+
+         bundel2.putString("key", tampilarah);
+         arah = new Intent(KetWisata.this, Arahkan.class); 
+         arah.putExtras(bundel2);
+    }
+
+
+}
+</code></pre>
+
+<p>Please help me guys.. !!</p>

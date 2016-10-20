@@ -1,0 +1,419 @@
+<p>so I have read a lot of post here that involve this, but none of them have helped me , since usually what happends is that the listview is not created when the set adapter methos is called, but in my case I have both of them created on the same OnCreateView() which is why i do not know why i keep getting this</p>
+
+<p>Here is my main activity:</p>
+
+<pre><code>package com.example.student_lists;
+
+import java.util.ArrayList;
+import java.util.Locale;
+
+import com.resources.student_list.Student;
+
+import android.app.ActionBar;
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.NavUtils;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.Filter;
+import android.widget.Filterable;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    EditText inputSearch;
+//  static ListView lv;
+//  static EditText inputSearch;
+    //static MyListAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    private class MyListAdapter extends ArrayAdapter<Student> implements Filterable{
+
+        private final Context context;
+        public ArrayList<Student> displayValues;
+        public ArrayList<Student> originalValues;
+
+        public MyListAdapter(Context context, int textViewResourceId, ArrayList<Student> values) {
+            super(context, textViewResourceId, values);
+            this.context = context;
+            this.displayValues = values;
+            this.originalValues = (ArrayList<Student>) values.clone();
+        }
+
+        public int getCount(){
+             return this.displayValues.size();
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            //----This method sets each row of the list individually----            
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View itemView = inflater.inflate(R.layout.list_view, parent, false);
+
+            if(displayValues.size() > 0)
+            {
+                Student student = displayValues.get(position);
+
+//                          //Fill Name
+                            TextView name = (TextView) itemView.findViewById(R.id.contactName);
+                            name.setText(student.getFirstName() +  student.getLastName());
+
+            }           
+            return itemView;
+
+        }
+
+        public Filter getFilter() {
+
+            Filter contactFilter = new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence constraint) {
+                 FilterResults filterResults = new FilterResults();   
+                 ArrayList<Student> filteredList = new ArrayList<Student>();
+
+                 //Filter the list
+                 if(constraint != null && originalValues !=null) {
+
+                     if(!constraint.toString().isEmpty())
+                     {  
+                         String constraintLowerCase = constraint.toString().toLowerCase();
+
+                            for(Student c: originalValues)
+                            {                           
+                                String cName = c.getFirstName().toLowerCase() ;
+                                String cLName = c.getLastName().toLowerCase();
+                                if(cName.startsWith(constraintLowerCase) || cLName.startsWith(constraintLowerCase)) 
+                                {
+                                    //Add the row to the list if filtered items
+                                    filteredList.add(c);
+                                }
+                            }                                            
+
+                     }
+
+                   //Important steps to store the filtered list
+                    filterResults.values = filteredList;
+                    filterResults.count = filteredList.size();
+                  }
+                  return filterResults;
+              }
+
+            @SuppressWarnings("unchecked")
+              @Override
+              protected void publishResults(CharSequence contraint, FilterResults results) {                                                                                              
+                  if (results.count > 0) 
+                  {         
+                    //Display the filtered list
+                MyListAdapter.this.displayValues = (ArrayList<Student>) results.values;
+                    notifyDataSetChanged();
+                  }
+                  else
+                  {
+                      if(inputSearch.getText().toString().isEmpty())
+                      {                 
+                        //Display the original list
+                          MyListAdapter.this.displayValues = (ArrayList<Student>) MyListAdapter.this.originalValues.clone();
+                      }
+                      else
+                      {                     
+                        //Display an empty list
+                          MyListAdapter.this.displayValues.clear();
+                      }                 
+                    notifyDataSetInvalidated();
+                  }
+              }
+             };
+
+            return contactFilter;
+
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            Fragment fragment = new DummySectionFragment();
+            Bundle args = new Bundle();
+            args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A dummy fragment representing a section of the app, but that simply
+     * displays dummy text.
+     */
+    public static class DummySectionFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        public static final String ARG_SECTION_NUMBER = "section_number";
+
+        public DummySectionFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_main_dummy, container, false);
+
+            switch(getArguments().getInt(ARG_SECTION_NUMBER)){
+            case 0:
+
+            case 1:
+
+                Student andres = new Student();
+                andres.setFirstName("Andres");
+                andres.setLastName("Blanco");
+
+                Student ondria = new Student();
+                ondria.setFirstName("Ondria");
+                ondria.setLastName("Arias");
+
+                ArrayList<Student> studentList = new ArrayList<Student>();
+                studentList.add(andres);
+                studentList.add(ondria);
+
+                MainActivity mainactivity = new MainActivity();
+                ListView lv = (ListView) rootView.findViewById(android.R.id.list);
+                //inputSearch = (EditText) rootView.findViewById(R.id.inputSearch);
+                MyListAdapter adapter = mainactivity.new MyListAdapter(getActivity().getBaseContext(), R.layout.list_view, studentList);
+                lv.setAdapter(adapter);
+                return rootView;
+
+            case 2:
+
+            }
+
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<p>and here is my LogCat report:</p>
+
+<pre><code>04-14 02:09:53.667: D/dalvikvm(1348): Late-enabling CheckJNI
+04-14 02:09:53.751: D/dalvikvm(1348): GC_FOR_ALLOC freed 103K, 5% free 3073K/3232K, paused 8ms, total 9ms
+04-14 02:09:53.795: D/AndroidRuntime(1348): Shutting down VM
+04-14 02:09:53.795: W/dalvikvm(1348): threadid=1: thread exiting with uncaught exception (group=0xa4d01b20)
+04-14 02:09:53.807: E/AndroidRuntime(1348): FATAL EXCEPTION: main
+04-14 02:09:53.807: E/AndroidRuntime(1348): Process: com.example.student_lists, PID: 1348
+04-14 02:09:53.807: E/AndroidRuntime(1348): java.lang.NullPointerException
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at com.example.student_lists.MainActivity$DummySectionFragment.onCreateView(MainActivity.java:304)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.Fragment.performCreateView(Fragment.java:1500)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:927)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1104)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1467)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:472)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.app.FragmentPagerAdapter.finishUpdate(FragmentPagerAdapter.java:141)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.view.ViewPager.populate(ViewPager.java:1068)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.view.ViewPager.populate(ViewPager.java:914)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1436)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.View.measure(View.java:16497)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.View.measure(View.java:16497)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at com.android.internal.widget.ActionBarOverlayLayout.onMeasure(ActionBarOverlayLayout.java:327)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.View.measure(View.java:16497)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2291)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.View.measure(View.java:16497)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1916)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1113)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1295)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1000)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5670)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.Choreographer$CallbackRecord.run(Choreographer.java:761)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.Choreographer.doCallbacks(Choreographer.java:574)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.Choreographer.doFrame(Choreographer.java:544)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:747)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.os.Handler.handleCallback(Handler.java:733)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.os.Handler.dispatchMessage(Handler.java:95)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.os.Looper.loop(Looper.java:136)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+04-14 02:09:53.807: E/AndroidRuntime(1348):     at dalvik.system.NativeStart.main(Native Method)
+04-14 02:28:04.931: D/dalvikvm(1442): GC_FOR_ALLOC freed 109K, 6% free 3067K/3232K, paused 35ms, total 35ms
+04-14 02:28:05.019: D/AndroidRuntime(1442): Shutting down VM
+04-14 02:28:05.019: W/dalvikvm(1442): threadid=1: thread exiting with uncaught exception (group=0xa4d01b20)
+04-14 02:28:05.019: E/AndroidRuntime(1442): FATAL EXCEPTION: main
+04-14 02:28:05.019: E/AndroidRuntime(1442): Process: com.example.student_lists, PID: 1442
+04-14 02:28:05.019: E/AndroidRuntime(1442): java.lang.NullPointerException
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at com.example.student_lists.MainActivity$DummySectionFragment.onCreateView(MainActivity.java:304)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.Fragment.performCreateView(Fragment.java:1500)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:927)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1104)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1467)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:472)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.app.FragmentPagerAdapter.finishUpdate(FragmentPagerAdapter.java:141)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.view.ViewPager.populate(ViewPager.java:1068)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.view.ViewPager.populate(ViewPager.java:914)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1436)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.View.measure(View.java:16497)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.View.measure(View.java:16497)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at com.android.internal.widget.ActionBarOverlayLayout.onMeasure(ActionBarOverlayLayout.java:327)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.View.measure(View.java:16497)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2291)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.View.measure(View.java:16497)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1916)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1113)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1295)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1000)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5670)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.Choreographer$CallbackRecord.run(Choreographer.java:761)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.Choreographer.doCallbacks(Choreographer.java:574)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.Choreographer.doFrame(Choreographer.java:544)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:747)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.os.Handler.handleCallback(Handler.java:733)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.os.Handler.dispatchMessage(Handler.java:95)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.os.Looper.loop(Looper.java:136)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+04-14 02:28:05.019: E/AndroidRuntime(1442):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>Please help me find whats causing my nullpointer.</p>

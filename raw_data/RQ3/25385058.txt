@@ -1,0 +1,75 @@
+<p>I have two collections which I am trying to compare for equality in my unit tests, but I am struggling with the contains method. Here is what I have:</p>
+
+<pre><code>@Test
+public void getAllItems() {
+
+    Collection<Item> actualItems = auction.getAllItems(joe);
+    Collection<Item> expectedItems = Lists.newArrayList();
+    expectedItems.add(iPhone);
+    expectedItems.add(skateboard);
+    assertThat(expectedItems, contains(actualItems));
+
+}
+</code></pre>
+
+<p><code>items</code> contains the same objects as <code>expectedItems</code> so I would expect the assertion to be true but this is the output I get:</p>
+
+<pre><code>[Item{name=iPhone}, Item{name=Skateboard}]  --> Expected
+[Item{name=iPhone}, Item{name=Skateboard}]  --> Actual
+
+java.lang.AssertionError: 
+Expected: iterable containing [<[Item{name=iPhone}, Item{name=Skateboard}]>]
+     but: item 0: was <Item{name=iPhone}>
+    at org.hamcrest.MatcherAssert.assertThat(MatcherAssert.java:20)
+    at org.hamcrest.MatcherAssert.assertThat(MatcherAssert.java:8)
+</code></pre>
+
+<p>Please can you help me where I am going wrong with using the <code>contains</code> method?</p>
+
+<pre><code>public class Item {
+
+    private String name;
+
+    public Item(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String toString() {
+        return Objects.toStringHelper(this).add("name", name).toString();
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Item other = (Item) obj;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+
+}
+</code></pre>

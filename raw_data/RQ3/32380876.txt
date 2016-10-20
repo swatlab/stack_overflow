@@ -1,0 +1,175 @@
+<p>After two days of going over every resource and forum I possibly could, I still didn't manage to solve my problem. The problem is that I'm getting no such table error when running my application. The idea is simple, the application should read all values in one column, put them into string array and use that string array in a spinner. I've even tried completely reinstalling the application and went over every solution, but none of them worked for me.</p>
+
+<p>Here's the code for SQLiteOpenHelper class:</p>
+
+<pre><code>public class DBConnect extends SQLiteOpenHelper {
+
+    private static final String DB_PATH = "/data/data/mypackage.name/databases/";
+    private static final String DB_NAME = "nutrition_table.sql";
+    private SQLiteDatabase myDatabase;
+    private final Context myContext;
+
+    public DBConnect(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    public void createDatabase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+
+        }else{
+
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    private boolean checkDataBase(){
+
+        File dbFile = myContext.getDatabasePath(DB_NAME);
+        return dbFile.exists();
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+     }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if(myDatabase != null)
+            myDatabase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>
+
+<p>Here's mine database nutrition_table.sql located in the assets folder created and exported with SqliteBrowser. I even tried to add _id primary key with autoincrement, but that hadn't worked either.</p>
+
+<pre><code>BEGIN TRANSACTION;
+CREATE TABLE `food` (
+    `name`  TEXT,
+    `numbers`   INTEGER
+);
+
+INSERT INTO `food` VALUES ('egg',4);
+INSERT INTO `food` VALUES ('bread',7);
+INSERT INTO `food` VALUES ('milk',10);
+CREATE TABLE "android_metadata" ("locale" TEXT DEFAULT 'en_US');
+INSERT INTO `android_metadata` VALUES ('en_US');
+COMMIT;
+</code></pre>
+
+<p>Activity class:</p>
+
+<pre><code>public class HomeActivity extends AppCompatActivity {
+
+    DBConnect dbConnect;
+    public String[] names;
+    Spinner spinner;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.home_layout);
+
+        //database
+        dbConnect = new DBConnect(this.getApplicationContext());
+        dbConnect = new DBConnect(this);
+        try{
+            dbConnect.createDatabase();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        dbConnect.openDataBase();
+
+        SQLiteDatabase db = dbConnect.getReadableDatabase();
+
+        int columnIndex = 0; // Whichever column your float is in.
+        Cursor cursor = db.rawQuery("SELECT name FROM food", null);
+        names = new String[cursor.getCount()];
+
+        if (cursor.moveToFirst())
+        {
+            for (int i = 0; i < cursor.getCount(); i++)
+            {
+                names[i] = cursor.getString(columnIndex);
+                cursor.moveToNext();
+            }
+        }
+        cursor.close();
+        db.close();
+
+        spinner = (Spinner) findViewById(R.id.spinner);
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(this,android.R.layout.simple_spinner_item, names);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); 
+        spinner.setAdapter(spinnerArrayAdapter);
+</code></pre>
+
+<p>I also have the permissions for the external storage:</p>
+
+<pre><code><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+</code></pre>
+
+<p>Finally, the error:</p>
+
+<pre><code>09-03 15:31:47.984    3360-3360/? E/SQLiteLog﹕ (1) no such table: food
+09-03 15:31:47.994    3360-3360/? D/AndroidRuntime﹕ Shutting down VM
+09-03 15:31:47.994    3360-3360/? W/dalvikvm﹕ threadid=1: thread exiting with uncaught exception (group=0x40a122a0)
+09-03 15:31:48.014    3360-3360/? E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{nlg.com.hl/nlg.com.hl.HomeActivity}: android.database.sqlite.SQLiteException: no such table: food (code 1): , while compiling: SELECT name FROM food
+</code></pre>
+
+<p>Thanks for help!</p>

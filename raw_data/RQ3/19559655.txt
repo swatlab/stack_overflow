@@ -1,0 +1,83 @@
+<p>I am having a strange behaviour when trying to decode a photo of the size 2448x2448 pixels. In code, I am calculating that a inSampleSize of 6 should be applied (based on the required size of the resulting bitmap) and when I call BitmapFactory.decodeStream with those options I am expecting a bitmap like this:</p>
+
+<ul>
+<li>full_photo_width = 2448 </li>
+<li>full_photo_height = 2448 </li>
+<li>inSampleSize = 6</li>
+<li>expected_width = (2448 / 6) = 408 </li>
+<li>expected_height (2448 / 6) = 408</li>
+<li>actual_width = 612 </li>
+<li>actual_height = 612</li>
+</ul>
+
+<p>Here is the code:</p>
+
+<pre><code>BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        try {
+            BitmapFactory.decodeStream(getContentResolver().openInputStream(uri), null, options);
+        } catch (FileNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        int photo_width = options.outWidth;
+        int photo_height = options.outHeight;
+        float rotation = rotationForImage(this, uri);
+        if (rotation != 0f) {
+            // Assume the photo is portrait oriented
+            matrix.preRotate(rotation);
+            float photo_ratio = (float) ((float)photo_width / (float)photo_height);
+            frame_height = (int) (frame_width / photo_ratio);
+
+        } else {
+            // Assume the photo is landscape oriented
+            float photo_ratio = (float) ((float)photo_height / (float)photo_width);
+            frame_height = (int) (frame_width * photo_ratio);
+
+        }
+        int sampleSize = calculateInSampleSize(options, frame_width, frame_height);
+        if ((sampleSize % 2) != 0) {
+            sampleSize++;
+        }
+        options.inSampleSize = sampleSize;
+        options.inJustDecodeBounds = false;
+
+        Bitmap bitmap = null;
+        try {
+            bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri), null, options);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+</code></pre>
+
+<p>And the calculateInSampleSize function: </p>
+
+<pre><code>    public static int calculateInSampleSize(
+        BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+
+        // We round the value to the highest, always.
+        if ((height / inSampleSize) > reqHeight || (width / inSampleSize > reqWidth)) {
+            inSampleSize++;
+        }
+
+    }
+
+    return inSampleSize;
+}
+</code></pre>
+
+<p>The code works for all the photos for all the photos and decodeStream is returning a bitmap with the correct size (depending on the calculated inSampleSize) in all the cases, except with a particular photo. Am I missing something here?
+Thanks!</p>

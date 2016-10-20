@@ -1,0 +1,390 @@
+<p>This is my activity code, when click on capture picture button, it will load camera from your phone. after i take a picture with camera, the picture will show at the imageView. Then i will click upload image picture button to upload my picture to server. Here the problem i faced, the code works well on all <code>android version 4.4</code> and below, when i test this code with <code>android 5.0</code>, the picture taken from camera wasn't show on the imageView. I had tried many solution and yet keep fail. Can anyone help me with this? thank you.</p>
+
+<p><strong>Activity code</strong> </p>
+
+<pre><code>public class TestUpload extends Activity implements OnItemSelectedListener {
+
+private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
+public static final int MEDIA_TYPE_IMAGE = 1;
+
+private static final String IMAGE_DIRECTORY_NAME = "Hello camera";
+
+private Uri fileUri;
+
+private ImageView imgPreview;
+private Button btnCapturePicture, btnUploadImage;
+private EditText itemname;
+private EditText description;
+private EditText price;
+private EditText contact;
+
+private String randNum, uname;
+
+Random random = new Random();
+private static final String _CHAR = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+private static final int RANDOM_STR_LENGTH = 12;        
+
+private Spinner spinCat, spinLoc;
+
+private String [] Category = {"IT Gadgets","Men Fashion","Women Fashion","Beauty","Sports","Cars and Motors","Furnitures","Music Instrument","Books","Property","Photography","Games and Toys","kids and Baby","Others"};
+private String [] Location = {"Kuala Lumpur","Melacca","Johor","Selangor","Kelantan","Kedah","Negeri Sembilan",
+        "Pahang","Perak","Perlis","Penang","Sabah","Sarawak","Terengganu"}; 
+
+private static final String TAG_SUCCESS = "success";
+
+JSONParser2 jsonParser2 = new JSONParser2();
+
+private static String url_create_image = "http://gemini888.tk/GP_trade_api_v2/image_connect/create_product.php";
+
+private SweetAlertDialog pDialog;
+
+long totalSize = 0;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.upload_test);
+
+    ActionBar ab = getActionBar();
+    ab.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#96ead7")));
+    ab.setDisplayHomeAsUpEnabled(true);
+
+    imgPreview = (ImageView) findViewById(R.id.imgPreview);
+    btnCapturePicture = (Button) findViewById(R.id.btn_camera);
+    btnUploadImage = (Button) findViewById(R.id.btn_upload);
+    itemname = (EditText) findViewById(R.id.input_upload_item_name);
+    description = (EditText) findViewById(R.id.input_item_desc);
+    price = (EditText) findViewById(R.id.upload_input_item_price);
+    contact = (EditText) findViewById(R.id.input_contact);
+    spinCat = (Spinner) findViewById(R.id.spin_category);
+    spinLoc = (Spinner) findViewById(R.id.spin_location);
+
+    ArrayAdapter<String> adapter_Category = new ArrayAdapter<String>
+    (this, android.R.layout.simple_spinner_item, Category);
+
+    ArrayAdapter<String> adapter_Location = new ArrayAdapter<String>
+    (this, android.R.layout.simple_spinner_item, Location);
+
+    adapter_Category.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    adapter_Location.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+    spinCat.setAdapter(adapter_Category);
+    spinLoc.setAdapter(adapter_Location);
+
+    spinCat.setOnItemSelectedListener(this);
+    spinLoc.setOnItemSelectedListener(this);
+
+    DatabaseHandler db = new DatabaseHandler(getApplicationContext());
+    HashMap<String, String> user = new HashMap<String, String>();
+    user = db.getUserDetails();
+    uname = user.get("uname");
+
+    //timeStamp = new SimpleDateFormat ("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+
+    randNum = getRandomString();
+    //capture image button click event
+    btnCapturePicture.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            //capture image
+            captureImage(); 
+        }
+    });
+
+    btnUploadImage.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+
+                //uploading the file to server
+                new UploadFileToServer().execute();
+        }   
+    });
+}
+//capturing Camera image will lunch camera app request image capture
+private void captureImage() {
+
+    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+    fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+
+    //Start image capture intent
+    startActivityForResult(intent, CAMERA_CAPTURE_IMAGE_REQUEST_CODE);
+}
+
+//Receiving activity result method will be called after closing the camera
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+    //if the result i capture image
+    if(requestCode == CAMERA_CAPTURE_IMAGE_REQUEST_CODE) {
+        if(resultCode == RESULT_OK) {
+
+            //success capture image, display it on imageview
+            previewCapturedImage(); 
+        } else if (resultCode == RESULT_CANCELED) {
+
+            //user cancel image capture
+            Toast.makeText(getApplicationContext(), "User cancelled image capture", Toast.LENGTH_SHORT).show();
+        } else {
+
+            //failed to capture image
+            Toast.makeText(getApplicationContext(), "Sorry, failed to capture image", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
+
+//Display image from a path to imageview
+private void previewCapturedImage() {
+
+
+        imgPreview.setVisibility(View.VISIBLE);
+
+        //bitmap factory
+        BitmapFactory.Options options = new BitmapFactory.Options();
+
+        //downsize image as it throws Outofmemory execption for larger images
+        options.inSampleSize = 8;
+        final Bitmap bitmap = BitmapFactory.decodeFile(fileUri.getPath(), options);
+
+        imgPreview.setImageBitmap(bitmap);
+
+    }
+
+//store the file url as it will be null after returning from camera app
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+
+    //save file url in bundle as it will be null on screen orientation change
+    outState.putParcelable("file_uri", fileUri);
+}
+
+//restore the fileUri again
+@Override
+protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    super.onRestoreInstanceState(savedInstanceState);
+
+    //get the Urifile
+    fileUri = savedInstanceState.getParcelable("file_uri");
+}
+
+//create file Uri to store image
+public Uri getOutputMediaFileUri(int type) {
+    return Uri.fromFile(getOutputMediaFile(type));
+}
+
+//returning image
+private File getOutputMediaFile(int type) {
+
+    //External sdcard location
+    File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), UserFunctions.IMAGE_DIRECTORY_NAME);
+
+    //create the storage directory if it does not exist
+    if(!mediaStorageDir.exists()) {
+        if (!mediaStorageDir.mkdirs()) {
+            Log.d(IMAGE_DIRECTORY_NAME, "Failed create" + UserFunctions.IMAGE_DIRECTORY_NAME + "directory");
+            return null;
+        }
+    }
+
+    //Create a media file name
+    File mediaFile;
+    if (type == MEDIA_TYPE_IMAGE) {
+
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + uname + randNum + ".jpg");
+    } else {
+        return null;
+    }
+
+    return mediaFile;
+}
+
+//upload image to server
+private class UploadFileToServer extends AsyncTask<Void, Integer, String> {
+
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        pDialog = new SweetAlertDialog(TestUpload.this, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#A5DC86"));
+        pDialog.setTitleText("Picture uploading, please wait..");
+        //pDialog.setIndeterminate(false);
+        pDialog.setCancelable(true);
+        pDialog.show();
+    }
+
+    @Override
+    protected String doInBackground(Void...params) {
+
+        String iname = itemname.getText().toString();
+        String des = description.getText().toString();
+        String iprice = price.getText().toString();
+        String icontact = contact.getText().toString();
+
+        String cat = spinCat.getSelectedItem().toString();
+        String loc = spinLoc.getSelectedItem().toString();
+
+        List<NameValuePair> param = new ArrayList<NameValuePair>();
+        param.add(new BasicNameValuePair("name", iname));
+        param.add(new BasicNameValuePair("description", des));
+        param.add(new BasicNameValuePair("price", iprice));
+        param.add(new BasicNameValuePair("username", uname));
+        param.add(new BasicNameValuePair("category", cat));
+        param.add(new BasicNameValuePair("location", loc));
+        param.add(new BasicNameValuePair("timestamp", randNum));
+        param.add(new BasicNameValuePair("contact", icontact));
+
+
+
+        JSONObject json = jsonParser2.makeHttpRequest(url_create_image,
+                "POST", param);
+
+        Log.d("Create Response", json.toString());
+
+        try {
+            int success = json.getInt(TAG_SUCCESS);
+
+            if (success == 1) {
+                // successfully created product
+                Log.d("Create Response", "success");
+            } else {
+                // failed to create product
+                Toast.makeText(getApplicationContext(),"failed",Toast.LENGTH_SHORT).show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return uploadFile();            
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+
+        pDialog.dismiss();
+        super.onPostExecute(result);
+    }   
+}
+
+@SuppressWarnings("deprecation")
+private String uploadFile() {
+    String responseString = null;
+
+    HttpClient httpclient = new DefaultHttpClient();
+    HttpPost httppost = new HttpPost(UserFunctions.FILE_UPLOAD_URL);
+
+    try {
+        AndroidMultiPartEntity entity = new AndroidMultiPartEntity(
+                new ProgressListener() {
+
+                    @Override
+                    public void transferred(long num) {
+                        setProgress((int) ((num / (float) totalSize) * 100));
+                    }
+                });
+
+        File sourceFile = new File(fileUri.getPath());
+
+        // Adding file data to http body
+        entity.addPart("image", new FileBody(sourceFile));
+
+        // Extra parameters if you want to pass to server
+        entity.addPart("website",
+                new StringBody("http://gemini888.tk"));
+        entity.addPart("email", new StringBody("thegemini888@gmail.com"));
+
+        totalSize = entity.getContentLength();
+        httppost.setEntity(entity);
+
+        // Making server call
+        HttpResponse response = httpclient.execute(httppost);
+        HttpEntity r_entity = response.getEntity();
+
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == 200) {
+            // Server response
+            responseString = EntityUtils.toString(r_entity);
+        } else {
+            responseString = "Error occurred! Http Status Code: "
+                    + statusCode;
+        }
+
+    } catch (ClientProtocolException e) {
+        responseString = e.toString();
+    } catch (IOException e) {
+        responseString = e.toString();
+    }
+
+    return responseString;
+
+}
+
+public String getRandomString() {
+
+    StringBuffer randStr = new StringBuffer();
+    for (int i =0; i<RANDOM_STR_LENGTH; i++) {
+        int number = getRandomNumber();
+        char ch = _CHAR.charAt(number);
+        randStr.append(ch);
+    }
+    return randStr.toString();
+}
+
+private int getRandomNumber() {
+
+    int randomInt = 0;
+    randomInt = random.nextInt(_CHAR.length());
+    if (randomInt - 1 == -1) {
+        return randomInt;
+    } else {
+        return randomInt - 1;
+    }
+}
+
+
+
+@Override
+public void onItemSelected(AdapterView<?> parent, View view, int position,
+        long id) {
+    // TODO Auto-generated method stub
+    spinCat.setSelection(position);
+
+    String CatList = (String) spinCat.getSelectedItem();
+
+    CatList.toString();
+
+}
+
+
+
+
+
+@Override
+public void onNothingSelected(AdapterView<?> parent) {
+    // TODO Auto-generated method stub
+
+}
+
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) { 
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            // app icon in action bar clicked; go home
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
+
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item); 
+    }
+}
+}
+</code></pre>

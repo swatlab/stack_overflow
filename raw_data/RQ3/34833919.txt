@@ -1,0 +1,235 @@
+<p>I'm trying to upload image to the server but it says image is null 
+i take a picture from camera covert it to a bitmap and upload it, but it didn't worked </p>
+
+<p>any hint/ help ?</p>
+
+<p>here is my code </p>
+
+<pre><code>import android.content.Context;
+    import android.content.Intent;
+    import android.graphics.Bitmap;
+    import android.graphics.BitmapFactory;
+    import android.media.Image;
+    import android.net.Uri;
+    import android.os.Bundle;
+    import android.os.Environment;
+    import android.provider.MediaStore;
+    import android.support.v7.app.ActionBarActivity;
+    import android.util.Log;
+    import android.view.Menu;
+    import android.view.MenuItem;
+    import android.view.View;
+    import android.widget.ImageView;
+    import android.widget.Toast;
+
+    import com.google.zxing.integration.android.IntentIntegrator;
+    import com.google.zxing.integration.android.IntentResult;
+
+    import java.io.File;
+    import java.io.FileInputStream;
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.io.OutputStreamWriter;
+    import java.lang.reflect.Array;
+    import java.text.SimpleDateFormat;
+    import java.util.ArrayList;
+    import java.util.Collection;
+    import java.util.Collections;
+    import java.util.Date;
+    import java.util.List;
+    import org.jibble.simpleftp.*;
+
+    import it.sauronsoftware.ftp4j.FTPClient;
+    import it.sauronsoftware.ftp4j.FTPCommunicationListener;
+    import it.sauronsoftware.ftp4j.FTPDataTransferListener;
+    import it.sauronsoftware.ftp4j.FTPReply;
+
+    public class Home extends ActionBarActivity implements View.OnClickListener {
+        String imageFileName="";
+        String imageFileExtension=".jpg";
+        File filePicture=null;
+        File fileString=null;
+        String JCode="";
+
+        @Override
+        public void onClick(View view) {
+            if (view==findViewById(R.id.scanbar)) {
+                System.out.println("11111 1");
+                IntentIntegrator integrator=new IntentIntegrator(this);
+
+                integrator.initiateScan();
+            }
+
+            if (view==findViewById(R.id.tpic)) {
+                System.out.println("11111 2");
+                //File pictureFolder= Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                //File filePicture=new File(pictureFolder,"smtcap.jpg");
+                // Create an image file name
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                imageFileName = "JPEG_" + timeStamp + "_";
+                File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                try {
+                    filePicture=File.createTempFile(imageFileName, imageFileExtension,storageDir);
+                    Uri outPutFileUri= Uri.fromFile(filePicture);
+                    Intent intentStartCamera=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    if (intentStartCamera.resolveActivity(getPackageManager()) !=null) {
+                        intentStartCamera.putExtra(MediaStore.EXTRA_OUTPUT,outPutFileUri);
+                        startActivityForResult(intentStartCamera,101);
+                    } else {
+                        Toast.makeText(this,"Can't find a camera application",Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(this,"There's a problem creating the file",Toast.LENGTH_SHORT).show();
+                }
+            }
+
+
+
+        }
+
+        @Override
+        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+
+            IntentResult scanningResult=IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
+            if (scanningResult!=null) {
+                String scanContent=scanningResult.getContents();
+                String scanFormat=scanningResult.getFormatName();
+                JCode=scanContent;
+                Toast.makeText(getApplicationContext(),scanContent,Toast.LENGTH_LONG).show();
+            }
+
+            if (requestCode ==101&&JCode!="") {
+                if (resultCode==RESULT_OK) {
+                    Bitmap bitmapToDisplay=null;
+                    if (filePicture.exists()) {
+                       bitmapToDisplay=decodeResizedBitmapFromSource(800,800);
+                    } else {
+                        if (data.hasExtra("data")) {
+                            Bitmap thumbnail;
+                            thumbnail=data.getParcelableExtra("data");
+                            bitmapToDisplay=thumbnail;
+                        } else {
+                            //bitmapToDisplay=nulBitmapFactory.decodeResource(getResources(),R.drawable.red_error);
+                        }
+                    }
+                    ImageView iview=(ImageView)findViewById(R.id.pview);
+                    iview.setImageBitmap(bitmapToDisplay);
+
+                    FTPClient client = null;
+                    try
+                    {
+                        //SimpleFTP ftp=new SimpleFTP();
+                        //ftp.connect("ctal.tindallconsulting.co.uk", 21, "CTALP", "1i23j12oi3j21");
+                        //ftp.connect("192.168.1.100", 21, "CTALP", "1i23j12oi3j21");
+                        //ftp.bin();
+                        //ftp.stor(new FileInputStream(new File(filePicture.getPath())), "out.jpg");
+                        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                        fileString=File.createTempFile("out",".txt",storageDir);
+                        FileOutputStream stream=new FileOutputStream(fileString);
+                        stream.write(JCode.getBytes());
+                        stream.flush();
+                        stream.close();
+                        //ftp.stor(new FileInputStream(new File(fileString.getPath())), "out.txt");
+                        //ftp.disconnect();
+
+                        client=new FTPClient();
+                        client.connect("192.168.1.100", 21);
+
+
+                        client.login("CTALP", "1i23j12oi3j21");
+                        client.setType(FTPClient.TYPE_BINARY);
+                        client.upload(filePicture, new MyTransferListener());
+                        client.upload(fileString,new MyTransferListener());
+
+                        Toast.makeText(getApplicationContext(),"Photo Uploading",Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(getApplicationContext(),"Problem uploading photo" + e.getMessage(),Toast.LENGTH_LONG).show();
+                        try {
+                            client.disconnect(true);
+                        } catch (Exception e2) {
+                            e2.printStackTrace();
+                        }
+                    }
+
+                } else {
+                    Toast.makeText(getApplicationContext(),"Problem taking photo",Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+        /*******  Used to file upload and show progress  **********/
+
+        public class MyTransferListener implements FTPDataTransferListener {
+            public void started() {
+                // Transfer started
+                //Toast.makeText(getBaseContext(), " Upload Started ...", Toast.LENGTH_SHORT).show();
+            }
+            public void transferred(int length) {
+
+
+            }
+            public void completed() {
+
+            }
+            public void aborted() {
+                // Transfer aborted
+            }
+            public void failed() {
+                // Transfer failed
+            }
+        }
+
+
+        private Bitmap decodeResizedBitmapFromSource(int reqWidth, int reqHeight) {
+            final BitmapFactory.Options options=new BitmapFactory.Options();
+            options.inJustDecodeBounds=true;
+            BitmapFactory.decodeFile(filePicture.getPath(),options);
+            options.inSampleSize=calculateInSampleSize(options,reqWidth ,reqHeight );
+            options.inJustDecodeBounds=false;
+            return BitmapFactory.decodeFile(filePicture.getPath(), options);
+        }
+        private int calculateInSampleSize(BitmapFactory.Options options,int reqWidth,int reqHeight) {
+            final int height=options.outHeight;
+            final int width=options.outWidth;
+            int inSampleSize=1;
+            if (height>reqHeight||width>reqWidth) {
+                final int heightRatio=Math.round((float)height/(float)reqHeight);
+                final int widthRatio=Math.round((float)width/(float)reqWidth);
+                inSampleSize=heightRatio<widthRatio?heightRatio:widthRatio;
+            }
+            return inSampleSize;
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_home);
+        }
+
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.menu_home, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+            int id = item.getItemId();
+
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_settings) {
+                return true;
+            }
+
+            return super.onOptionsItemSelected(item);
+        }
+
+    }
+</code></pre>
+
+<p>using ftp4j 1.7.2 jar file </p>

@@ -1,0 +1,69 @@
+<p>I'm running Android Studio 1.1.0.</p>
+
+<p>I created a new project using the Android Studio Wizard and selected MinimumSDK: API 15, and Tabbed Activity.</p>
+
+<p>The target SDK is automatically set to API 21.</p>
+
+<p>When I run this project (with no modifications) on a Genymotion Nexus 5, API19 (4.4.4) emulator everything looks as expected.</p>
+
+<p>When I run this project (with no modifications) on a Genymotion Nexus 6, API21 (5.0.0) emulator, I only get a blank white screen.</p>
+
+<p>This is the generated onCreate in MainActivity</p>
+
+<pre><code>protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    // Set up the action bar.
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    // When swiping between different sections, select the corresponding
+    // tab. We can also use ActionBar.Tab#select() to do this if we have
+    // a reference to the Tab.
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        // Create a tab with text corresponding to the page title defined by
+        // the adapter. Also specify this Activity object, which implements
+        // the TabListener interface, as the callback (listener) for when
+        // this tab is selected.
+        actionBar.addTab(
+                actionBar.newTab()
+                        .setText(mSectionsPagerAdapter.getPageTitle(i))
+                        .setTabListener(this));
+    }
+}
+</code></pre>
+
+<p>Android Studio tells me that </p>
+
+<pre><code>actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+actionBar.setSelectedNavigationItem(position);
+
+actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+</code></pre>
+
+<p>are deprecated, which may explain why they don't work in my API21 device.</p>
+
+<p>How do I change these deprecated methods to work on API21 and still work in 
+
+<p>I'm frustrated that Android Studio's templates don't work for the latest API.</p>

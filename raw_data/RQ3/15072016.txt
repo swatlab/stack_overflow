@@ -1,0 +1,32 @@
+<p>Before 4.2.2, only the logo was clickable.</p>
+
+<p>As of 4.2.2, the title of the actionbar is clickable along with the logo - <strong>both as if part of the same button</strong>.</p>
+
+<p>You can see an example of this behavior in the Google Reader app - if you have a 4.2.2 device (See screenshot attached).</p>
+
+<p><strong>How do I disable this behavior and enable clicking only on the icon?</strong> Perhaps it's a bug?</p>
+
+<p>See example code snippet:</p>
+
+<pre><code>public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                finish();
+                return true;
+        }
+        return false;
+    }
+}
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/mHXNhl.png" alt="Clicking on the logo sets the title to also being clicked"></p>

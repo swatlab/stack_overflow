@@ -1,0 +1,155 @@
+<p>I'm trying to deal with the library Otto and try <a href="http://www.vogella.com/tutorials/JavaLibrary-EventBusOtto/article.html" rel="nofollow">an example here</a></p>
+
+<p>and I was able to run the example. But I want to work with components, for which I was a little altered example and got the error</p>
+
+<p>MainActivity:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+    public static Bus bus;
+    private TextView mainTxt;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mainTxt = (TextView) findViewById(R.id.mainText);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container, new PlaceholderFragment())
+                    .commit();
+        }
+        bus = new Bus(ThreadEnforcer.MAIN);
+        bus.register(this);
+    }
+    @Subscribe
+    public void getMessage(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_LONG).show();
+        mainTxt.setText(s);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            TestData t = new TestData();
+            t.message="Hello from the activity";
+            bus.post(t);
+            return true;
+        }  
+        return super.onOptionsItemSelected(item);
+    }
+    public class TestData {
+        public String message;
+    }   
+}
+</code></pre>
+
+<p>Fragment:</p>
+
+<pre><code>public class PlaceholderFragment extends Fragment {
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View button = rootView.findViewById(R.id.fragmentbutton);
+        button.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                MainActivity.bus.post("Hello from the Fragment");
+            }
+        });
+        MainActivity.bus.register(this);
+        return rootView;
+    }
+    @Subscribe
+    public void getMessage(MainActivity.TestData data) {
+        Toast.makeText(getActivity(), data.message, Toast.LENGTH_LONG).show();
+    }
+
+    @Produce
+    public String produceEvent() {
+        return "Starting up";
+    }
+}
+</code></pre>
+
+<p>I just changed:</p>
+
+<pre><code>@Subscribe
+    public void getMessage(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_LONG).show();
+        mainTxt.setText(s);
+    }
+</code></pre>
+
+<p>or rather added <code>mainTxt.setText(s);</code>I want to fragment the event of not only displays a message and sets the value in <code>mainTxt</code></p>
+
+<p>Error:</p>
+
+<pre><code>01-09 21:11:22.448  28849-28849/? E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{gcm.colibri.com.ottotest/gcm.colibri.com.ottotest.MainActivity}: java.lang.RuntimeException: Could not dispatch event: class java.lang.String to handler [EventHandler public void gcm.colibri.com.ottotest.MainActivity.getMessage(java.lang.String)]: null
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1956)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+            at android.app.ActivityThread.access$600(ActivityThread.java:123)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4464)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:822)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:589)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.RuntimeException: Could not dispatch event: class java.lang.String to handler [EventHandler public void gcm.colibri.com.ottotest.MainActivity.getMessage(java.lang.String)]: null
+            at com.squareup.otto.Bus.throwRuntimeException(Bus.java:456)
+            at com.squareup.otto.Bus.dispatch(Bus.java:386)
+            at com.squareup.otto.Bus.dispatchProducerResultToHandler(Bus.java:252)
+            at com.squareup.otto.Bus.register(Bus.java:205)
+            at gcm.colibri.com.ottotest.PlaceholderFragment.onCreateView(PlaceholderFragment.java:33)
+            at android.support.v4.app.Fragment.performCreateView(Fragment.java:1786)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:947)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1126)
+            at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:739)
+            at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1489)
+            at android.support.v4.app.FragmentActivity.onStart(FragmentActivity.java:548)
+            at android.app.Instrumentation.callActivityOnStart(Instrumentation.java:1133)
+            at android.app.Activity.performStart(Activity.java:4529)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1929)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+            at android.app.ActivityThread.access$600(ActivityThread.java:123)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4464)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:822)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:589)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at gcm.colibri.com.ottotest.MainActivity.getMessage(MainActivity.java:34)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.squareup.otto.EventHandler.handleEvent(EventHandler.java:89)
+            at com.squareup.otto.Bus.dispatch(Bus.java:384)
+            at com.squareup.otto.Bus.dispatchProducerResultToHandler(Bus.java:252)
+            at com.squareup.otto.Bus.register(Bus.java:205)
+            at gcm.colibri.com.ottotest.PlaceholderFragment.onCreateView(PlaceholderFragment.java:33)
+            at android.support.v4.app.Fragment.performCreateView(Fragment.java:1786)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:947)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1126)
+            at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:739)
+            at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1489)
+</code></pre>
+
+<p>help me to understand</p>

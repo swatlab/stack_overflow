@@ -1,0 +1,26 @@
+<p>I have <code>android.support.v7.widget.Toolbar</code> in my fragment.</p>
+
+<p>Also I declared in my Fragment <code>onViewCreated</code> this:</p>
+
+<pre><code>        ((MainActivity) mCtx).setSupportActionBar(toolbar);
+        ((MainActivity) mCtx).getSupportActionBar().setTitle(null);
+        ((MainActivity) mCtx).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+</code></pre>
+
+<p>But I cant make that Toolbar button back to work no way.</p>
+
+<p>How to do that?</p>
+
+<p>Tried to:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            onBackAction();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>

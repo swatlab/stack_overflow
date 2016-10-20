@@ -1,0 +1,252 @@
+<p>I have a question. I have 2 android projects. One is the "Main" project. The other is a project where i tried to implement a basic quiz application based on a tutorial found on the internet.
+The quiz application works properly, so i would like to implement it on the "Main" project. (In the "Main" project i have got 2 packages, one is for the classes of the Quiz) I created the classes, layouts, copy the database to the assets folder. Everything is the same  as the second project. But it can't copy the database. I've got table not found error.
+ It makes the db, i checked it with ddms ( pulled the db) but cant copy the tables. The code is the same(!) in the "Main project" as the second project. (And in the second project everything is fine)</p>
+
+<p>Here is the code snippets:</p>
+
+<pre><code>package com.thesis.Quiz;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.thesis.eliminations.R;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class DBHelperForQuiz extends SQLiteOpenHelper{
+
+    //The Androids default system path of your application database.
+    private static String DB_PATH = "/data/data/com.thesis.eliminations/databases/";
+    private static String DB_NAME = "QuizDB";
+    private SQLiteDatabase myDataBase; 
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DBHelperForQuiz(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+        //SQLiteDatabase db_Read = null;
+        //SQLiteDatabase db = null;
+        if(dbExist){
+            //do nothing - database already exist
+            //db = super.getReadableDatabase();
+        }else{
+            this.getReadableDatabase();
+            //db_Read = this.getReadableDatabase();
+            //db_Read.close();
+            try {
+                copyDataBase();
+            //  db = super.getReadableDatabase();
+            } catch (IOException e) {
+                //throw new Error("Error copying database");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+            //database does't exist yet.
+        }
+        if(checkDB != null){
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+        //Open your local db as the input stream
+        //InputStream myInput = myContext.getAssets().open(DB_NAME);
+        InputStream myInput = myContext.getResources().getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException{
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    public List<Question> getQuestionsList(int difficulty, int numberOfQuestions) {
+        Log.d("NOQ",Integer.toString(numberOfQuestions));
+        List<Question> questionsList = new ArrayList<Question>();
+        Cursor c = myDataBase
+                .rawQuery("SELECT * FROM QUESTIONS WHERE DIFFICULTY="
+                        + difficulty + " ORDER BY RANDOM() LIMIT "
+                        + numberOfQuestions, null);
+
+        while (c.moveToNext()) {
+            Question q = new Question();
+            q.setQuestionText(c.getString(1));
+            q.setRightAnswer(c.getString(2));
+            q.setAnswerOption1(c.getString(3));
+            q.setAnswerOption2(c.getString(4));
+            q.setAnswerOption3(c.getString(5));
+            q.setQuestionDiffLevel(difficulty);
+            questionsList.add(q);
+        }
+        return questionsList;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+    }
+}
+</code></pre>
+
+<p>And:</p>
+
+<pre><code>public class QuizActivityMain extends Activity implements OnClickListener {
+
+    Button bStart, bQuit, bSetDiff;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.quizmenu);
+        initialize();
+    }
+
+    private void initialize() {
+        bStart = (Button) findViewById(R.id.bStartQuiz);
+        bQuit = (Button) findViewById(R.id.bExitQuiz);
+        bSetDiff = (Button) findViewById(R.id.bSetDiff);
+        bSetDiff.setOnClickListener(this);
+        bQuit.setOnClickListener(this);
+        bStart.setOnClickListener(this);
+        Log.d("init", "initialize..");
+    }
+
+    @Override
+    public void onClick(View v) {
+        Intent i;
+        switch (v.getId()) {
+            case R.id.bStartQuiz:
+                List<Question> questionsList = getQuestionsFromDB();
+                QuizGame currentQuizGame = new QuizGame();
+                currentQuizGame.setNumberOfRounds(this.getNumOfQuestions());
+                currentQuizGame.setQuestions(questionsList);
+                Log.d("ql set", "ql set");
+    /*  ((QuizApplication) getApplication())
+                .setCurrentQuizGame(currentQuizGame);*/
+
+                ((QuizApplication)getApplication()).setCurrentQuizGame(currentQuizGame); 
+                Log.d("cqg set", "cqg set");
+                i = new Intent(this, AskedQuestion.class);
+                Log.d("i started", "intent");
+                startActivity(i);
+                Log.d("i started", "intent started");
+                break;
+
+            case R.id.bExitQuiz:
+                finish();
+                break;
+
+            case R.id.bSetDiff:
+                i = new Intent(this, QuizSettings.class);
+                startActivity(i);
+                break;
+        }
+    }
+
+    private List<Question> getQuestionsFromDB() throws Error{
+        int tmpDifficulty = getDifficulty();
+        int tmpNumberOfQuestions = getNumOfQuestions();
+        DBHelperForQuiz myDbHelper = new DBHelperForQuiz(this.getApplicationContext());
+        myDbHelper = new DBHelperForQuiz(this);
+
+        try {
+            myDbHelper.createDataBase();
+        } catch (IOException e) {
+            throw new Error("Unable to create database");
+        }
+        try {
+            myDbHelper.openDataBase();
+            Log.d("openeddb", "open db success");
+        } catch (SQLException sqle) {
+            throw sqle;
+        }
+
+        Log.d("ql try", "ql making");
+        List<Question> qL = myDbHelper.getQuestionsList(tmpDifficulty, tmpNumberOfQuestions);
+
+        Log.d("TMPNOQ",Integer.toString(tmpNumberOfQuestions));
+        Log.d("ql rdy", "ql done");
+        myDbHelper.close();
+        Log.d("db cls", "closed");
+        return qL;
+    }
+
+    private int getNumOfQuestions() {
+        return 5;
+    }
+
+    private int getDifficulty() {
+        return 2;
+    }
+}
+</code></pre>

@@ -1,0 +1,158 @@
+<p>I'm a beginner in Android dev. I'm trying to make a wallpaper app. Shows a splash Screen for 2sec, and then shifts to the grid view where I've displayed 15 images. Many errors show up when to goes to this MainActivity showing the grid layout. The app is about 5 mb. is that the problem ?
+Please Help.</p>
+
+<p>Here's the LogCat as soon as this activity starts.</p>
+
+<pre><code>09-01 01:07:05.134: E/dalvikvm-heap(6811): Out of memory on a 16384016-byte allocation.
+09-01 01:07:05.144: E/AndroidRuntime(6811): FATAL EXCEPTION: main
+09-01 01:07:05.144: E/AndroidRuntime(6811): java.lang.OutOfMemoryError
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.graphics.BitmapFactory.nativeDecodeAsset(Native Method)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:503)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:356)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:800)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.content.res.Resources.loadDrawable(Resources.java:2105)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.content.res.Resources.getDrawable(Resources.java:695)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.ImageView.resolveUri(ImageView.java:636)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.ImageView.setImageResource(ImageView.java:365)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at com.gamerspitch.dbzwallapper.ImageAdapter.getView(ImageAdapter.java:58)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.AbsListView.obtainView(AbsListView.java:2177)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.GridView.makeAndAddView(GridView.java:1341)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.GridView.makeRow(GridView.java:341)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.GridView.fillDown(GridView.java:283)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.GridView.fillFromTop(GridView.java:417)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.GridView.layoutChildren(GridView.java:1229)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.AbsListView.onLayout(AbsListView.java:2012)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.View.layout(View.java:14289)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewGroup.layout(ViewGroup.java:4559)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.FrameLayout.onLayout(FrameLayout.java:448)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.View.layout(View.java:14289)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewGroup.layout(ViewGroup.java:4559)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at com.android.internal.widget.ActionBarOverlayLayout.onLayout(ActionBarOverlayLayout.java:349)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.View.layout(View.java:14289)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewGroup.layout(ViewGroup.java:4559)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.widget.FrameLayout.onLayout(FrameLayout.java:448)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.View.layout(View.java:14289)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewGroup.layout(ViewGroup.java:4559)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewRootImpl.performLayout(ViewRootImpl.java:1976)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1730)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1004)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5481)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.Choreographer$CallbackRecord.run(Choreographer.java:749)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.Choreographer.doCallbacks(Choreographer.java:562)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.Choreographer.doFrame(Choreographer.java:532)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:735)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.os.Handler.handleCallback(Handler.java:730)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.os.Handler.dispatchMessage(Handler.java:92)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.os.Looper.loop(Looper.java:137)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at android.app.ActivityThread.main(ActivityThread.java:5103)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at java.lang.reflect.Method.invokeNative(Native Method)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at java.lang.reflect.Method.invoke(Method.java:525)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:737)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+09-01 01:07:05.144: E/AndroidRuntime(6811):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>MainActivity.java</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.grid_layout);
+
+    GridView gridView = (GridView) findViewById(R.id.grid_view);
+
+    // Instance of ImageAdapter Class
+    gridView.setAdapter(new ImageAdapter(this));
+
+    gridView.setOnItemClickListener(new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View v,
+                int position, long id) {
+
+            // Sending image id to FullScreenActivity
+            Intent i = new Intent(getApplicationContext(), FullImageActivity.class);
+            // passing array index
+            i.putExtra("id", position);
+            startActivity(i);
+        }
+    });
+}
+</code></pre>
+
+<p>ImageAdapter.java</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+
+private Context mContext;
+
+// Keep all Images in array
+public Integer[] mThumbIds = { R.drawable.pic1, R.drawable.pic2, 
+        R.drawable.pic3, R.drawable.pic4, R.drawable.pic5,
+        R.drawable.pic6, R.drawable.pic7, R.drawable.pic8,
+        R.drawable.pic9, R.drawable.pic10, R.drawable.pic11,
+        R.drawable.pic12, R.drawable.pic13, R.drawable.pic14,
+        R.drawable.pic15, R.drawable.pic16 };
+
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) 
+    {  
+        Resources r = Resources.getSystem();
+        float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, r.getDisplayMetrics());
+        // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(LayoutParams.WRAP_CONTENT, (int)px));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        //imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+}
+</code></pre>
+
+<p>grid_layout.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/grid_view"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:background="@drawable/background2"
+android:padding="10dp"
+android:numColumns="auto_fit"
+android:columnWidth="90dp"
+android:horizontalSpacing="10dp"
+android:verticalSpacing="10dp"
+android:gravity="center"
+android:stretchMode="columnWidth" >
+
+
+</GridView>
+</code></pre>
+
+<p>Please help me on this, or explain to me why exactly I'm getting those errors. Thanks in advance.</p>

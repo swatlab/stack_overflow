@@ -1,0 +1,976 @@
+<clones>
+<systeminfo processor="nicad3" system="snippets" granularity="functions" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="54344" npairs="194"/>
+<runinfo ncompares="53421268" cputime="33206968"/>
+
+<clone nlines="136" similarity="94">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="92" endline="258" pcid="21013"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="48364"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="23067"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="50332"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="34805"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="25029"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="29051"></source>
+</clone>
+
+<clone nlines="132" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="89" endline="245" pcid="27083"></source>
+</clone>
+
+<clone nlines="125" similarity="78">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="85" endline="226" pcid="30966"></source>
+</clone>
+
+<clone nlines="125" similarity="78">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="85" endline="226" pcid="18937"></source>
+</clone>
+
+<clone nlines="125" similarity="78">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="85" endline="226" pcid="36706"></source>
+</clone>
+
+<clone nlines="125" similarity="78">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="85" endline="226" pcid="17030"></source>
+</clone>
+
+<clone nlines="125" similarity="78">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="85" endline="226" pcid="9366"></source>
+</clone>
+
+<clone nlines="125" similarity="78">
+<source file="snippets/91@SafeSlinger-Android.java" startline="89" endline="245" pcid="11"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="85" endline="226" pcid="3591"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="18787"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="18787"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="16880"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="16880"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="48158"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="48158"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="28845"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="28845"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.10.1-messenger/SafeSlinger-Android-1.6.10.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="53914"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.10.1-messenger/SafeSlinger-Android-1.6.10.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="53914"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="50126"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="50126"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="22861"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="22861"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="30811"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="30811"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="34598"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="3441"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="38453"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="24827"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.10.2-messenger/SafeSlinger-Android-1.6.10.2-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="42158"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="1553"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="14976"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="26876"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="36556"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.10-messenger/SafeSlinger-Android-1.6.10-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="46013"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="32621"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.11-messenger/SafeSlinger-Android-1.6.11-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="7318"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="9211"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="235" endline="280" pcid="21"></source>
+<source file="releases/v1.6.11.1-messenger/SafeSlinger-Android-1.6.11.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="13093"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="34598"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="3441"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="38453"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="24827"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.10.2-messenger/SafeSlinger-Android-1.6.10.2-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="42158"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="1553"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="14976"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="26876"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="36556"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.10-messenger/SafeSlinger-Android-1.6.10-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="46013"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="32621"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.11-messenger/SafeSlinger-Android-1.6.11-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="7318"></source>
+</clone>
+
+<clone nlines="30" similarity="76">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="236" endline="279" pcid="9211"></source>
+</clone>
+
+<clone nlines="30" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="235" endline="280" pcid="6"></source>
+<source file="releases/v1.6.11.1-messenger/SafeSlinger-Android-1.6.11.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="235" endline="280" pcid="13093"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="50336"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="23071"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="27087"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="25033"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="48368"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="34809"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="272" endline="289" pcid="21017"></source>
+</clone>
+
+<clone nlines="18" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="259" endline="276" pcid="15"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="259" endline="276" pcid="29055"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="28843"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="28843"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.10.1-messenger/SafeSlinger-Android-1.6.10.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="53912"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="16878"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.10.2-messenger/SafeSlinger-Android-1.6.10.2-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="42156"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="30809"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="24825"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="9209"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.11.1-messenger/SafeSlinger-Android-1.6.11.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="13091"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="18785"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="199" endline="220" pcid="20803"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.11-messenger/SafeSlinger-Android-1.6.11-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="7316"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="32619"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="38451"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="50124"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="26874"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="14974"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="3439"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="22859"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="1551"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="34596"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="48156"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.6.10-messenger/SafeSlinger-Android-1.6.10-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="46011"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="190" endline="211" pcid="4"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="36554"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.10.1-messenger/SafeSlinger-Android-1.6.10.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="53912"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="16878"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.10.2-messenger/SafeSlinger-Android-1.6.10.2-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="42156"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="30809"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="24825"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="9209"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.11.1-messenger/SafeSlinger-Android-1.6.11.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="13091"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="18785"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="199" endline="220" pcid="20803"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.11-messenger/SafeSlinger-Android-1.6.11-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="7316"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="32619"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="38451"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="50124"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="26874"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="14974"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="3439"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="22859"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="1551"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="34596"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="48156"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.6.10-messenger/SafeSlinger-Android-1.6.10-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="190" endline="211" pcid="46011"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="190" endline="211" pcid="19"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="191" endline="212" pcid="36554"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="15211"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="69" endline="78" pcid="15125"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="14975"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.13-messenger/SafeSlinger-Android-1.6.13-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="14975"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.10.1-messenger/SafeSlinger-Android-1.6.10.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="53913"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="50125"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="1552"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="48157"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.10-messenger/SafeSlinger-Android-1.6.10-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="46012"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="3440"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.10.2-messenger/SafeSlinger-Android-1.6.10.2-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="42157"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="38452"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="36555"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="34597"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="32620"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.11-messenger/SafeSlinger-Android-1.6.11-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="7317"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="30810"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="28844"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="9210"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="26875"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.6.11.1-messenger/SafeSlinger-Android-1.6.11.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="13092"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="24826"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="22860"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="227" endline="242" pcid="20804"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="18786"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/113@SafeSlinger-Android.java" startline="218" endline="233" pcid="5"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="16879"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="69" endline="78" pcid="50418"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="50331"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="69" endline="78" pcid="1686"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="1772"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="69" endline="78" pcid="48450"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="48363"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="73" endline="82" pcid="3590"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="3675"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="38688"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="69" endline="78" pcid="38602"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="36790"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="73" endline="82" pcid="36705"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="69" endline="78" pcid="34891"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="34804"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="32840"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="69" endline="78" pcid="32754"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="31050"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="73" endline="82" pcid="30965"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="69" endline="78" pcid="29137"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="29050"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="69" endline="78" pcid="27169"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="27082"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="73" endline="82" pcid="9365"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="9450"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="68" endline="77" pcid="25115"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="25028"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="69" endline="78" pcid="23153"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="77" endline="86" pcid="23066"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="71" endline="80" pcid="21100"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="80" endline="89" pcid="21012"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="19021"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="73" endline="82" pcid="18936"></source>
+</clone>
+
+<clone nlines="10" similarity="90">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/GroupingActivity.java" startline="66" endline="75" pcid="17114"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/91@SafeSlinger-Android.java" startline="77" endline="86" pcid="10"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-exchange/src/edu/cmu/cylab/starslinger/exchange/VerifyActivity.java" startline="73" endline="82" pcid="17029"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.10.1-messenger/SafeSlinger-Android-1.6.10.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="53913"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.8.0-demo/SafeSlinger-Android-1.8.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="50125"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.12-messenger/SafeSlinger-Android-1.6.12-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="1552"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.8.1-messenger/SafeSlinger-Android-1.8.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="48157"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.10-messenger/SafeSlinger-Android-1.6.10-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="46012"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.0.1-messenger/SafeSlinger-Android-1.7.0.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="3440"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.10.2-messenger/SafeSlinger-Android-1.6.10.2-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="42157"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.1-demo/SafeSlinger-Android-1.6.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="38452"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.0-messenger/SafeSlinger-Android-1.7.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="36555"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.8.1-demo/SafeSlinger-Android-1.8.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="34597"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.0-demo/SafeSlinger-Android-1.6.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="32620"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.11-messenger/SafeSlinger-Android-1.6.11-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="7317"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.2-messenger/SafeSlinger-Android-1.7.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="30810"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.8.0-messenger/SafeSlinger-Android-1.8.0-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="28844"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.1-demo/SafeSlinger-Android-1.7.1-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="9210"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.8.1.2-messenger/SafeSlinger-Android-1.8.1.2-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="26875"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.6.11.1-messenger/SafeSlinger-Android-1.6.11.1-messenger/safeslinger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="218" endline="233" pcid="13092"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.2-demo/SafeSlinger-Android-1.7.2-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="24826"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.8.1.1-messenger/SafeSlinger-Android-1.8.1.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="22860"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/master/SafeSlinger-Android-master/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="227" endline="242" pcid="20804"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.1-messenger/SafeSlinger-Android-1.7.1-messenger/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="18786"></source>
+</clone>
+
+<clone nlines="10" similarity="100">
+<source file="snippets/90@SafeSlinger-Android.java" startline="218" endline="233" pcid="20"></source>
+<source file="releases/v1.7.0-demo/SafeSlinger-Android-1.7.0-demo/safeslinger-messenger/src/edu/cmu/cylab/starslinger/transaction/C2DMBaseReceiver.java" startline="219" endline="234" pcid="16879"></source>
+</clone>
+
+</clones>

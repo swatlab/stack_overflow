@@ -1,0 +1,213 @@
+<p>I'm implementing a WebSocket server (for learning purposes) and I have it correctly handling the handshake (<strong>websocket.onopen is called</strong> so I assume this means handshake was successful), however, when the client (browser) sends a message after the handshake, the server never receives it.</p>
+
+<p>Using Chrome's developer tools, I'm able to see that all the headers were correctly received and no errors are thrown. It also says that it sent the "hello" despite the readLine() never firing in Java.</p>
+
+<p>What's wrong in my code?</p>
+
+<p><strong>EDIT 1:</strong> I discovered that if I refresh the web page, then (and only then) the ServerSocket receives the data from the last connection (that the refresh just killed)! Why is this the only way it receives it?</p>
+
+<p><strong>EDIT 2:</strong> I also found that I can send a message to the client after the handshake and the client receieves it but STILL the server never receives the client's message! I sent the message to the client like this:</p>
+
+<pre><code>byte[] message = new byte[ 7 ];
+message[ 0 ] = new Integer(129).byteValue();
+message[ 1 ] = new Integer(5).byteValue();
+byte[] raw = "hello".getBytes();
+message[ 2 ] = raw[ 0 ];
+message[ 3 ] = raw[ 1 ];
+message[ 4 ] = raw[ 2 ];
+message[ 5 ] = raw[ 3 ];
+message[ 6 ] = raw[ 4 ];
+outStream.write( message);
+out.println();
+</code></pre>
+
+<hr>
+
+<p><strong>HTML PAGE</strong></p>
+
+<pre><code><!DOCTYPE html>
+<html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <title>WebSocket Test</title></head>
+
+    <body>
+        <script>
+            try
+            {
+                function writeToScreen(message)
+                {
+                    var p = document.createElement( "p" );
+                    p.innerHTML = message;
+                    document.getElementsByTagName( "body" )[ 0 ].appendChild( p );
+                }
+
+                function onOpen(evt)
+                {
+                    writeToScreen( "opened" );
+                    doSend( "hello" );
+                    //We reach here but the server never recieves the message! (and bufferedAmount == 0)
+                    writeToScreen( "sent: " + websocket.bufferedAmount );
+                }
+                function onClose(evt)
+                {
+                    alert( "closed" );
+                    websocket.close();
+                }
+                function onMessage(evt)
+                {
+                    alert( "Message: " + evt.data );
+                }
+                function onError(evt)
+                {
+                    alert( "Error: " + evt );
+                }
+
+                function doSend (message)
+                {   
+                    websocket.send( message );
+                }
+
+                //PUT IN YOUR OWN LOCAL IP ADDRESS HERE TO GET IT TO WORK
+                var websocket = new WebSocket( "ws://192.168.1.19:4444/" );
+                websocket.onopen = onOpen;
+                websocket.onclose = onClose;
+                websocket.onmessage = onMessage;
+                websocket.onerror = onError;
+
+            }
+            catch(e)
+            {
+            }
+        </script>
+    </body>
+</html>
+</code></pre>
+
+<p><strong>JAVA CODE</strong></p>
+
+<pre><code>import java.net.*;
+import java.io.*;
+import java.security.*;
+
+public class WebListener
+{
+    public static void main(String[] args) throws Exception
+    {
+        ServerSocket serverSocket = null;
+        boolean listening = true;
+
+        try {
+            serverSocket = new ServerSocket(4444);
+        } catch (IOException e) {
+            System.err.println("Could not listen on port: 4444.");
+            System.exit(-1);
+        }
+
+        while (listening) new ServerThread(serverSocket.accept()).start();
+
+        serverSocket.close();
+    }
+}
+
+class ServerThread extends Thread {
+    private Socket socket = null;
+
+    public ServerThread(Socket socket) {
+        super("ServerThread");
+        this.socket = socket;
+    }
+
+    public void run() {
+
+        try {
+            OutputStream outStream = null;
+            PrintWriter out = new PrintWriter( outStream = socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream()));
+
+            String inputLine, outputLine;
+
+            //Handle the headers first
+            doHeaders( out, in );
+
+            //Now read anything they have to send
+            while ( ( inputLine = in.readLine() ) != null )
+            {
+                //WE NEVER REACH HERE!
+                System.out.println( inputLine );
+            }
+
+            out.close();
+            in.close();
+            socket.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void doHeaders(PrintWriter out, BufferedReader in) throws Exception
+    {
+        String inputLine = null;
+        String key = null;
+
+        //Read the headers
+        while ( ( inputLine = in.readLine() ) != null )
+        {
+            //Get the key
+            if ( inputLine.startsWith( "Sec-WebSocket-Key" ) ) key = inputLine.substring( "Sec-WebSocket-Key: ".length() );
+
+            //They're done
+            if ( inputLine.equals( "" ) ) break;
+        }
+
+        //We need a key to continue
+        if ( key == null ) throw new Exception( "No Sec-WebSocket-Key was passed!" );
+
+        //Send our headers
+        out.println( "HTTP/1.1 101 Web Socket Protocol Handshake\r" );
+        out.println( "Upgrade: websocket\r" );
+        out.println( "Connection: Upgrade\r" );
+        out.println( "Sec-WebSocket-Accept: " + createOK( key ) + "\r" );
+        out.println( "\r" );
+    }
+
+    public String createOK(String key) throws NoSuchAlgorithmException, UnsupportedEncodingException, Exception
+    {
+        String uid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+        String text = key + uid;
+
+        MessageDigest md = MessageDigest.getInstance( "SHA-1" );
+        byte[] sha1hash = new byte[40];
+        md.update( text.getBytes("iso-8859-1"), 0, text.length());
+        sha1hash = md.digest();
+
+        return new String( base64( sha1hash ) );
+    }
+
+    public byte[] base64(byte[] bytes) throws Exception
+    {
+        ByteArrayOutputStream out_bytes = new ByteArrayOutputStream();
+        OutputStream out = new Base64.OutputStream(out_bytes); //Using http://iharder.net/base64
+        out.write(bytes);
+        out.close();
+        return out_bytes.toByteArray();
+    }
+
+    private String convertToHex(byte[] data) { 
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < data.length; i++) { 
+            int halfbyte = (data[i] >>> 4) & 0x0F;
+            int two_halfs = 0;
+            do { 
+                if ((0 <= halfbyte) && (halfbyte <= 9)) 
+                    buf.append((char) ('0' + halfbyte));
+                else 
+                    buf.append((char) ('a' + (halfbyte - 10)));
+                halfbyte = data[i] & 0x0F;
+            } while(two_halfs++ < 1);
+        } 
+        return buf.toString();
+    } 
+}
+</code></pre>

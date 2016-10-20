@@ -1,0 +1,45 @@
+<p>I need to create some directories and files and all of them should have permission 0600.<br>
+When I Run from NetBeans Debug:
+After creating directory when i try to store some files there I get <code>IOException</code> with "Permission Denied" message while both directories and files are created with same application at the same time with the same user so I think 0600 (owner read/write) should work.<br>
+And When Running Jar file, chmod doesn't work at all!
+My code is:  </p>
+
+<pre><code>if(!Dest.exists()){
+   boolean res=dirs.mkdirs();
+   if(res){
+      Runtime.getRuntime().exec("chmod -R 600 '"+dirs.getAbsolutePath()+"'");                
+    }
+}
+File Destination=new File(Dest, source.getName());
+documentManager.copyFile(source, Destination);
+</code></pre>
+
+<p>and the copyFile is:  </p>
+
+<pre><code>public static void copyFile(File sourceFile, File destFile) throws FileNotFoundException,IOException {
+    if(!destFile.exists()) {
+        destFile.createNewFile();
+    }
+
+    FileChannel source = null;
+    FileChannel destination = null;
+    try {
+        source = new FileInputStream(sourceFile).getChannel();
+        destination = new FileOutputStream(destFile).getChannel();
+        destination.transferFrom(source, 0, source.size());
+    }
+    finally {
+        if(source != null) {
+            source.close();
+        }
+        if(destination != null) {
+            Runtime.getRuntime().exec("chmod 600 '"+destFile.getAbsolutePath()+"'");
+            destination.close();
+        }
+    }
+}
+</code></pre>
+
+<p>What's the problem?</p>
+
+<p>Thanks</p>

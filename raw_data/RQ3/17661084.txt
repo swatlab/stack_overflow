@@ -1,0 +1,207 @@
+<p>I'm using Google Maps V2 in my Android Project. I have created (with the wizard) an Activity with Scrollable Tabs + Swipe, in one of my layout i'm using SupportMapFragment, but in the map i can't scroll the map horizontally, when a swipe inside the map it's show me the another view. Here's my code:</p>
+
+<p><strong>MainActivity</strong></p>
+
+<pre><code>    public class MainActivity extends FragmentActivity {
+
+    private List<Fragment> paginas;
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        if(paginas==null){
+            paginas = new ArrayList<Fragment>();
+            paginas.add(new LocalizacaoPesquisadorActivity());
+            paginas.add(new VotosPorRegiaoActivity());
+        }
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            switch (position) {
+            case 0:
+                return paginas.get(0);
+            case 1:
+                return paginas.get(1);
+            default: return null;
+
+            }           
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return paginas.size();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_activity_localizacao_pesquisador).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_activity_votos_por_regiao).toUpperCase(l);          
+            }
+            return null;
+        }
+    }
+
+
+
+}
+</code></pre>
+
+<p><strong>LocalizacaoPesquisadorActivity</strong> </p>
+
+<pre><code>public class LocalizacaoPesquisadorActivity extends Fragment {
+
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.activity_localizacao_pesquisador,
+            container, false);
+    System.out.println();
+    return rootView;
+}
+
+
+}
+</code></pre>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
+
+    <android.support.v4.view.PagerTitleStrip
+        android:id="@+id/pager_title_strip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#33b5e5"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp"
+        android:textColor="#fff" />
+
+</android.support.v4.view.ViewPager>
+</code></pre>
+
+<p><strong>activity_localizacao_pesquisador.xml</strong></p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res=auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".LocalizacaoPesquisadorActivity" >
+
+    <EditText
+        android:id="@+id/editTextDataLocalizacaoPesquisador"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:inputType="none"
+        android:hint="Data" 
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
+
+    <Spinner
+        android:id="@+id/spinnerHorarioLocalizacaoPesquisador"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editTextDataLocalizacaoPesquisador"
+        android:layout_alignRight="@+id/editTextDataLocalizacaoPesquisador"
+        android:layout_below="@+id/editTextDataLocalizacaoPesquisador"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+    <Button
+        android:id="@+id/buttonAtualizarLocalizacaoPesquisador"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editTextDataLocalizacaoPesquisador"
+        android:layout_alignRight="@+id/editTextDataLocalizacaoPesquisador"
+        android:layout_below="@+id/spinnerHorarioLocalizacaoPesquisador"
+        android:text="Atualizar"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:onClick="atuarlizarMapaLocalizacaoPesquisador" />
+
+    <fragment android:id="@+id/mapaLocalizacaoPesquisador"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_below="@+id/buttonAtualizarLocalizacaoPesquisador"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/buttonAtualizarLocalizacaoPesquisador"
+        android:layout_alignRight="@+id/buttonAtualizarLocalizacaoPesquisador"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"        
+        map:cameraTargetLat="-23.531152"
+        map:cameraTargetLng="-46.789876"
+        map:cameraZoom="1"
+        />
+
+</RelativeLayout>
+</code></pre>
+
+<p>I'm think in intercept the swipe action when it is on the map, what you think?</p>

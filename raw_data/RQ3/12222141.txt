@@ -1,0 +1,195 @@
+<p>I am trying to copy a database that I made with SQLite manager, in which I did:</p>
+
+<pre><code>CREATE TABLE "android_metadata" ("locale" TEXT DEFAULT 'en_US')
+</code></pre>
+
+<p>and  </p>
+
+<pre><code>INSERT INTO "android_metadata" VALUES ('en_US')  
+</code></pre>
+
+<p>And I named all my primary keys <code>_id</code>. My database gets copied(in the first run there are various red messages in the logcat); thereafter, it only gives an error when I query it.</p>
+
+<p><strong>MainActivity</strong></p>
+
+<pre><code>public class MainActivity extends Activity {
+String CNAME=" ques",TABLE_NAME=" JAVAQ";
+
+
+
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    Setupdb dbobj=new Setupdb(this); 
+
+    try {    
+
+        //dbobj.close();
+        dbobj.createDataBase();
+
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    } 
+
+
+
+    dbobj.openDataBase();
+    dbobj.close();
+
+
+
+   try{
+         SQLiteDatabase sqdb=dbobj.getReadableDatabase();
+
+
+
+         Cursor c = sqdb.query(TABLE_NAME,
+                 new String[] { CNAME },
+                 null, null, null, null, null); 
+         while (c.moveToNext()) {
+
+            String name =
+            c.getString(c.getColumnIndex(CNAME));
+            Log.i("LOG_TAG", " HAS NAME " + name);
+         }}
+
+
+
+            catch(Exception e){
+
+                Log.e("err", e.toString());
+            } 
+
+
+
+
+}}
+</code></pre>
+
+<p><strong>Setupdb</strong></p>
+
+<pre><code>public class Setupdb extends SQLiteOpenHelper {
+
+  private static String DB_PATH = "";
+    private static final String DB_NAME = "camprep.sqlite";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+
+    private static Setupdb mDBConnection;
+
+
+public Setupdb(Context context) {
+    super(context, DB_NAME, null, 3);
+    this.myContext=context;
+    DB_PATH="/data/data/"
+            + context.getApplicationContext().getPackageName()
+            + "/databases/";
+    Log.e(DB_NAME, DB_PATH);
+}
+public static synchronized Setupdb getDBAdapterInstance(Context context) {
+    if (mDBConnection == null) {
+        mDBConnection = new Setupdb(context);
+    }
+    return mDBConnection;
+} 
+
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+            Log.e("db","exist");
+            // do nothing - database already exist
+        } else {
+            // By calling following method
+            // 1) an empty database will be created into the default system path of your application
+            // 2) than we overwrite that database with our database.
+            this.getReadableDatabase();
+            try {
+                Log.e("calling", "copy");
+                copyDataBase(); 
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+
+
+
+
+}
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+            // database does't exist yet.
+        }
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false; 
+    }
+
+    private void copyDataBase() throws IOException {
+        // Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+        // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME; 
+        // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+        // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+        // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+    }
+    public synchronized void close() {
+        if (myDataBase != null)
+            myDataBase.close();
+        super.close();
+    } 
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+
+}
+
+}
+</code></pre>
+
+<p><strong>Stacktrace</strong></p>
+
+<pre><code> 08-31 20:17:05.320: I/dalvikvm(9457): threadid=3: reacting to signal 3
+08-31 20:17:05.370: I/dalvikvm(9457): Wrote stack traces to '/data/anr/traces.txt'
+08-31 20:17:05.451: E/camprep.sqlite(9457): /data/data/com.example.mydataexplosion/databases/
+08-31 20:17:05.490: E/db(9457): exist
+08-31 20:17:05.521: E/CursorWindow(9457): Failed to read row 0, column -1 from a CursorWindow which has 11 rows, 1 columns.
+08-31 20:17:05.521: E/err(9457): java.lang.IllegalStateException: Couldn't read row 0, col -1 from CursorWindow.  Make sure the Cursor is initialized correctly before accessing data from it.
+08-31 20:17:05.650: D/gralloc_goldfish(9457): Emulator without GPU emulation detected.
+08-31 20:17:05.650: I/dalvikvm(9457): threadid=3: reacting to signal 3
+08-31 20:17:05.670: I/dalvikvm(9457): Wrote stack traces to '/data/anr/traces.txt'
+</code></pre>

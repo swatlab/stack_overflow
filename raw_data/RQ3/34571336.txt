@@ -1,0 +1,296 @@
+<p>I have created an activity and tried to insert a fragment into the activity, but when running it the fragment does not appear when the activity is created.  Just a blank space, there are no build errors.</p>
+
+<p>Thanks for any help in advance.</p>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        final HomeFragment homeFragment = new HomeFragment();
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        getFragmentManager().beginTransaction()
+                .replace(R.id.main_container, homeFragment).commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main_activity_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        } else if (id == R.id.search_mag_icon){
+            // Open intent here
+            Intent i = new Intent(getApplicationContext(), SearchActivity.class);
+            startActivity(i);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_register) {
+            Intent i = new Intent(getApplicationContext(), RegisterActivity.class);
+            startActivity(i);
+        } else if (id == R.id.nav_login) {
+            Intent i = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(i);
+        } else if (id == R.id.nav_my_listings) {
+            // navigate to my listings
+        } else if (id == R.id.nav_how) {
+            // navigate to how it works page
+        } else if (id == R.id.nav_help) {
+            // navigate to help page
+        } else if (id == R.id.nav_contact_us) {
+            // navigate to contact page,
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+}
+</code></pre>
+
+<p><strong>HomeFragment.java</strong></p>
+
+<pre><code>public class HomeFragment extends Fragment {
+
+    ImageView bookIcon;
+    ImageView barcodeIcon;
+    ImageView messageIcon;
+    ImageView listIcon;
+
+
+    public HomeFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_home, container, false);
+
+        setHomeIcons(rootView);
+
+        return rootView;
+    }
+
+    public void setHomeIcons(View rootView){
+        bookIcon = (ImageView)rootView.findViewById(R.id.bookIcon);
+        bookIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Launching All products Activity
+                Intent i = new Intent(getActivity().getApplicationContext(), BrowseUniCourseActivity.class);
+                startActivity(i);
+            }
+        });
+
+        barcodeIcon = (ImageView)rootView.findViewById(R.id.barcodeIcon);
+        barcodeIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Snackbar.make(v, "Will open 'Barcode' Intent", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+
+        messageIcon = (ImageView)rootView.findViewById(R.id.messageIcon);
+        messageIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Snackbar.make(v, "Will open 'My Messages' Intent", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+
+            }
+        });
+
+        listIcon = (ImageView)rootView.findViewById(R.id.listIcon);
+        listIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Snackbar.make(v, "Will open 'My Listings' Intent", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+    }
+}
+</code></pre>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:background="#FFF"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:openDrawer="start">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <include
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            layout="@layout/app_bar_main" />
+
+        <FrameLayout
+            android:id="@+id/main_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+        </FrameLayout>
+    </LinearLayout>
+
+    <android.support.design.widget.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        android:background="@color/colorPrimaryDark"
+        app:itemTextColor="#FFF"
+        app:itemIconTint="#FFF"
+        app:headerLayout="@layout/nav_header_main"
+        app:menu="@menu/activity_main_drawer" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p><strong>fragment_home.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Book icon and text -->
+        <ImageView
+            android:id="@+id/bookIcon"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginLeft="50dip"
+            android:layout_marginTop="110dip"
+            android:src="@drawable/book" />
+
+        <TextView
+            android:id="@+id/bookLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bookIcon"
+            android:layout_marginLeft="20dip"
+            android:text="@string/bookLabel"
+            android:textColor="@color/colorAlt"
+            android:textStyle="bold" />
+
+
+        <!-- Barcode icon and text -->
+        <ImageView
+            android:id="@+id/barcodeIcon"
+            android:layout_width="95dip"
+            android:layout_height="95dip"
+            android:layout_marginLeft="260dip"
+            android:layout_marginTop="120dip"
+            android:src="@drawable/barcode" />
+
+        <TextView
+            android:id="@+id/barcodeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/barcodeIcon"
+            android:layout_marginLeft="260dip"
+            android:paddingTop="5dip"
+            android:text="@string/barcodeLabel"
+            android:textColor="@color/colorAlt"
+            android:textStyle="bold" />
+
+
+        <!-- Message icon and text -->
+        <ImageView
+            android:id="@+id/messageIcon"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginLeft="50dip"
+            android:layout_marginTop="350dip"
+            android:src="@drawable/email" />
+
+        <TextView
+            android:id="@+id/messageLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/messageIcon"
+            android:layout_marginLeft="55dip"
+            android:text="@string/messageLabel"
+            android:textColor="@color/colorAlt"
+            android:textStyle="bold" />
+
+        <!-- List icon and text -->
+        <ImageView
+            android:id="@+id/listIcon"
+            android:layout_width="95dip"
+            android:layout_height="95dip"
+            android:layout_marginLeft="260dip"
+            android:layout_marginTop="350dip"
+            android:src="@drawable/list" />
+
+        <TextView
+            android:id="@+id/listLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/listIcon"
+            android:layout_marginLeft="273dip"
+            android:paddingTop="5dip"
+            android:text="@string/listLabel"
+            android:textColor="@color/colorAlt"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+</code></pre>

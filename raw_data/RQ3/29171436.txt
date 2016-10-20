@@ -1,0 +1,225 @@
+<p>I am new in Android Development. I am trying to display <em>a list of cards</em> in the screen with only one card at a time on the screen using <strong><em>RecyclerView</em></strong>. But unfortunately cards that I designed are not filling entire screen width as expected, as you can see in the <em>image</em> given below.
+How I can stretch these cards to fill in the entire screen (width wise, height is wrap content).
+Is there any possible solution to this problem?</p>
+
+<p>My Code:</p>
+
+<p><strong>activity_sub.xml</strong></p>
+
+<pre><code>   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+<include
+    android:id="@+id/appBar"
+    layout="@layout/app_bar"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Horizontal Card List"
+        android:textSize="16sp"
+        android:padding="3dp"
+        android:background="#CCCCCC" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/hrlist_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="horizontal" />
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>custom_card.xml</strong></p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:tag="contains Cards main Container">
+
+    <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/card_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="10dp"
+        app:cardBackgroundColor="#B6B6B6">
+
+        <TextView
+            android:id="@+id/card_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:padding="20dp"
+            android:text="Card 1"
+            android:textSize="30sp" />
+
+    </android.support.v7.widget.CardView>
+</LinearLayout>
+</code></pre>
+
+<p><strong>SubActivity.java</strong></p>
+
+<pre><code>package ab9.mamv.com.playground;
+
+import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class SubActivity extends ActionBarActivity {
+
+    Toolbar toolbar;
+
+    private RecyclerView mRecyclerView;
+    private SubActivityAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sub);
+
+        toolbar = (Toolbar) findViewById(R.id.appBar);
+        setSupportActionBar(toolbar);
+
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        //RecyclerView
+        mRecyclerView = (RecyclerView) findViewById(R.id.hrlist_recycler_view);
+        mRecyclerView.setHasFixedSize(true);
+
+        mAdapter = new SubActivityAdapter(this, getData());
+        mRecyclerView.setAdapter(mAdapter);
+
+        //Layout manager for the Recycler View
+        mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+
+    }
+
+    public static List<SubActivityData> getData() {
+        List<SubActivityData> subActivityData = new ArrayList<>();
+        String[] cardTitle = {
+                "Card 1",
+                "Card 2",
+                "Card 3",
+                "Card 4",
+                "Card 5",
+                "Card 6",
+        };
+        for (int i = 0; i < cardTitle.length; i++) {
+            SubActivityData current = new SubActivityData();
+            current.cardTitle = cardTitle[i];
+            subActivityData.add(current);
+        }
+
+        return subActivityData;
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_sub, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if (id == android.R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p><strong>SubActivityAdapter.java</strong></p>
+
+<pre><code>package ab9.mamv.com.playground;
+
+import android.content.Context;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Created by Abhishek on 20-03-2015.
+ */
+public class SubActivityAdapter extends RecyclerView.Adapter<SubActivityAdapter.SubActivityViewHolder> {
+
+    private final LayoutInflater inflater;
+    List<SubActivityData> subActivityData = Collections.EMPTY_LIST;
+
+    public SubActivityAdapter(Context context, List<SubActivityData> subActivityData) {
+        inflater = LayoutInflater.from(context);
+        this.subActivityData = subActivityData;
+    }
+
+
+    @Override
+    public SubActivityViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+        View view = inflater.inflate(R.layout.custom_card, parent, false);
+        SubActivityViewHolder subActivityViewHolder = new SubActivityViewHolder(view);
+        return subActivityViewHolder;
+    }
+
+    @Override
+    public void onBindViewHolder(SubActivityViewHolder holder, int position) {
+        SubActivityData currentCard = subActivityData.get(position);
+        holder.title.setText(currentCard.cardTitle);
+
+    }
+
+    @Override
+    public int getItemCount() {
+        return subActivityData.size();
+    }
+
+    class SubActivityViewHolder extends RecyclerView.ViewHolder {
+
+        TextView title;
+
+        public SubActivityViewHolder(View itemView) {
+            super(itemView);
+
+            title = (TextView) itemView.findViewById(R.id.card_text);
+        }
+    }
+}
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/3GoAK.png" alt="enter image description here"></p>

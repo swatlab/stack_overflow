@@ -1,0 +1,440 @@
+<p>I have read solution from <a href="http://stackoverflow.com/questions/19491675/failed-to-change-locale-for-db-data-data-my-easymedi-controller-databases-easy">Failed to change locale for db '/data/data/my.easymedi.controller/databases/EasyMediInfo.db' to 'en_US'</a> but it doesnt help me. I still have the same error.</p>
+
+<p>These is my <code>DBHelper</code> class. Could you look into it and help me?</p>
+
+<pre><code>package com.example.mgr;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Date;
+import java.util.ArrayList;
+
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.example.mgr/databases/";
+
+    private static String DB_NAME = "Mgr.Test.db";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    public static final String KEY_ROWID = "_id";
+
+    public static final String KEY_DATE = "DataWstawiena";
+
+    public static final String KEY_TRESC = "Tresc";
+
+    public static final String DATABASE_NAME = "Mgr.Test";
+
+    public static final String DATABASE_TABLE = "InformacjeZDziekanatu";
+    private static int DATABASE_VERSION = 18;
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DBHelper(Context context) {
+
+        super(context, DB_NAME, null, DATABASE_VERSION);
+        System.out.println("------Odpalam DBHelpera---wolane z konstruktora----");
+        this.myContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+        System.out.println("----Baza istnieje: " + dbExist + "-----");
+
+        if(dbExist){
+            System.out.println("----Baza istnieje!");
+            this.getReadableDatabase();
+            System.out.println("----Baza istnieje! znow");
+            //do nothing - database already exist
+        }
+        dbExist = checkDataBase();
+        if(!dbExist){
+            System.out.println("----Baza nie istnieje");
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+                System.out.println("Bede kopiowal");
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+        System.out.println("----Baza istnieje w checkDB!");
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS|SQLiteDatabase.OPEN_READONLY);
+            System.out.println("Bazka otwarta!");
+
+        }catch(SQLiteException e){
+
+            System.out.println("database does't exist yet");
+
+        }
+
+        if(checkDB != null){
+            System.out.println("Zamykam baze");
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public SQLiteDatabase openDataBase() throws SQLException{
+
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS|SQLiteDatabase.OPEN_READONLY);
+        return myDataBase;
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(" ----Jestem w mtodzie onUpgrade------");
+        //DATABASE_VERSION++;
+
+    }
+
+    /**
+    * Wykonuje zapytanie SQL
+    * @param query - zapytanie SQL
+    * @return zwraca Stringa z rezultatem
+    */
+    public String executeQuery(String query){
+    String result = "";
+    Cursor cursor = myDataBase.rawQuery(query, null);
+    String dataWs ="Data Wstawienia ";
+    String tresc = "Tresc";
+    result = dataWs + tresc + "\n";
+    if(cursor.moveToFirst())
+    {
+    do
+    {
+    result +=  cursor.getString(1) +" "+ cursor.getString(3)+"\n";
+    }while(cursor.moveToNext());
+    }
+
+    return result;
+    }
+
+    /**
+    * Wykonuje zapytanie SQL i zwraca tablice
+    * @param query - zapytanie SQL
+    * @return zwraca tablie Stringa z rezultatem
+    */
+    public ArrayList<String> executeQueryTab(String query){
+    ArrayList<String> result = new ArrayList<String>();
+    Cursor cursor = myDataBase.rawQuery(query, null);
+    String dataWs ="Data Wstawienia ";
+    String tresc = "Tresc";
+    result.add(dataWs + tresc);
+    if(cursor.moveToFirst())
+    {
+    do
+    {
+    result.add(cursor.getString(1) +" "+ cursor.getString(3));
+    }while(cursor.moveToNext());
+    }
+
+    return result;
+    }
+
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+}
+</code></pre>
+
+<p>It worked perfectly before but I have made some upgrades of database and then it stopped work. I guess that this is the source of this error but I am not sure. </p>
+
+<p>Thanks in advance!</p>
+
+<p>On your request: </p>
+
+<p>I have call createDataBase method in my <strong>MainActivity</strong> class, as you can see below:</p>
+
+<pre><code>package com.example.mgr;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.Gravity;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends Activity implements OnClickListener {
+
+    SharedPreferences preferences;
+    TextView tv;
+    Adapter adapter;
+    SQLiteDatabase as;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Button infDlaStudButton = (Button) findViewById(R.id.infDlaStud);
+        Button infDlaKandButton = (Button) findViewById(R.id.infDlaKand);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        DBHelper myDbHelper = new DBHelper(this);
+        infDlaStudButton.setOnClickListener(this);
+        infDlaKandButton.setOnClickListener(this);
+
+        infDlaKandButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View arg0) {
+                ble();
+
+            }
+
+        });
+
+        infDlaStudButton.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                ble();
+            }
+        });
+
+        try {
+            myDbHelper.createDataBase();
+            System.out.println("Stworzyłam bazę danych");
+
+        } catch (IOException ioe) {
+
+            throw new Error("nie moge to create database");
+
+        }
+        System.out.println("bede otwierdal baze danych w glowej metodzie");
+
+        myDbHelper.openDataBase();
+
+    }
+
+    void ble() {
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this, SecondActivity.class);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onClick(View arg0) {
+        Toast.makeText(this, "ble", Toast.LENGTH_LONG).show();
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p>Yes, the <strong>android_metadata</strong> table exist in the database and has '*en_US*' value.</p>
+
+<p>I have create new, very simple database <strong>Drzewo.db</strong>. When this table has only 2 tables: <strong>andoid_metadata</strong> and another one (<strong>Przyjeci</strong>) then everything works! But later I have added new table and tried to make an upgrade and I have the same error.  </p>
+
+<p>There are my <strong>logs</strong> (from this new database):</p>
+
+<pre><code>12-04 19:58:41.959: E/SQLiteLog(2293): (11) database corruption at line 50741 of [00bb9c9ce4]
+12-04 19:58:41.959: E/SQLiteLog(2293): (11) database corruption at line 50780 of [00bb9c9ce4]
+12-04 19:58:41.969: E/SQLiteLog(2293): (11) statement aborts at 16: [SELECT locale FROM android_metadata UNION SELECT NULL ORDER BY locale DESC LIMIT 1] 
+12-04 19:58:42.056: E/SQLiteDatabase(2293): Failed to open database '/data/data/com.example.mgr/databases/Drzewo.db'.
+12-04 19:58:42.056: E/SQLiteDatabase(2293): android.database.sqlite.SQLiteException: Failed to change locale for db '/data/data/com.example.mgr/databases/Drzewo.db' to 'en_US'.
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnection.setLocaleFromConfiguration(SQLiteConnection.java:386)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:218)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.ContextImpl.openOrCreateDatabase(ContextImpl.java:854)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.content.ContextWrapper.openOrCreateDatabase(ContextWrapper.java:229)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:224)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteOpenHelper.getReadableDatabase(SQLiteOpenHelper.java:188)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at com.example.mgr.DBHelper.createDataBase(DBHelper.java:53)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at com.example.mgr.MainActivity.onCreate(MainActivity.java:73)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.Activity.performCreate(Activity.java:5104)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.os.Handler.dispatchMessage(Handler.java:99)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.os.Looper.loop(Looper.java:137)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at java.lang.reflect.Method.invokeNative(Native Method)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at java.lang.reflect.Method.invoke(Method.java:511)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at dalvik.system.NativeStart.main(Native Method)
+12-04 19:58:42.056: E/SQLiteDatabase(2293): Caused by: android.database.sqlite.SQLiteDatabaseCorruptException: database disk image is malformed (code 11)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnection.nativeExecuteForString(Native Method)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnection.executeForString(SQLiteConnection.java:634)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     at android.database.sqlite.SQLiteConnection.setLocaleFromConfiguration(SQLiteConnection.java:367)
+12-04 19:58:42.056: E/SQLiteDatabase(2293):     ... 28 more
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293): Couldn't open Drzewo.db for writing (will try read-only):
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293): android.database.sqlite.SQLiteException: Failed to change locale for db '/data/data/com.example.mgr/databases/Drzewo.db' to 'en_US'.
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnection.setLocaleFromConfiguration(SQLiteConnection.java:386)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:218)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.ContextImpl.openOrCreateDatabase(ContextImpl.java:854)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.content.ContextWrapper.openOrCreateDatabase(ContextWrapper.java:229)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:224)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteOpenHelper.getReadableDatabase(SQLiteOpenHelper.java:188)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at com.example.mgr.DBHelper.createDataBase(DBHelper.java:53)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at com.example.mgr.MainActivity.onCreate(MainActivity.java:73)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.Activity.performCreate(Activity.java:5104)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.ActivityThread.access$600(ActivityThread.java:141)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.os.Handler.dispatchMessage(Handler.java:99)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.os.Looper.loop(Looper.java:137)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.app.ActivityThread.main(ActivityThread.java:5041)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at java.lang.reflect.Method.invokeNative(Native Method)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at java.lang.reflect.Method.invoke(Method.java:511)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at dalvik.system.NativeStart.main(Native Method)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293): Caused by: android.database.sqlite.SQLiteDatabaseCorruptException: database disk image is malformed (code 11)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnection.nativeExecuteForString(Native Method)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnection.executeForString(SQLiteConnection.java:634)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   at android.database.sqlite.SQLiteConnection.setLocaleFromConfiguration(SQLiteConnection.java:367)
+12-04 19:58:42.219: E/SQLiteOpenHelper(2293):   ... 28 more
+12-04 19:58:42.259: D/AndroidRuntime(2293): Shutting down VM
+12-04 19:58:42.280: W/dalvikvm(2293): threadid=1: thread exiting with uncaught exception (group=0x40a71930)
+12-04 19:58:42.359: E/AndroidRuntime(2293): FATAL EXCEPTION: main
+12-04 19:58:42.359: E/AndroidRuntime(2293): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.mgr/com.example.mgr.MainActivity}: android.database.sqlite.SQLiteException: Can't upgrade read-only database from version 5 to 6: Drzewo.db
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.os.Handler.dispatchMessage(Handler.java:99)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.os.Looper.loop(Looper.java:137)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at java.lang.reflect.Method.invokeNative(Native Method)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at java.lang.reflect.Method.invoke(Method.java:511)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at dalvik.system.NativeStart.main(Native Method)
+12-04 19:58:42.359: E/AndroidRuntime(2293): Caused by: android.database.sqlite.SQLiteException: Can't upgrade read-only database from version 5 to 6: Drzewo.db
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:245)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.database.sqlite.SQLiteOpenHelper.getReadableDatabase(SQLiteOpenHelper.java:188)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at com.example.mgr.DBHelper.createDataBase(DBHelper.java:53)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at com.example.mgr.MainActivity.onCreate(MainActivity.java:73)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.Activity.performCreate(Activity.java:5104)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+12-04 19:58:42.359: E/AndroidRuntime(2293):     ... 11 more
+</code></pre>
+
+<p>I work on <em>eclipse</em> *juno* + <em>Android 4.2.2</em></p>

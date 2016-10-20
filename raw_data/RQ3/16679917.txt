@@ -1,0 +1,34 @@
+<p>I have an activity which can contain several fragments. Each of the fragments can have their own menu entries in the ActionBar. This works fine so far and each item is clickable and performs the desired action. </p>
+
+<p>My problem is the following. In the MainActivity I declared the following lines to intercept calls to the HomeIcon of the ActionBar:</p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            clearBackStack();
+                    setHomeFragment();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+        }
+    }
+</code></pre>
+
+<p>I declared it in the Activity because I wanted that every Fragment should call this so that I don't have to catch the android.R.id.home case in each fragment. </p>
+
+<p>In one Fragment I am using setDisplayHomeAsUpEnabled(true), so that I get the little arrow left of the ActionBar Icon. When the HomeIcon is clicked in this fragment I don't want to set the HomeFragment, I want to set the Fragment which was last displayed. So I have a onOptionsItemSelected - Method in the Fragment:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem menuItem) {
+
+    switch (menuItem.getItemId()) {
+    case android.R.id.home:
+        setLastFragment();
+               return true;
+    ...
+</code></pre>
+
+<p>However this does not work the way I wanted it to work. The Activity's onOptionsItemSelected is called first, catches the MenuItem and redirects to the HomeFragment. With the other MenuItems declared in other fragments i can check the see the same behaviour. Activity is called first, doesn't catch the MenuItem (default case) and then redirects to super.onOptionsItemSelected(item).</p>
+
+<p>So it seems that this is the case how Android handles the Menu Clicks. First Activity, then Fragment. Is there a way to change this? I don't want to put the android.R.id.home-case in every fragment and handle it there. Is there a nicer way to do this?</p>

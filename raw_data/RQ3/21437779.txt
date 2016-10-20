@@ -1,0 +1,570 @@
+<p>So, all I am trying to do is to display a GIF fullscreen in the background, and have a second layer displaying google ads come over the GIF when a user taps the screen.
+On an AVD it works fine, however on my phone it shows only some frames, and I doesn't show at all on other peoples phones. The textViews show up, but the background remains black. </p>
+
+<p>Here is my MainActivity:</p>
+
+<pre><code>package pt.quintas.migratoris;
+
+import com.google.android.gms.ads.*;
+
+import pt.quintas.migratoris.util.SystemUiHider;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ *
+ * @see SystemUiHider
+ */
+public class MigratorisActivity extends Activity {
+
+    private Thread migrationCounterT;
+    private long migrationCounter = 0;
+
+    /**
+     * Whether or not the system UI should be auto-hidden after
+     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+     */
+    private static final boolean AUTO_HIDE = true;
+
+    /**
+     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+     * user interaction before hiding the system UI.
+     */
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    /**
+     * If set, will toggle the system UI visibility upon interaction. Otherwise,
+     * will show the system UI visibility upon interaction.
+     */
+    private static final boolean TOGGLE_ON_CLICK = true;
+
+    /**
+     * The flags to pass to {@link SystemUiHider#getInstance}.
+     */
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+
+    /**
+     * The instance of the {@link SystemUiHider} for this activity.
+     */
+    private SystemUiHider mSystemUiHider;
+    private AdView adView;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.migratoris_activity);
+
+        final View controlsView = findViewById(R.id.fullscreen_content_controls);
+        final View contentView = findViewById(R.id.GIFSingle);
+
+        // Create the adView.
+        adView = new AdView(this);
+        adView.setAdUnitId("a--------------");
+        adView.setAdSize(AdSize.BANNER);
+
+        // Lookup your LinearLayout assuming it's been given
+        // the attribute android:id="@+id/mainLayout".
+        LinearLayout layout = (LinearLayout) findViewById(R.id.fullscreen_content_controls2);
+
+        // Add the adView to it.
+        layout.addView(adView);
+
+        // Initiate a generic request.
+        AdRequest adRequest = new AdRequest.Builder().build();
+
+        // Load the adView with the ad request.
+        adView.loadAd(adRequest);
+
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                    // Cached values.
+                    int mControlsHeight;
+                    int mShortAnimTime;
+
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                    public void onVisibilityChange(boolean visible) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                            // If the ViewPropertyAnimator API is available
+                            // (Honeycomb MR2 and later), use it to animate the
+                            // in-layout UI controls at the bottom of the
+                            // screen.
+                            if (mControlsHeight == 0) {
+                                mControlsHeight = controlsView.getHeight();
+                            }
+                            if (mShortAnimTime == 0) {
+                                mShortAnimTime = getResources().getInteger(
+                                        android.R.integer.config_shortAnimTime);
+                            }
+                            controlsView.animate()
+                                    .translationY(visible ? 0 : mControlsHeight)
+                                    .setDuration(mShortAnimTime);
+                        } else {
+                            // If the ViewPropertyAnimator APIs aren't
+                            // available, simply show or hide the in-layout UI
+                            // controls.
+                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                        }
+
+                        if (visible && AUTO_HIDE) {
+                            // Schedule a hide().
+                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                        }
+                    }
+                });
+
+        // Set up the user interaction to manually show or hide the system UI.
+        contentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+            }
+        });
+
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+
+
+        //start thread
+        migrationCounterT = new Thread() {
+
+              @Override
+              public void run() {
+                try {
+                  while (!isInterrupted()) {
+                    Thread.sleep(1000);
+                    runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                          migrationCounter += 1;
+                        TextView migrationTV = (TextView) findViewById(R.id.textCounter);
+                        migrationTV.setText(migrationCounter + " light years.");
+                      }
+                    });
+                  }
+                } catch (InterruptedException e) {
+                }
+              }
+            };
+
+            migrationCounterT.start();
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+    @Override
+    public void onPause() {
+      adView.pause();
+      super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+      super.onResume();
+      adView.resume();
+    }
+
+    @Override
+    public void onDestroy() {
+      adView.destroy();
+      super.onDestroy();
+    }
+
+
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    Handler mHideHandler = new Handler();
+    Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
+
+    /**
+     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+}
+</code></pre>
+
+<p>This is my layout xml:</p>
+
+<pre><code><FrameLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:id="@+id/MainLayout"
+    tools:context=".MigratorisActivity" >
+
+    <!--
+         The primary full-screen view. This can be replaced with whatever view
+         is needed to present your content, e.g. VideoView, SurfaceView,
+         TextureView, etc.
+    -->
+
+    <pt.quintas.migratoris.GIFView
+        android:layout_marginLeft="0dp" 
+        android:layout_gravity="center"
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent"
+        android:id="@+id/GIFSingle">
+    </pt.quintas.migratoris.GIFView>
+
+     <TextView
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|top"
+        android:textStyle="bold"
+        android:textSize="14pt"
+        android:padding="25dip"
+
+        android:textColor="#ffffffff"
+        android:text="You have migrated for:" />
+
+    <TextView
+        android:id="@+id/textCounter"
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|bottom"
+        android:textStyle="bold"
+        android:textSize="14pt"
+        android:padding="16dip"
+
+        android:textColor="#ffffffff"
+        android:text="" />
+
+    <!--
+         This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows.
+    -->
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true" >
+
+        <LinearLayout
+            android:id="@+id/fullscreen_content_controls"
+            style="?buttonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/black_overlay"
+            android:orientation="vertical"
+            tools:ignore="UselessParent" >
+
+            <LinearLayout
+                android:id="@+id/fullscreen_content_controls2"
+                style="?buttonBarStyle"
+                android:paddingTop="21dp"
+                android:layout_width="480dp"
+                android:layout_height="75dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:background="@color/black_overlay"
+                android:orientation="vertical" >
+
+                </LinearLayout>
+
+        </LinearLayout>
+    </FrameLayout>
+
+</FrameLayout>
+</code></pre>
+
+<p>Because Android does not support GIF naturally I used a GIFView class that simply uses the Movie Class to display the GIF. This is my GIFView Class:</p>
+
+<pre><code>package pt.quintas.migratoris;
+
+import java.io.IOException;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Movie;
+import android.graphics.Paint;
+import android.util.AttributeSet;
+import android.view.View;
+
+
+public class GIFView extends View {
+    private Movie movie;
+    private long moviestart;
+    private int gifCounter;
+
+    public GIFView(Context context, AttributeSet attrs) throws IOException {
+        super(context, attrs);
+        movie = Movie.decodeStream(getResources().getAssets().open("migratorisgif01.gif"));
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+
+        canvas.drawColor(Color.TRANSPARENT);
+
+        float heightScale = canvas.getHeight() / 960.0f;
+        float widthScale = canvas.getWidth() / 720.0f;
+        canvas.scale(widthScale, heightScale);
+
+        super.onDraw(canvas);
+
+        long now = android.os.SystemClock.uptimeMillis();
+        Paint p = new Paint();
+        p.setAntiAlias(true);
+        if (moviestart == 0)
+            moviestart = now;
+        int relTime;
+        relTime = (int) ((now - moviestart) % movie.duration());
+        float test = movie.duration();
+        // movie.setTime(relTime);
+        if (gifCounter == movie.duration()) {
+            gifCounter = 0;
+        } else
+            gifCounter += 100;
+        movie.setTime(gifCounter);
+
+        movie.draw(canvas, 0, 0);
+        this.invalidate();
+    }
+}
+</code></pre>
+
+<p>When debugging on my phone I get this LogCat: 
+(So this is where the GIF shows up, but stuttering)</p>
+
+<pre><code>01-29 15:58:43.582: I/ApplicationPackageManager(4487): cscCountry is not German : VOD
+01-29 15:58:44.113: I/Ads(4487): Use AdRequest.Builder.addTestDevice("B246DEAA33A5FAE6AF9FF0A2F44B5CBC") to get test ads on this device.
+01-29 15:58:44.113: I/Ads(4487): Starting ad request.
+01-29 15:58:44.233: I/webclipboard(4487): clipservice: android.sec.clipboard.ClipboardExManager@405e5e50
+01-29 15:58:44.333: V/webview(4487): OnSizeChanged: Enter 
+01-29 15:58:44.343: E/GooglePlayServicesUtil(4487): The Google Play services resources were not found. Check your project configuration to ensure that the resources are included.
+01-29 15:58:44.653: E/GooglePlayServicesUtil(4487): The Google Play services resources were not found. Check your project configuration to ensure that the resources are included.
+01-29 15:58:44.673: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:44.744: E/GooglePlayServicesUtil(4487): The Google Play services resources were not found. Check your project configuration to ensure that the resources are included.
+01-29 15:58:44.894: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:45.164: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:45.484: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:45.704: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:45.905: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:46.115: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:46.345: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:46.505: V/webview(4487): ZoomScale 3 mPreserveZoom: false
+01-29 15:58:46.625: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:46.786: I/Ads(4487): Ad finished loading.
+01-29 15:58:46.836: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:47.046: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:47.256: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:47.466: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:47.666: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:47.867: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:48.077: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:48.287: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:48.487: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:48.717: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:48.928: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:49.268: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:49.578: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:49.859: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:50.149: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:50.429: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:50.719: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:50.940: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:51.170: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:51.370: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:51.600: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:51.830: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:52.111: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:52.391: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:52.681: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:52.921: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:53.132: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:53.332: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:53.532: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:53.732: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:53.932: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:54.183: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:54.513: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:54.793: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:55.084: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:55.374: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:55.594: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:55.804: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:56.004: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:56.225: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:56.565: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:56.845: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:57.146: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:57.436: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:57.676: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:57.876: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:58.087: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:58.327: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:58.607: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:58.897: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:59.188: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:59.488: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:58:59.778: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:00.129: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:00.359: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:00.559: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:00.779: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:00.989: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:01.220: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:01.430: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:01.640: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:01.840: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:02.050: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:02.251: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:02.451: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:02.651: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:02.851: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:03.051: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:03.252: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:03.452: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:03.652: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:03.862: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:04.072: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:04.283: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:04.483: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:04.683: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:04.883: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:05.093: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:05.294: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:05.504: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:05.714: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:05.914: E/(4487): Wink AGIF Error 7 700 100 7
+01-29 15:59:05.934: W/KeyCharacterMap(4487): Can't open keycharmap file
+01-29 15:59:05.934: W/KeyCharacterMap(4487): Error loading keycharmap file '/system/usr/keychars/melfas_touchkey.kcm.bin'. hw.keyboards.65537.devname='melfas_touchkey'
+01-29 15:59:05.934: W/KeyCharacterMap(4487): Using default keymap: /system/usr/keychars/qwerty.kcm.bin
+01-29 15:59:06.184: E/(4487): Wink AGIF Error 7 700 100 7
+</code></pre>
+
+<p>Running it on the AVD Nexus: 
+(This is when it works fine)</p>
+
+<pre><code>01-29 12:06:35.800: D/dalvikvm(877): DexOpt: --- BEGIN 'ads206081988.jar' (bootstrap=0) ---
+01-29 12:06:35.990: D/dalvikvm(877): DexOpt: --- END 'ads206081988.jar' (success) ---
+01-29 12:06:35.990: D/dalvikvm(877): DEX prep '/data/data/pt.quintas.migratoris/cache/ads206081988.jar': unzip in 1ms, rewrite 191ms
+01-29 12:06:36.050: D/dalvikvm(877): GC_FOR_ALLOC freed 238K, 9% free 3147K/3452K, paused 30ms, total 34ms
+01-29 12:06:36.090: I/Ads(877): Use AdRequest.Builder.addTestDevice("B3EEABB8EE11C2BE770B684D95219ECB") to get test ads on this device.
+01-29 12:06:36.110: I/Ads(877): Starting ad request.
+01-29 12:06:36.140: V/WebViewChromium(877): Binding Chromium to the main looper Looper (main, tid 1) {b1dac978}
+01-29 12:06:36.160: I/chromium(877): [INFO:library_loader_hooks.cc(112)] Chromium logging enabled: level = 0, default verbosity = 0
+01-29 12:06:36.160: I/BrowserProcessMain(877): Initializing chromium process, renderers=0
+01-29 12:06:36.320: E/chromium(877): [ERROR:gl_surface_egl.cc(153)] No suitable EGL configs found.
+01-29 12:06:36.340: E/chromium(877): [ERROR:gl_surface_egl.cc(620)] GLSurfaceEGL::InitializeOneOff failed.
+01-29 12:06:36.340: E/chromium(877): [ERROR:gl_surface_egl.cc(153)] No suitable EGL configs found.
+01-29 12:06:36.340: E/chromium(877): [ERROR:gl_surface_egl.cc(620)] GLSurfaceEGL::InitializeOneOff failed.
+01-29 12:06:36.340: E/chromium(877): [ERROR:gpu_info_collector.cc(86)] gfx::GLSurface::InitializeOneOff() failed
+01-29 12:06:36.360: W/chromium(877): [WARNING:proxy_service.cc(888)] PAC support disabled because there is no system implementation
+01-29 12:06:36.470: D/dalvikvm(877): GC_FOR_ALLOC freed 76K, 8% free 3285K/3552K, paused 38ms, total 40ms
+01-29 12:06:36.480: I/dalvikvm-heap(877): Grow heap (frag case) to 4.346MB for 1127536-byte allocation
+01-29 12:06:36.550: D/dalvikvm(877): GC_FOR_ALLOC freed <1K, 6% free 4386K/4656K, paused 64ms, total 64ms
+01-29 12:06:36.970: D/gralloc_goldfish(877): Emulator without GPU emulation detected.
+01-29 12:06:37.970: I/Choreographer(877): Skipped 85 frames!  The application may be doing too much work on its main thread.
+01-29 12:06:41.950: I/Choreographer(877): Skipped 184 frames!  The application may be doing too much work on its main thread.
+01-29 12:06:43.810: I/Choreographer(877): Skipped 182 frames!  The application may be doing too much work on its main thread.
+01-29 12:06:45.300: I/Choreographer(877): Skipped 151 frames!  The application may be doing too much work on its main thread.
+</code></pre>
+
+<p>Running on other phones this is what I get:
+(This is when the GIF simply doesn't appear)</p>
+
+<pre><code>01-29 15:34:06.195: E/SQLiteLog(28567): (14) cannot open file at line 30241 of [00bb9c9ce4]
+01-29 15:34:06.195: E/SQLiteLog(28567): (14) os_unix.c:30241: (2) open(/FileSyetmQuota.db) - 
+01-29 15:34:06.195: D/WebKit(28567): ERROR: 
+01-29 15:34:06.195: D/WebKit(28567): SQLite database failed to load from /FileSyetmQuota.db
+01-29 15:34:06.195: D/WebKit(28567): Cause - unable to open database file
+01-29 15:34:06.195: D/WebKit(28567): external/webkit/Source/WebCore/platform/sql/SQLiteDatabase.cpp(71) : bool WebCore::SQLiteDatabase::open(const WTF::String&, bool)
+01-29 15:34:06.195: E/SQLiteLog(28567): (14) cannot open file at line 30241 of [00bb9c9ce4]
+01-29 15:34:06.195: E/SQLiteLog(28567): (14) os_unix.c:30241: (2) open(/NotificationPermissions.db) - 
+01-29 15:34:06.195: D/WebKit(28567): ERROR: 
+01-29 15:34:06.195: D/WebKit(28567): SQLite database failed to load from /NotificationPermissions.db
+01-29 15:34:06.195: D/WebKit(28567): Cause - unable to open database file
+01-29 15:34:06.195: D/WebKit(28567): external/webkit/Source/WebCore/platform/sql/SQLiteDatabase.cpp(71) : bool WebCore::SQLiteDatabase::open(const WTF::String&, bool)
+01-29 15:34:07.760: D/skia(30145): Wink AGIF Move Constructer End 17, totalTime : 1700
+01-29 15:34:07.880: D/dalvikvm(30145): GC_CONCURRENT freed 194K, 6% free 12423K/13191K, paused 13ms+2ms, total 27ms
+01-29 15:34:07.880: D/dalvikvm(30145): WAIT_FOR_CONCURRENT_GC blocked 7ms
+01-29 15:34:07.955: D/dalvikvm(30145): DexOpt: --- BEGIN 'ads970080158.jar' (bootstrap=0) ---
+01-29 15:34:08.020: D/dalvikvm(30145): DexOpt: --- END 'ads970080158.jar' (success) ---
+01-29 15:34:08.025: D/dalvikvm(30145): DEX prep '/data/data/pt.quintas.migratoris/cache/ads970080158.jar': unzip in 0ms, rewrite 66ms
+01-29 15:34:08.065: D/dalvikvm(30145): GC_CONCURRENT freed 206K, 7% free 12623K/13447K, paused 11ms+12ms, total 35ms
+01-29 15:34:08.070: I/Ads(30145): Use AdRequest.Builder.addTestDevice("F8E5DAD99BDAB8DA57F0BA3BBB1CFF6C") to get test ads on this device.
+01-29 15:34:08.070: I/dalvikvm(30145): Could not find method android.webkit.WebSettings.getDefaultUserAgent, referenced from method abr.a
+01-29 15:34:08.070: W/dalvikvm(30145): VFY: unable to resolve static method 3330: Landroid/webkit/WebSettings;.getDefaultUserAgent (Landroid/content/Context;)Ljava/lang/String;
+01-29 15:34:08.070: D/dalvikvm(30145): VFY: replacing opcode 0x71 at 0x0011
+01-29 15:34:08.080: I/Ads(30145): Starting ad request.
+01-29 15:34:08.085: I/dalvikvm(30145): Could not find method android.webkit.WebSettings.setMediaPlaybackRequiresUserGesture, referenced from method abz.<init>
+01-29 15:34:08.085: W/dalvikvm(30145): VFY: unable to resolve virtual method 3345: Landroid/webkit/WebSettings;.setMediaPlaybackRequiresUserGesture (Z)V
+01-29 15:34:08.085: D/dalvikvm(30145): VFY: replacing opcode 0x6e at 0x003d
+01-29 15:34:08.145: I/webclipboard(30145): clipservice: android.sec.clipboard.ClipboardExManager@41f1de60
+01-29 15:34:08.165: I/webclipboard(30145): clipservice: android.sec.clipboard.ClipboardExManager@41f1de60
+01-29 15:34:08.180: V/webkit(30145): BrowserFrame constructor: this=Handler (android.webkit.BrowserFrame) {41ef7ab0}
+01-29 15:34:08.200: E/GooglePlayServicesUtil(30145): The Google Play services resources were not found. Check your project configuration to ensure that the resources are included.
+01-29 15:34:08.225: D/dalvikvm(30145): GC_CONCURRENT freed 370K, 8% free 12740K/13703K, paused 12ms+12ms, total 41ms
+01-29 15:34:08.240: V/webkit(30145): BrowserFrame constructor: this=Handler (android.webkit.BrowserFrame) {41f61850}
+01-29 15:34:08.275: D/libEGL(30145): loaded /system/lib/egl/libEGL_mali.so
+01-29 15:34:08.290: D/libEGL(30145): loaded /system/lib/egl/libGLESv1_CM_mali.so
+01-29 15:34:08.295: D/libEGL(30145): loaded /system/lib/egl/libGLESv2_mali.so
+01-29 15:34:08.300: D/(30145): Device driver API match
+01-29 15:34:08.300: D/(30145): Device driver API version: 10
+01-29 15:34:08.300: D/(30145): User space API version: 10 
+01-29 15:34:08.300: D/(30145): mali: REVISION=Linux-r2p4-02rel0 BUILD_DATE=Tue Oct 16 15:37:13 KST 2012 
+01-29 15:34:08.355: D/OpenGLRenderer(30145): Enabling debug mode 0
+01-29 15:34:08.400: E/GooglePlayServicesUtil(30145): The Google Play services resources were not found. Check your project configuration to ensure that the resources are included.
+01-29 15:34:08.405: E/GooglePlayServicesUtil(30145): The Google Play services resources were not found. Check your project configuration to ensure that the resources are included.
+01-29 15:34:11.315: I/GATE(30145): <GATE-M>DEV_ACTION_COMPLETED</GATE-M>
+01-29 15:34:11.365: I/Ads(30145): Ad finished loading.
+01-29 15:34:11.415: D/dalvikvm(30145): GC_FOR_ALLOC freed 92K, 7% free 12784K/13703K, paused 22ms, total 22ms
+</code></pre>
+
+<p>Any suggestions? I am so confused as to why it has these 3 running results...</p>
+
+<p>Thanks for your time, have a good one.</p>

@@ -1,0 +1,192 @@
+<p>I've placed a <code>ListView</code> on top of another view and I want the list to just display some changing data and the user shouldn't have any interaction with the list.
+The parent view of the list has some buttons on it which I need to be able to reach through the list.
+I tried many of the proposed solutions here but none of them work for me.</p>
+
+<p>You can see the comments for the various solutions (solution combinations) I tried.</p>
+
+<p>Any suggestions???</p>
+
+<p>extended <code>ListView</code>:</p>
+
+<pre><code>public class ItemList extends ListView {
+
+    private MyListAdapater myListAdapater;
+    private Item[] items;
+
+    public ItemList(Context context, int rows) {
+        super(context);
+        items = new Item[rows];
+        for (int i = 0; i < items.length; i++) {
+            items[i] = new item(context, "Bla Bla Bla");
+        }
+
+
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER);
+        layoutParams.setMargins(pxToDp(8), 0, 0, pxToDp(12));
+        setLayoutParams(layoutParams);
+        myListAdapater = new MyListAdapater(context, items);
+        setAdapter(myListAdapater);
+        setDivider(null);
+        int rowMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        setDividerHeight(pxToDp(8));
+        setSelector(R.color.Transparent);
+//        setOnTouchListener(new OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                return false;
+//            }
+//        });
+//        setFocusable(false);
+//        setClickable(false);
+//        setFocusableInTouchMode(false);
+//        requestDisallowInterceptTouchEvent(true);
+        setSelection(myListAdapater.getCount() - 1);
+    }
+
+
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return false;
+    }
+
+    protected int pxToDp(int px) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, px, getResources().getDisplayMetrics());
+    }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        return true;
+//    }
+
+   }
+</code></pre>
+
+<p>List Adapter:</p>
+
+<pre><code>public class MyListAdapater extends BaseAdapter {
+
+    private Item[] listData;
+    private Context context;
+
+    public MyListAdapater(Context context, Item[] listData) {
+        this.Item = listData;
+        this.context = context;
+
+    }
+
+    @Override
+    public int getCount() {
+        return listData.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return listData[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+
+    //    @Override
+    //    public boolean isEnabled(int position) {
+    //        return false;
+    //    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+
+
+            convertView = listData[position];
+            holder.item = (Item) convertView;
+            convertView.setTag(holder);
+            //convertView.setOnTouchListener(new View.OnTouchListener() {
+            //    @Override
+            //    public boolean onTouch(View v, MotionEvent event) {
+            //        return true;
+            //    }
+            //});
+
+        } else {
+
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        return convertView;
+    }
+
+
+
+    static class ViewHolder {
+        Item item;
+    }
+}
+</code></pre>
+
+<ul>
+<li>The Items in the list are views themselves</li>
+</ul>
+
+<p>Thank you</p>
+
+<p><strong>EDIT:</strong></p>
+
+<p>I tried adding the list in xml and still can't click the view behind the list.</p>
+
+<p>I tried a test project with the following layout:</p>
+
+<pre><code>?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.listtest.MainActivity"
+    android:background="@color/Blue">
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="click"
+        android:layout_gravity="center"
+        android:onClick="onClickTestButton"/>
+
+    <ListView
+        android:id="@+id/test_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="12dp"
+        android:layout_marginLeft="8dp"
+        android:divider="@drawable/divider"
+        android:dividerHeight="8dp"
+        android:listSelector="@color/Transparent"
+        android:stackFromBottom="true"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clickable="false" >
+    </ListView>
+
+</FrameLayout>
+</code></pre>
+
+<p>and in the activity:</p>
+
+<pre><code>myListAdapter = new MyListAdapater(this, items);
+testList = (ListView) findViewById(R.id.test_list);
+testList.setAdapter(myListAdapter);
+testList.setOnItemClickListener(null);
+testList.setEnabled(false);
+</code></pre>
+
+<p>now this works fine and I can click the button behind the list in the test project, however, when I did the same thing in the original project it doesn't work.</p>
+
+<p>Anyone can point me to why this is happening???</p>
+
+<p>Thank you</p>

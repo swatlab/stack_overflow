@@ -1,0 +1,82 @@
+<p>Even after coding it, I'm not able to see toggle button in the preview. Am I missing something? </p>
+
+<p>I want to implement navigation drawer on that toggle button, it will open from right to left and on again clicking it it will close.</p>
+
+<p>Below is my code:</p>
+
+<pre><code>public class entryActivity extends ActionBarActivity {
+
+    private String[] mMenuItems;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_entry);
+
+        //https://developer.android.com/training/implementing-navigation/nav-drawer.html
+        mMenuItems = getResources().getStringArray(R.array.menu_items);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // Set the adapter for the list view
+        mDrawerList.setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, mMenuItems));
+        ActionBar actionBar = getSupportActionBar();
+
+        actionBar.setHomeButtonEnabled(true);
+
+
+        actionBarDrawerToggle = new ActionBarDrawerToggle(
+                this,
+                mDrawerLayout,
+                R.string.open,
+                R.string.close
+        ){
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+
+        mDrawerLayout.setDrawerListener(actionBarDrawerToggle);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if(actionBarDrawerToggle.onOptionsItemSelected(item)){
+            return true;
+        }
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+}
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/Kpf4e.png" alt="enter image description here"></p>

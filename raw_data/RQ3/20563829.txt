@@ -1,0 +1,173 @@
+<p>at our current project we are experiencing some difficulties. I recently changed some Hibernate Beans (our Article Bean and some underlying stuff) and I ran some tests and everything looked fine. Now my teammate is having exceptions with this message:</p>
+
+<p><code>Foreign key (FK_09fd525ae6654c059394d22cc15:ARTBILDER [artikel_fk,servdat_fk])) must have same number of columns as the referenced primary key (ARTIKEL [AUTOIN_FIX])</code></p>
+
+<p>The annotations are definitely correct. I had the same problem and decided to setup the project on my computer from scratch and the problems were gone. What can be the reason for these problems?</p>
+
+<p>We are working on a legacy database and are only mapping our objects to the database and not generating the database with hibernate. And we are using HibernateSearch for full-text search (maybe this is related, because the first time this occured was after I added the HibernateSearch Annotations). </p>
+
+<p>We are using a Firebird 2.5 instance.</p>
+
+<p>EDIT:</p>
+
+<p>here is the property the error is coming from:</p>
+
+<p>The ID Class:</p>
+
+<pre><code>@Embeddable
+public class ID implements Serializable {
+    private static final long serialVersionUID = 1810044174631580834L;
+
+    private Long autoin;
+    private Integer serverId;
+
+    public ID() {
+    }
+
+    public ID(Long autoin, Integer serverId) {
+        this.autoin = autoin;
+        this.serverId = serverId;
+    }
+
+    @Column(name = "autoin_fix")
+    public Long getAutoin() {
+        return this.autoin;
+    }
+
+    @Column(name = "servdat_fk")
+    public Integer getServerId() {
+        return this.serverId;
+    }
+
+    public void setAutoin(Long autoin) {
+        this.autoin = autoin;
+    }
+
+    public void setServerId(Integer serverId) {
+        this.serverId = serverId;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((this.autoin == null) ? 0 : this.autoin.hashCode());
+        result = prime * result
+                + ((this.serverId == null) ? 0 : this.serverId.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (this.getClass() != obj.getClass()) {
+            return false;
+        }
+        ID other = (ID) obj;
+        if (this.autoin == null) {
+            if (other.autoin != null) {
+                return false;
+            }
+        } else if (!this.autoin.equals(other.autoin)) {
+            return false;
+        }
+        if (this.serverId == null) {
+            if (other.serverId != null) {
+                return false;
+            }
+        } else if (!this.serverId.equals(other.serverId)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder().append("ID [").append(this.autoin)
+                .append("_").append(this.serverId).append("]").toString();
+    }
+
+}
+</code></pre>
+
+<p>The Article class:</p>
+
+<pre><code>@Indexed
+@Entity
+@Table(name = "ARTIKEL")
+public class Article {
+
+    private ID id;
+    private List<Picture> pictures;
+
+        ...
+
+    @DocumentId
+    @EmbeddedId
+    @FieldBridge(impl = IDBridge.class)
+    public ID getId() {
+        return id;
+    }
+
+    @OneToMany
+    @JoinColumns({
+        @JoinColumn(name = "artikel_fk", referencedColumnName = "autoin_fix"),
+        @JoinColumn(name = "servdat_fk", referencedColumnName = "servdat_fk") })
+    @IndexedEmbedded
+    public List<Picture> getPictures() {
+            return pictures;
+    }  
+
+}
+</code></pre>
+
+<p>The Picture class:</p>
+
+<pre><code>@Entity
+@Table(name = "ARTBILDER")
+public class Picture extends BasePicture {
+
+    ...
+
+    protected ID id;
+
+    @EmbeddedId
+    @FieldBridge(impl = IDBridge.class)
+    @Field(store = Store.YES, index = Index.YES)
+    public ID getId() {
+        return id;
+    }
+
+    ...
+}
+</code></pre>
+
+<p>EDIT2: I may have a clue where this comes from, please standby.</p>
+
+<p>EDIT3: Nope, not the error.</p>
+
+<p>EDIT4: Here is the DDL:</p>
+
+<pre><code>CREATE TABLE ARTIKEL
+(
+  AUTOIN_FIX NUM10_0 DEFAULT 0,
+  SERVDAT_FK NUM10_0 DEFAULT 0,
+  ...
+  PRIMARY KEY (AUTOIN_FIX,SERVDAT_FK)
+);
+
+CREATE TABLE ARTBILDER
+(
+  AUTOIN_FIX NUM10_0 DEFAULT 0,
+  ARTIKEL_FK NUM10_0 DEFAULT 0,
+  SERVDAT_FK NUM10_0 DEFAULT 0,
+  ...
+  PRIMARY KEY (AUTOIN_FIX,SERVDAT_FK)
+);
+</code></pre>

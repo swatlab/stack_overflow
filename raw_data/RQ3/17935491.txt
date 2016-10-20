@@ -1,0 +1,74 @@
+<p>I am trying to resize a large image. For small images this code works properly, however for large images outHeight and outWidth are always -1, creating a NullPointerException. This is particularly odd since I set options.inJustDecodeBounds = true, which should prevent this kind of error since memory usage is reduced. Am I missing something? My methods are below:</p>
+
+<pre><code>   @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+            Intent imageReturnedIntent) {
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            Uri selectedImage = imageReturnedIntent.getData();
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            InputStream inputStream = null;
+            try {
+                inputStream = getContentResolver().openInputStream(
+                        selectedImage);
+            } catch (FileNotFoundException e1) {
+                Log.d("onActivityResult", "FileNotFoundException");
+                e1.printStackTrace();
+            }
+            BitmapFactory.decodeStream(inputStream, null, options);
+            try {
+                inputStream.close();
+            } catch (IOException e1) {
+                Log.d("onActivityResult", "IOException");
+                e1.printStackTrace();
+            }
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = calculateInSampleSize(options, IMAGE_SIZE,
+                    IMAGE_SIZE);
+            InputStream inputStreamTwo = null;
+            try {
+                inputStreamTwo = getContentResolver().openInputStream(
+                        selectedImage);
+            } catch (FileNotFoundException e) {
+                Log.d("onActivityResult", "FileNotFoundException");
+                e.printStackTrace();
+            }
+            Bitmap unscaledImage = BitmapFactory.decodeStream(inputStreamTwo,
+                    null, options);
+            image = Bitmap.createScaledBitmap(unscaledImage, IMAGE_SIZE,
+                    IMAGE_SIZE, false);
+            Log.d("Unscaled image byte count",
+                    "Bytes: " + unscaledImage.getByteCount());
+            Log.d("Scaled image byte count", "Bytes: " + image.getByteCount());
+        }
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+</code></pre>
+
+<p>Thank you for your help!</p>
+
+<p>Update: This happens on small images too (around 100KB) which are JPGs. It does not happen for larger JPGs (1.2MB) taken by the phone's camera.</p>

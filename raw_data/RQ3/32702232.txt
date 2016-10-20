@@ -1,0 +1,224 @@
+<p>I'm using this <a href="https://github.com/omgnuts/lib-subsampling-scale-image-view" rel="nofollow">lib</a> to show photos (I dont want to use <code>PhotoView</code> lib, because it has no that I need). This lib is perfect, but have only one minus: when changing screen orientation it makes screen white and in a few mili seconds reloads image... I've played with code of the <code>SubsamplingScaleImageView</code> and found out that there are some methods in the three <code>AsyncTask</code>'s <code>doInBackground</code> methods that have been needed to operate in the <code>uiThread</code>. </p>
+
+<p>When I've played with that code I've moved everything from <code>doInBackground</code> method to <code>postExecute</code> in each <code>AsyncTask</code> class and compile the program. On my surprise everithing worked fine, I've decided to undo all operations and make manipulatuons with that code more carefully, but it didnt work after that, even when I'm trying to move code to <code>postExecute</code> again... I dont remember how I moved that code into <code>onPostExecute</code> but it have been working untill I decided to refactore it ((( Please, anybody, help me!</p>
+
+<pre><code>   /**
+     * Async task used to get image details without blocking the UI thread.
+     */
+    private static class TilesInitTask extends AsyncTask<Void, Void, int[]> {
+        private final WeakReference<SubsamplingScaleImageView> viewRef;
+        private final WeakReference<Context> contextRef;
+        private final WeakReference<DecoderFactory<? extends ImageRegionDecoder>> decoderFactoryRef;
+        private final Uri source;
+        private ImageRegionDecoder decoder;
+        private Exception exception;
+
+        public TilesInitTask(SubsamplingScaleImageView view, Context context, DecoderFactory<? extends ImageRegionDecoder> decoderFactory, Uri source) {
+            this.viewRef = new WeakReference<SubsamplingScaleImageView>(view);
+            this.contextRef = new WeakReference<Context>(context);
+            this.decoderFactoryRef = new WeakReference<DecoderFactory<? extends ImageRegionDecoder>>(decoderFactory);
+            this.source = source;
+        }
+
+        @Override
+        protected int[] doInBackground(Void... params) {
+            try {
+                String sourceUri = source.toString();
+                Context context = contextRef.get();
+                DecoderFactory<? extends ImageRegionDecoder> decoderFactory = decoderFactoryRef.get();
+                SubsamplingScaleImageView view = viewRef.get();
+                if (context != null && decoderFactory != null && view != null) {
+                    decoder = decoderFactory.make();
+                    Point dimensions = decoder.init(context, source);
+                    int sWidth = dimensions.x;
+                    int sHeight = dimensions.y;
+                    int exifOrientation = view.getExifOrientation(sourceUri);
+                    if (view.sRegion != null) {
+                        sWidth = view.sRegion.width();
+                        sHeight = view.sRegion.height();
+                    }
+                    return new int[] { sWidth, sHeight, exifOrientation };
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to initialise bitmap decoder", e);
+                this.exception = e;
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(int[] xyo) {
+            final SubsamplingScaleImageView view = viewRef.get();
+            if (view != null) {
+                if (decoder != null && xyo != null && xyo.length == 3) {
+                    view.onTilesInited(decoder, xyo[0], xyo[1], xyo[2]);
+                } else if (exception != null && view.onImageEventListener != null) {
+                    view.onImageEventListener.onImageLoadError(exception);
+                }
+            }
+        }
+    }
+
+    /**
+     * Async task used to load images without blocking the UI thread.
+     */
+    private static class TileLoadTask extends AsyncTask<Void, Void, Bitmap> {
+        private final WeakReference<SubsamplingScaleImageView> viewRef;
+        private final WeakReference<ImageRegionDecoder> decoderRef;
+        private final WeakReference<Tile> tileRef;
+        private Exception exception;
+
+        public TileLoadTask(SubsamplingScaleImageView view, ImageRegionDecoder decoder, Tile tile) {
+            this.viewRef = new WeakReference<SubsamplingScaleImageView>(view);
+            this.decoderRef = new WeakReference<ImageRegionDecoder>(decoder);
+            this.tileRef = new WeakReference<Tile>(tile);
+            tile.loading = true;
+        }
+
+        @Override
+        protected Bitmap doInBackground(Void... params) {
+            try {
+                SubsamplingScaleImageView view = viewRef.get();
+                ImageRegionDecoder decoder = decoderRef.get();
+                Tile tile = tileRef.get();
+                if (decoder != null && tile != null && view != null && decoder.isReady()) {
+                    synchronized (view.decoderLock) {
+                        // Update tile's file sRect according to rotation
+                        view.fileSRect(tile.sRect, tile.fileSRect);
+                        if (view.sRegion != null) {
+                            tile.fileSRect.offset(view.sRegion.left, view.sRegion.top);
+                        }
+                        return decoder.decodeRegion(tile.fileSRect, tile.sampleSize);
+                    }
+                } else if (tile != null) {
+                    tile.loading = false;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to decode tile", e);
+                this.exception = e;
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            final SubsamplingScaleImageView subsamplingScaleImageView = viewRef.get();
+            final Tile tile = tileRef.get();
+            if (subsamplingScaleImageView != null && tile != null) {
+                if (bitmap != null) {
+                    tile.bitmap = bitmap;
+                    tile.loading = false;
+                    subsamplingScaleImageView.onTileLoaded();
+                } else if (exception != null && subsamplingScaleImageView.onImageEventListener != null) {
+                    subsamplingScaleImageView.onImageEventListener.onTileLoadError(exception);
+                }
+            }
+        }
+    }
+</code></pre>
+
+<hr>
+
+<blockquote>
+  <p>UPD </p>
+</blockquote>
+
+<p>Now I've just changed <code>AsyncTasks</code> into <code>Runnable</code> and call them by <code>run()</code> method without <code>Handler(getMainLooper()).post(runnable)</code>. Can somebody explain me what happened?</p>
+
+<hr>
+
+<pre><code>   /**
+         * Async task used to get image details without blocking the UI thread.
+         */
+        private static class TilesInitTask implements Runnable {
+            private final WeakReference<SubsamplingScaleImageView> viewRef;
+            private final WeakReference<Context> contextRef;
+            private final WeakReference<DecoderFactory<? extends ImageRegionDecoder>> decoderFactoryRef;
+            private final Uri source;
+            private ImageRegionDecoder decoder;
+            private Exception exception;
+
+            public TilesInitTask(SubsamplingScaleImageView view, Context context, DecoderFactory<? extends ImageRegionDecoder> decoderFactory, Uri source) {
+                this.viewRef = new WeakReference<>(view);
+                this.contextRef = new WeakReference<>(context);
+                this.decoderFactoryRef = new WeakReference<DecoderFactory<? extends ImageRegionDecoder>>(decoderFactory);
+                this.source = source;
+            }
+
+            public void run() {
+                SubsamplingScaleImageView view = null;
+                try {
+                    String sourceUri = source.toString();
+                    Context context = contextRef.get();
+                    DecoderFactory<? extends ImageRegionDecoder> decoderFactory = decoderFactoryRef.get();
+                    view = viewRef.get();
+                    if (context != null && decoderFactory != null && view != null) {
+                        decoder = decoderFactory.make();
+                        Point dimensions = decoder.init(context, source);
+                        int sWidth = dimensions.x;
+                        int sHeight = dimensions.y;
+
+                        int exifOrientation = view.getExifOrientation(sourceUri);
+                        if (view.sRegion != null) {
+                            sWidth = view.sRegion.width();
+                            sHeight = view.sRegion.height();
+                        }
+                        view.onTilesInited(decoder, sWidth, sHeight, exifOrientation);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to initialise bitmap decoder", e);
+                    this.exception = e;
+                    if (view != null && view.onImageEventListener != null) {
+                        view.onImageEventListener.onImageLoadError(exception);
+                    }
+                }
+            }
+        }
+
+/**
+     * Async task used to load images without blocking the UI thread.
+     */
+    private static class TileLoadTask implements Runnable {
+        private final WeakReference<SubsamplingScaleImageView> viewRef;
+        private final WeakReference<ImageRegionDecoder> decoderRef;
+        private final WeakReference<Tile> tileRef;
+        private Exception exception;
+
+        public TileLoadTask(SubsamplingScaleImageView view, ImageRegionDecoder decoder, Tile tile) {
+            this.viewRef = new WeakReference<>(view);
+            this.decoderRef = new WeakReference<>(decoder);
+            this.tileRef = new WeakReference<>(tile);
+            tile.loading = true;
+        }
+
+        public void run() {
+            SubsamplingScaleImageView view = null;
+            try {
+                view = viewRef.get();
+                ImageRegionDecoder decoder = decoderRef.get();
+                Tile tile = tileRef.get();
+                if (decoder != null && tile != null && view != null && decoder.isReady()) {
+                    synchronized (view.decoderLock) {
+                        // Update tile's file sRect according to rotation
+                        view.fileSRect(tile.sRect, tile.fileSRect);
+                        Log.d("TAGTAG", "2");
+                        if (view.sRegion != null) {
+                            tile.fileSRect.offset(view.sRegion.left, view.sRegion.top);
+                        }
+                        tile.bitmap = decoder.decodeRegion(tile.fileSRect, tile.sampleSize);
+                        tile.loading = false;
+                        view.onTileLoaded();
+                    }
+                } else if (tile != null) {
+                    tile.loading = false;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to decode tile", e);
+                this.exception = e;
+                if (view != null && view.onImageEventListener != null) {
+                    view.onImageEventListener.onTileLoadError(exception);
+                }
+            }
+        }
+    }
+</code></pre>

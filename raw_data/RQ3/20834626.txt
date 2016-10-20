@@ -1,0 +1,112 @@
+<p>i'm trying to create an activity page that has a scrollable gridview which will display images and i'm having trouble when i run the app. The images aren't displaying and i'm not really sure what i'm missing in order for them to show when i run the app from my phone to test it i've look up similar tutorials that I've based my code off of but it's still not working. any help or input is greatly appreciated and please let me know if i need to provide any other code. Thank You.</p>
+
+<p>xml file (activity_third.xml)</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+<GridView
+    android:id="@+id/grid_view"
+    android:numColumns="2"
+    android:gravity="center"
+    android:columnWidth="50dp"
+    android:stretchMode="columnWidth"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" 
+    android:smoothScrollbar="true" 
+>
+
+
+
+</GridView>
+</LinearLayout>
+</code></pre>
+
+<p>ThirdActivity.java</p>
+
+<pre><code>package com.example.firstapp2;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.view.Menu;
+import android.view.View;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ThirdActivity extends Activity {
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_third);
+
+    GridView gridView = (GridView) findViewById(R.id.grid_view);
+
+    // Instance of ImageAdapter Class
+    gridView.setAdapter(new ImageAdapter(this));
+} 
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.third, menu);
+    return true;
+}
+}
+</code></pre>
+
+<p>ImageAdapter.java</p>
+
+<pre><code>import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+    R.drawable.balloon_1, R.drawable.balloon_2,
+    R.drawable.balloon_3, R.drawable.balloon_4,
+    R.drawable.balloon_5, R.drawable.balloon_6
+       /*insert array of images*/
+};
+}
+</code></pre>

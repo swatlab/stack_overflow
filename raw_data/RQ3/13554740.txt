@@ -1,0 +1,119 @@
+<p>In my program, I'd like to use Map with two keys (Integers). My first idea was to join the integers into a string in some way, eg:</p>
+
+<pre><code>String key = k1.toString()+"-"+k2.toString();
+</code></pre>
+
+<p>This solution didn't look good for me: 1) ugly; 2) slow (handling numbers as a text).</p>
+
+<p>I discovered other approaches here on stackoverflow. They were based on encapsulating the integers in one class - one purpose class (MyKey), or more generic one (Pair).  </p>
+
+<p>I tried to run some speed tests and my dummy solutions seem to be fastest. After the first shot, I tried to encapsulate the transformation integers-string in a new class (MyString) and run test also against this solution.</p>
+
+<p>The maps definitions were:</p>
+
+<pre><code>Map<Pair<Integer,Integer>,String> map1 = new HashMap<>();
+Map<MyKey,String> map2 = new HashMap<>();
+Map<String,String> map3 = new HashMap<>();
+Map<MyString,String> map4 = new HashMap<>();
+</code></pre>
+
+<p>The test results were (ran multiple times, seems stable):</p>
+
+<pre><code>  map: put+get=total
+  1: 52+154=206
+  2: 29+77=106
+  3: 23+49=72
+  3: 17+55=72
+</code></pre>
+
+<p>The solutions with string are faster. Direct concatenating of string keys is faster when searching, slower when inputting.</p>
+
+<p>My questions are:</p>
+
+<p>1) Why are the solutions with String faster? (one call of hashCode()?)</p>
+
+<p>2) Is there any reason why shouldn't be solutions with String used?</p>
+
+<hr>
+
+<p>Additional information:</p>
+
+<p>Number of records in the Map was about 6000.</p>
+
+<p>Test tried to get also values for many unexisting keys. Could it change test results?</p>
+
+<p>In my program, I generate permutations of boolean[N] where M values are true. Once, I get result for certain N,M; I'd like to store them for case I need them again.</p>
+
+<p>And here is complete code of classes used in my example:</p>
+
+<pre><code>  class Pair<L,R> {
+
+    private final L left;
+    private final R right;
+
+    public Pair(L left, R right) {
+      this.left = left;
+      this.right = right;
+    }
+
+    public L getLeft() { return left; }
+    public R getRight() { return right; }
+
+    @Override
+    public int hashCode() { return left.hashCode() ^ right.hashCode(); }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null) return false;
+      if (!(o instanceof Pair)) return false;
+      Pair pairo = (Pair) o;
+      return this.left.equals(pairo.getLeft()) &&
+             this.right.equals(pairo.getRight());
+    }
+  }
+
+  class MyKey {
+      public Integer k1;
+      public Integer k2;
+
+      public MyKey(Integer k1, Integer k2) {
+          this.k1 = k1;
+          this.k2 = k2;
+      }
+
+      @Override
+      public int hashCode() {
+          return k1.hashCode() + 17 * k2.hashCode();
+      }
+
+      @Override
+      public boolean equals(Object o) {
+          if (o == this) {
+              return true;
+          }
+          if (o == null || !(o instanceof MyKey)) {
+              return false;
+          }
+          MyKey cp = MyKey.class.cast(o);
+          return k1.equals(cp.k1) && k2.equals(cp.k2);
+      }
+  }
+
+  class MyString  {
+      private String value;
+
+      public MyString(Integer k1, Integer k2) {
+          value=k1+"-"+k2;
+      }
+
+      @Override
+      public int hashCode() {
+          return value.hashCode();
+      }
+
+      @Override
+      public boolean equals(Object o) {
+          return o.equals(value);
+      }
+  }
+</code></pre>

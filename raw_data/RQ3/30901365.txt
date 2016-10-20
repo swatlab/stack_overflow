@@ -1,0 +1,435 @@
+<p>I am getting the following error: no such table: categories (code 1): , while compiling: SELECT  * FROM categories.</p>
+
+<p>I have an activity, SplashActivity which loads a second activity Category. On the Category Activity, I am loading a spinner with data from a table [categories] in the database. When the user selects an item on the spinner and it should load a QuestionsActivity which shows questions from the database based on the selection on the spinner.</p>
+
+<p>The database is being copied from the Assets folder. It was working and then suddenly the error started popping up when I put the code to load the Question activity on the 'play' button. I have uninstalled the application from my phone to wipe of the data and reloading still gives the same error.</p>
+
+<p>I have looked <a href="http://stackoverflow.com/questions/27873626/unable-to-start-activity-android-database-sqlite-sqliteexception-no-such-table">here</a> and <a href="http://stackoverflow.com/questions/18570005/no-such-table-when-i-add-a-new-table">here</a>, still no luck getting it to work. </p>
+
+<hr>
+
+<p>This is my logcat</p>
+
+<pre><code>06-17 21:15:16.610  16854-16854/zw.co.pindula.funsa E/SQLiteLog﹕ (1) no such table: categories
+06-17 21:15:16.624  16854-16854/zw.co.pindula.funsa E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    Process: zw.co.pindula.funsa, PID: 16854
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{zw.co.pindula.funsa/zw.co.pindula.funsa.util.Category}: android.database.sqlite.SQLiteException: no such table: categories (code 1): , while compiling: SELECT  * FROM categories
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2325)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2387)
+            at android.app.ActivityThread.access$800(ActivityThread.java:151)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1303)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5254)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:903)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:698)
+     Caused by: android.database.sqlite.SQLiteException: no such table: categories (code 1): , while compiling: SELECT  * FROM categories
+            at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+            at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+            at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+            at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+            at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+            at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+            at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+            at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1316)
+            at android.database.sqlite.SQLiteDatabase.rawQuery(SQLiteDatabase.java:1255)
+            at zw.co.pindula.funsa.db.DBHelper.getAllCategories(DBHelper.java:168)
+            at zw.co.pindula.funsa.util.Category.loadCategoryData(Category.java:70)
+            at zw.co.pindula.funsa.util.Category.onCreate(Category.java:37)
+            at android.app.Activity.performCreate(Activity.java:5990)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1106)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2278)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2387)
+            at android.app.ActivityThread.access$800(ActivityThread.java:151)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1303)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5254)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:903)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:698)
+</code></pre>
+
+<p>This is my DBHelper Class</p>
+
+<pre><code>package zw.co.pindula.funsa.db;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import zw.co.pindula.funsa.quiz.Question;
+
+/**
+ * Created by NKT on 03/06/2015.
+ */
+public class DBHelper extends SQLiteOpenHelper{
+    private static String DB_PATH;// =  "/data/data/zw.co.pindula.funsa/databases/";
+    // Database Version
+    private static final int DATABASE_VERSION = 1;
+    private static String DB_NAME = "questionsDb";
+
+    //Category Table name
+    private static final String TABLE_CATEGORY = "categories";
+
+    private final Context myContext;
+    //private static String DB_PATH= Context.getDatabasePath(DB_NAME).getPath();
+    private SQLiteDatabase myDataBase;
+
+
+    public DBHelper(Context context) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
+        this.myContext = context;
+        DB_PATH = myContext.getDatabasePath(DB_NAME).getPath();
+    }
+
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+        if(!dbExist)
+        {
+            //By calling this method an empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    private boolean checkDataBase(){
+        /*
+        SQLiteDatabase checkDB = null;
+        try{
+            String myPath = DB_PATH;// + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+            //database doesn't exist yet.
+        }
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+        */
+        //New checkDataBase method
+        boolean checkdb = false;
+        try{
+            String myPath = myContext.getFilesDir().getAbsolutePath().replace("files", "databases")+ File.separator + DB_NAME;
+            File dbfile = new File(myPath);
+            checkdb = dbfile.exists();
+        }
+        catch(SQLiteException e){
+            System.out.println("Database doesn't exist");
+        }
+
+        return checkdb;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH;// + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+        //Open the database
+        String myPath = DB_PATH;// + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Drop older table if existed, all data will be gone
+        //db.execSQL("DROP D IF EXISTS " + TABLE);
+
+        // Create tables again
+        //onCreate(db);
+    }
+
+    public List<Question> getQuestionSet(int difficulty, int numQ){
+        List<Question> questionSet = new ArrayList<Question>();
+        Cursor c = myDataBase.rawQuery("SELECT * FROM QUESTIONS WHERE DIFFICULTY=" + difficulty +
+                " ORDER BY RANDOM() LIMIT " + numQ, null);
+        while (c.moveToNext()){
+            //Log.d("QUESTION", "Question Found in DB: " + c.getString(1));
+            Question q = new Question();
+            q.setQuestion(c.getString(1));
+            q.setAnswer(c.getString(2));
+            q.setOption1(c.getString(3));
+            q.setOption2(c.getString(4));
+            q.setOption3(c.getString(5));
+            q.setRating(difficulty);
+            questionSet.add(q);
+        }
+        return questionSet;
+    }
+
+    /**
+     * Getting and return all the Categories
+     * */
+    public List<String> getAllCategories(){
+        List<String> myCategories = new ArrayList<String>();
+
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_CATEGORY;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                myCategories.add(cursor.getString(1));
+            } while (cursor.moveToNext());
+        }
+
+        // closing connection
+        cursor.close();
+        db.close();
+
+        // returning categories
+        return myCategories;
+    }
+/*
+ * This method sets the questions using the categories
+ */
+    public List<Question> getQuestionSetCategories(String cat, int difficulty, int numQ){
+        List<Question> questionSet = new ArrayList<Question>();
+        Cursor c = myDataBase.rawQuery("SELECT * FROM QUESTIONS WHERE CATEGORY=" + cat +
+                " ORDER BY RANDOM() LIMIT " + numQ, null);
+        while (c.moveToNext()){
+            //Log.d("QUESTION", "Question Found in DB: " + c.getString(1));
+            Question q = new Question();
+            q.setQuestion(c.getString(1));
+            q.setAnswer(c.getString(2));
+            q.setOption1(c.getString(3));
+            q.setOption2(c.getString(4));
+            q.setOption3(c.getString(5));
+            q.setRating(difficulty);
+            questionSet.add(q);
+        }
+        return questionSet;
+    }
+}
+</code></pre>
+
+<p>This is the Category Activity</p>
+
+<pre><code>package zw.co.pindula.funsa.util;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.SQLException;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.util.List;
+
+import zw.co.pindula.funsa.R;
+import zw.co.pindula.funsa.db.DBHelper;
+import zw.co.pindula.funsa.quiz.Constants;
+import zw.co.pindula.funsa.quiz.GamePlay;
+import zw.co.pindula.funsa.quiz.Question;
+
+public class Category extends Activity implements AdapterView.OnItemSelectedListener {
+
+    Spinner spinner;
+    String theCategory; //This is the String to hold the selected category
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_category);
+
+        spinner = (Spinner)findViewById(R.id.mySpinner);
+
+        loadCategoryData();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_category, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+         * Function to load the spinner data from SQLite database
+         * */
+        private void loadCategoryData() {
+            // database handler
+            DBHelper db = new DBHelper(getApplicationContext());
+
+            // Spinner Drop down elements
+            List<String> lables = db.getAllCategories();
+
+            // Creating adapter for spinner
+            ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this,
+                    android.R.layout.simple_spinner_item, lables);
+
+            // Drop down layout style - list view with radio button
+            //dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            dataAdapter.setDropDownViewResource(android.R.layout.simple_list_item_single_choice);
+
+            // attaching data adapter to spinner
+            spinner.setAdapter(dataAdapter);
+        }
+
+    public void startGame(View view){
+
+
+        Spinner spinner = (Spinner)findViewById(R.id.mySpinner);
+        theCategory = spinner.getSelectedItem().toString();
+
+
+        if(theCategory==null){
+            Toast.makeText(this, "You didn't select anything: ",
+                    Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            Intent i;
+
+            List<Question> questions = getQuestionSetFromDb();
+
+            //Initialise Game with retrieved question set ///
+            GamePlay c = new GamePlay();
+            c.setQuestions(questions);
+            c.setNumRounds(getNumQuestions());
+            ((FunsaApplication)getApplication()).setCurrentGame(c);
+
+            //Start Game Now.. //
+            i = new Intent(this, QuestionActivity.class);
+            startActivityForResult(i, Constants.PLAYBUTTON);
+            //break;
+        }
+
+    }
+    private List<Question> getQuestionSetFromDb() throws Error {
+        int diff = getDifficultySettings();
+        int numQuestions = getNumQuestions();
+        DBHelper myDbHelper = new DBHelper(this);
+        try {
+            myDbHelper.createDataBase();
+        } catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+        try {
+            myDbHelper.openDataBase();
+        }catch(SQLException sqle){
+            throw sqle;
+        }
+        List<Question> questions = myDbHelper.getQuestionSetCategories(theCategory, diff, numQuestions);
+        myDbHelper.close();
+        return questions;
+    }
+
+    /**
+     * Method to return the difficulty settings
+     * @return
+     */
+    private int getDifficultySettings() {
+        SharedPreferences settings = getSharedPreferences(Constants.SETTINGS, 0);
+        int diff = settings.getInt(Constants.DIFFICULTY, Constants.MEDIUM);
+        return diff;
+    }
+
+    /**
+     * Method to return the number of questions for the game
+     * @return
+     */
+    private int getNumQuestions() {
+        SharedPreferences settings = getSharedPreferences(Constants.SETTINGS, 0);
+        int numRounds = settings.getInt(Constants.NUM_ROUNDS, 2); //This sets the number of rounds
+        return numRounds;
+    }
+
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        String selection =adapterView.getItemAtPosition(i).toString();//.getItemAtPosition(i).toString();
+
+        theCategory = selection;
+        // Showing selected spinner item
+        Toast.makeText(adapterView.getContext(), "You selected: " + selection,
+                Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
+}
+</code></pre>

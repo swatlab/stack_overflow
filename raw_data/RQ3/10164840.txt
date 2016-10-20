@@ -1,0 +1,79 @@
+<p>I have a POJO that contains <code>hashcode()</code> and <code>equals()</code> method that I have overridden , but my query is that what about If i make <code>hashcode()</code> method  comment then in collection lets say in a hashmap when I am storing the user defined objects then what impact would it have...and another thing is that if I make equals method as a comment then what Impact would it have If I try to enter duplicate records will it store duplicate records twice!</p>
+
+<pre><code>public class Employee {
+
+ String name,job;
+ int salary;
+
+ public Employee(String n , String j, int t )
+ {
+     this.name= n;
+     this.job=j;
+     this.salary= t;         
+ }
+
+/* @Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((job == null) ? 0 : job.hashCode());
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + salary;
+    return result;
+}*/
+
+ /*@Override
+public boolean equals(Object obj) {
+    if (this == obj)
+        return true;
+    if (obj == null)
+        return false;
+    if (getClass() != obj.getClass())
+        return false;
+    Employee other = (Employee) obj;
+    if (job == null) {
+        if (other.job != null)
+            return false;
+    } else if (!job.equals(other.job))
+        return false;
+    if (name == null) {
+        if (other.name != null)
+            return false;
+    } else if (!name.equals(other.name))
+        return false;
+    if (salary != other.salary)
+        return false;
+    return true;
+}
+ */
+
+ @Override
+ public int hashCode()
+     {       
+     return name.hashCode()+job.hashCode()+salary;       
+
+ }
+
+ @Override
+    public boolean equals(Object obj) {  
+     if (this == obj)  
+    {  
+        return true;   
+    }  
+    // make sure o can be cast to this class  
+    if (obj == null || obj.getClass() != getClass())  
+    {  
+        // cannot cast  
+        return false;  
+    }           
+
+     Employee e = (Employee) obj;   
+     return this.name.equals(e.name)&&this.job.equals(e.job)&&this.salary==e.salary;
+ }
+
+ @Override
+ public String toString() {
+        return name+"\t" +"\t"+  job +"\t"+ salary;
+    }
+}
+</code></pre>

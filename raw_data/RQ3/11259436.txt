@@ -1,0 +1,147 @@
+<p>I am making an Android application using custom views. I have done this many times before but this time I seem to have encountered a weird issue.</p>
+
+<p>When attempting to make the layout, either through XML or the layout editor, my custom view does not layout as expected. When I place one of my views to the right of an existing one, it appears to align to the left. I have attached an image to show what I mean
+<img src="http://i.stack.imgur.com/IiMqH.png" alt="Layout Issue"></p>
+
+<p>I'm not certain what is causing this, it doesn't appear to happen with any other view, and has never happened before with previous applications despite me using similar code for the custom view.</p>
+
+<p>Has anyone encountered an issue like this before? If so, any suggestions?</p>
+
+<p>I can put up the code for the view and other potentially relevant code if requested.</p>
+
+<p>EDIT - Alright, coding as requested, hopefully it doesn't offend anyone too much.</p>
+
+<p>XML:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/relativeLayout"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent" >
+
+<com.offthemap.sudokusolver.SudokuButton
+    android:id="@+id/sudokuButton2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_centerHorizontal="true" />
+
+<com.offthemap.sudokusolver.SudokuButton
+    android:id="@+id/sudokuButton1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_toRightOf="@+id/sudokuButton2" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>Custom View:</p>
+
+<pre><code>package com.offthemap.sudokusolver;
+
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.util.AttributeSet;
+import android.view.View;
+
+public class SudokuButton extends View 
+{
+private static Bitmap background, border, borderSelected;
+private static Bitmap[] number;
+private static int size = 100;
+private int numberIndex = -1;
+
+public SudokuButton(Context context, AttributeSet attrs) 
+{
+    super(context);
+    Resources res = getResources();
+    if (background == null){background = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.background), size, size, false);}
+    if (border == null){border = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.border), size, size, false);}
+    if (borderSelected == null){borderSelected = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.borderselected), size, size, false);}
+    if (number == null)
+    {
+        number = new Bitmap[]{
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.one), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.two), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.three), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.four), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.five), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.six), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.seven), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.eight), size, size, false),
+                Bitmap.createScaledBitmap(BitmapFactory.decodeResource(res, R.drawable.nine), size, size, false)
+                };
+        }
+}
+
+public void increaseNumber()
+{
+    numberIndex++;
+    if (numberIndex == 9){numberIndex = -1;}
+    invalidate();
+}
+
+public void setNumber(int newNumber)
+{
+    numberIndex = newNumber;
+}
+
+public static void setSize(int newSize)
+{
+    size = newSize;
+}
+
+protected void onDraw(Canvas canvas)
+{
+    canvas.drawBitmap(background, 0, 0, null);
+    if (numberIndex != -1)
+    {
+        canvas.drawBitmap(number[numberIndex], 0, 0, null);
+    }
+    canvas.drawBitmap(border, 0, 0, null);
+}
+
+@Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) 
+ {
+    setMeasuredDimension(measureWidth(widthMeasureSpec),    measureHeight(heightMeasureSpec));
+ }
+
+private int measureWidth(int measureSpec)
+{
+    int preferred = background.getWidth();
+    return getMeasurement(measureSpec, preferred);
+    }
+
+private int measureHeight(int measureSpec)
+{
+  int preferred = background.getHeight();
+  return getMeasurement(measureSpec, preferred);
+}
+
+private int getMeasurement(int measureSpec, int preferred)
+{
+    int specSize = MeasureSpec.getSize(measureSpec);
+    int measurement = 0;
+
+    switch(MeasureSpec.getMode(measureSpec))
+  {
+    case MeasureSpec.EXACTLY:
+        measurement = specSize;
+        break;
+    case MeasureSpec.AT_MOST:
+        measurement = Math.min(preferred, specSize);
+        break;
+    default:
+        measurement = preferred;
+        break;
+  }
+    return measurement;
+}
+}
+</code></pre>
+
+<p>SECOND EDIT - Appears it was just an issue with using static bitmaps, not sure why it was happening but removing it seemed to fix it.</p>

@@ -1,0 +1,135 @@
+<p>I am right now trying to create a bar-chart in android using achartengine,hopefully i have created it,but here the problem is the bars which i have created are displaying too nearer with each bars, i need to show those bars with the below orders(ord1,ord2 etc,..) which are all on the x-axis?</p>
+
+<p>Can any one please let me know the solution to over come this issue?</p>
+
+<p>The following image will make clear,please find it</p>
+
+<p><img src="http://i.stack.imgur.com/tf2DA.jpg" alt="enter image description here"></p>
+
+<p>Please find my sources for reference</p>
+
+<p><strong>BarActivity.java</strong></p>
+
+<pre><code> public class BarActivity extends Activity 
+ { 
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    Intent intent = createIntent();
+    startActivity(intent);
+}
+
+
+ public Intent createIntent() 
+
+ {
+
+String[] titles = new String[] { "Order's profit of the year", " " };
+List<double[]> values = new ArrayList<double[]>();
+values.add(new double[] { 29, 83, 47, 33 });
+values.add(new double[] {});
+
+int[] colors = new int[] { Color.WHITE, Color.BLACK};
+
+XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+renderer.setOrientation(Orientation.HORIZONTAL);
+
+setChartSettings(renderer, "Profit for the year 2012", " ", " ", 0,100, 0,100, Color.GRAY, Color.LTGRAY);
+
+renderer.setXLabels(1);
+renderer.setYLabels(10);
+
+renderer.addXTextLabel(10.75, "ord1");
+renderer.addXTextLabel(20.75, "ord2");
+renderer.addXTextLabel(30.75, "ord3");
+renderer.addXTextLabel(40.75, "ord4");
+
+int length = renderer.getSeriesRendererCount();
+for (int i = 0; i < length; i++) 
+{
+  SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+  seriesRenderer.setDisplayChartValues(true);
+  }
+
+return ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+}
+
+protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+{
+
+// creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+    XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+    renderer.setAxisTitleTextSize(16);
+
+    renderer.setChartTitleTextSize(20);
+
+    renderer.setLabelsTextSize(15);
+
+    renderer.setLegendTextSize(15);
+
+    int length = colors.length;
+
+    for (int i = 0; i < length; i++) 
+    {
+      SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+      r.setColor(colors[i]);
+      renderer.addSeriesRenderer(r);
+    }
+    return renderer;
+  }
+
+   protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+   String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,int labelsColor) 
+  {
+
+  // sets lots of default values for this renderer
+
+   renderer.setChartTitle(title);
+
+   renderer.setXTitle(xTitle);
+   renderer.setYTitle(yTitle);
+
+   renderer.setXAxisMin(xMin);
+   renderer.setXAxisMax(xMax);
+
+   renderer.setYAxisMin(yMin);
+   renderer.setYAxisMax(yMax);
+
+   renderer.setAxesColor(axesColor);
+   renderer.setLabelsColor(labelsColor);
+
+   renderer.setApplyBackgroundColor(true);
+   renderer.setBackgroundColor(Color.BLACK);
+
+}
+
+protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) 
+{
+
+    // adds the axis titles and values into the dataset
+
+    XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+    int length = titles.length;
+
+    for (int i = 0; i < length; i++) 
+    {
+      CategorySeries series = new CategorySeries(titles[i]);
+      double[] v = values.get(i);
+      int seriesLength = v.length;
+      for (int k = 0; k < seriesLength; k++) 
+      {
+        series.add(v[k]);
+      }
+
+      dataset.addSeries(series.toXYSeries());
+     }
+    return dataset;
+    }
+  }
+</code></pre>
+
+<p>Thanks for your precious time!..</p>

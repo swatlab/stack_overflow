@@ -1,0 +1,68 @@
+<p>I got an error while setting adapter, i only have one folder for layouts
+and to tabs fragments on activity_main , i have searched in many websites but no results. Please help! </p>
+
+<pre><code>    @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    context = this;
+    mTitle = getTitle();
+    navMenuTitle = getResources().getStringArray(R.array.titles);
+
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter); //Null Pointer Exception
+
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+            getSupportActionBar().setTitle(navMenuTitle[position]);
+        }
+    });
+</code></pre>
+
+<p>this is the SectionAdapter </p>
+
+<pre><code>    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class below).
+        switch(position){
+        case 0:
+        return MainGenFragment.newInstance(position + 1);
+        case 1:
+            return new FragmentMyPwd();
+        }
+        return null;
+
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages. Now Changed to 2.
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            //case 2:
+                //return getString(R.string.title_section3).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>

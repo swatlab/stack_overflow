@@ -1,0 +1,81 @@
+<p>I am developing one demo application in which I am playing so many images(Bitmaps). I am using Global Bitmap object for display same image in to more than one Activity. But using that I am geting OutOfMemoryError while I am trying to create Bitmap using Bitmap.createBitmap(...). I tried using <a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html#load-bitmap" rel="nofollow">this code</a> but still I am getting same error and it is crashing my application and through the OutOfMemoryError.</p>
+
+<p>I am stuck on this. Can anyone has any solution to avoid this.??</p>
+
+<p>Thanks in advance.</p>
+
+<p><strong>I am getting bitmap after cropping the image so that I am using below code for decode the bitmap size.</strong></p>
+
+<pre><code>public static Bitmap loadFromBitmap( Context context, Bitmap b, int maxW, int maxH ) throws IOException {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        Bitmap bitmap = null;
+        options.inScaled = false;
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
+        options.inJustDecodeBounds = true;
+        BufferedInputStream stream = null;
+        ByteArrayOutputStream outstream = new ByteArrayOutputStream();
+        b.compress(CompressFormat.JPEG, 100, outstream);
+        InputStream is = new java.io.ByteArrayInputStream(outstream.toByteArray());
+
+        stream = new BufferedInputStream(is, 16384 );
+        if ( stream != null ) {
+            options.inSampleSize = calculateInSampleSize( options, maxW, maxH );
+            stream = null;
+            stream = new BufferedInputStream(is, 16384 );
+        } else {
+            return null;
+        }
+        options.inDither = false;
+        options.inJustDecodeBounds = false;
+        options.inPurgeable = true;
+        bitmap = BitmapFactory.decodeStream( stream, null, options );
+        if ( bitmap != null ) bitmap = BitmapUtils.resizeBitmap( bitmap, maxW, maxH );
+        return bitmap;
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+</code></pre>
+
+<p>Error:</p>
+
+<pre><code>02-21 15:32:31.160: E/AndroidRuntime(2951): FATAL EXCEPTION: main
+02-21 15:32:31.160: E/AndroidRuntime(2951): java.lang.OutOfMemoryError
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.graphics.BitmapFactory.nativeDecodeAsset(Native Method)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:483)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:351)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.graphics.BitmapFactory.decodeResource(BitmapFactory.java:374)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.graphics.BitmapFactory.decodeResource(BitmapFactory.java:404)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.Activity.performCreate(Activity.java:4465)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1092)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1924)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1985)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.ActivityThread.access$600(ActivityThread.java:127)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1151)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.os.Handler.dispatchMessage(Handler.java:99)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.os.Looper.loop(Looper.java:137)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at android.app.ActivityThread.main(ActivityThread.java:4447)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at java.lang.reflect.Method.invokeNative(Native Method)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at java.lang.reflect.Method.invoke(Method.java:511)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+02-21 15:32:31.160: E/AndroidRuntime(2951):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

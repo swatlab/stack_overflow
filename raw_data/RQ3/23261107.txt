@@ -1,0 +1,274 @@
+<p>Am developing an android application, where i need to store the received incoming message in sqlite database. I need to store the particular message format in database. now my application is receiving particular message format but i need to push those messages to database. Please help me solve this problem. Thanks in advance.</p>
+
+<p>mainactivity.java:</p>
+
+<pre><code>public class SecureMessagesActivity extends Activity implements OnClickListener, OnItemClickListener
+{
+    Button btnSent, btninbox, btndraft;
+    TextView tv_msg, tv_no;
+    ListView lvmsg;
+    SmsReceiver sms;
+    public void onCreate(Bundle savedInstanceState) 
+    {
+        super.onCreate(savedInstanceState);
+
+        //setTheme( android.R.style.Theme_Light );
+        setContentView(R.layout.main);
+
+        btninbox = (Button) findViewById(R.id.btnInbox );
+        btninbox.setOnClickListener(this);
+
+        lvmsg = (ListView) findViewById(R.id.lvMsg);
+    }
+ArrayList<String> sms1 = new ArrayList<String>();
+
+
+    public void onItemClick( AdapterView<?> parent, View view, int pos, long id ) 
+    {
+        try 
+        {
+            //Retriving Lat Lan from msg body
+                String[] splitted = sms1.get( pos ).split("\n"); 
+            String sender = splitted[0];
+
+            String data= splitted[1];
+            String[] latval=data.split(":");
+            String lat=latval[1];//Lat Value 
+
+            String data1 = splitted[2];
+            String[] lanval=data1.split(":");
+            String lan=lanval[1];//Lan Value
+
+            Toast.makeText( this, lat, Toast.LENGTH_SHORT ).show();
+            Toast.makeText( this, lan, Toast.LENGTH_SHORT ).show();
+        } 
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void onClick( View v ) 
+    {
+
+        ContentResolver contentResolver = getContentResolver();
+        Cursor cursor = contentResolver.query( Uri.parse( "content://sms/inbox" ), null, null, null, null);
+        //Cursor cursor = contentResolver.query(Uri.parse("content://sms/inbox"),new String[]{phoneLookUp.DISPLAY_NAME}, condition, null, null, null);
+        int indexBody = cursor.getColumnIndex( SmsReceiver.BODY );
+        int indexAddr = cursor.getColumnIndex( SmsReceiver.ADDRESS );
+        //int indexDate = cursor.getColumnIndex( SmsReceiver.DATE );
+
+        if ( indexBody < 0 || !cursor.moveToFirst() ) return;
+
+        sms1.clear();
+        while( cursor.moveToNext() ){
+        String str = getContactName(getApplicationContext(),cursor.getString(cursor.getColumnIndex(SmsReceiver.ADDRESS)))+":"
+                    + cursor.getString( indexAddr ) + "\n" 
+                    + cursor.getString( indexBody );
+
+        if(str.startsWith("Lat:")|| str.contains("Lat:"))
+        {
+             sms1.add( str );   
+        }
+
+
+
+
+
+
+
+        ListView smsListView = (ListView) findViewById( R.id.lvMsg );
+        smsListView.setAdapter( new ArrayAdapter<String>( this, android.R.layout.simple_list_item_1, sms1) );
+        smsListView.setOnItemClickListener( this );
+        }
+        }   
+public String getContactName(Context context, String phoneNumber) {
+        ContentResolver cr = context.getContentResolver();
+        Uri uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI,
+                Uri.encode(phoneNumber));
+        Cursor cursor = cr.query(uri,
+                new String[] { PhoneLookup.DISPLAY_NAME }, null, null, null);
+        if (cursor == null) {
+            return null;
+        }
+        String contactName = null;
+        if (cursor.moveToFirst()) {
+            contactName = cursor.getString(cursor
+                    .getColumnIndex(PhoneLookup.DISPLAY_NAME));
+        }
+        if (cursor != null && !cursor.isClosed()) {
+            cursor.close();
+        }
+        return contactName;
+    }
+
+}
+</code></pre>
+
+<p>smsreciver.java:</p>
+
+<pre><code>public class SmsReceiver extends BroadcastReceiver 
+{
+
+
+    public static final String SMS_EXTRA_NAME = "pdus";
+    public static final String SMS_URI = "content://sms";
+
+    public static final String ADDRESS = "address";
+    public static final String PERSON = "person";
+    public static final String DATE = "date";
+    public static final String READ = "read";
+    public static final String STATUS = "status";
+    public static final String TYPE = "type";
+    public static final String BODY = "body";
+    public static final String SEEN = "seen";
+    public static final int MESSAGE_TYPE_INBOX = 1;
+    public static final int MESSAGE_TYPE_SENT = 2;
+
+    public static final int MESSAGE_IS_NOT_READ = 0;
+    public static final int MESSAGE_IS_READ = 1;
+
+    public static final int MESSAGE_IS_NOT_SEEN = 0;
+    public static final int MESSAGE_IS_SEEN = 1;
+
+    // Change the password here or give a user possibility to change it
+   // public static final byte[] PASSWORD = new byte[]{ 0x20, 0x32, 0x34, 0x47, (byte) 0x84, 0x33, 0x58 };
+    @Override
+    public void onReceive( Context context, Intent intent ) 
+    {
+        Bundle bundle = intent.getExtras();
+        SmsMessage[] msgs = null;
+        String messages = "";
+        if (bundle != null)
+        {
+        //—retrieve the SMS message received—
+        Object[] smsExtra = (Object[]) bundle.get("pdus");
+        msgs = new SmsMessage[smsExtra.length];
+
+        for (int i=0; i<msgs.length; i++)
+        {
+        SmsMessage sms = SmsMessage.createFromPdu((byte[])smsExtra[i]);
+        //take out content from sms
+
+        if(sms.getMessageBody().contains("Lat:"))
+        {
+        String body = sms.getMessageBody().toString();
+        String address = sms.getOriginatingAddress();
+        messages += "SMS from" + address + ":\n";
+        messages += body + "\n";
+        //—display the new SMS message—
+        Toast.makeText(context, messages, Toast.LENGTH_SHORT).show();
+        //MessageBody();
+        putSmsToDatabase(sms, context );
+        abortBroadcast();
+        }
+        }
+        }
+
+    }
+
+
+private void putSmsToDatabase( SmsMessage sms, Context context )
+{
+DataBaseHelper dataBaseHelper = new DataBaseHelper(context);
+
+SQLiteDatabase db = dataBaseHelper.getWritableDatabase();
+
+String mydate = java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime());
+// Create SMS row
+ContentValues values = new ContentValues();
+
+values.put(ADDRESS, sms.getOriginatingAddress().toString() );
+values.put(DATE, mydate);
+values.put(BODY, sms.getMessageBody().toString());
+ //values.put( READ, MESSAGE_IS_NOT_READ );
+ //values.put( STATUS, sms.getStatus() );
+ //values.put( TYPE, MESSAGE_TYPE_INBOX );
+ //values.put( SEEN, MESSAGE_IS_NOT_SEEN );
+
+db.insert(SMS_URI, null, values);
+
+db.close();
+
+}
+}
+</code></pre>
+
+<p>databasehelper.java:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+    //private static String DB_PATH = Environment.getExternalStorageDirectory().toString()+"/My Files/storage/sdcard0/Android/data/org.secure.sms/database";
+
+    //public static final String SMS_URI = "/data/data/org.secure.sms/databases/";
+    public static final String  DATABASE_FILE_PATH= Environment.getExternalStorageDirectory().toString()+"/data/data/org.secure.sms/databases/";
+//  SQLiteDatabase.openDatabase("/sdcard/sms.db", SQLiteDatabase.OPEN_READONLY);
+      //public static final String  DATABASE_NAME      = "mydb"; 
+    public static final String db_name = "sms.db";
+    public static final int version =1;
+    public DB_Path dbp= new DB_Path();
+    public SQLiteDatabase db=dbp.getOrders();
+    Cursor cur=db.rawQuery("select * from datatable", null);
+    Context context;
+    public DataBaseHelper(Context context) {
+    super(context, db_name, null, version);
+    // TODO Auto-generated constructor stub
+    this.context =context;
+    }
+
+    //@Override
+    public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+    db.execSQL("create table datatable(address varchar(10), body varchar(30))");
+    Toast.makeText(context, "database created", Toast.LENGTH_LONG).show();
+    Log.i("dbcreate", "DATABASE HAS CREATED");
+    }
+
+    public boolean checkDataBase(String db) {
+
+    SQLiteDatabase checkDB = null;
+
+    try {
+    String myPath = "data/data/"+ context.getPackageName() +"/databases/sms.db" + db;
+    checkDB = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+
+    } catch (SQLiteException e) {
+
+    // database does’t exist yet.
+
+    } catch (Exception e) {
+
+    }
+
+    if (checkDB != null) {
+
+    checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+    }
+
+@Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+    if (oldVersion >= newVersion)
+    return;
+
+    if (oldVersion == 1) 
+    {
+    Log.d("New Version", "Datas can be upgraded");
+    }
+
+    Log.d("Sample Data", "onUpgrade : " + newVersion);
+    }
+public class DB_Path{
+    public final SQLiteDatabase getOrders(){
+        File dbfile=new File("/sdcard/TheDataBaseFile");
+        SQLiteDatabase db=SQLiteDatabase.openOrCreateDatabase(dbfile, null);
+        return db;
+    }
+}
+
+    }
+</code></pre>

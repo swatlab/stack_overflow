@@ -1,0 +1,251 @@
+<p><strong><em>EDIT</em></strong> Added <code>MyActivity.java</code> (i.e., main activity) at bottom
+<strong><em>EDIT2</em></strong> Added lines to <code>MyActivity.java</code> (this solved the problem)</p>
+
+<p>I have preferences set up but have no way to access them. No matter what <code>style</code> I pick in xml and no matter what virtual device or style I pick in Android Studio (AS) 1.1.0, the screen lacks the 3 dots shown below. Not even the pulldown styles that include <code>LightActionBar</code> and <code>DarkActionBar</code> show the dots. </p>
+
+<p><img src="http://i.stack.imgur.com/49pkQ.png" alt="enter image description here"></p>
+
+<p>In xml, I've tried <code><style name="AppBaseTheme" parent="android:Holo.ButtonBar"></code>, which finally worked last night (was having same problem) on a small app, and also, for <code>parent</code>, I tried <code>Base.Theme.AppCompat.Light.DarkActionBar</code> and other things.</p>
+
+<p>I don't so much care if I see the 3 dots; just ANYTHING to expose the preferences screen.</p>
+
+<p>I've also tried <code>never</code>, <code>ifroom</code>, and <code>always</code> for <code>showAsAction</code>:</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+            tools:context=".MyActivity">
+
+<item android:id="@+id/itemFocus"
+      android:title="@string/focusAtClue"
+      android:orderInCategory="200"
+      app:showAsAction="never"/>
+</code></pre>
+
+<p>Here's <code>preferences.xml</code>:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        >
+        <CheckBoxPreference
+            android:key="@string/focusAfterShow"
+            android:title="@string/focusAfterShow"
+            android:summary="Always place the cursor at the 'clue' (sum) after tapping 'Show'."
+            android:defaultValue="true"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory
+        >
+        <CheckBoxPreference
+            android:key="@string/screenSaver"
+            android:title="@string/screenSaver"
+
+            android:summary="Keep screen on at all times while running this app."
+            android:defaultValue="true"
+            />
+    </PreferenceCategory>
+
+</PreferenceScreen>
+</code></pre>
+
+<p>Here's <code>SettingsFragment.java</code>:</p>
+
+<pre><code>import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.os.Bundle;
+import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
+public class SettingsFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener {
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    addPreferencesFromResource(R.xml.preferences);
+  }
+  @Override
+  public void onResume() {
+    super.onResume();
+    getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+  }
+  @Override
+  public void onPause() {
+    super.onPause();
+    getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+  }
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    if (key.equalsIgnoreCase("pie_type")){
+      Log.w("Settings", sharedPref.getString(key, ""));
+    }
+  }
+}
+</code></pre>
+
+<p>And <code>SettingsActivity.java</code>:</p>
+
+<pre><code>    import android.app.Activity;
+    import android.os.Bundle;
+
+public class SettingsActivity extends Activity {
+  public static final String SETTINGS = "com.whatever.kakurocombosbuildvariants.settings";
+  public static final String FIRST_USE = "com.whateverkakurocombosbuildvariants.firstUse";
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_settings);
+  }
+
+}
+</code></pre>
+
+<p>Here's where <code>SettingsActivity</code> is invoked in <code>MyActivity.java</code>:</p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item)
+  {
+    switch (item.getItemId()) {
+      case R.id.menu_settings:
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+
+        return true;
+
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
+</code></pre>
+
+<p><code>MyActivity.java</code> (main activity; 300 LINES OF EXTRANEOUS CODE DELETED)</p>
+
+<pre><code>public class MyActivity extends Activity {
+
+  public final String
+      prefix = "com.XXXX.kakurocombosbuildvariants"
+      , SETTINGS =        prefix + ".settings"
+      , FIRST_USE =       prefix + ".firstUse"
+      , FOCUS_AT_CLUE =   prefix + ".focusAtClue"
+      , SCREENSAVER =     prefix + ".screensaver"
+      , literally_Focus_At_Clue = "Focus at clue"
+      , literally_Screen_saver  = "Screen saver"
+      ;
+  public boolean firstUse;
+
+  SharedPreferences preferences;
+  SharedPreferences.Editor editor;
+
+  boolean screenSaver;//= false;
+  boolean focusAtClue ;//= true;
+
+  AlertDialog alertDialog;
+
+  private void makeActionOverflowMenuShown() {
+    //devices with hardware menu button (e.g. Samsung Note) don't show action overflow menu
+    try {
+      ViewConfiguration config = ViewConfiguration.get(this);
+      Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+      if (menuKeyField != null) {
+        menuKeyField.setAccessible(true);
+        menuKeyField.setBoolean(config, false);
+      }
+    } catch (Exception e) {
+      popupMessage("Problem making actionbar overflow");
+    }
+  }
+
+  void showKeypad(){
+    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+  }
+
+  public static boolean isTablet(Context ctx){
+    return (ctx.getResources().getConfiguration().screenLayout
+        & Configuration.SCREENLAYOUT_SIZE_MASK
+    )
+        >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+  }
+
+  @Override public boolean onPrepareOptionsMenu(Menu menu)
+  {
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item)
+  {
+    switch (item.getItemId()) {
+      case R.id.menu_settings:
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+
+        return true;
+
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
+
+  private void setScreensaver()
+  {
+    if( ! screenSaver) getWindow().addFlags  (WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    else               getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+  }
+
+  @Override protected void
+  onCreate(Bundle savedInstanceState) // ************************** ON CREATE **********
+  {
+    super.onCreate(savedInstanceState);
+
+/////////////////////////// EDIT2 ///////////////////////////////////////    
+
+    getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
+    getWindow().setFormat(Window.FEATURE_ACTION_BAR);
+
+/////////////////////////// EDIT2 ///////////////////////////////////////    
+
+    if(! FREE) setContentView(R.layout.activity_my);
+    else       setContentView(R.layout.activity_free);
+
+    SharedPreferences preferences = getSharedPreferences(SETTINGS, MODE_PRIVATE);
+
+    firstUse = preferences.getBoolean(FIRST_USE, true);
+    if(firstUse){
+      Toast.makeText(getApplicationContext(), "Welcome to Kakuro Combos", Toast.LENGTH_SHORT).show();
+      editor = preferences.edit();
+      editor.putBoolean(FIRST_USE, false);
+      editor.commit();
+    }
+
+    alertDialog = new AlertDialog.Builder(this).create();
+    alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "OK",
+                          new DialogInterface.OnClickListener() { public void
+                                                                  onClick(DialogInterface dialog, int which)
+                          {
+                            dialog.dismiss();
+                          }});
+    showKeypad();
+
+    makeActionOverflowMenuShown();
+
+    getWindow().setFormat(Window.FEATURE_ACTION_BAR);
+
+    showKeypad();
+
+    setScreensaver();
+
+
+  } // onCreate
+}
+</code></pre>
+
+<p>/////////////////////// EDIT2 ////////////////////////////</p>
+
+<pre><code>  @Override public boolean onCreateOptionsMenu(Menu menu)
+  { getMenuInflater().inflate(R.menu.activity_main, menu);
+    return true;
+  }
+</code></pre>
+
+<p>/////////////////////// EDIT2 ////////////////////////////</p>

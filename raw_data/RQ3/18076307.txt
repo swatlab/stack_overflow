@@ -1,0 +1,319 @@
+<p>I am working on FragmentTabs. When I try to show the following layout in one of the tabs, I don't see the button on the screen. I can see the button if I don't use tabs.The activity's layout is as follows:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="4dip"
+    android:gravity="center_horizontal"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <FrameLayout
+            android:id="@+id/simple_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="0px"
+            android:layout_weight="1">
+    </FrameLayout>
+
+    <Button android:id="@+id/new_fragment"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="New fragment">
+        <requestFocus />
+    </Button>
+
+</LinearLayout>
+</code></pre>
+
+<p>The FragmentTabs code is as follows:</p>
+
+<pre><code>package com.example.tabswithfragments;
+
+import java.util.HashMap;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
+
+/**
+ * @author mwho
+ * 
+ */
+public class TabsFragmentActivity extends FragmentActivity implements
+        TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, TabInfo>();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+        private String tag;
+        private Class<? extends Fragment> clss;
+        private Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String tag, Class<? extends Fragment> clazz, Bundle args) {
+            this.tag = tag;
+            this.clss = clazz;
+            this.args = args;
+        }
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+        /**
+         * @param context
+         */
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+         */
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+     */
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Step 1: Inflate layout
+        setContentView(R.layout.tabs_layout);
+        // Step 2: Setup TabHost
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); // set the
+                                                                                // tab
+                                                                                // as
+                                                                                // per
+                                                                                // the
+                                                                                // saved
+                                                                                // state
+        }
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+     */
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); // save the tab
+                                                                // selected
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Step 2: Setup TabHost
+     */
+    private void initialiseTabHost(Bundle args) {
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab1").setIndicator("Tab 1"),
+                (tabInfo = new TabInfo("Tab1",
+                        MainActivity.CountingFragment.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        TabsFragmentActivity
+                .addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab2")
+                        .setIndicator("Tab 2"), (tabInfo = new TabInfo("Tab2",
+                        ListActivity.FavList.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        // Default to first tab
+        this.onTabChanged("Tab1");
+        //
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    /**
+     * @param activity
+     * @param tabHost
+     * @param tabSpec
+     * @param clss
+     * @param args
+     */
+    private static void addTab(TabsFragmentActivity activity, TabHost tabHost,
+            TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        // Attach a Tab view factory to the spec
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state. If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        tabInfo.fragment = activity.getSupportFragmentManager()
+                .findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager()
+                    .beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+
+        tabHost.addTab(tabSpec);
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+     */
+    public void onTabChanged(String tag) {
+        TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager()
+                    .beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+}
+</code></pre>
+
+<p>Counting fragment class is as follows:</p>
+
+<pre><code>package com.example.tabswithfragments;
+
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+
+
+public class MainActivity extends FragmentActivity {
+    int mStackLevel = 1;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_stack);
+
+        // Watch for button clicks.
+        Button button = (Button)findViewById(R.id.new_fragment);
+        button.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                addFragmentToStack();
+            }
+        });
+
+        if (savedInstanceState == null) {
+            // Do first time initialization -- add initial fragment.
+            Fragment newFragment = CountingFragment.newInstance(mStackLevel);
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.add(R.id.simple_fragment, newFragment).commit();
+        } else {
+            mStackLevel = savedInstanceState.getInt("level");
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("level", mStackLevel);
+    }
+
+
+    void addFragmentToStack() {
+        mStackLevel++;
+
+        // Instantiate a new fragment.
+        Fragment newFragment = CountingFragment.newInstance(mStackLevel);
+
+        // Add the fragment to the activity, pushing this transaction
+        // on to the back stack.
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(R.id.simple_fragment, newFragment);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.addToBackStack(null);
+        ft.commit();
+    }
+
+
+
+    public static class CountingFragment extends Fragment {
+        int mNum;
+
+        /**
+         * Create a new instance of CountingFragment, providing "num"
+         * as an argument.
+         */
+        static CountingFragment newInstance(int num) {
+            CountingFragment f = new CountingFragment();
+
+            // Supply num input as an argument.
+            Bundle args = new Bundle();
+            args.putInt("num", num);
+            f.setArguments(args);
+
+            return f;
+        }
+
+        /**
+         * When creating, retrieve this instance's number from its arguments.
+         */
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mNum = getArguments() != null ? getArguments().getInt("num") : 1;
+        }
+
+        /**
+         * The Fragment's UI is just a simple text view showing its
+         * instance number.
+         */
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View v = inflater.inflate(R.layout.hello_world, container, false);
+            View tv = v.findViewById(R.id.text);
+            ((TextView)tv).setText("Fragment #" + mNum);
+            tv.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.gallery_thumb));
+            return v;
+        }
+    }
+
+}
+</code></pre>
+
+<p>Can someone help me please. </p>

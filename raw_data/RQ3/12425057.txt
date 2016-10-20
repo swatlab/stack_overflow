@@ -1,0 +1,263 @@
+<p>I have a Activity created to display a user timeline in a ListView in Android gingerbread it is working fine but when i launch it on a android 4 device the list is blank and the logcat output is:</p>
+
+<pre><code>E/log_tag(5083): Error in parsing data org.json.JSONException: End of input at character 0 of
+</code></pre>
+
+<p>I have posted the code below:</p>
+
+<pre><code>package nl.safan.e_app;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+
+import eu.erikw.PullToRefreshListView.OnRefreshListener;
+import eu.erikw.PullToRefreshListView;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class TwitterParseHandler extends SherlockActivity {
+ArrayList<TwitterFeed> arrayOfWebData = new ArrayList<TwitterFeed>();
+
+class TwitterFeed {
+    public String text;
+    public String created_at;
+}
+
+FancyAdapter aa=null;
+
+static ArrayList<String> resultRow;
+private PullToRefreshListView listView;
+
+public void onCreate(Bundle savedInstanceState) {
+    try
+    {
+        setTheme(TabActivity.THEME);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_twitter_parse_handler);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        String result = "";
+
+        try
+        {
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpGet httppost = new HttpGet("https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name=safanbv&count=20&exclude_replies=True&lang=en");
+            HttpResponse response = httpclient.execute(httppost);
+            HttpEntity entity = response.getEntity();
+            InputStream webs = entity.getContent();
+
+            try
+            {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(webs, "iso-8859-1"),8);
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line + "/n");
+                }
+
+                webs.close();
+                result=sb.toString();
+            }catch(Exception e){
+                Log.e("log_tag", "Error in converting result "+e.toString());
+            }
+        }catch(Exception e){
+            Log.e("log_tag", "Error in http connection "+e.toString());
+        }
+
+        try
+        {
+            JSONArray jArray = new JSONArray(result);
+            for (int i=0;i<jArray.length();i++)
+            {
+                JSONObject json_data = jArray.getJSONObject(i);
+                TwitterFeed resultRow = new TwitterFeed();
+                  String date = json_data.getString("created_at");
+                  final String TWITTER="EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+                  SimpleDateFormat sf = new SimpleDateFormat(TWITTER,Locale.ENGLISH);
+                  sf.setLenient(true);
+                  Date created_at = sf.parse(date);
+                resultRow.text = json_data.getString("text");
+                resultRow.created_at = DateFormat.getDateInstance().format(created_at);;
+
+                arrayOfWebData.add(resultRow);
+            }
+        }catch(JSONException e){
+            Log.e("log_tag", "Error in parsing data "+e.toString());
+        }
+
+        ListView myListView = (ListView)findViewById(R.id.list);
+
+        aa=new FancyAdapter();
+
+        myListView.setAdapter(aa);
+
+        listView = (PullToRefreshListView)findViewById(R.id.list);
+        listView.setOnRefreshListener(new OnRefreshListener() {
+
+            @Override
+            public void onRefresh() {
+                listView.postDelayed(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        String result = "";
+                        try
+                        {
+                            HttpClient httpclient = new DefaultHttpClient();
+                            HttpGet httppost = new HttpGet("https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name=safanbv&count=20&exclude_replies=True");
+                            HttpResponse response = httpclient.execute(httppost);
+                            HttpEntity entity = response.getEntity();
+                            InputStream webs = entity.getContent();
+
+                            try
+                            {
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(webs, "iso-8859-1"),8);
+                                StringBuilder sb = new StringBuilder();
+                                String line = null;
+                                while ((line = reader.readLine()) != null) {
+                                    sb.append(line + "/n");
+                                }
+
+                                webs.close();
+                                result=sb.toString();
+                            }catch(Exception e){
+                                Log.e("log_tag", "Error in converting result "+e.toString());
+                            }
+                        }catch(Exception e){
+                            Log.e("log_tag", "Error in http connection "+e.toString());
+                        }
+
+                        try
+                        {
+                            JSONArray jArray = new JSONArray(result);
+                            for (int i=0;i<jArray.length();i++)
+                            {
+                                JSONObject json_data = jArray.getJSONObject(i);
+                                TwitterFeed resultRow = new TwitterFeed();
+                                  String date = json_data.getString("created_at");
+                                  final String TWITTER="EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+                                  SimpleDateFormat sf = new SimpleDateFormat(TWITTER,Locale.ENGLISH);
+                                  sf.setLenient(true);
+                                  Date created_at = sf.parse(date);
+                                resultRow.text = json_data.getString("text");
+                                resultRow.created_at = DateFormat.getDateInstance().format(created_at);;
+
+                                arrayOfWebData.add(resultRow);
+                            }
+                        }catch(JSONException e){
+                            Log.e("log_tag", "Error in parsing data "+e.toString());
+                        } catch (ParseException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        listView.onRefreshComplete();
+                    }
+                }, 2000);
+            }
+        });
+
+    }
+    catch(Exception e){
+        Log.e("ERROR", "ERROR IN CODE: "+e.toString());
+        e.printStackTrace();
+    }
+
+}
+
+class FancyAdapter extends ArrayAdapter<TwitterFeed> {
+    FancyAdapter() {
+        super(TwitterParseHandler.this, android.R.layout.simple_list_item_1, arrayOfWebData);
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+
+        if (convertView==null) {
+            LayoutInflater inflater=getLayoutInflater();
+            convertView=inflater.inflate(R.layout.twitterlist, null);
+
+            holder=new ViewHolder(convertView);
+            convertView.setTag(holder);
+        }
+        else
+        {
+            holder=(ViewHolder)convertView.getTag();
+        }
+        holder.populateFrom(arrayOfWebData.get(position));
+
+        return(convertView);
+    }
+}
+
+class ViewHolder {
+    public TextView name=null;
+    public TextView birthday=null;
+
+    ViewHolder(View row) {
+        name=(TextView)row.findViewById(R.id.TwitterText);
+        birthday=(TextView)row.findViewById(R.id.TwitterDatum);
+    }
+
+    void populateFrom(TwitterFeed r) {
+        name.setText(r.text);
+        birthday.setText(r.created_at);
+    }
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    /*menu.add("refresh")
+    .setIcon(R.drawable.ic_menu_refresh)
+    .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);*/
+return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item)
+{
+
+    switch (item.getItemId())
+    {
+    case android.R.id.home:
+        finish();
+        return true;
+
+    case Menu.FIRST:
+        //examineJSONdata();
+        return true;
+
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+   }
+   }
+</code></pre>
+
+<p>I hope someone can find the problem.
+Thanks in advance!</p>

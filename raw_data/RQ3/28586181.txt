@@ -1,0 +1,236 @@
+<p>I would like to read database from an existing file.</p>
+
+<p>I have copied the .sqlite database to asset folder.
+I can see the .sqlite file under DDMS explorer in /data/data//databases/</p>
+
+<p>However when I run a "c = db.rawQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table'", null);"</p>
+
+<p>It only returns the android_metadata table and not the other table from my database which was created in Firefox SQLite Manager.</p>
+
+<p>*NOTE, I will post both my DatabaseHandler and Database Activity files, for any modification please supply the FULL code (modify my existing files) and the reason for this is that I am new to Android and pieces of codes confuse me as to where in the class I need to paste, replace or append etc therefore I would appreciate FULL codes.</p>
+
+<p>Database Handler:</p>
+
+<pre><code>    package com.mypackage.lm;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static final String DB_NAME  = "lm.sqlite";
+    private static final int DB_VERSION  = 1;
+    private static final String TABLE_LM = "lmtable";
+    private static final String LOG_TAG = "debugger";
+    private static final String DB_PATH = "context.getDatabasePath(DatabaseHelper.DB_NAME).getParentFile()";
+
+    private SQLiteDatabase myDB; 
+    private Context context;
+
+    public DatabaseHelper(Context context) {
+    super(context, DB_NAME, null, DB_VERSION);
+    this.context = context;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public synchronized void close(){
+    if(myDB!=null){
+        myDB.close();
+    }
+    super.close();
+    }
+
+    /***
+     * Check if the database is exist on device or not
+     * @return
+     */
+    private boolean checkDataBase() {
+    SQLiteDatabase tempDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        tempDB = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READWRITE);
+    } catch (SQLiteException e) {
+        Log.e("ts01 - check", e.getMessage());
+    }
+    if (tempDB != null)
+        tempDB.close();
+    return tempDB != null ? true : false;
+    }
+
+/***
+ * Copy database from source code assets to device
+ * @throws IOException
+ */
+public void copyDataBase() throws IOException{
+    try {
+    InputStream myInput = context.getAssets().open(DB_NAME);
+    String outputFileName = DB_PATH + DB_NAME;
+    OutputStream myOutput = new FileOutputStream(outputFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+
+    while((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+    } catch (Exception e) {
+    Log.e("ts02 - copyDatabase", e.getMessage());
+    }
+
+    }
+
+/***
+ * Open database
+ * @throws SQLException
+ */
+    public void openDataBase() throws SQLException{
+        String myPath = DB_PATH + DB_NAME;
+        myDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+}
+
+    /***
+     * Check if the database doesn't exist on device, create new one
+     * @throws IOException
+     */
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();        
+
+        if (dbExist) {
+            System.out.println("Database DOES exist");
+
+        } else {
+        System.out.println("Database DOESN'T exist");
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            Log.e("ts03 - create", e.getMessage());
+        }
+        }
+    }
+
+
+    public List<String> getAllUsers(){
+        List<String> listUsers = new ArrayList<String>();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor c;
+
+        try {
+        //c = db.rawQuery("SELECT * FROM " + TABLE_LM , null);
+        //c = db.rawQuery("SELECT name FROM sqlite_master WHERE type = 'table'" , null);
+        //c = db.rawQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name != 'android_metadata' AND name != 'sqlite_sequence'", null);
+        c = db.rawQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table'", null);
+        if(c == null) return null;
+
+        String name;
+        c.moveToFirst();
+        do {            
+            name = c.getString(0);            
+            listUsers.add(name);
+        } while (c.moveToNext()); 
+        c.close();
+        } catch (Exception e) {
+        Log.e("ts04", e.getMessage());
+        }
+
+        db.close();        
+
+        return listUsers;
+    }
+
+}
+</code></pre>
+
+<p>Database Activity:</p>
+
+<pre><code>    package com.mypackage.lm;
+
+import java.io.IOException;
+import java.util.List;
+
+import com.mypackage.lm.R.id;
+
+import android.app.Activity;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class DatabaseActivity extends MainActivity {
+
+        DatabaseHelper dbHeplper;
+        ListView lvUsers;
+        ListAdapter adapter;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.db_return);
+
+
+
+        dbHeplper = new DatabaseHelper(getApplicationContext());
+
+
+        try {
+            dbHeplper.createDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        lvUsers = (ListView)findViewById(id.listViewDB);
+         List<String> listUsers = dbHeplper.getAllUsers();
+
+        if(listUsers != null){
+            adapter = new ArrayAdapter<String>(getApplicationContext(),
+                android.R.layout.simple_list_item_1, android.R.id.text1,
+                listUsers);
+            lvUsers.setAdapter(adapter);
+        }
+
+        }
+
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+        }
+
+
+    }
+</code></pre>

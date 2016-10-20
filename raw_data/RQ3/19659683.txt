@@ -1,0 +1,468 @@
+<p>I created a simple android project in Android Studio using navigation type Tabs + Viewpager. The code compiles and runs OK. But after i included android annotations, i get a null pointer exception for the viewPager object.</p>
+
+<p>The Code is as follows:</p>
+
+<p>MainActivity.java;</p>
+
+<pre><code>package com.example.tabnanot;
+
+import java.util.Locale;
+
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import com.googlecode.androidannotations.annotations.EActivity;
+
+
+@EActivity(R.layout.activity_main)
+public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);       // This is where the null pointer occurs
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            return PlaceholderFragment.newInstance(position + 1);
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+            textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<p>activity_main.xml;</p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" />
+</code></pre>
+
+<p>fragment_main.xml;</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity$PlaceholderFragment">
+
+    <TextView
+        android:id="@+id/section_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>Here's my build.gradle file;</p>
+
+<pre><code>buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.6.+'
+    }
+}
+apply plugin: 'android'
+
+repositories {
+    mavenCentral()
+}
+
+ext.daggerVersion = '1.0.0';
+ext.androidAnnotationsVersion = '2.7.1';
+
+configurations {
+    apt
+}
+
+dependencies {
+
+    apt "com.googlecode.androidannotations:androidannotations:${androidAnnotationsVersion}"
+    compile "com.googlecode.androidannotations:androidannotations-api:${androidAnnotationsVersion}"
+    apt "com.squareup.dagger:dagger-compiler:${daggerVersion}"
+    compile "com.squareup.dagger:dagger:${daggerVersion}"
+}
+
+android {
+    compileSdkVersion 18
+    buildToolsVersion "18.1.1"
+
+    defaultConfig {
+        minSdkVersion 12
+        targetSdkVersion 18
+    }
+}
+
+dependencies {
+    compile 'com.android.support:appcompat-v7:+'
+}
+
+android.applicationVariants.all { variant ->
+    aptOutput = file("${project.buildDir}/source/apt_generated/${variant.dirName}")
+    println "****************************"
+    println "variant: ${variant.name}"
+    println "manifest:  ${variant.processResources.manifestFile}"
+    println "aptOutput:  ${aptOutput}"
+    println "****************************"
+
+    variant.javaCompile.doFirst {
+        println "*** compile doFirst ${variant.name}"
+        aptOutput.mkdirs()
+        variant.javaCompile.options.compilerArgs += [
+                '-processorpath', configurations.apt.getAsPath(),
+                '-AandroidManifestFile=' + variant.processResources.manifestFile,
+                '-s', aptOutput
+        ]
+    }
+}
+</code></pre>
+
+<p>Here's the manifest file;</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="com.example.tabnanot"
+android:versionCode="1"
+android:versionName="1.0" >
+
+<uses-sdk
+    android:minSdkVersion="12"
+    android:targetSdkVersion="18" />
+
+<uses-feature
+    android:name="android.hardware.camera"
+    android:required="false" />
+
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+<application
+    android:allowBackup="true"
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity
+        android:name="MainActivity_"
+        android:label="@string/app_name" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+</application>
+
+</manifest>
+</code></pre>
+
+<p>Here's the error log from log cat</p>
+
+<pre><code>10-29 13:28:17.229      628-628/com.android.exchange E/ActivityThread﹕ Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40d1e2f8 that was originally bound here
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40d1e2f8 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.AccountServiceProxy.getDeviceId(AccountServiceProxy.java:116)
+            at com.android.exchange.ExchangeService.getDeviceId(ExchangeService.java:1249)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1856)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+10-29 13:28:17.279      628-628/com.android.exchange E/StrictMode﹕ null
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40d1e2f8 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.AccountServiceProxy.getDeviceId(AccountServiceProxy.java:116)
+            at com.android.exchange.ExchangeService.getDeviceId(ExchangeService.java:1249)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1856)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+10-29 13:28:17.319      628-628/com.android.exchange E/ActivityThread﹕ Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40d37b28 that was originally bound here
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40d37b28 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.ServiceProxy.test(ServiceProxy.java:191)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1850)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+10-29 13:28:17.379      628-628/com.android.exchange E/StrictMode﹕ null
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40d37b28 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.ServiceProxy.test(ServiceProxy.java:191)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1850)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+10-29 13:28:34.880        37-81/? E/SurfaceFlinger﹕ ro.sf.lcd_density must be defined as a build property
+10-29 13:28:35.170    1641-1641/? E/Trace﹕ error opening trace file: No such file or directory (2)
+10-29 13:28:35.999    1641-1641/com.example.tabnanot E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.tabnanot/com.example.tabnanot.MainActivity_}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+            at android.app.ActivityThread.access$600(ActivityThread.java:141)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:5041)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at com.example.tabnanot.MainActivity.onCreate(MainActivity.java:56)
+            at com.example.tabnanot.MainActivity_.onCreate(MainActivity_.java:26)
+            at android.app.Activity.performCreate(Activity.java:5104)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+            at android.app.ActivityThread.access$600(ActivityThread.java:141)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:5041)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+            at dalvik.system.NativeStart.main(Native Method)
+10-29 13:28:36.619        37-37/? E/SurfaceFlinger﹕ ro.sf.lcd_density must be defined as a build property
+10-29 13:28:36.710       37-421/? E/SurfaceFlinger﹕ ro.sf.lcd_density must be defined as a build property
+</code></pre>
+
+<p>I tried debugging and realised that the view pager object is null.
+I don't know what's causing this.
+I added the android annotations jars to a libs folder and marked the generated sources as source root.</p>
+
+<p>NB: I can successfully normal projects (i.e, those with navigation type none) using annotations but it fails for the tabs thing
+Any help will be deeply appreciated.
+Thanks all.</p>
+
+<p>EDIT::
+ when i look into the generated MainActivity_.java
+ I see this line</p>
+
+<pre><code>setContentView(layout.activity_main);
+</code></pre>
+
+<p>I think it should be</p>
+
+<pre><code>setContentView(R.layout.activity_main);
+</code></pre>
+
+<p>I'm not sure though</p>

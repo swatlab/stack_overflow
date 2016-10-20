@@ -1,0 +1,74 @@
+<p>I am currently trying to read data from a SQLite database which is populated outside of the program, however every time i try to access a table which should be within the database i keep getting a table not found error.</p>
+
+<p>Code to get question.</p>
+
+<pre><code>public Question getQuestion(int id,String category) {
+   String path = DB_PATH + DB_NAME;
+   SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READONLY);
+
+    Cursor cursor = database.query(selectTable(category), new String[]
+                    {KEY_ID, KEY_QUESTION, KEY_ANSWER1, KEY_IMAGE},
+            KEY_ID + "=?" + new String[]{String.valueOf(id)}, null, null, null, null);
+    if (cursor != null) {
+        cursor.moveToFirst();
+    }
+    Question question = new Question(Integer.parseInt(cursor.getString(0)), cursor.getString(1),
+            cursor.getString(2),Uri.parse(cursor.getString(3)));
+
+    database.close();
+    cursor.close();
+    return question;
+}
+</code></pre>
+
+<p>Copy database from SQL file.</p>
+
+<pre><code> private void copyDB() throws IOException{
+
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    String outFileName = DB_PATH + DB_NAME;
+
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+</code></pre>
+
+<p>Can anyone think of a reason as to why?, i seem to think i am accessing the wrong database however i should only have one database present and if i didn't have a database in the first place i would have a different error.</p>
+
+<p>Any ideas as to whats happening and how to fix it?</p>
+
+<p>After running through the debugger and checking the database as suggested i found that the database is actually null. So i am guessing i am doing something wrong when i copy the file?</p>
+
+<pre><code>    private void copyDB() throws IOException{
+
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    String outFileName = DB_PATH + DB_NAME;
+
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+</code></pre>
+
+<p>Thanks in advance.</p>

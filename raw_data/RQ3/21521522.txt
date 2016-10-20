@@ -1,0 +1,16 @@
+<p>I want to write following code for VideoView.Because i want to show 4 video file in screen with Gridview Layout. </p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+ }
+</code></pre>

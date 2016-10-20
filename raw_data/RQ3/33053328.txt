@@ -1,0 +1,212 @@
+<p>This is an update from my previous questions <a href="http://stackoverflow.com/questions/33050043/how-to-call-the-gridview-activity-from-another-activity/33050233?noredirect=1#comment53923624_33050233">How to call the Gridview Activity from another activity</a> which I added my codes</p>
+
+<p>Here is my gallery.xml</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+ <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/gridview"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:columnWidth="90dp"
+android:numColumns="auto_fit"
+android:verticalSpacing="10dp"
+android:horizontalSpacing="10dp"
+android:stretchMode="columnWidth"
+android:gravity="center"
+/>
+</code></pre>
+
+<p>Gallery.java</p>
+
+<pre><code> package com.example.diaz.chmscadvertisement;
+
+
+ import android.os.Bundle;
+ import android.app.Activity;
+ import android.view.Menu;
+ import android.widget.GridView;
+
+ public class Gallery extends Activity {
+ @Override
+ protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.gallery);
+
+    GridView gridview = (GridView) findViewById(R.id.gridview);
+    gridview.setAdapter(new ImageAdapter(this));
+ }
+
+   @Override
+   public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+}
+</code></pre>
+
+<p>ImageAdapter.java</p>
+
+<pre><code> package com.example.diaz.chmscadvertisement;
+
+ import android.content.Context;
+ import android.view.View;
+ import android.view.ViewGroup;
+ import android.widget.BaseAdapter;
+ import android.widget.GridView;
+ import android.widget.ImageView;
+
+ /**
+  * Created by diaz on 10/10/2015.
+  */
+      public class ImageAdapter extends BaseAdapter {
+     private Context mContext;
+
+     public ImageAdapter(Context c) {
+         mContext = c;
+     }
+
+     public int getCount() {
+         return mThumbIds.length;
+     }
+
+     public Object getItem(int position) {
+         return null;
+     }
+
+     public long getItemId(int position) {
+         return 0;
+     }
+
+     // create a new ImageView for each item referenced by the Adapter
+     public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {
+        // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        R.drawable.sample2, R.drawable.sample3,
+        R.drawable.sample4, R.drawable.sample5,
+        R.drawable.sample6, R.drawable.sample7,
+        R.drawable.sample10, R.drawable.sample1,
+        R.drawable.sample8, R.drawable.sample9,
+
+};
+ }
+</code></pre>
+
+<p>Manifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.diaz.chmscadvertisement" >
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/logoalijis"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+
+        <activity android:name=".ViewFlipperBody" />
+        <activity android:name=".AboutChmsc" />
+        <activity android:name=".CampusLife" />
+        <activity android:name=".AboutUs" />
+        <activity android:name=".MainMenu"></activity>
+        <activity android:name=".Gallery"/>
+        <activity
+            android:name=".SplashScreen"
+            android:label="CHMSC-Alijis" >
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>My Main Menu this is where I press the button in order to open the Gridview</p>
+
+<p>MainMenu.java</p>
+
+<pre><code>package com.example.diaz.chmscadvertisement;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+
+
+public class MainMenu extends Activity implements View.OnClickListener {
+
+Button button2;
+Button button3;
+Button button4;
+Button button6;
+Button button7;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.mainmenu);
+
+        button2 = (Button) findViewById(R.id.button2);
+        button3 = (Button) findViewById(R.id.button3);
+        button4 = (Button) findViewById(R.id.button4);
+        button6 = (Button) findViewById(R.id.button6);
+        button7 = (Button) findViewById(R.id.button7);
+
+        button2.setOnClickListener(this);
+        button3.setOnClickListener(this);
+        button4.setOnClickListener(this);
+        button6.setOnClickListener(this);
+        button7.setOnClickListener(this);
+
+    }
+
+    public void onClick(View v){
+        if (v.getId() == R.id.button2) {
+            Intent intent = new Intent(this, ViewFlipperBody.class);
+            this.startActivity(intent);
+
+        } else if (v.getId() == R.id.button3) {
+            Intent intent = new Intent(this, AboutChmsc.class);
+            this.startActivity(intent);
+
+        } else if (v.getId() == R.id.button4) {
+            Intent intent = new Intent(this, CampusLife.class);
+            this.startActivity(intent);
+        }
+
+        else if (v.getId() == R.id.button6) {
+            Intent intent = new Intent(this, Gallery.class);
+            this.startActivity(intent);
+        }
+
+        else if (v.getId() == R.id.button7) {
+            Intent intent = new Intent(this, AboutUs.class);
+            this.startActivity(intent);
+        }
+
+    }
+}
+</code></pre>
+
+<p>The problem is that when I click the Gallery button(which is the button6 in my MainMenu.java) the gallery.xml is not opening at all. If I replace mThumbIds's element with R.drawable.icon_launcher,it will work properly.Any idea? Thanks in advance</p>

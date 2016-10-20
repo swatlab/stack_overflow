@@ -1,0 +1,34 @@
+<p>I ve build an application now i want to copy the database of that running application using my new backup application how can i do that ??</p>
+
+<p><strong>my database</strong> path is </p>
+
+<pre><code>DB_PATH = "/data/data/iCam.Cam/";
+DB_NAME = "testdb.db";
+</code></pre>
+
+<p><strong>DB_PATH + DB_NAME</strong> </p>
+
+<p>now i have code which will copy the database from the given path to sdcard but initially i check the database using this method</p>
+
+<pre><code>public boolean checkDataBase() {    
+        SQLiteDatabase checkDB = null;    
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);    
+        } catch (SQLiteException e) {
+            e.fillInStackTrace();    
+            // database does't exist yet.   
+        }    
+        if (checkDB != null) {    
+            checkDB.close();
+            }    
+        return checkDB != null ? true : false;
+    }
+</code></pre>
+
+<p>it returns <strong>false.</strong></p>
+
+<p>help me...</p>
+
+<p>Thanks</p>

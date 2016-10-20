@@ -1,0 +1,146 @@
+<p>I have to change color of multiple selected items (Text views) in List view. What I am doing here is, when user selects items from list views, color should be change to BLUE and when user deselects items, color should change to by default color (here Black). I have been through few tutorials and implemented one little demo. But I am not getting, how to deal with color change. Below is my code...</p>
+
+<h2>activity_main.xml</h2>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <ListView
+        android:layout_height="wrap_content"
+        android:id="@+id/listView2"
+        android:layout_width="match_parent">
+    </ListView>
+</LinearLayout>
+</code></pre>
+
+<h1>listitem.xml</h1>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</LinearLayout>
+</code></pre>
+
+<h2>MainActivity.java</h2>
+
+<pre><code>public class MainActivity extends Activity
+{
+    /** Called when the activity is first created. */
+    public View row;
+    ListView lview;
+    ListViewAdapter lviewAdapter;
+
+    private final static String month[] = {"January","February","March","April","May",
+        "June","July","August","September","October","November","December"};
+
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        lview = (ListView) findViewById(R.id.listView2);
+        lviewAdapter = new ListViewAdapter(this, month);
+
+        lview.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        lview.setAdapter(lviewAdapter);
+
+        lview.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                    long arg3) {
+                // TODO Auto-generated method stub
+
+            }
+        });
+    }
+
+
+
+
+}
+</code></pre>
+
+<h2>ListViewAdapter.java</h2>
+
+<pre><code>public class ListViewAdapter extends BaseAdapter
+{
+    ArrayList<Boolean> saved = new ArrayList<Boolean>();
+    Activity context;
+    String title[];
+    String description[];
+
+    public ListViewAdapter(Activity context, String[] title) {
+        super();
+        this.context = context;
+        this.title = title;
+
+    }
+
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return title.length;
+    }
+
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private class ViewHolder {
+        TextView txtViewTitle;
+
+    }
+
+
+
+
+    public View getView(int position, View convertView, ViewGroup parent)
+    {
+        // TODO Auto-generated method stub
+        ViewHolder holder;
+        LayoutInflater inflater =  context.getLayoutInflater();
+
+        if (convertView == null)
+        {
+            convertView = inflater.inflate(R.layout.listitem_row, null);
+            holder = new ViewHolder();
+            holder.txtViewTitle = (TextView) convertView.findViewById(R.id.textView1);
+
+            convertView.setTag(holder);
+
+
+        }
+        else
+        {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txtViewTitle.setText(title[position]);
+
+
+    return convertView;
+    }
+
+}
+</code></pre>

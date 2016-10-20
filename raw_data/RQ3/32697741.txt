@@ -1,0 +1,393 @@
+<p>Need help i am developing an medical dictionary where the user can search for symptom... example cough and medical dictionary will display list of illness and on that list the user can choose disease and when the user chose a diseases (or click) medical dictionary will display the information of that illness.</p>
+
+<p>i have done only is the user can search illness and medical dictionary will display the information about that illness.</p>
+
+<p>btw iam using SQLITE DATABASE and android studio... 
+Here is the whole code : </p>
+
+<pre><code>public class Meaning extends ActionBarActivity {       //Meaning class
+String result[];
+String word;
+DatabaseHelper dbhelper;
+TextView wordplace;
+TextView meaningplace;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_meaning);
+
+    Intent intent = getIntent();
+    word = intent.getExtras().getString("word");
+    dbhelper = new DatabaseHelper(this);
+    dbhelper.openDataBase();
+    result = dbhelper.getMeaning(word);
+    wordplace = (TextView) findViewById(R.id.wordf);
+    meaningplace = (TextView) findViewById(R.id.meaningf);
+    wordplace.setText(result[0]);
+    meaningplace.setText(result[1]);
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_meaning, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>}</p>
+
+<pre><code>//Main Activity
+public class MainActivity extends ActionBarActivity {
+private final String TAG = "Main Activity";
+DatabaseHelper dbhelper;
+AutoCompleteTextView actv;
+Cursor cursor;
+Button search;
+int flag=0;
+ListView ls;
+ArrayList<String> dataword ;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    ls = (ListView) findViewById(R.id.mainlist);
+
+    ls.setVisibility(View.VISIBLE);
+
+
+
+    dbhelper = new DatabaseHelper(this);
+    try{
+        dbhelper.createDataBase();
+    }catch (IOException e){
+        Log.e(TAG,"can't read/write file ");
+        Toast.makeText(this,"error loading data",Toast.LENGTH_SHORT).show();
+    }
+
+    dbhelper.openDataBase();
+
+    actv = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
+    SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,R.layout.singalline,null,from,to);
+    // This will provide the labels for the choices to be displayed in the AutoCompleteTextView
+    adapter.setCursorToStringConverter(new SimpleCursorAdapter.CursorToStringConverter() {
+        @Override
+        public CharSequence convertToString(Cursor cursor) {
+
+            return cursor.getString(1);
+        }
+    });
+
+    adapter.setFilterQueryProvider(new FilterQueryProvider() {
+        @Override
+        public Cursor runQuery(CharSequence constraint) {
+            cursor=null;
+            int count = constraint.length();
+            if(count>=1){
+                String constrains = constraint.toString();
+                cursor = dbhelper.query(constrains);
+
+            }
+
+            return cursor;
+        }
+    });
+
+    actv.setAdapter(adapter);
+
+    search = (Button) findViewById(R.id.button);
+    search.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Log.d("Main Activity","Search button was clicked");
+            searchData();
+        }
+    });
+
+    actv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            flag = 1;
+            Log.d("Main Activity","actv list item was ckicked");
+        }
+    });
+
+    actv.setOnKeyListener(new View.OnKeyListener() {
+        @Override
+        public boolean onKey(View v, int keyCode, KeyEvent event) {
+            if(event.getAction() == 0) {
+                if(event.getKeyCode() == 0x42) {
+                    searchData();
+                    actv.dismissDropDown();
+                    hideKeyBoard();
+                }
+            }
+
+            return false;
+        }
+    });
+
+    ls.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Log.d("My Activity","Item in Lower list is clicked");
+            String word = dataword.get(position);
+            startMeaning(word);
+
+        }
+    });
+
+}
+
+public void searchData(){
+    String actext = actv.getText().toString().trim();
+    if(actext.length()==0 || actext.length()==1) {
+        Toast.makeText(getApplicationContext(),"At least type more",Toast.LENGTH_SHORT).show();
+        return;
+    }
+    if(cursor.moveToFirst()){
+        int temp =cursor.getCount();
+
+        if(check(temp,flag) ){
+            Log.d("Main Activity","Only one row is there ");
+            String word = null;
+            if(flag==1) word = actv.getText().toString().trim();
+            if(temp==1) word = cursor.getString(1);
+
+            startMeaning(word);
+            flag =0;
+        } else {
+            dataword = new ArrayList<>();
+
+            Log.d("Main Activity", "MANY ROW is there");
+
+            cursor.moveToFirst();
+            for(int i=0;i<cursor.getCount();i++){
+                String wordt = cursor.getString(1);
+
+                dataword.add(wordt);
+
+                cursor.moveToNext();
+            }
+            ls.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,dataword));
+            ls.setVisibility(View.VISIBLE);
+
+        }
+
+    }else {
+        Toast.makeText(getApplicationContext(),"No Word Found",Toast.LENGTH_SHORT).show();
+
+    }
+
+
+
+}
+
+public void startMeaning(String wordf){
+    Intent intent = new Intent(this,Meaning.class);
+    intent.putExtra("word",wordf);
+    dbhelper.close();
+    startActivity(intent);
+}
+
+public boolean check(int a,int b){
+    if (a==1) return true;
+    if (b==1) return true;
+    return false;
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+private void hideKeyBoard() {
+    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+    imm.hideSoftInputFromWindow(actv.getWindowToken(), 0x0);
+}
+</code></pre>
+
+<p>}</p>
+
+<pre><code> //Database Helper 
+public class DatabaseHelper extends SQLiteOpenHelper {
+       private final String PATH = "/data/data/test.usmaan.alam.urdudictionarytest/databases/";
+    private static String DBNAME = "local";
+    private SQLiteDatabase myDataBase ;
+    private Context context ;
+    private ProgressDialog dialog;
+
+    public DatabaseHelper(Context context) {
+        super(context,DBNAME,null,1);
+        this.context = context ;
+    }
+
+
+    public Cursor query(String constrain){
+        Cursor cursor = myDataBase.rawQuery("select _id,english_word from urdu where english_word like "+"'%"+constrain+"%'",null);
+        return cursor;
+    }
+
+    public String[] getMeaning(String id){
+        Cursor cursor = myDataBase.rawQuery("select * from urdu where english_word='"+id+"'",null);
+        cursor.moveToFirst();
+        String[] result = new String[2];
+        result[0] = cursor.getString(1);
+        result[1] = cursor.getString(2);
+        return result;
+
+    }
+
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+            Log.d("Urdu Dictionary","dbExist= false");
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            dialog = new ProgressDialog(context);
+            dialog.setMessage("Loading data ....");
+            dialog.setCanceledOnTouchOutside(false);
+            Log.e("urdu dictionary","calling a new thread");
+
+            try {
+
+                Toast.makeText(context,"Loading data",Toast.LENGTH_LONG).show();
+                dialog.show();
+                copyDataBase();
+            } catch (IOException e){
+                throw new Error("Erro copying database");
+            }
+
+
+
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = PATH + DBNAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        } catch(Exception e){
+            Log.e("Kuch bhi",e.getMessage());
+            //database does't exist yet.
+            Log.e("DatabaseHelper", "Database is not available");
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+        Log.e("Urdu Dictionary","copyDatabase called");
+
+        //Open your local db as the input stream
+        InputStream myInput = context.getAssets().open(DBNAME);
+
+        // Path to the just created empty db
+        String outFileName = PATH + DBNAME;
+        Log.e("Urdu Dictionary","after ins");
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+        dialog.dismiss();
+    }
+
+
+    public void openDataBase() throws SQLException {
+
+        //Open the database
+        String myPath = PATH + DBNAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>

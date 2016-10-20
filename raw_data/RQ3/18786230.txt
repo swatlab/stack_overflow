@@ -1,0 +1,226 @@
+<p>I have an application that starts with a database pre-populated. I want to update the application, inserting new tables and copying the new database pre-populated.
+When updating the application, if I put the version of the database to 2, it creates new tables, but does not copy the new database. But if I keep to version 1, the application stops with an error.</p>
+
+<p>The database is in the assets folder and use this code to copy in the first time:</p>
+
+<pre><code>public class DataBaseHelper<E> extends OrmLiteSqliteOpenHelper {
+    private static String DB_PATH = "/data/data/com.teste/databases/";
+    private static String DB_NAME = "teste.db";
+    private static int DB_VERSION = 1;
+    private SQLiteDatabase myDataBase;
+    Context context;
+
+    public DataBaseHelper(Context context) {
+            super(context, DB_NAME, null, DB_VERSION);
+            this.context = context;
+            try {
+                    createDataBase();
+            } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+            }
+    }
+
+    public void createDataBase() throws IOException {
+            boolean dbExist = checkDataBase();
+            if (dbExist) {
+            } else {
+                    this.getReadableDatabase();
+                    try {
+                            copyDataBase();
+                    } catch (IOException e) {
+                            throw new Error("Error copying database");
+                    }
+            }
+    }
+
+    private boolean checkDataBase() {
+            SQLiteDatabase checkDB = null;
+            try {
+                    String myPath = DB_PATH + DB_NAME;
+                    checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                                    SQLiteDatabase.OPEN_READONLY);
+            } catch (SQLiteException e) {
+            }
+            if (checkDB != null) {
+                    checkDB.close();
+            }
+            return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException {
+            InputStream myInput = context.getAssets().open(DB_NAME);
+            String outFileName = DB_PATH + DB_NAME;
+            OutputStream myOutput = new FileOutputStream(outFileName);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                    myOutput.write(buffer, 0, length);
+            }
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+            String myPath = DB_PATH + DB_NAME;
+            myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                            SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db, ConnectionSource src) {
+            try {
+                    TableUtils.createTable(src, Table1.class);
+                    TableUtils.createTable(src, Table2.class);
+                    TableUtils.createTable(src, Table3.class);
+            } catch (Exception e) {
+                    e.printStackTrace();
+            }
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, ConnectionSource src,
+                    int oldVersion, int newVersion) {
+            try {
+                    TableUtils.dropTable(src, Table1.class, true);
+                    TableUtils.dropTable(src, Table2.class, true);
+                    TableUtils.dropTable(src, Table3.class, true);
+
+                    onCreate(db, src);
+            } catch (Exception e) {
+                    e.printStackTrace();
+            }
+    }
+
+    @Override
+    public synchronized void close() {
+            if (myDataBase != null)
+                    myDataBase.close();
+            super.close();
+    }
+}
+</code></pre>
+
+<p>Now, I have one more table to insert, and I'm using this code: </p>
+
+<pre><code>public class DataBaseHelper<E> extends OrmLiteSqliteOpenHelper {
+private static String DB_PATH = "/data/data/com.teste/databases/";
+private static String DB_NAME = "teste.db";
+private static int DB_VERSION = 2;
+private SQLiteDatabase myDataBase;
+Context context;
+
+public DataBaseHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        this.context = context;
+        try {
+                createDataBase();
+        } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        }
+}
+
+public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+        } else {
+                this.getReadableDatabase();
+                try {
+                        copyDataBase();
+                } catch (IOException e) {
+                        throw new Error("Error copying database");
+                }
+        }
+}
+
+private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        try {
+                String myPath = DB_PATH + DB_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                                SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+        }
+        if (checkDB != null) {
+                checkDB.close();
+        }
+        return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException {
+        InputStream myInput = context.getAssets().open(DB_NAME);
+        String outFileName = DB_PATH + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+        }
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+}
+
+public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                        SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db, ConnectionSource src) {
+        try {
+                TableUtils.createTable(src, Table1.class);
+                TableUtils.createTable(src, Table2.class);
+                TableUtils.createTable(src, Table3.class);
+                TableUtils.createTable(src, Table4.class);
+        } catch (Exception e) {
+                e.printStackTrace();
+        }
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, ConnectionSource src,
+                int oldVersion, int newVersion) {
+        try {
+                TableUtils.dropTable(src, Table1.class, true);
+                TableUtils.dropTable(src, Table2.class, true);
+                TableUtils.dropTable(src, Table3.class, true);
+                TableUtils.dropTable(src, Table4.class, true);
+                onCreate(db, src);
+        } catch (Exception e) {
+                e.printStackTrace();
+        }
+}
+
+@Override
+public synchronized void close() {
+        if (myDataBase != null)
+                myDataBase.close();
+        super.close();
+}
+}
+</code></pre>
+
+<p><strong>EDIT 2:</strong></p>
+
+<p>I call copyDatabase in onUpgrade and the DB is not  copied. See:</p>
+
+<pre><code>TableUtils.createTable(src, Linhas.class);
+TableUtils.createTable(src, Horarios.class);
+TableUtils.createTable(src, Itinerarios.class);
+TableUtils.createTable(src, Utils.class);
+copyDataBase();
+</code></pre>
+
+<p>Any help?</p>
+
+<p><strong>EDIT 3:</strong></p>
+
+<p>I noticed that when we change the version of the database upgrade using the method and copied the database from asset folder, the data do not appear because the version of the database that this folder assets be less than the current version. Is there a way to copy when the new database pre-populated, change the version of it?</p>

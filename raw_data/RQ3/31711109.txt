@@ -1,0 +1,197 @@
+<p>I am developing an Android app for a bus schedule. I have a SQLite database with the stops and times, but I am currently having a nightmare trying to access it. I googled this issue, but I couldn't find a solution.</p>
+
+<p>I have built a <code>DataBaseHelper</code> class that extends <code>SQLiteOpenHelper</code> with the code as follows:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+    private static String DB_PATH;
+
+    private static String DB_NAME = "BagesExpress_def";
+
+    private SQLiteDatabase myDataBase;
+
+    private final Context myContext;
+
+    public DataBaseHelper(Context context){
+        super(context, DB_NAME, null,1);
+        this.myContext = context;
+        this.DB_PATH = this.myContext.getDatabasePath(DB_NAME).getAbsolutePath();
+    }
+
+    public void createDatabase() throws IOException{
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            Log.v("EXISTS", "dbExists");
+        }else{
+            this.getReadableDatabase();
+
+            try{
+                copyDataBase();
+            } catch (IOException e){
+                throw new Error ("Error copying data");
+            }
+        }
+    }
+
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH;
+            checkDB = SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+
+        }
+
+        if(checkDB!=null){
+            checkDB.close();
+        }
+
+        return checkDB != null;
+    }
+
+    private void copyDataBase() throws IOException{
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        String outFilename = DB_PATH;
+
+        OutputStream myOutput = new FileOutputStream(outFilename);
+
+        byte[] buffer = new byte [1024];
+        int length;
+
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer,0,length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+        String myPath = DB_PATH;
+        myDataBase = SQLiteDatabase.openDatabase(myPath,null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    public synchronized void close() {
+        if(myDataBase!=null)
+            myDataBase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate (SQLiteDatabase db){
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+        if(newVersion>oldVersion)
+            try{
+                copyDataBase();
+            }
+            catch(IOException ioe){
+
+            }
+    }
+
+    public List<Viatge> getViatges(int horaSortida, int paradaSortida, int paradaArribada){
+
+        Log.v("DBPATH",DB_PATH);
+        List<Viatge> viatges = new ArrayList<Viatge>();
+
+        String selectQuery = "SELECT t1.run, t1.parada, t2.parada,t1.hora,t2.hora FROM directesDirBarna t1, directesDirBarna t2 \n" +
+                "WHERE (t1.run = t2.run AND t1.parada = "+ paradaSortida +" AND t2.parada = " + paradaArribada +") \n" +
+                "AND t1.Hora > "+ horaSortida +" AND t2.Hora <> '';";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()){
+            do{
+                Viatge viatge = new Viatge();
+                viatge.setParadaSortida(Integer.parseInt(cursor.getString(1)));
+                viatge.setParadaArribada(Integer.parseInt(cursor.getString(2)));
+                viatge.setHoraSortida(Integer.parseInt(cursor.getString(3)));
+                viatge.setHoraArribada(Integer.parseInt(cursor.getString(4)));
+
+                viatges.add(viatge);
+            } while(cursor.moveToNext());
+
+        }
+        return viatges;
+    }
+}
+</code></pre>
+
+<p>Inside a <code>testSQL</code> Activity, I am using the following code:</p>
+
+<pre><code> public class SqlTest extends Activity {
+    private DataBaseHelper myDBHelper;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sql_test);
+
+        Button sqlButton = (Button)findViewById(R.id.SQLBtn);
+        sqlButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myDBHelper = new DataBaseHelper(getApplicationContext());
+
+                try {
+                    myDBHelper.openDataBase();
+                }
+                catch(SQLException sqle){
+                }
+
+                myDBHelper.getViatges(1000,1,10);
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_sql_test, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+</code></pre>
+
+<p>When I press the button to fetch the database, I get the following  error:</p>
+
+<blockquote>
+  <p>android.database.sqlite.SQLiteException: no such table:
+  directesDirBarna (code 1)</p>
+</blockquote>
+
+<p>Despite this table existing in my database.</p>
+
+<p>I suspect that this happens because my code can't find the DataBase so it creates a blank one and thus it can't find anything in it, but I can't find where this happens. </p>
+
+<p>Can anyone illuminate my way? Thanks a lot.</p>
+
+<p>Edit: This was solved. I used this <a href="https://github.com/jgilfelt/android-sqlite-asset-helper" rel="nofollow">https://github.com/jgilfelt/android-sqlite-asset-helper</a>, uninstalled app from my device, made a clean build and now it works. </p>

@@ -1,0 +1,250 @@
+<p>What happens when I call <code>SQLiteOpenHelper.close()</code> and what happens when I call <code>SQLiteDatabase.close()</code>?</p>
+
+<p>For my android applications, I always create subclass of <code>Application</code> class which have single instance of <code>MySQLiteOpenHelper</code> which is subclass of <code>SQLiteOpenHelper</code> that will be shared by all application components like Services, Activities and BroadcastReceivers.</p>
+
+<p>In <code>MySQLiteOpenHelper</code>, I have single instance of <code>SQLiteDatabase</code>. I create the instance of <code>MySQLiteOpenHelper</code> in Application.onCreate() method and never call <code>close()</code> on any of <code>SQLiteOpenHelper</code> or <code>SQLiteDatabase</code> instances. Though I call close() explicitly on every cursor object returned by the <code>query()</code> and on every <code>SQLiteStatement</code> I use to insert, update or delete the data.</p>
+
+<p>Untill now, it was working fine without any problem. But recently I am getting crashlogs from user's. The exception thrown is <code>SQLiteDatabaseLockedException</code>. I read documentation which says</p>
+
+<blockquote>
+  <p>Thrown if the database engine was unable to acquire the database locks it needs to do its job.</p>
+</blockquote>
+
+<p>I don't understand how can their be problem in acquiring the database lock when there is only single database instance I am using and documentation says that all database calls are serialized by the system. Also I am not starting or ending any database transaction using beginTransaction() or any other related method.</p>
+
+<p>After some search I think that I should call <code>close()</code> on my database connection.</p>
+
+<p>My questions are:</p>
+
+<ol>
+<li><p>Am I using the correct approach here(I don't need to share data across other apps or 3rd party app so not using ContentProviders)?</p></li>
+<li><p>When should I close the database connection? </p></li>
+<li><p>Also, should I call close on <code>MySQLiteOpenHelper</code> or <code>SQLiteDatabase</code>?</p></li>
+</ol>
+
+<blockquote>
+  <p>Code for MySQLiteOpenHelper.java:</p>
+</blockquote>
+
+<pre><code>public class MySQLiteOpenHelper extends SQLiteOpenHelper {
+
+        public static String TAG = Common.MAIN_TAG + "MySQLiteOpenHelper";
+
+        public static int DATABASE_VERSION = 19;
+
+        private static String DB_PATH = null;
+        public static final String DB_NAME = "data.sqlite";
+        private SQLiteDatabase db;
+
+        private final Context context;
+
+        /**
+         * Constructor Takes and keeps a reference of the passed context in order to
+         * access to the application assets and resources.
+         * 
+         * @param context
+         */
+        public MySQLiteOpenHelper(Context context) {
+            super(context, DB_NAME, null, DATABASE_VERSION);
+            DB_PATH = "/data/data/" + context.getPackageName().replace("/", "")
+                    + "/databases/";
+            this.context = context;
+        }
+
+        /**
+         * Creates a empty database on the system and rewrites it with your own
+         * database.
+         * */
+        public void createDataBase() throws IOException {
+
+            // Log.v(TAG, "Create database checkpoint - 1");
+            boolean dbExist = checkDataBase();
+            // Log.v(TAG, "Create database checkpoint - 2");
+            if (dbExist) {
+                // Log.v(TAG,
+                // "Create database checkpoint - 3 - database already exists");
+            } else {
+                // Log.v(TAG,
+                // "Create database checkpoint - 3 - database needs to be copied");
+                // Log.v(TAG, "Create database checkpoint - 4");
+                try {
+                    copyDataBase();
+                    checkDataBase();
+                    // Log.v(TAG,
+                    // "Create database checkpoint - 5 - database cpoied");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new Error("Error copying database");
+                }
+            }
+        }
+
+        void copyDatabaseToSdCard() throws IOException {
+            if (Log.isInDebugMode()) {
+                InputStream input = null;
+                FileOutputStream output = null;
+
+                int c;
+                byte[] tmp;
+                try {
+                    File databaseFile = new File(
+                            Environment.getExternalStorageDirectory(),
+                            Common.MAIN_TAG + "sqlite");
+                    if (databaseFile.exists()) {
+                        databaseFile.delete();
+                    }
+                    databaseFile.createNewFile();
+                    output = new FileOutputStream(databaseFile);
+                    int i = 0;
+
+                    input = new FileInputStream(new File(DB_PATH + DB_NAME));
+                    tmp = new byte[1024];
+                    while ((c = input.read(tmp)) != -1) {
+                        i++;
+                        output.write(tmp, 0, c);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    if (input != null) {
+                        input.close();
+                    }
+                    if (output != null) {
+                        output.close();
+                        output.close();
+                    }
+                }
+            }
+        }
+
+        /**
+         * Check if the database already exist to avoid re-copying the file each
+         * time you open the application.
+         * 
+         * @return true if it exists, false if it doesn't
+         */
+        private boolean checkDataBase() {
+            // Log.v(TAG, "Check database checkpoint - 1");
+            SQLiteDatabase checkDB = null;
+            try {
+                // checkDB = getWritableDatabase();
+                String myPath = DB_PATH + DB_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                        SQLiteDatabase.OPEN_READWRITE);
+                // Log.v(TAG,
+                // "Check database checkpoint - 2 - got database file on device");
+                checkDB.close();
+                getWritableDatabase().close();
+                // Log.v(TAG, "Check database checkpoint - 3");
+            } catch (Exception e) {
+                // Log.v(TAG,
+                // "Check database checkpoint - 4 - database does not exists on device");
+                // database does't exist yet.
+                if (checkDB != null)
+                    checkDB.close();
+                // Log.v(TAG, "Check database checkpoint - 5");
+            }
+
+            return checkDB != null ? true : false;
+        }
+
+        /**
+         * Copies your database FROM your local raw-folder to the just created empty
+         * database in the system folder, FROM where it can be accessed and handled.
+         * This is done by transfering bytestream.
+         * */
+        private void copyDataBase() throws IOException {
+            // Log.v(TAG, "Copy database checkpoint - 1");
+            InputStream input = null;
+            FileOutputStream output = null;
+            SQLiteDatabase myDB = null;
+
+            myDB = context.openOrCreateDatabase(DB_NAME, 0, null);
+            if (myDB != null) {
+                myDB.close();
+            }
+
+            int c;
+            byte[] tmp;
+            try {
+                File databaseFile = new File(DB_PATH, DB_NAME);
+                databaseFile.mkdirs();
+                databaseFile.createNewFile();
+                output = new FileOutputStream(DB_PATH + DB_NAME);
+                int i = 0;
+
+                input = context.getResources().openRawResource(R.raw.hcgtabletdb);
+                tmp = new byte[1024];
+                while ((c = input.read(tmp)) != -1) {
+                    i++;
+                    output.write(tmp, 0, c);
+                }
+                // Log.v(TAG, "Finished copying database");
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Log.e(TAG, "Error in copying database" + DB_NAME);
+            } finally {
+                if (input != null) {
+                    input.close();
+                }
+                if (output != null) {
+                    output.close();
+                    output.close();
+                }
+            }
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            createDataBase();
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        }
+
+        public int getIdFor(String name) {
+            String query = "SELECT * FROM bloodpressure WHERE userid=" + userId
+                + " ORDER BY createdon, timecreatedon";
+            Cursor cur = db.rawQuery(query, new String[] {});
+            int id = cur.getInt(0);
+            cur.close();
+            return cur;
+        }
+}
+</code></pre>
+
+<blockquote>
+  <p>Code for MyApplication.java</p>
+</blockquote>
+
+<pre><code>public class MyApplication extends Application {
+
+    private static MyApplication singleton;
+    private MySQLiteOpenHelper dbHelper;
+
+    public static MyApplication getInstance() {
+        return singleton;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        singleton = this;
+        dbHelper = new MySQLiteOpenHelper(getApplicationContext());
+        // Some code
+    }
+
+    public MySQLiteOpenHelper getDatabaseHelper() {
+        return dbHelper;
+    }
+
+}
+</code></pre>
+
+<blockquote>
+  <p>Using code in any of application components:</p>
+</blockquote>
+
+<pre><code>int id = MyApplication.getInstance().getDatabaseHelper().getIdFor("ashish");
+</code></pre>

@@ -1,0 +1,77 @@
+<p>I have a GridView and want to get the name of the clicked Resource (e.g. R.drawable.foo1) and I don't know how.</p>
+
+<p>Here is the place in my Fragment where I want to get the Name:</p>
+
+<pre><code>public static class PlaceholderFragment extends Fragment {
+
+    public PlaceholderFragment() {}
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        GridView gridview = (GridView) rootView.findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(getActivity()));
+
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                // TODO HERE I WANT TO GET THE NAME
+            }
+        });
+
+        return rootView;
+    }
+}
+</code></pre>
+
+<p>I have the following adapter:</p>
+
+<pre><code>import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+            R.drawable.foo1, R.drawable.foo2, R.drawable.foo3
+    };
+}
+</code></pre>

@@ -1,0 +1,130 @@
+<p>i want to highlight selected row with different color in listview. Here i using CustomAdapter for populating rows in listview. When i click any row then change the background of selected row. If i select another the highlight selected one, remove previous highlighted background.</p>
+
+<p>relation_dialog.xml</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">       
+
+                <Button
+                    android:layout_width="fill_parent"
+                    android:layout_height="33dp"
+                    android:text="Done"
+                    android:id="@+id/btnDoneRelationDialog"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    android:background="@drawable/buttonshape"
+                    android:textColor="#FFFFFF"
+                    android:textAllCaps="false"/>
+
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/popup_lstview_relations"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_above="@+id/relativeLayout"
+            android:choiceMode="singleChoice"/>
+    </RelativeLayout>
+</LinearLayout>
+</code></pre>
+
+<p>AddMemberSearch.java</p>
+
+<pre><code> listViewPopup = (ListView) d.findViewById(R.id.popup_lstview_relations);
+
+        RelationAdapter relationAdapter = new RelationAdapter(AddmemberSearch.this, relationList);
+        listViewPopup.setAdapter(relationAdapter);
+
+        listViewPopup.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                // TODO Auto-generated method stub
+               // listViewPopup.getSelectedView().setBackgroundColor(getResources().getColor(R.color.title_bar_color));
+                Object o = listViewPopup.getItemAtPosition(position);
+                relValue = ((ValueNamePairBO) o).getValue();
+                Log.d("System Out", "relValue: " + relValue);
+                view.setSelected(true);
+                autoComplteVerifyUserId.setText("");
+            }
+        });
+</code></pre>
+
+<p>RelationAdapter class</p>
+
+<pre><code>    public class RelationAdapter extends BaseAdapter {
+    private ArrayList<ValueNamePairBO> listData;
+    private LayoutInflater layoutInflater;
+    public RelationAdapter(Context aContext, ArrayList<ValueNamePairBO> listData) {
+        this.listData = listData;
+        layoutInflater = LayoutInflater.from(aContext);
+    }
+
+    @Override
+    public int getCount() {
+        return listData.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return listData.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = layoutInflater.inflate(R.layout.relation_row, null);
+            holder = new ViewHolder();
+
+            holder.txtRelationName = (TextView) convertView.findViewById(R.id.txtRelationName);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+
+
+        holder.txtRelationName.setText(listData.get(position).getName());
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView txtRelationName;
+    }
+
+}
+</code></pre>
+
+<p>relation_row.xml</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/txtRelationName"
+        android:layout_gravity="left"
+        android:textColor="#000000"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:paddingLeft="20dp"
+        />
+</LinearLayout>
+</code></pre>

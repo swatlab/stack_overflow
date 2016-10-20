@@ -1,0 +1,306 @@
+<p>I'm trying to create a listview using a preloaded database, the app is running but the data is not showing. Pls help me. Im using Database Browser for Sqlite. Or can someone give me an example of this? </p>
+
+<p>This is my DataListView.java</p>
+
+<pre><code>package com.example.thetrial;
+import java.util.ArrayList;
+import android.app.Activity;
+import android.app.ListActivity;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;  
+import android.database.sqlite.SQLiteException;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.CursorAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class DataListView extends Activity {
+private DBHelper dbDBHelper = null;
+private Cursor ourCursor = null;
+private DBAdapter adapter = null;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    try{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+    ListView myListView = (ListView)findViewById(R.id.myListView);
+dbDBHelper = new DBHelper(this);
+dbDBHelper.createDataBase();
+dbDBHelper.openDataBase();
+ourCursor = dbDBHelper.getCursor();
+startManagingCursor(ourCursor);
+adapter = new DBAdapter(ourCursor);
+myListView.setAdapter(adapter);
+}catch (Exception e){
+
+    Log.e("Error", "Error in code: " + e.toString());
+    e.printStackTrace();
+}
+}
+class DBAdapter extends CursorAdapter{
+    DBAdapter(Cursor c){
+        super(DataListView.this,c,0);
+    }
+
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+        // TODO Auto-generated method stub
+        DBHolder holder = (DBHolder)view.getTag();
+        holder.populateFrom(cursor, dbDBHelper);
+    }
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        // TODO Auto-generated method stub
+        LayoutInflater inflater = getLayoutInflater();
+        View view=inflater.inflate(R.layout.row, parent, false);
+        DBHolder holder = new DBHolder(view);
+        view.setTag(holder);
+        return(view);
+    }
+
+}
+static class DBHolder {
+    private TextView name = null;
+    DBHolder (View view){
+        name = (TextView)view.findViewById(R.id.text);
+
+    }
+    void populateFrom(Cursor c, DBHelper r){
+    name.setText(r.getName(c)); 
+    }
+    }
+}
+</code></pre>
+
+<p>DBHelper.java</p>
+
+<pre><code>package com.example.thetrial;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Locale;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+public SQLiteDatabase DB;
+private static String DB_Path = "/data/data/com.example.thetrial/databases/";
+private static String DB_Name = "trialakoagain.db";
+public  static final String TABLE_Name = "linux_comm";
+public static final String Column_Id = "_id";
+public static final String Column_Comm = "comm";
+public static final String Column_Desc = "desc";
+private final Context myContext;
+
+
+public DBHelper(Context context) {
+    super(context, DB_Name, null, 1);
+    this.myContext = context;
+}   
+
+ public void createDataBase(){
+
+        boolean dbExist = checkDataBase();
+        if(!dbExist){
+            this.getReadableDatabase();
+            copyDataBase();
+        } 
+ }
+        /*
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }*/
+ private boolean checkDataBase() {
+        // TODO Auto-generated method stub
+     SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_Path + DB_Name;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+            checkDB.setLocale(Locale.getDefault());
+            //checkDB.setLockingEnabled(true);
+            checkDB.setVersion(1);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    } 
+
+private void copyDataBase()  {
+InputStream inputStream = null;
+OutputStream outStream = null;
+String outFileName = DB_Path + DB_Name;
+try{
+    inputStream = myContext.getAssets().open(DB_Name);
+    outStream = new FileOutputStream(outFileName);
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = inputStream.read(buffer)) > 0){
+        outStream.write(buffer,0,length);
+    }
+    outStream.flush();
+    outStream.close();
+    inputStream.close();
+}catch (IOException e){
+    throw new Error("Problem copying db to resource!");
+}
+
+}
+public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_Path + DB_Name;
+        DB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(DB != null)
+                DB.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+    public Cursor getCursor(){
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables (TABLE_Name);
+        String [] asColumnToReturn = new String [] {Column_Id,Column_Comm,Column_Desc};
+
+        Cursor mCursor = queryBuilder.query(DB, asColumnToReturn, null, null, null, null, null);
+        return mCursor;
+
+    }
+    public String getName(Cursor c){
+        return(c.getString(2));
+    }
+
+}
+</code></pre>
+
+<p>Manifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="com.example.thetrial"
+android:versionCode="1"
+android:versionName="1.0" >
+
+<uses-sdk
+    android:minSdkVersion="14"
+    android:targetSdkVersion="21" />
+
+<application
+    android:allowBackup="true"
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity
+        android:name=".DataListView"
+        android:label="@string/app_name" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+</application>
+</code></pre>
+
+<p></p>
+
+<p>I'm not sure if these are correct I just watched a tutorial and it never said what are the needs of main.xml and row.xml</p>
+
+<p>main.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+>
+<ListView
+android:id="@+id/myListView"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" >
+</ListView>
+</code></pre>
+
+<p></p>
+
+<p>row.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical" >
+
+<TextView
+    android:id="@+id/text"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    />
+</code></pre>
+
+<p></p>

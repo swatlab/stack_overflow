@@ -1,0 +1,33 @@
+<p>I am writing a class <code>Vec2D</code>, representing a 2 dimensional vector. I store <code>x</code> and <code>y</code> in <code>double</code>s.</p>
+
+<p>When asked to generate <code>equals(Object obj</code> and <code>hashCode()</code>, eclipse generated this:</p>
+
+<pre><code>@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    long temp;
+    temp = Double.doubleToLongBits(x);
+    result = prime * result + (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(y);
+    result = prime * result + (int) (temp ^ (temp >>> 32));
+    return result;
+}
+@Override
+public boolean equals(Object obj) {
+    if (this == obj)
+        return true;
+    if (obj == null)
+        return false;
+    if (getClass() != obj.getClass())
+        return false;
+    Vec2D other = (Vec2D) obj;
+    if (Double.doubleToLongBits(x) != Double.doubleToLongBits(other.x))
+        return false;
+    if (Double.doubleToLongBits(y) != Double.doubleToLongBits(other.y))
+        return false;
+    return true;
+}
+</code></pre>
+
+<p>What is the significance of <code>Double.doubleToLongBits(x)</code> in this context? Can I not simply write <code>x != other.x</code>?</p>

@@ -1,0 +1,352 @@
+<p>I am a beginner in Java and Android Studio and I am trying to build an app by following online tutorials. Everything good up to the point that I arrived to tabbed Activity. My app will have One main activity and tree tabs associated "FIRST WORDS"(that will have only some text describing the app), "WORDS"(that will have a grid view) and "GAMES"(that will also have a grid view inside). Both GridViews will lead to other activities on item click. 
+    Managed to do everything up to the point where I have to introduce the GridView in the second tab. I write it in the xml I write the code in .MainActivity.java, there is no error on the code, but when I try to run the app it crashes with </p>
+
+<p>"Unable to start activity ComponentInfo{com.gadgetcatch.firstwords/com.gadgetcatch.firstwords.MainActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.GridView.setAdapter(android.widget.ListAdapter)' on a null object reference"</p>
+
+<p>Here is the words.xml</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/rsz_1rsz_words">
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/action_words"
+        android:gravity="center"
+        android:textSize="@dimen/abc_text_size_large_material"
+        android:layout_marginTop="70dp"
+        android:layout_marginLeft="70dp"
+        android:layout_marginRight="70dp"
+        android:id="@+id/words_textview"/>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/words_textview"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="60dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginEnd="50dp"
+        android:layout_marginRight="50dp">
+
+        <GridView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/gridview"
+            android:numColumns="auto_fit"
+            android:verticalSpacing="80dp"
+            android:horizontalSpacing="40dp"
+            android:columnWidth="100dp"
+            android:stretchMode="columnWidth"
+            android:gravity="center" />
+
+
+    </LinearLayout>
+
+</RelativeLayout>
+</code></pre>
+
+<p>Here is the main activity java code</p>
+
+<pre><code>package com.gadgetcatch.firstwords;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this));
+
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                Toast.makeText(MainActivity.this, "" + position,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        /*
+      The {@link android.support.v4.view.PagerAdapter} that will provide
+      fragments for each of the sections. We use a
+      {@link FragmentPagerAdapter} derivative, which will keep every
+      loaded fragment in memory. If this becomes too memory intensive, it
+      may be best to switch to a
+      {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        /*
+      The {@link ViewPager} that will host the section contents.
+     */
+        ViewPager mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        //Add a tab bar navigation
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabbar);
+        tabLayout.setupWithViewPager(mViewPager);
+
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setIcon(R.mipmap.ic_launcher);
+
+
+    }
+
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c){
+            mContext = c;
+        }
+
+        public int getCount(){
+            return imageIDs.length;
+        }
+
+        public Object getItem(int position){
+            return null;
+        }
+
+        public long getItemId(int position){
+            return 0;
+        }
+
+        private Integer[] imageIDs = {
+                R.drawable.animals_png, R.drawable.food_png, R.drawable.clothing_png,
+                R.drawable.colors_png, R.drawable.body_png, R.drawable.transport_png
+        };
+
+        public View getView(int position, View convertView, ViewGroup parent){
+            ImageView imageView;
+            if (convertView == null){
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8,8,8,8);
+            }
+            else {
+                imageView = (ImageView) convertView;
+            }
+            imageView.setImageResource(imageIDs[position]);
+            return imageView;
+        }
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            switch (position) {
+                case 0:
+                    return PlaceholderFragment.newInstance(position + 1);
+                case 1:
+                    return Words.newInstance(position + 1);
+                case 2:
+                    return Games.newInstance(position + 1);
+            }
+            return null;
+
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+}
+</code></pre>
+
+<p>Please explain what am I doing wrong. I have attached also an app screen below that maybe might help you to make an idea of hat I am trying to do. Thanks in advance for your support.</p>
+
+<p><a href="http://i.stack.imgur.com/ltrNN.png" rel="nofollow">Sreen with the App</a></p>
+
+<p>Here is also what I have in the Words.java:</p>
+
+<pre><code>    public class Words extends Fragment {
+
+    private static final String ARG_SECTION_NUMBER = "section_number";
+
+    public static Words newInstance(int sectionNumber) {
+        Words fragment = new Words();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v =inflater.inflate(R.layout.words,container,false);
+        return v;
+
+
+    }
+
+}
+</code></pre>
+
+<p>Here is what I have now in Words.java after I add here the code for the GridView:</p>
+
+<pre><code> public class Words extends Fragment {
+
+    GridView gridview;
+    private static final String ARG_SECTION_NUMBER = "section_number";
+
+    public static Words newInstance(int sectionNumber) {
+        Words fragment = new Words();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v =inflater.inflate(R.layout.words,container,false);
+        GridView gridview = (GridView)v.findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this));
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                Toast.makeText(MainActivity.this, "" + position,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        return v;
+
+
+    }
+
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c){
+            mContext = c;
+        }
+
+        public int getCount(){
+            return imageIDs.length;
+        }
+
+        public Object getItem(int position){
+            return null;
+        }
+
+        public long getItemId(int position){
+            return 0;
+        }
+
+        private Integer[] imageIDs = {
+                R.drawable.animals_png, R.drawable.food_png, R.drawable.clothing_png,
+                R.drawable.colors_png, R.drawable.body_png, R.drawable.transport_png
+        };
+
+        public View getView(int position, View convertView, ViewGroup parent){
+            ImageView imageView;
+            if (convertView == null){
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8,8,8,8);
+            }
+            else {
+                imageView = (ImageView) convertView;
+            }
+            imageView.setImageResource(imageIDs[position]);
+            return imageView;
+        }
+
+    }
+}
+</code></pre>
+
+<p>The errors that appear now are in the onCreateView giving me an error on gridview.setAdapter(new ImageAdapter(this)); (the error is for "this" saying that Image Adapter (android.content.Context) cannot be applied to com.gadgetcatch.firstwords.Words)</p>
+
+<p>And te second error is for the Toast message saying that cannot resolve method makeText(com.gadgetcatch.firstwords.Words, java.lang.String, int) </p>

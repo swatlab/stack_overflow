@@ -1,0 +1,296 @@
+<p>I'm hoping my question isn't too broad. What I would really like to know is how to tell exactly where my code is hitting a wall.</p>
+
+<p>I'm not getting errors from my debugger, the app just crashes when the emulator starts an activity that uses a sqlite database (3rd activity in). I am positive it is the addition of sqlite into my code that causes the crash because it ran before I added it. </p>
+
+<p>This code simply needs to access and read from an external database that I created and pasted into the assets folder. I reviewed the sqlite database in firefox's SQLite Manager; the information seems to be formatted correctly.</p>
+
+<p>I created an assets folder within app/src/Main to facilitate the addition of the external database "ex3.db". Then I copied and pasted the database file there.</p>
+
+<p>So here is the code. LetterImage is a class that holds strings retrieved from the sqlite database. MyDBHandler creates an empty database, copies the old one into it, and fills LetterImage with the values returned from a query based on a string. LoadSubjectActivity calls them both to search the database and return a string.</p>
+
+<p>LetterImage:</p>
+
+<pre><code>public class LetterImage {
+private Integer _ID;
+private String _letter;
+private String _bigfilename;
+private String _littlefilename;
+
+//Constructor(s)
+public LetterImage(){
+
+}
+
+public LetterImage(Integer ID, String letter, String bigfilename, String littlefilename){
+    this._ID = ID;
+    this._letter = letter;
+    this._bigfilename = bigfilename;
+    this._littlefilename = littlefilename;
+}
+
+public LetterImage(String letter){
+    this._letter = letter;
+}
+
+//End Constructors
+
+//Begin setters and getters
+
+//ID is primary key
+public void setID(Integer ID){
+    this._ID = ID;
+}
+
+public Integer getID(){
+    return this._ID;
+}
+
+//letter is main identifier used to search database
+// passed to LoadSubjectActivity
+// from ChooseSubjectABCActivity as extra from intent
+public void setLetter(String letter){
+    this._letter = letter;
+}
+
+public String getLetter(){
+    return this._letter;
+}
+
+//Capital letter image file name
+public void setBigFileName(String bigfilename){
+    this._bigfilename = bigfilename;
+}
+public String getBigFileName(){
+    return this._bigfilename;
+}
+
+//Lowercase Letter image file name
+public void setLittleFileName(String littlefilename){
+    this._littlefilename = littlefilename;
+}
+public String getLittleFileName(){
+    return this._littlefilename;
+}
+}
+</code></pre>
+
+<p>Now, here is MyDBHandler:</p>
+
+<pre><code>import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.content.Context;
+import android.database.Cursor;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.SQLException;
+
+public class MyDBHandler extends SQLiteOpenHelper{
+
+private final Context myContext;
+private static Context context;
+
+private static final int DATABASE_VERSION = 1;
+private static String DB_PATH = "data/data" + context.getPackageName() + "/databases/";
+private static final String DATABASE_NAME = "ex3.db";
+public static final String TABLE_IMAGES = "tbl1";
+
+private SQLiteDatabase myDataBase;
+
+//Fields in Database
+public static final String COLUMN_ID = "_id";
+public static final String COLUMN_BIGIMAGEFILE = "bigImage";
+public static final String COLUMN_LITTLEIMAGEFILE = "littleImage";
+public static final String COLUMN_LETTER = "letter";
+
+//Constructor
+public MyDBHandler(Context context) {
+    super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    this.myContext = context;
+}
+
+//if there is no existing database, create an empty one
+public void createDatabase() throws IOException{
+    boolean dbExist = checkDataBase();
+
+    if(dbExist) {
+        //do nothing
+    }else {
+        //call this method and create an empty database
+        this.getReadableDatabase();
+
+        try {
+            copyDataBase();
+
+        } catch(IOException e){
+            throw new Error("Error copying database");
+
+        }
+
+    }
+}
+
+//check to see if there is an existing database
+private boolean checkDataBase(){
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DATABASE_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    } catch (SQLiteException e){
+        throw new Error("Unable to open database");
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+//fills new empty database with existing database ex3
+private void copyDataBase() throws IOException{
+
+    InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+    String outFileName = DB_PATH + DATABASE_NAME;
+
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+//opens the new database
+public void openDatabase() throws SQLException {
+
+    String myPath = DB_PATH + DATABASE_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+}
+
+@Override
+public synchronized void close(){
+    if(myDataBase != null)
+        myDataBase.close();
+    super.close();
+}
+
+@Override
+public void onCreate(SQLiteDatabase db){
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int OldVersion, int newVersion){
+
+}
+
+
+//creates an instance of letter LetterImage
+//queries the new database by searching for the row with where the value of COLUMN_LETTER = letter
+//fills LetterImage with the values from that row
+public LetterImage findLetter(String letter) {
+    String query = "Select * FROM " + TABLE_IMAGES + " WHERE " + COLUMN_LETTER + " =  \"" + letter + "\"";
+
+    SQLiteDatabase db = this.getWritableDatabase();
+
+    Cursor cursor = db.rawQuery(query, null);
+
+    LetterImage LetterImage = new LetterImage();
+
+    if (cursor.moveToFirst()) {
+        cursor.moveToFirst();
+        LetterImage.setID(Integer.parseInt(cursor.getString(0)));
+        LetterImage.setBigFileName(cursor.getString(1));
+        LetterImage.setLittleFileName(cursor.getString(2));
+        LetterImage.setLetter(cursor.getString(3));
+        cursor.close();
+    } else {
+        LetterImage = null;
+    }
+    db.close();
+    return LetterImage;
+}
+}
+</code></pre>
+
+<p>Finally, here are the pertinent parts of the LoadSubjectActivity class:</p>
+
+<pre><code>public class LoadSubjectActivity extends MainActivity{
+
+private DrawingView drawView;
+private ImageButton currPaint;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.content_load_subject);
+
+    //receives string letter, from last activity
+    //letter will be used to search array and return files names of the images to be used
+
+    Intent intent = getIntent();
+    String letter = intent.getExtras().getString("letter");
+
+    //displayFN calls testDB(letter) to test the database
+    //It should simply display the string returned by testDB()
+
+    TextView displayFN = (TextView)findViewById(R.id.display_filenames);
+    displayFN.setText(testDB(letter.toLowerCase()));
+
+
+    //Eventually, button images will be filled dynamically
+
+    ImageButton bigLetter = (ImageButton)findViewById(R.id.big_letter);
+    ImageButton littleLetter = (ImageButton)findViewById(R.id.little_letter);
+    bigLetter.setImageResource(R.drawable.biga);
+    littleLetter.setImageResource(R.drawable.littlea);
+
+    drawView = (DrawingView)findViewById(R.id.drawing);
+    LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
+    currPaint = (ImageButton)paintLayout.getChildAt(0);
+    currPaint.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.paint_pressed));
+}
+
+//Function to test the database takes a string as an argument to search the database
+public String testDB(String letter){
+
+    //create a new instance of dbHandler
+    MyDBHandler dbHandler = new MyDBHandler(this);
+
+    //try to either create an empty database or open the existing one
+    try{
+        dbHandler.createDatabase();
+    } catch (IOException ioe){
+        throw new Error("Unable to create database");
+    }
+    try{
+        dbHandler.openDatabase();
+    } catch(SQLException sqle){
+        sqle.printStackTrace();
+        throw new Error ("unable to open database");
+    }
+
+
+    LetterImage letterImage = dbHandler.findLetter(letter);
+    String blFileName = letterImage.getBigFileName();
+
+    //return the big letter image file name;
+    return blFileName;
+
+}
+</code></pre>
+
+<p>Anyway, I apologize in advance for any obvious problems. I have traced the logic to the best of my ability...I am teaching myself java and sql...this is my first android project. Any and all insight is greatly appreciated.</p>

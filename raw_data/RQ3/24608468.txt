@@ -1,0 +1,361 @@
+<p>How can I solve this problem would in android ?</p>
+
+<pre><code>07-07 14:44:58.122: E/CursorWindow(12281): Could not allocate CursorWindow '/storage/emulated/0/Android/data/com.example.mytestlistview/Mafatih/Mafatih.db' of size 2097152 due to error -12.
+</code></pre>
+
+<p>I create a <code>SearchBox</code> on a DB that it is <code>10MB</code> .That show the results of search on <code>ListView</code> but get me this error.</p>
+
+<p>My StructNote.java :</p>
+
+<pre><code>public class StructNote {
+    public String Title;
+    public String Comment;
+
+    public StructNote(String Title,String Comment)
+    {
+        super();
+        this.Title = Title;
+        this.Comment = Comment;
+    }
+
+    public String getTitle()
+    {
+        return Title;
+    }
+
+
+    public String getComment()
+    {
+        return Comment;
+    }
+}
+</code></pre>
+
+<p>My MainActivity.java :</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+    public static final String DIR_SDCARD = Environment
+            .getExternalStorageDirectory().getAbsolutePath();
+    public static final String DIR_DATABASE = DIR_SDCARD + "/Android/data/";
+    public ArrayList<StructNote> notes = new ArrayList<StructNote>();
+    public ArrayAdapter adapter;
+    public String Titel_Drawer;
+    public Integer titleID;
+    public Cursor cursorid;
+    public ArrayList<String> array;
+    public static String PACKAGE_NAME;
+    EditText editText;
+    DB db = new DB(MainActivity.this);
+    public Cursor cursor;
+    public SQLiteDatabase sql;
+    public ListView lstContent;
+    int selectedId;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        PACKAGE_NAME = getApplicationContext().getPackageName();
+        File file = new File(DIR_DATABASE + PACKAGE_NAME + "/Mafatih");
+        file.mkdirs();
+        db.GetPackageName(PACKAGE_NAME);
+        db.CreateFile();
+        try {
+            db.CreateandOpenDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        sql = db.openDataBase();
+
+        final ListView lstContent = (ListView) findViewById(R.id.lstContent);
+        adapter = new AdapterNote(notes);
+        lstContent.setAdapter(adapter);
+
+        editText = (EditText) findViewById(R.id.search);
+
+        editText.setOnKeyListener(new OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                        if (editText.getText().length() < 2) {
+                            Toast.makeText(MainActivity.this, "Please enter more text !", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                        else
+                        {
+                            populateListView(editText.getText());
+                            return true;
+                        }
+                    }
+                    else if(keyCode == KeyEvent.KEYCODE_DEL) {
+                        adapter.clear();
+                        return false;
+                        }
+                return false;
+            }
+        });
+
+        final RadioGroup radioGroup = (RadioGroup) findViewById(R.id.Language);
+
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(RadioGroup arg0, int arg1) {
+                selectedId = radioGroup.getCheckedRadioButtonId();
+                Log.i("xxx", String.valueOf(selectedId));
+
+            }
+        });
+    }
+
+    public void populateListView(Editable editable) {
+        if(selectedId == 2131034177)
+        {
+        try {
+            cursor = sql.rawQuery(
+                    "SELECT * FROM WebSite_MetaDataDBBack WHERE Comment LIKE '"
+                            +"%"+ editable + "%'", null);
+            array = new ArrayList<String>();
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    do {
+                        StructNote note = new StructNote(Titel_Drawer, Titel_Drawer);
+                        note.Comment = cursor.getString(cursor
+                                .getColumnIndex("Comment"));
+                        titleID = cursor.getInt(cursor
+                                .getColumnIndex("CategoryID"));
+                        cursorid = sql.rawQuery(
+                                "SELECT Title FROM WebSite_CategoryBack WHERE CategoryID ="
+                                        + titleID, null);
+                        if (cursorid != null) {
+                            do {
+                                cursorid.moveToFirst();
+                                note.Title = cursorid.getString(cursorid
+                                        .getColumnIndex("Title"));
+                            } while (cursorid.moveToNext());
+                        }
+                        notes.add(note);
+                    } while (cursor.moveToNext());
+                }
+                adapter.notifyDataSetChanged();
+                cursor.close();
+            }
+
+        } catch (Exception e) {
+            Log.i("xxx", "You have an error");
+        }
+
+        }
+        else if(selectedId == 2131034176)
+        {
+            try {
+                cursor = sql.rawQuery(
+                        "SELECT Tafsir,CategoryID FROM WebSite_MetaDataDBBack WHERE Tafsir LIKE '"
+                                +"%"+ editable + "%'", null);
+                array = new ArrayList<String>();
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        do {
+                            StructNote note = new StructNote(Titel_Drawer, Titel_Drawer);
+                            note.Comment = cursor.getString(cursor
+                                    .getColumnIndex("Tafsir"));
+                            titleID = cursor.getInt(cursor
+                                    .getColumnIndex("CategoryID"));
+                            cursorid = sql.rawQuery(
+                                    "SELECT Title FROM WebSite_CategoryBack WHERE CategoryID ="
+                                            + titleID, null);
+                            if (cursorid != null) {
+                                do {
+                                    cursorid.moveToFirst();
+                                    note.Title = cursorid.getString(cursorid
+                                            .getColumnIndex("Title"));
+                                } while (cursorid.moveToNext());
+                            }
+                            notes.add(note);
+
+                        } while (cursor.moveToNext());
+                    }
+                    adapter.notifyDataSetChanged();
+                    cursor.close();
+                }
+
+            } catch (Exception e) {
+                Log.i("xxx", "You have an error");
+            }
+
+        }
+    }
+}
+</code></pre>
+
+<p>My AdapterNote.java :</p>
+
+<pre><code>public class AdapterNote extends ArrayAdapter<StructNote> {
+
+    public AdapterNote(ArrayList<StructNote> array) {
+        super(G.context, R.layout.dapter_notes, array);
+    }
+
+    public static class ViewHolder {
+
+        public TextView txtTitle;
+        public TextView txtDescription;
+
+        public ViewHolder(View view) {
+            txtTitle = (TextView) view.findViewById(R.id.txtTitle);
+            txtDescription = (TextView) view.findViewById(R.id.txtDescription);
+        }
+
+        public void fill(ArrayAdapter<StructNote> adapter, StructNote item,
+                int position) {
+            txtTitle.setText(item.Title);
+            txtDescription.setText(item.Comment);
+        }
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        StructNote item = getItem(position);
+        if (convertView == null) {
+            convertView = G.inflater.inflate(R.layout.dapter_notes, parent,
+                    false);
+            holder = new ViewHolder(convertView);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+        holder.fill(this, item, position);
+        return convertView;
+    }
+}
+</code></pre>
+
+<p>My G.java :</p>
+
+<pre><code>public class G extends Application{
+    public static Context context;
+    public static LayoutInflater inflater;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        context = getApplicationContext();
+        inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+}
+</code></pre>
+
+<p>And this is my Db.java for DB :</p>
+
+<pre><code>public class DB extends SQLiteOpenHelper{   
+    public static final String DIR_SDCARD =Environment.getExternalStorageDirectory().getAbsolutePath();
+    public static final String DIR_DATABASE = DIR_SDCARD +"/Android/data/";
+    private static  String DB_NAME = "Mafatih.db";
+    private final Context myContext;
+    public static String PACKAGE_NAME;
+    public boolean flag = false;
+
+    private void copyDataBase() throws IOException{
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DIR_DATABASE +PACKAGE_NAME+"/Mafatih/"+ DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        try{
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+            }
+        }
+        catch (IOException e) {
+            Log.e("Copy", e.toString());
+        }
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+       }
+
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+
+        try{
+
+            checkDB = SQLiteDatabase.openDatabase(DIR_DATABASE +PACKAGE_NAME+ "/Mafatih/" + DB_NAME, null, 0);
+
+        }catch(SQLiteException e){
+         Log.e("asdf", "checkDataBase-->"+e.toString());
+        }
+        if(checkDB != null){
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+       }
+    @Override
+    public synchronized SQLiteDatabase getReadableDatabase() {
+        return super.getReadableDatabase();
+    }
+    public DB(Context context) {
+     super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+
+    public void CreateandOpenDataBase() throws IOException{
+         boolean dbExist = checkDataBase();
+         if(dbExist){
+         }
+         else
+         {
+        try {
+                copyDataBase();
+            } 
+        catch (IOException e) {
+            throw new Error("Error copying database --> "+e.toString());
+            }
+         }
+    }
+
+    public SQLiteDatabase openDataBase() throws SQLException{
+        return SQLiteDatabase.openOrCreateDatabase(DIR_DATABASE +PACKAGE_NAME+ "/Mafatih/" +DB_NAME, null);
+       }
+
+
+    public boolean CreateFile(){
+        if(flag == false)
+        {
+            File file= new File(DIR_DATABASE);
+            file.mkdirs();
+            return true;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public void GetPackageName(String res){
+        PACKAGE_NAME = res;
+    }
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+    }
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>

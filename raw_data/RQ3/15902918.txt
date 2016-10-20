@@ -1,0 +1,114 @@
+<p>Following <a href="http://www.ashokgelal.com/2012/12/setting-up-intellij-idea-12-with-maven-actionbarsherlock-roboelectric-androidannotations/" rel="nofollow">this tutorial</a> I've added Maven, ABS and AndroidAnnotations to my Android project in IntelliJ IDEA. At first I've struggled with <a href="http://stackoverflow.com/questions/14099291/intellij-android-support-v4-jar-in-included-in-actionbarsherlock-and-project">DEX/cannot access android.support.v4.app.FragmentActivity</a> exceptions, and seems to fix it with the following configuration:</p>
+
+<p><img src="http://i.stack.imgur.com/pyXSh.png" alt="app deps"></p>
+
+<p><img src="http://i.stack.imgur.com/EREb2.png" alt="abs deps"></p>
+
+<p>Right now I'm getting <code>java.lang.RuntimeException: Unable to start activity</code> error.</p>
+
+<p>Manifest:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="ru.erarta.erarta"
+          android:versionCode="1"
+          android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="10" android:targetSdkVersion="16" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <application android:label="@string/app_name"
+                 android:theme="@style/Theme.Sherlock"
+                 android:icon="@drawable/ic_launcher"
+                 android:name=".Erarta">
+        <activity android:name=".TabsFragmentActivity"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:name=".DayActivity_" />
+        <activity android:name=".CalendarActivity"/>
+        <activity android:name=".AboutActivity"/>
+        <activity android:name=".EventActivity"/>
+        <activity android:name=".PermanentExhibitionActivity"/>
+        <activity android:name=".MediaActivity"/>
+        <activity android:name=".MapActivity"/>
+        <activity android:name=".TypesActivity" android:label="Типы событий"/>
+        <!-- uses-library android:name="com.google.android.maps" /-->
+    </application>
+</manifest>
+</code></pre>
+
+<p>Main Activity declaration:</p>
+
+<pre><code>public class TabsFragmentActivity extends SherlockFragmentActivity
+        implements TabHost.OnTabChangeListener
+</code></pre>
+
+<p>Logcat output:</p>
+
+<pre><code>04-09 16:45:48.614: ERROR/AndroidRuntime(26562): FATAL EXCEPTION: main
+        java.lang.RuntimeException: Unable to start activity ComponentInfo{ru.erarta.erarta/ru.erarta.erarta.TabsFragmentActivity}: java.lang.ClassCastException: ru.erarta.erarta.CalendarActivity
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1872)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1893)
+        at android.app.ActivityThread.access$1500(ActivityThread.java:135)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1054)
+        at android.os.Handler.dispatchMessage(Handler.java:99)
+        at android.os.Looper.loop(Looper.java:150)
+        at android.app.ActivityThread.main(ActivityThread.java:4385)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:507)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:849)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:607)
+        at dalvik.system.NativeStart.main(Native Method)
+        Caused by: java.lang.ClassCastException: ru.erarta.erarta.CalendarActivity
+        at android.support.v4.app.Fragment.instantiate(Fragment.java:384)
+        at ru.erarta.erarta.TabsFragmentActivity.onTabChanged(TabsFragmentActivity.java:108)
+        at ru.erarta.erarta.TabsFragmentActivity.initialiseTabHost(TabsFragmentActivity.java:73)
+        at ru.erarta.erarta.TabsFragmentActivity.onCreate(TabsFragmentActivity.java:51)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1072)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1836)
+        ... 11 more
+</code></pre>
+
+<p>I've decompiled APK with <code>apktool</code> here is <code>$ find . | grep support</code>:</p>
+
+<pre><code>./smali/android/support
+./smali/android/support/v4
+./smali/android/support/v4/app
+./smali/android/support/v4/app/Watson$OnCreateOptionsMenuListener.smali
+./smali/android/support/v4/app/Watson$OnOptionsItemSelectedListener.smali
+./smali/android/support/v4/app/Watson$OnPrepareOptionsMenuListener.smali
+./smali/android/support/v4/app/Watson.smali
+./smali/com/actionbarsherlock/internal/view/View_HasStateListenerSupport.smali
+</code></pre>
+
+<p>Here is code around TabsFragmentActivity.java:108:</p>
+
+<pre><code>public void onTabChanged(String tag) {
+    TabInfo newTab = this.mapTabInfo.get(tag);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this,
+                        newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+            }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+</code></pre>

@@ -1,0 +1,192 @@
+<p>I am getting these three errors while it starts the app and it crashes immediately after that(I've added all the references where required):</p>
+
+<pre><code>android.view.InflateException: Binary XML file line #29: Error inflating class fragment
+Caused by: android.view.InflateException: Binary XML file line #29: Error inflating class fragment
+Caused by: java.lang.IllegalStateException: Fragment com.tifinnearme.priteshpatel.materialdrawer.NavigationFragment did not create a view.
+</code></pre>
+
+<p>Here is Mainactivity.java</p>
+
+<pre><code>package com.tifinnearme.priteshpatel.materialdrawer;
+
+import android.content.Intent;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+
+
+public class MainActivity extends ActionBarActivity {
+Toolbar toolbar;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    toolbar=(Toolbar)findViewById(R.id.app_bar);
+    setSupportActionBar(toolbar);
+
+    getSupportActionBar().setHomeButtonEnabled(true);
+    //Create object for drawer layout
+
+    NavigationFragment navFrag=     (NavigationFragment)getSupportFragmentManager().findFragmentById(R.id.drawer_fragment);
+    DrawerLayout drawerLayout=(DrawerLayout)findViewById(R.id.drawer_layout);//Get the object of drawer layout
+
+    navFrag.setUp(R.id.drawer_fragment,drawerLayout,toolbar);
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    if(id==R.id.navigate)
+    {
+        startActivity(new Intent(this,Subactivity.class));
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p>NavigationFragment.java</p>
+
+<pre><code>package com.tifinnearme.priteshpatel.materialdrawer;
+
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+
+
+/**
+* A simple {@link Fragment} subclass.
+*/
+public class NavigationFragment extends Fragment {
+
+public static final String PREF_FILE_NAME="testprefs";
+public static final String KEY_USER_LEARNED_DRAWER="User learned drawer";
+private ActionBarDrawerToggle mDrawerToggle;
+private DrawerLayout mDrawerLayout;
+private boolean mUserLearnedDrawer;//indicate whether user has opened drawer first time or not(
+private boolean mFromSavedInstanceState;
+private View containerView;
+public NavigationFragment() {
+    // Required empty public constructor
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    mUserLearnedDrawer=Boolean.valueOf(readFromPrefs(getActivity(), KEY_USER_LEARNED_DRAWER, "false"));//false indicates user doesn't know about drawer
+    if(savedInstanceState!=null){
+        mFromSavedInstanceState=true;
+    }
+}
+
+
+public void setUp(int drawer_fragment, DrawerLayout drawerLayout, Toolbar toolbar) {
+    //Initialize the drawer layout and toggle
+    containerView=getActivity().findViewById(drawer_fragment);
+    mDrawerLayout=drawerLayout;
+    mDrawerToggle=new ActionBarDrawerToggle(getActivity(),mDrawerLayout,toolbar,R.string.drawer_open,R.string.drawer_close){
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if(!mUserLearnedDrawer)
+            {
+                mUserLearnedDrawer=true;
+                savedPreferences(getActivity(),KEY_USER_LEARNED_DRAWER,mUserLearnedDrawer+"");
+                //Save this value into our Key to indicate that user has seen drawer
+            }
+            getActivity().invalidateOptionsMenu();//It creates Actionbar again when drawer toggles
+
+
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            getActivity().invalidateOptionsMenu();
+        }
+    };
+    if(!mUserLearnedDrawer && !mFromSavedInstanceState)
+    {
+        mDrawerLayout.openDrawer(containerView);
+    }
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+public static void savedPreferences(Context context,String prefName,String prefValue){
+    SharedPreferences sharedPrefs=context.getSharedPreferences(PREF_FILE_NAME,Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor=sharedPrefs.edit();
+    editor.putString(prefName,prefValue);
+    /*editor.commit();*///It wait for the operation to become successful
+    editor.apply();//It doesn't wait for the operation to become successful
+}
+public static String readFromPrefs(Context context,String prefName,String prefDefaultValue){
+    SharedPreferences getPrefs=context.getSharedPreferences(PREF_FILE_NAME,Context.MODE_PRIVATE);
+    return  getPrefs.getString(prefName,prefDefaultValue);
+}
+}
+</code></pre>
+
+<p>activity_main.xml</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout     xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/drawer_layout"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <include
+        android:id="@+id/app_bar"
+        layout="@layout/app_bar"></include>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/app_bar"
+        android:text="@string/hello_world" />
+</RelativeLayout>
+
+<fragment
+    android:id="@+id/drawer_fragment"
+    android:name="com.tifinnearme.priteshpatel.materialdrawer.NavigationFragment"
+    android:layout_width="240dp"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    app:layout="@layout/fragment_navigation"
+    tools:layout="@layout/fragment_navigation" />
+
+
+ </android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p><strong>EDIT:</strong> Duplicate question doesn't resolved my problem. I'm still having the same problem.If anyone could help with this, than it'd be great. thanks!</p>

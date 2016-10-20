@@ -1,0 +1,23 @@
+<p>I have a SherlockFragmentActivity with two SherlockFragments in its tabs. Naturally I want to keep the currently selected tab active on orientation changes and when the user returns from an activity they've launched from either of the fragments.</p>
+
+<p>So I use <em>onSaveInstanceState</em> to store the selected tab index and re-select it on <em>onCreate</em>. This works fine on orientation changes. But if I launch another activity (let's say a preferences screen) and return from it, the saved instance state is always null on <em>onCreate</em>, even though <em>onSaveInstanceState</em> has been called.  </p>
+
+<p>So I guess the question is that am I just going at this the wrong way. If I use fragments am I forced to use only one activity with all the sub-screens as fragments?</p>
+
+<p>Or is there some other reason why my saved instance state disappears between activity changes?</p>
+
+<p>Edit: code from Activity B</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>

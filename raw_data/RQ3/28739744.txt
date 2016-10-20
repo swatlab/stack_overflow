@@ -1,0 +1,448 @@
+<p>How to save uploaded file to sdcard folder , currently it stores to /data/data/cache folder with filename like "NanoHTTPD-some random number". </p>
+
+<p>I am not able to copy it to any folder location in sdcard.</p>
+
+<p>I would like to save the file to a pre-mentioned folder location in sdcard with the same name as the original file name was uploaded from my html page.</p>
+
+<p>I have tried all sort of codes .But file copy fails all the time.
+1)Not able to get correct location of temp file.
+2)Not getting original filename that the form was posted with</p>
+
+<p>Here is my implementation .</p>
+
+<p>Please help i am stuck.</p>
+
+<pre><code>    public class HttpMultimediaServer extends NanoHTTPD {
+    private static final String TAG = "HttpMultimediaServer";
+    private FileInputStream fileInputStream;
+
+    public HttpMultimediaServer() {
+        super(12345);
+        this.setTempFileManagerFactory(new ExampleManagerFactory());
+    }
+
+    @Override 
+    public Response serve(IHTTPSession session) {
+        Method method = session.getMethod();
+        String uri = session.getUri();
+
+        Log.e("handle", "url>>" + uri);
+
+        if (uri.contains(filesOnly)) {
+            isfilesOnly = true;
+            uri = "/";
+        } else
+            isfilesOnly = false;
+
+        uri = uri.replace("%20", " ");
+
+        try {
+            uri=new String (uri.getBytes ("iso-8859-1"), "UTF-8");
+        } catch (UnsupportedEncodingException e2) {
+            e2.printStackTrace();
+        }
+
+
+        File filePathServer = new File(uri);
+
+
+
+        if (method==Method.POST) {
+
+            try {
+
+
+                Map<String, String> hdrs=session.getHeaders();
+                Map<String, String> params=session.getParms();
+
+                Map<String, String> files = new HashMap<String, String>();
+                session.parseBody(files);
+
+                Set<String> keys = files.keySet();
+                for(String key: keys){
+                    String name = key;
+                    String loaction = files.get(key);
+
+                    File tempfile = new File(loaction);
+
+
+                String tempFileName = files.get(loaction).toString();
+                File fileToMove = new File(tempFileName); 
+
+    // temp file path returned by NanoHTTPD
+
+                String p =Environment.getExternalStorageDirectory().getPath();
+                String newFile = p + "/LICENSE.txt";
+                File nf = new File(newFile); // I want to move file here
+
+                if (fileToMove.canWrite()) {
+                    boolean success = fileToMove.renameTo(nf);
+                    if (success == true) {
+                        // LOG to console
+                        Log.i("FILE_MOVED_TO", newFile);
+                    } else {
+                        Log.e("FILE_MOVE_ERROR", tempFileName);
+                    }
+                } else {
+                    Log.e("PERMISSION_ERROR_TEMP_FILE", tempFileName);
+                }
+
+                }
+                uploadstatus = UPLOAD_SUCESS;
+
+
+                return new Response("UPLOAD_SUCESS");
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                uploadstatus = UPLOAD_FAIL;
+
+                return new Response("UPLOAD_FAIL");
+
+            }
+
+
+        }
+
+    }
+
+
+    public static void copy(File src, File dst) throws IOException {
+        InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst);
+
+        // Transfer bytes from in to out
+        byte[] buf = new byte[1024];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+        in.close();
+        out.close();
+    }
+
+    public static void copyFile(File src, File dst) throws IOException
+    {
+        FileChannel inChannel = new FileInputStream(src).getChannel();
+        FileChannel outChannel = new FileOutputStream(dst).getChannel();
+        try
+        {
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        }
+        finally
+        {
+            if (inChannel != null)
+                inChannel.close();
+            if (outChannel != null)
+                outChannel.close();
+        }
+    }
+
+
+
+
+
+    private Response getFullResponse(String mimeType,String filePath) throws FileNotFoundException {
+    //        cleanupStreams();
+        fileInputStream = new FileInputStream(filePath);
+        return new Response(Response.Status.OK, mimeType, fileInputStream);
+    }
+
+    private Response getPartialResponse(String mimeType, String rangeHeader,String filePath) throws IOException {
+        File file = new File(filePath);
+        String rangeValue = rangeHeader.trim().substring("bytes=".length());
+        long fileLength = file.length();
+        long start, end;
+        if (rangeValue.startsWith("-")) {
+            end = fileLength - 1;
+            start = fileLength - 1
+                    - Long.parseLong(rangeValue.substring("-".length()));
+        } else {
+            String[] range = rangeValue.split("-");
+            start = Long.parseLong(range[0]);
+            end = range.length > 1 ? Long.parseLong(range[1])
+                    : fileLength - 1;
+        }
+        if (end > fileLength - 1) {
+            end = fileLength - 1;
+        }
+        if (start <= end) {
+            long contentLength = end - start + 1;
+    //            cleanupStreams();
+            fileInputStream = new FileInputStream(file);
+                //noinspection ResultOfMethodCallIgnored
+            fileInputStream.skip(start);
+            Response response = new Response(Response.Status.PARTIAL_CONTENT, mimeType, fileInputStream);
+            response.addHeader("Content-Length", contentLength + "");
+            response.addHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileLength);
+            response.addHeader("Content-Type", mimeType);
+            return response;
+        } else {
+            return new Response(Response.Status.RANGE_NOT_SATISFIABLE, "text/html", rangeHeader);
+        }
+    }
+    int UPLOAD_SUCESS = 1;
+    int UPLOAD_FAIL = -1;
+    int UPLOAD_NO = 0;
+    int uploadstatus;
+    boolean isfilesOnly;
+    String filesOnly = "?filesOnly=1";
+    ArrayList<CLocalFile> list;
+    StringBuilder sb;
+
+    public void walkdir(File dir) {
+
+        File listFile[] = dir.listFiles();
+        if (listFile != null) {
+            for (int i = 0; i < listFile.length; i++) {
+                // checking if it is a directory
+                if (listFile[i].isDirectory()) {
+                    if (isfilesOnly)
+                        walkdir(listFile[i]);
+                    else {
+                        CLocalFile f = new CLocalFile();
+                        f.setName(listFile[i].getName());
+                        f.setData(listFile[i].getAbsolutePath());
+                        f.setSize("Folder");
+                        list.add(f);
+                        continue;
+                    }
+                }
+                    // checking the file extension if it is a file
+                String fileName = listFile[i].getName();
+
+                String extension = "";
+
+                int e = fileName.lastIndexOf('.');
+                if (e > 0) {
+                    extension = fileName.substring(e + 1);
+                }
+                if (!isfilesOnly
+                        || CollabUtility.video_pattern.contains(extension
+                                .toLowerCase(Locale.ENGLISH))
+                        || CollabUtility.document_pattern.contains(extension
+                                .toLowerCase(Locale.ENGLISH))
+                        || CollabUtility.audio_pattern.contains(extension
+                                .toLowerCase(Locale.ENGLISH))) {
+                    CLocalFile f = new CLocalFile();
+                    f.setName(fileName);
+                    String mb = "Bytes";
+                    double size = listFile[i].length();
+                    if (size > 1024) {
+                        size = size / 1024;
+                        mb = "KB";
+                    }
+                    if (size > 1024) {
+                        size = size / 1024;
+                        mb = "MB";
+                    }
+                    if (size > 1024) {
+                        size = size / 1024;
+                        mb = "GB";
+                    }
+                    size = Math.floor(size * 100 + 0.5) / 100;
+                    f.setSize(size + " " + mb);
+                    f.setData(listFile[i].getAbsolutePath());
+                    list.add(f);
+                }
+            }
+        }
+    }
+
+    void listofMedia(File file) {
+        list = new ArrayList<CLocalFile>();
+        walkdir(file);
+        // now create the html page
+        String style = "<style>" + "html {background-color:#eeeeee;} "
+                + "body { background-color:#FFFFFF; "
+                + "font-family:Tahoma,Arial,Helvetica,sans-serif; "
+                + "font-size:18x; " + "border:3px " + "groove #006600; "
+                + "padding:15px; } " + "</style>";
+
+        String script = "<script language='javascript'>"
+                + "function clickit(state) {"
+                + "if(state==true){document.getElementById('filesonly').checked="
+                + "! document.getElementById('filesonly').checked}"
+                + "if ( document.getElementById('filesonly').checked == false ){"
+                + "var l=window.location.href;" + "l=l.replace('" + filesOnly
+                + "', '');" + "window.location=l;" + "}"
+                + "else{var l=window.location.href;"
+                + "window.location=String.concat(l,'" + filesOnly + "')" + "}"
+                + "}</script>";
+        Log.d("check", script);
+
+        sb = new StringBuilder();
+        sb.append("<html>");
+        sb.append("<head>");
+        sb.append("<title>Files from device</title>");
+        sb.append(style);
+            // sb.append("<script language='javascript'>"
+            // + "function clickit() {"
+            // + "if ( document.getElementById('filesonly').checked == false ){"
+            // + "var l=window.location.href;" + "l=l.replace('" + filesOnly
+            // + "', '');" + "window.location=l;" + "}"
+            // + "else{var l=window.location.href;"
+            // + "window.location=String.concat(l,'" + filesOnly + "')" + "}"
+            // + "}</script>");
+        sb.append(script);
+        sb.append("</head>");
+
+        sb.append("<body alink=\"blue\" vlink=\"blue\">");
+
+        Log.d("check", sb.toString());
+
+            // if(true)
+            // return;
+            // form upload
+        sb.append("<h3>File Upload:</h3>");
+        sb.append("Select a file to upload: <br/>");
+        sb.append("<form action=\"\" method=\"post\"  enctype=\"multipart/form-data\">");
+        sb.append("<input type=\"file\" name=\"uploadfile\" size=\"50\" />");
+        sb.append("<input type=\"submit\" value=\"Upload File\" />");
+        sb.append("</form>");
+
+        if (uploadstatus == UPLOAD_FAIL)
+            sb.append("<h3><font color='red'>The upload was failed</font></h3>");
+        else if (uploadstatus == UPLOAD_SUCESS)
+            sb.append("<h3><font color='red'>The upload was successfull</font></h3>");
+
+        // if files are there or not
+        if (list != null && list.size() != 0) {
+            sb.append("<h3>The following files are hosted live from ");
+            if (!isfilesOnly)
+                sb.append("<font color='blue'>" + file.getName()
+                        + "</font> folder of ");
+            sb.append("the device</h3>");
+        } else {
+            sb.append("<h3>Couldn't find any file from <font color='blue'>"
+                    + file.getName() + "</font> folder of the device</h3>");
+        }
+
+        // checkbox
+        if (isfilesOnly)
+            sb.append("<input type=\"checkbox\" onchange='clickit(false);' checked='true' id=\"filesonly\" />"
+                    + "<asd onclick='clickit(true);' style=\"cursor:default;\">"
+                    + "Show only relevant Files (Audio, Video and Documents)</asd>");
+        else
+            sb.append("<input type=\"checkbox\" onchange='clickit(false);' id=\"filesonly\" />"
+                    + "<asd onclick='clickit(true);' style=\"cursor:default;\">"
+                    + "Show only relevant Files (Audio, Video and Documents)</asd>");
+
+            // table of files
+        sb.append("<table cellpadding='5px' align=''>");
+
+           // showing path URLs if not only files
+        if (!isfilesOnly) {
+            ArrayList<File> href = new ArrayList<File>();
+            File parent = new File(file.getPath());
+            while (parent != null) {
+                href.add(parent);
+                    // pointing to the next parent
+                parent = parent.getParentFile();
+            }
+
+            sb.append("<tr>");
+            sb.append("<td colspan=2><b>");
+            sb.append("<a href='" + file.getParent() + "'>");
+            sb.append("UP");
+            sb.append("</a>");
+
+                // printing the whole structure
+            String path = "";
+            for (int i = href.size() - 2; i >= 0; --i) {
+                path = href.get(i).getPath();
+                if (isfilesOnly)
+                    path += filesOnly;
+                sb.append("  =>  <a href='" + path + "'>");
+                sb.append(href.get(i).getName());
+                sb.append("</a>");
+            }
+            sb.append("</b></td>");
+            sb.append("</tr>");
+        }
+
+        sb.append("<tr>");
+
+        sb.append("<td>");
+        sb.append("<b>File Name</b>");
+        sb.append("</td>");
+
+        sb.append("<td>");
+        sb.append("<b>Size / Type</b>");
+        sb.append("</td>");
+
+        sb.append("<tr>");
+
+            // sorting the list
+        Collections.sort(list);
+
+            // showing the list of files
+        for (CLocalFile f : list) {
+            String data = f.getData();
+            if (isfilesOnly)
+                data += filesOnly;
+            sb.append("<tr>");
+
+            sb.append("<td>");
+            sb.append("<a href='" + data + "'>");
+            sb.append(f.getName());
+            sb.append("</a>");
+            sb.append("</td>");
+
+            sb.append("<td align=\"right\">");
+            sb.append(f.getSize());
+            sb.append("</td>");
+
+            sb.append("</tr>");
+        }
+        sb.append("</table>");
+        sb.append("</body>");
+        sb.append("</html>");
+    }
+
+
+
+    private static class ExampleManagerFactory implements TempFileManagerFactory {
+        @Override
+        public TempFileManager create() {
+            return new ExampleManager();
+        }
+    }
+
+    private static class ExampleManager implements TempFileManager {
+        private final String tmpdir;
+        private final List<TempFile> tempFiles;
+
+        private ExampleManager() {
+            tmpdir = System.getProperty("java.io.tmpdir");
+    //             tmpdir = System.getProperty("/sdcard");
+
+            tempFiles = new ArrayList<TempFile>();
+        }
+
+        @Override
+        public TempFile createTempFile() throws Exception {
+            DefaultTempFile tempFile = new DefaultTempFile(tmpdir);
+            tempFiles.add(tempFile);
+            System.out.println("Created tempFile: " + tempFile.getName());
+            return tempFile;
+        }
+
+        @Override
+        public void clear() {
+            if (!tempFiles.isEmpty()) {
+                System.out.println("Cleaning up:");
+            }
+            for (TempFile file : tempFiles) {
+                try {
+                    System.out.println("   "+file.getName());
+                    file.delete();
+                } catch (Exception ignored) {}
+            }
+            tempFiles.clear();
+        }
+    }
+
+}
+</code></pre>

@@ -1,0 +1,283 @@
+<p>I am beginner of android development with due search i was able to make a working sqlite database but i would like to import pre-made database from asset folder. though i have found tutorial and code for it but facing problem of integration in my code. can any one help me to provide coding help with this class:-</p>
+
+<p>Wfdaadapter.java</p>
+
+<pre><code>public class Wfdaadapter {
+
+    public static final String KEY_ROWID = "_id";
+    public static final String KEY_FD1 = "fd1";
+    public static final String KEY_FD2 = "fd2";
+    public static final String KEY_FD3 = "fd3";
+    public static final String KEY_FD4 = "fd4";
+    public static final String KEY_FD5 = "fd5";
+
+    private static final String TAG = "CountriesDbAdapter";
+    private DatabaseHelper mDbHelper;
+    private SQLiteDatabase mDb;
+
+    private static final String DATABASE_NAME = "iigdatabase";
+    private static final String SQLITE_TABLE = "iigimport";
+    private static final int DATABASE_VERSION = 1;
+
+    private final Context mCtx;
+
+    private static final String DATABASE_CREATE = "CREATE TABLE if not exists "
+            + SQLITE_TABLE + " (" + KEY_ROWID
+            + " integer PRIMARY KEY autoincrement," + KEY_FD1 + "," + KEY_FD2
+            + "," + KEY_FD3 + "," + KEY_FD4 + "," + KEY_FD5 + ","
+            + " UNIQUE (" + KEY_FD1 + "));";
+
+    private static class DatabaseHelper extends SQLiteOpenHelper {
+
+        DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            Log.w(TAG, DATABASE_CREATE);
+            db.execSQL(DATABASE_CREATE);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+                    + newVersion + ", which will destroy all old data");
+            db.execSQL("DROP TABLE IF EXISTS " + SQLITE_TABLE);
+            onCreate(db);
+        }
+    }
+
+    public Wfdaadapter(Context ctx) {
+        this.mCtx = ctx;
+    }
+
+    public Wfdaadapter open() throws SQLException {
+        mDbHelper = new DatabaseHelper(mCtx);
+        mDb = mDbHelper.getWritableDatabase();
+        return this;
+    }
+
+    public void close() {
+        if (mDbHelper != null) {
+            mDbHelper.close();
+        }
+    }
+
+    public long createCountry(String fd1, String fd2, String fd3,
+            String fd4, String fd5) {
+
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(KEY_FD1, fd1);
+        initialValues.put(KEY_FD2, fd2);
+        initialValues.put(KEY_FD3, fd3);
+        initialValues.put(KEY_FD4, fd4);
+        initialValues.put(KEY_FD5, fd5);
+
+        return mDb.insert(SQLITE_TABLE, null, initialValues);
+    }
+
+    public boolean deleteAllCountries() {
+
+        int doneDelete = 0;
+        doneDelete = mDb.delete(SQLITE_TABLE, null, null);
+        Log.w(TAG, Integer.toString(doneDelete));
+        return doneDelete > 0;
+
+    }
+
+    public Cursor fetchCountriesByName(String inputText) throws SQLException {
+
+        Cursor mCursor = null;
+        if (inputText == null || inputText.length() == 0) {
+            mCursor = mDb.query(SQLITE_TABLE, new String[] { KEY_ROWID,
+                    KEY_FD1, KEY_FD2, KEY_FD3, KEY_FD4, KEY_FD5 }, null,
+                    null, null, null, null, null);
+
+        } else {
+            mCursor = mDb.query(true, SQLITE_TABLE, new String[] { KEY_ROWID,
+                    KEY_FD1, KEY_FD2, KEY_FD3, KEY_FD4, KEY_FD5 },
+                    KEY_FD1 + " like '%" + inputText + "%'", null, null, null,
+                    null, null);
+        }
+        if (mCursor != null) {
+            mCursor.moveToFirst();
+        }
+        return mCursor;
+
+    }
+
+    public Cursor fetchAllCountries() {
+
+        Cursor mCursor = mDb.query(SQLITE_TABLE, new String[] { KEY_ROWID,
+                KEY_FD1, KEY_FD2, KEY_FD3, KEY_FD4, KEY_FD5 }, null, null,
+                null, null, null, null);
+
+        if (mCursor != null) {
+            mCursor.moveToFirst();
+        }
+        return mCursor;
+    }
+
+    public void insertSomeCountries() {
+
+
+    }
+
+}
+</code></pre>
+
+<p>method class for copying asset folder in app
+Wfdahelper.java</p>
+
+<pre><code>public class Wfdahelper extends SQLiteOpenHelper {
+
+    // The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.monika.sharma12/databases/";
+
+    private static String DATABASE_NAME = "iigdatabase";
+
+    private SQLiteDatabase mDb;
+
+    private final Context mCtx;
+
+    /**
+     * Constructor Takes and keeps a reference of the passed context in order to
+     * access to the application assets and resources.
+     * 
+     * @param context
+     */
+    public Wfdahelper(Context context) {
+
+        super(context, DATABASE_NAME, null, 1);
+        this.mCtx = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own
+     * database.
+     * */
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+            // do nothing - database already exist
+        } else {
+
+            // By calling this method and empty database will be created into
+            // the default system path
+            // of your application so we are gonna be able to overwrite that
+            // database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each
+     * time you open the application.
+     * 
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            // database does't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created
+     * empty database in the system folder, from where it can be accessed and
+     * handled. This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException {
+
+        // Open your local db as the input stream
+        InputStream myInput = mCtx.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DATABASE_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DATABASE_NAME;
+        mDb = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if (mDb != null)
+            mDb.close();
+
+        super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    // Add your public helper methods to access and get content from the
+    // database.
+    // You could return cursors by doing "return mDb.query(....)" so it'd
+    // be easy
+    // to you to create adapters for your views.
+
+}
+</code></pre>

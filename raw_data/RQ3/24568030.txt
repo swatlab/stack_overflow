@@ -1,0 +1,103 @@
+<p>In my project I need to add data which gets stored on to database and retrieves data when asked to display.</p>
+
+<p>I created a database called DannyZ with a table in it using SQLite browser in my computer and stored it in the assets folder of my android application project.</p>
+
+<p>Then i added a class DatabaseHelper.java. I get the filenotfound exception in the code.I quit couldnot figure out, is the database file being recognised or not.</p>
+
+<p>The below is the code for <strong>DatabaseHelper class</strong>.</p>
+
+<pre><code>    public class DatabaseHelper extends SQLiteOpenHelper 
+{
+    private static String DB_PATH = "/data/data/pack.dannyzdatabase/databases/";
+    private static String DB_NAME = "DannyZ";
+    private SQLiteDatabase myDatabase;
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+
+    public DatabaseHelper(Context context){
+
+        super(context,DB_NAME,null,1);
+        this.myContext = context;
+    }
+    /** creates an empty database on the system and rewrites it **/
+    public void createDatabase() throws IOException {
+    boolean dbExist = checkDatabase();
+    if(dbExist){
+        //do nothing - database already exists
+        }else{
+        this.getReadableDatabase();
+        try {
+            copyDatabase();
+        } catch(IOException e){
+            throw new Error ("Error copying Database");
+        }
+        }
+        }   
+
+        private boolean checkDatabase(){
+    SQLiteDatabase checkDB = null;
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath,null,SQLiteDatabase.OPEN_READONLY);
+    } catch(SQLiteException e){
+    }
+    if(checkDB!= null){
+        checkDB.close();
+    }
+    return checkDB!= null? true : false;
+    }
+
+    /*** Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transferring byte stream.
+     * */
+    private void copyDatabase() throws IOException{
+    //open your local database as input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    //path to the just created empty database
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty database as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the input file to the output file
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0)
+        myOutput.write(buffer,0,length);
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+    }
+    //close the streams
+    public void openDatabase() throws SQLException {
+    String myPath = DB_PATH + DB_NAME;
+    myDatabase = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+    }
+    @Override
+    public synchronized void close() {
+    if(myDatabase != null)
+    myDatabase.close();
+    super.close();}
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    db.execSQL(null);
+    onCreate(db);
+    }
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    db.execSQL("DROP TABLE IF EXISTS");
+    onCreate(db);
+    }
+    }
+</code></pre>
+
+<p>Sorry for my poor formatting,I am new to stack overflow.</p>
+
+<p>please help me!!</p>

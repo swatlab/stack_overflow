@@ -1,0 +1,73 @@
+<p>I created an Activity that contains two tabs. One of these tabs is a Map (Google Maps API v2).</p>
+
+<p>There is not a layout of Activty (no setContent() is called), since the activity screen is dynamically filled with a Fragment, depending on the selected tab.</p>
+
+<p>Now, I need to add a TextView on the bottom of the Map.</p>
+
+<p>I guess I can extend <code>MapFragment</code> and then work on the <code>onCreateView</code> method, in order to returning a different View that include both the Map and the TextView. I don't know exactly how I can do it. Any suggestion?</p>
+
+<p><strong>EDIT:</strong></p>
+
+<pre><code>actionbar.addTab(actionbar.newTab()
+                .setText("LIST")
+                .setTabListener(new TabListener<ListFragment>(
+                        this, "list", ListFragment.class)));
+
+
+        Log.i("TabListener","chiamata TABLISTENER 2");
+        actionbar.addTab(actionbar.newTab()
+                .setText("MAP")
+                .setTabListener(new TabListener<CustomMapFragment>(
+                        this, "map", CustomMapFragment.class)));
+</code></pre>
+
+<p>The TabListener class:</p>
+
+<pre><code>public class TabListener<T extends Fragment> implements ActionBar.TabListener {
+    private final Activity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+    private final Bundle mArgs;
+    private Fragment mFragment;
+
+    public TabListener(Activity activity, String tag, Class<T> clz) {
+        this(activity, tag, clz, null);
+    }
+
+    public TabListener(Activity activity, String tag, Class<T> clz, Bundle args) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+        mArgs = args;
+
+        mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
+        if (mFragment != null && !mFragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
+            ft.detach(mFragment);
+            ft.commit();
+
+        }
+
+    }
+
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        if (mFragment == null) {
+            mFragment = Fragment.instantiate(mActivity, mClass.getName(), mArgs);
+            ft.add(android.R.id.content, mFragment, mTag);
+        } else {
+            ft.attach(mFragment);
+        }
+
+    }
+
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        if (mFragment != null) {
+            ft.detach(mFragment);
+        }
+    }
+
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+
+    }
+}
+</code></pre>

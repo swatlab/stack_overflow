@@ -1,0 +1,399 @@
+<h2>UPDATED CODE</h2>
+
+<hr>
+
+<p>I'm trying to make an app for a Gallery's TV that shows a regular movie/slide show and when remote touched moves to next activity where they can choose an Artist by portrait and name and when one selected with dpad center will move onto a view switcher with first page portrait and text info, and with right/left on the dpad go from info->video on how he does his work(optional)->image1 of his->image n->info.</p>
+
+<p>Ok now my problem is this:</p>
+
+<pre><code>    08-05 23:36:54.915: W/Trace(11124): error opening trace file: No such file or directory (2)
+08-05 23:36:54.920: W/ActivityThread(11124): Application com.tsfat.galleyTV is waiting for the debugger on port 8100...
+08-05 23:36:54.935: I/System.out(11124): Sending WAIT chunk
+08-05 23:36:54.950: I/dalvikvm(11124): Debugger is active
+08-05 23:36:55.135: I/System.out(11124): Debugger has connected
+08-05 23:36:55.135: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:55.340: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:55.540: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:55.740: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:55.940: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:56.140: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:56.345: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:56.545: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:56.745: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:56.945: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:57.145: I/System.out(11124): waiting for debugger to settle...
+08-05 23:36:57.350: I/System.out(11124): debugger has settled (1421)
+08-05 23:36:58.030: D/MediaPlayer(11124): getMetadata
+08-05 23:36:58.120: W/MediaPlayer(11124): info/warning (3, 0)
+08-05 23:36:58.125: I/MediaPlayer(11124): Info (3,0)
+08-05 23:37:30.340: I/ScreenSaverActivity(11124): Calling Intent
+08-05 23:37:30.570: I/NamesList(11124): [Ishai Haviv,Kitzis,Sharon,]
+08-05 23:37:30.615: I/ArtistAdapter.getView-position(11124): 0
+08-05 23:37:30.635: I/ArtistPickerActivity.update()(11124): Initializing Thread for Ishai Haviv
+08-05 23:37:30.640: E/BitmapWorkerTask(11124): get returns null
+08-05 23:37:30.700: I/ArtistAdapter.getView-position(11124): 0
+08-05 23:37:30.700: I/ArtistPickerActivity.update()(11124): Initializing Thread for Ishai Haviv
+08-05 23:37:30.705: D/BitmapWorkerTask(11124): GOOD
+08-05 23:37:30.710: I/ArtistAdapter.getView-position(11124): 1
+08-05 23:37:30.715: I/ArtistPickerActivity.update()(11124): Initializing Thread for Kitzis
+08-05 23:37:30.715: E/BitmapWorkerTask(11124): get returns null
+08-05 23:37:30.720: I/ArtistAdapter.getView-position(11124): 2
+08-05 23:37:30.725: I/ArtistPickerActivity.update()(11124): Initializing Thread for Sharon
+08-05 23:37:30.725: E/BitmapWorkerTask(11124): get returns null
+08-05 23:37:30.735: I/ArtistAdapter.getView-position(11124): 0
+08-05 23:37:30.740: I/ArtistPickerActivity.update()(11124): Initializing Thread for Ishai Haviv
+08-05 23:37:30.740: E/BitmapWorkerTask(11124): get returns null
+08-05 23:37:30.815: I/ArtistAdapter.getView-position(11124): 0
+08-05 23:37:30.820: I/ArtistPickerActivity.update()(11124): Initializing Thread for Ishai Haviv
+08-05 23:37:30.820: D/BitmapWorkerTask(11124): GOOD
+08-05 23:37:30.835: I/ArtistAdapter.getView-position(11124): 0
+08-05 23:37:30.835: I/ArtistPickerActivity.update()(11124): Initializing Thread for Ishai Haviv
+08-05 23:37:30.835: D/BitmapWorkerTask(11124): GOOD
+08-05 23:37:30.845: I/ArtistAdapter.getView-position(11124): 0
+08-05 23:37:30.845: I/ArtistPickerActivity.update()(11124): Initializing Thread for Ishai Haviv
+08-05 23:37:30.850: D/BitmapWorkerTask(11124): GOOD
+08-05 23:37:30.850: I/ArtistAdapter.getView-position(11124): 1
+08-05 23:37:30.850: I/ArtistPickerActivity.update()(11124): Initializing Thread for Kitzis
+08-05 23:37:30.855: D/BitmapWorkerTask(11124): GOOD
+08-05 23:37:30.855: I/ArtistAdapter.getView-position(11124): 2
+08-05 23:37:30.860: I/ArtistPickerActivity.update()(11124): Initializing Thread for Sharon
+08-05 23:37:30.860: D/BitmapWorkerTask(11124): GOOD
+08-05 23:37:30.935: D/BitmapWorkerTask(11124): GOOD
+08-05 23:45:59.935: D/AndroidRuntime(11124): Shutting down VM
+08-05 23:45:59.935: W/dalvikvm(11124): threadid=1: thread exiting with uncaught exception (group=0x40b79930)
+08-05 23:45:59.985: E/AndroidRuntime(11124): FATAL EXCEPTION: main
+08-05 23:45:59.985: E/AndroidRuntime(11124): java.lang.NullPointerException
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at com.tsfat.galleyTV.ArtistPickerActivity$BitmapWorkerTask.onPostExecute(ArtistPickerActivity.java:263)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at android.os.AsyncTask.finish(AsyncTask.java:631)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at android.os.AsyncTask.access$600(AsyncTask.java:177)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at android.os.AsyncTask$InternalHandler.handleMessage(AsyncTask.java:644)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at android.os.Handler.dispatchMessage(Handler.java:99)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at android.os.Looper.loop(Looper.java:137)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at android.app.ActivityThread.main(ActivityThread.java:5227)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at java.lang.reflect.Method.invokeNative(Native Method)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at java.lang.reflect.Method.invoke(Method.java:511)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:795)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:562)
+08-05 23:45:59.985: E/AndroidRuntime(11124):    at dalvik.system.NativeStart.main(Native Method)
+08-05 23:46:00.110: I/Process(11124): Sending signal. PID: 11124 SIG: 9
+</code></pre>
+
+<p>no idea what's going on!!</p>
+
+<p>this is my NEW code:</p>
+
+<pre><code>package com.tsfat.galleyTV;
+
+import java.io.File;
+import java.lang.ref.WeakReference;
+
+import android.R.bool;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class ArtistPickerActivity extends Activity implements
+        AdapterView.OnItemClickListener {
+
+    String GALLERY_ROOT;
+    GridView menu;
+    Context c = this;
+    String[] names;
+    Bitmap mPlaceHolderBitmap;
+
+    /*
+     * private Runnable onTimeOut = new Runnable() {
+     * 
+     * @Override public void run() { // TODO Auto-generated method stub Intent i
+     * = new Intent("android.intent.action.MAIN"); c.startActivity(i); }
+     * 
+     * };
+     * 
+     * Handler hTimeout = new Handler();
+     */
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.artist_picker_layout);
+        // getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getActionBar()
+                .setTitle(
+                        "Navigate and select with dpad to get to know the Artist&apos;s work");
+        GALLERY_ROOT = getSharedPreferences("Gallery Path", 0).getString(
+                "GalleryPath", "storage/GALLERY/Gallery");
+        GridView gv = (GridView) findViewById(R.id.gridview);
+        gv.setAdapter(new ArtistsAdapter(this));
+        gv.setOnItemClickListener(this);
+
+        mPlaceHolderBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.loading_image);
+
+        // hTimeout.postDelayed(onTimeOut, 60*1000);
+    }
+
+    /*
+     * @Override public void onUserInteraction() { // TODO Auto-generated method
+     * stub super.onUserInteraction(); hTimeout.removeCallbacks(onTimeOut);
+     * hTimeout.postDelayed(onTimeOut, 60*1000); }
+     */
+
+    public class ArtistView extends LinearLayout {
+        private ImageView portrait;
+        private TextView title;
+
+        public ArtistView(Context context, String name) {
+            super(context);
+            this.setPadding(8, 8, 8, 8);
+            this.setOrientation(VERTICAL);
+            portrait = new ImageView(c);
+            title = new TextView(c);
+            title.setGravity(Gravity.CENTER_HORIZONTAL);
+            portrait.setScaleType(ScaleType.CENTER_INSIDE);
+            addView(portrait);
+            addView(title);
+            update(name);
+        }
+
+        public void update(String name) {
+            Log.i("ArtistPickerActivity.update()", "Initializing Thread for "
+                    + name);
+            ((TextView) getChildAt(1)).setText(name);
+            loadBitmap(new File(GALLERY_ROOT + "/Artists/" + name + "/Portrait.png"),
+                    (ImageView) getChildAt(0));
+        }
+
+    }
+
+    public class ArtistsAdapter extends BaseAdapter {
+        Context c;
+
+        ArtistsAdapter(Context context) {
+            c = context;
+            File f = new File(GALLERY_ROOT + "/Artists");
+            if (!f.exists()) {
+                Toast.makeText(
+                        c,
+                        "Gallery file system not setup correctly!!\n"
+                                + "Please talk to manager to get fixed. Sorry for the annoyance.",
+                        Toast.LENGTH_LONG).show();
+                finish();
+            }
+            names = f.list();
+            Log.i("NamesList", printArray(names));
+        }
+
+        private String printArray(String[] names) {
+            StringBuilder res = new StringBuilder();
+            res.append('[');
+            for (String i : names) {
+                res.append(i + ",");
+            }
+            res.append(']');
+            return res.toString();
+        }
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return names.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return new File(GALLERY_ROOT + "/Artists/" + names[position] + "/Portrait.png");
+        }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Log.i("ArtistAdapter.getView-position", position + "");
+            ArtistView res = (ArtistView) convertView;
+            if (res == null)
+                res = new ArtistView(c, names[position]);
+            else
+                res.update(names[position]);
+            return res;
+        }
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        // TODO Auto-generated method stub
+        Log.i("GridViewItemClicked","Starting Activity with " + names[position]);
+        Intent moreInfo = new Intent(this,ArtistInfoActivity.class);
+        moreInfo.putExtra("name", names[position]);
+        startActivity(moreInfo);
+    }
+
+    public Bitmap decodeSampledBitmapFromResource(String file,
+            int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(file, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(file, options);
+    }
+
+    public void loadBitmap(File path, ImageView imageView) {
+        if (cancelPotentialWork(path, imageView)) {
+            final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+            final AsyncDrawable asyncDrawable = new AsyncDrawable(mPlaceHolderBitmap, task);
+            imageView.setImageDrawable(asyncDrawable);
+            task.execute(path);
+        }
+    }   
+
+    public static boolean cancelPotentialWork(File path, ImageView imageView) {
+        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+
+        if (bitmapWorkerTask != null) {
+            final File bitmapData = bitmapWorkerTask.data;
+            if (bitmapData != path) {
+                // Cancel previous task
+                bitmapWorkerTask.cancel(true);
+            } else {
+                // The same work is already in progress
+                return false;
+            }
+        }
+        // No task associated with the ImageView, or an existing task was
+        // cancelled
+        return true;
+    }
+
+    static class AsyncDrawable extends BitmapDrawable {
+        private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
+
+        public AsyncDrawable(Bitmap bitmap,
+                BitmapWorkerTask bitmapWorkerTask) {
+            super(bitmap);
+            bitmapWorkerTaskReference = new WeakReference<BitmapWorkerTask>(bitmapWorkerTask);
+        }
+
+        public BitmapWorkerTask getBitmapWorkerTask() {
+            return bitmapWorkerTaskReference.get();
+        }
+    }
+
+    class BitmapWorkerTask extends AsyncTask {
+
+        private final WeakReference<ImageView> imageViewReference;
+        private File data;
+
+        public BitmapWorkerTask(ImageView imageView) {
+            // Use a WeakReference to ensure the ImageView can be garbage
+            // collected
+            imageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        // Decode image in background.
+        @Override
+        protected Bitmap doInBackground(Object... params) {
+            data = (File) params[0];
+            if(imageViewReference != null){
+                ImageView iv = imageViewReference.get();
+                return decodeSampledBitmapFromResource(data.toString(),iv.getWidth(),iv.getHeight());               
+            }
+            Log.e("BitmapWorkerTask", "doInBackground is null");
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object bitmap) {
+            if (isCancelled()) {
+                bitmap = null;
+                return;
+            }
+
+            if (imageViewReference != null && bitmap != null) {
+                final ImageView imageView = imageViewReference
+                        .get();
+                final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+                if (/*this == bitmapWorkerTask && */imageView != null) {
+                    imageView.setImageBitmap((Bitmap) bitmap);
+                    ((BaseAdapter) menu.getAdapter()).notifyDataSetChanged();                   
+                }
+
+                Log.i("onPostExecute","this: " + (this==bitmapWorkerTask ? "not equal" : "GOOD"));
+                Log.i("onPostExecute","imageview: " + (imageView==null ? "null" : "GOOD"));
+            }
+            Log.i("onPostExecute","imageView reference: " + (imageViewReference==null ? "null" : "GOOD"));
+            Log.i("onPostExecute","bitmap: " + (bitmap==null ? "null" : "GOOD"));
+        }
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+    private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
+        if (imageView != null) {
+            final Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof AsyncDrawable) {
+                final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
+                Log.d("BitmapWorkerTask","GOOD");
+                return asyncDrawable.getBitmapWorkerTask();
+            }
+        }
+        Log.e("BitmapWorkerTask","get returns null");
+        return null;
+    }
+
+}
+</code></pre>
+
+<p>Please help, I need to finish this baddly!!</p>

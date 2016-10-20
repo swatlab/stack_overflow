@@ -1,0 +1,106 @@
+<p>I've a slidetab on my activity ,It has 4 fragments. Each fragment contains a listView and I fill this listview with a baseAdapter . </p>
+
+<p>I've published my application and I got this error very much :</p>
+
+<pre><code>STACK_TRACE = java.lang.NullPointerException
+at android.content.ComponentName.<init>(ComponentName.java:75)
+at android.content.Intent.<init>(Intent.java:3970)
+at ir.radaar.goblin.Fragment_E$ListAdapter.<init>(Fragment_E.java:396)
+at ir.radaar.goblin.Fragment_E$GetContacts.onPostExecute(Fragment_E.java:359)
+at ir.radaar.goblin.Fragment_E$GetContacts.onPostExecute(Fragment_E.java:1)
+at android.os.AsyncTask.finish(AsyncTask.java:631)
+at android.os.AsyncTask.access$600(AsyncTask.java:177)
+at android.os.AsyncTask$InternalHandler.handleMessage(AsyncTask.java:644)
+at android.os.Handler.dispatchMessage(Handler.java:99)
+at android.os.Looper.loop(Looper.java:176)
+at android.app.ActivityThread.main(ActivityThread.java:5317)
+at java.lang.reflect.Method.invokeNative(Native Method)
+at java.lang.reflect.Method.invoke(Method.java:511)
+at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1102)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:869)
+at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>this is my baseAdapter code :</p>
+
+<pre><code>public class ListAdapter extends BaseAdapter {
+    Activity activity;
+    public ArrayList<HashMap<String, String>> list;
+    DatabaseHandler db_e;
+
+    public ListAdapter(Activity activity, ArrayList<HashMap<String, String>> list) {
+        super();
+        this.activity = (Activity) activity;
+        this.list = list;
+        try {
+                db_e = new DatabaseHandler(getActivity());
+                if (!db_e.isOpen())
+                    db_e.open();
+
+        } catch (Exception e) {
+            startActivity(new Intent (getActivity(), FistActiivty.class));
+        }
+        ostan = getResources().getStringArray(R.array.ostan);
+    }
+
+    public int getCount() {
+        return list.size();
+
+    }
+
+    public Object getItem(int position) {
+        return list.get(position);
+    }
+
+    public HashMap<String, String> geting(int position) {
+        return list.get(position);
+    }
+
+    public long getItemId(int arg0) {
+        return 0;
+    }
+
+    private class ViewHolder {
+        ImageView img;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        LayoutInflater inflater = activity.getLayoutInflater();
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.ads_ekhtesasi, null);
+            holder = new ViewHolder();
+            holder.img = (ImageView) convertView.findViewById(R.id.img);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+
+        return convertView;
+    }
+
+    public void clear() {
+        if (this.list.size() > 0)
+            this.list.clear();
+    }
+}
+</code></pre>
+
+<p>Fragment_E.java line 396 is this :
+db_e.open();</p>
+
+<p>I don't know why does it keeps error. The same line on other fragments get error too . </p>
+
+<p>on databaseHandler class, this is the class that opens the database :</p>
+
+<pre><code>public DatabaseHandler open() {
+    helper = new OpenHelper(context);
+    myDB = helper.getWritableDatabase();
+    return this;
+}
+</code></pre>
+
+<p>Could you help me . Why does I get this error ? </p>
+
+<p>thanks </p>

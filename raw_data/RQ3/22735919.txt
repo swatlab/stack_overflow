@@ -1,0 +1,62 @@
+<p>I am new to Android development. I have a an Activity that utilizes <a href="http://developer.android.com/reference/android/support/v4/app/FragmentPagerAdapter.html" rel="nofollow">FragmentPagerAdapter</a> to create tabs. Everything works fine except I want each tab to have its own unique <code>fragment.xml</code> file and right now all tabs display the same fragment (<code>fragment_home.xml</code>).</p>
+
+<p>I have a suspicion the problem lies in this code:</p>
+
+<pre><code>public View onCreateView(LayoutInflater inflater, 
+                         ViewGroup container, 
+                         Bundle savedInstanceState) 
+{
+        View rootView = inflater.inflate(R.layout.fragment_home, container, false);
+
+        TextView textView = (TextView) rootView
+            .findViewById(R.id.section_label);
+        textView.setText(Integer.toString(getArguments()
+            .getInt(ARG_SECTION_NUMBER)));
+
+        return rootView; 
+}
+</code></pre>
+
+<hr>
+
+<p><strong>EDIT 1</strong><br></p>
+
+<p>I have added another Fragment class to represent another Fragment. It has its own <code>OnCreateView()</code> method which inflates an XML file called <code>fragment_overview.xml</code> and that works fine. </p>
+
+<p>Now I am still stuck with my problem of wanting both fragments to be present in different tabs. </p>
+
+<p>The code below creates an instance of <code>OverViewFragment</code> in its <code>getItem()</code> method. There is only one fragment returned so how do I make it multiple fragments? </p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class
+        // below).
+        return OverviewFragment.newInstance(position + 1);
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages.
+        return 5;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.tab1).toUpperCase(l);
+        case 1:
+            return getString(R.string.tab2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>

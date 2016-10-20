@@ -1,0 +1,355 @@
+<p>I am working on an Android quiz . I have created my database with one question and four options along-with difficulty level. I have created a layout to display the question with four buttons . Now the problem is how will i connect my database with the question and four buttons. </p>
+
+<p>so as to, when I click on right button it moves to the next question and when I click on wrong button it gives an error and exits.</p>
+
+<p>Code In XML</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical" android:layout_width="fill_parent"
+android:layout_height="fill_parent" android:gravity="center_horizontal"
+android:background="@drawable/background">
+
+<LinearLayout android:orientation="horizontal"
+      android:layout_width="wrap_content"
+    android:layout_height="110dp" 
+    android:paddingTop="5dip" android:paddingBottom="5dip"
+    android:gravity="center_horizontal">
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="1dip"
+        android:paddingTop="1dip"
+        android:src="@drawable/logo2" />
+
+</LinearLayout>
+
+<LinearLayout android:orientation="horizontal"
+    android:layout_width="fill_parent" android:layout_height="wrap_content"
+    android:paddingTop="5dip" android:paddingBottom="5dip"
+    android:gravity="center_horizontal">
+
+    <RadioGroup android:layout_width="fill_parent"
+        android:layout_height="wrap_content" android:orientation="vertical"
+        android:background="#99CCFF"
+        android:id="@+id/group1">
+
+        <TextView android:layout_width="fill_parent"
+            android:layout_height="wrap_content"        
+            android:background="#0000CC"
+            android:textStyle="bold" android:id="@+id/question"/>
+
+        <Button android:onClick="false" android:id="@+id/answer1"
+            android:layout_width="150dip" />
+
+        <Button android:onClick="false" android:id="@+id/answer2"
+            android:layout_width="150dip" />    
+        <Button android:onClick="false" android:id="@+id/answer3" 
+            android:layout_width="150dip"/> 
+        <Button android:onClick="false" android:id="@+id/answer4"
+            android:layout_width="150dip" />    
+    </RadioGroup>
+</LinearLayout>
+</code></pre>
+
+<p>MY DBHelper.java</p>
+
+<pre><code>public class DBHelper extends SQLiteOpenHelper{
+
+//The Android's default system path of your application database.
+
+private static String DB_PATH = "/data/data/com.starchazer.cyk/databases/";
+private static String DB_NAME = "questionsDb";
+private SQLiteDatabase myDataBase; 
+private final Context myContext;
+
+/**
+ * Constructor
+ * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+ * @param context
+ */
+public DBHelper(Context context) {
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}   
+
+/**
+ * Creates a empty database on the system and rewrites it with your own database.
+ * */
+public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+    if(!dbExist)
+    {
+        //By calling this method and empty database will be created into the default system path
+        //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+            copyDataBase(); 
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each time you open the application.
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase(){
+    SQLiteDatabase checkDB = null;
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }catch(SQLiteException e){
+        //database does't exist yet.
+    }
+    if(checkDB != null){
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+}
+
+@Override
+public synchronized void close() {
+    if(myDataBase != null)
+        myDataBase.close();
+    super.close();
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+}
+
+// Add your public helper methods to access and get content from the database.
+// You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+// to you to create adapters for your views.
+
+
+
+
+public List<Question> getQuestionSet(int difficulty, int numQ){
+    List<Question> questionSet = new ArrayList<Question>();
+    Cursor c = myDataBase.rawQuery("SELECT * FROM QUESTIONS WHERE DIFFICULTY=" + difficulty +
+            " ORDER BY RANDOM() LIMIT " + numQ, null);
+    while (c.moveToNext()){
+        //Log.d("QUESTION", "Question Found in DB: " + c.getString(1));
+        Question q = new Question();
+        q.setQuestion(c.getString(1));
+        q.setAnswer(c.getString(2));
+        q.setOption1(c.getString(3));
+        q.setOption2(c.getString(4));
+        q.setOption3(c.getString(5));
+        q.setRating(difficulty);
+        questionSet.add(q);
+    }
+    return questionSet;
+}
+}
+</code></pre>
+
+<p>MY QuestionActivity</p>
+
+<pre><code>public class QuestionActivity extends Activity implements OnClickListener{
+
+private Question currentQ;
+private GamePlay currentGame;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.question);
+    /**
+     * Configure current game and get question
+     */
+
+
+
+    currentGame = ((XYZ_Application)getApplication()).getCurrentGame();
+    currentQ = currentGame.getNextQuestion();
+    Button c1 = (Button) findViewById(R.id.answer1 );
+    c1.setOnClickListener(this);
+    Button c2 = (Button) findViewById(R.id.answer2 );
+    c2.setOnClickListener(this);
+    Button c3 = (Button) findViewById(R.id.answer3 );
+    c3.setOnClickListener(this);
+    Button c4 = (Button) findViewById(R.id.answer4 );
+    c4.setOnClickListener(this);
+
+    /**
+     * Update the question and answer options..
+     */
+    setQuestions();
+
+}
+
+
+/**
+ * Method to set the text for the question and answers from the current games
+ * current question
+ */
+private void setQuestions() {
+    //set the question text from current question
+    String question = Utility.capitalise(currentQ.getQuestion()) + "?";
+    TextView qText = (TextView) findViewById(R.id.question);
+    qText.setText(question);
+
+    //set the available options
+    List<String> answers = currentQ.getQuestionOptions();
+    TextView option1 = (TextView) findViewById(R.id.answer1);
+    option1.setText(Utility.capitalise(answers.get(0)));
+
+    TextView option2 = (TextView) findViewById(R.id.answer2);
+    option2.setText(Utility.capitalise(answers.get(1)));
+
+    TextView option3 = (TextView) findViewById(R.id.answer3);
+    option3.setText(Utility.capitalise(answers.get(2)));
+
+    TextView option4 = (TextView) findViewById(R.id.answer4);
+    option4.setText(Utility.capitalise(answers.get(3)));
+}
+
+
+@Override
+public void onClick(View arg0) {
+
+
+    /**
+     * validate a buttonselected has been selected
+     */    
+    if (!checkAnswer()) return;
+
+
+    /**
+     * check if end of game
+     */
+    if (currentGame.isGameOver()){
+
+
+        Intent i = new Intent(this, Main.class);
+        startActivity(i);
+        finish();
+    }
+    else{
+        Intent i = new Intent(this, QuestionActivity.class);
+        startActivity(i);
+        finish();
+    }
+}
+
+
+@Override
+public boolean onKeyDown(int keyCode, KeyEvent event)
+{
+    switch (keyCode)
+    {
+    case KeyEvent.KEYCODE_BACK :
+        return true;
+    }
+
+    return super.onKeyDown(keyCode, event);
+}
+
+
+/**
+ * Check if a checkbox has been selected, and if it
+ * has then check if its correct and update gamescore
+ */
+private boolean checkAnswer() {
+    String answer = getSelectedAnswer();
+    if (answer==null){
+
+        return false;
+    }
+    else {
+
+        if (currentQ.getAnswer().equalsIgnoreCase(answer))
+        {
+            //Log.d("Questions", "Correct Answer!");
+            currentGame.incrementRightAnswers();
+        }
+        else{
+            //Log.d("Questions", "Incorrect Answer!");
+            currentGame.incrementWrongAnswers();
+        }
+        return true;
+    }
+}
+
+
+/**
+ * 
+ */
+private String getSelectedAnswer() {
+    Button c1 = (Button)findViewById(R.id.answer1);
+    Button c2 = (Button)findViewById(R.id.answer2);
+    Button c3 = (Button)findViewById(R.id.answer3);
+    Button c4 = (Button)findViewById(R.id.answer4);
+    if (c1.callOnClick())
+    {
+        return c1.getText().toString();
+    }
+    if (c2.callOnClick())
+    {
+        return c2.getText().toString();
+    }
+    if (c3.callOnClick())
+    {
+        return c3.getText().toString();
+    }
+    if (c4.callOnClick())
+    {
+        return c4.getText().toString();
+    }
+
+    return null;
+}
+
+
+}
+</code></pre>

@@ -1,0 +1,445 @@
+<p>I have a DatabaseHelper class like this :</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper
+{
+
+// The Android's default system path of your application database.
+private static String DB_PATH = android.os.Environment.getExternalStorageDirectory() + "/FitnessData/";
+
+private static String DB_NAME = "OFSDb.db";
+
+private SQLiteDatabase myDataBase;
+
+private final Context myContext;
+
+/**
+ * Constructor Takes and keeps a reference of the passed context in order to
+ * access to the application assets and resources.
+ * 
+ * @param context
+ */
+public DataBaseHelper(Context context)
+{
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own
+ * database.
+ * */
+public void createDataBase() throws IOException
+{
+
+    boolean dbExist = checkDataBase();
+
+    if (dbExist)
+    {
+        // do nothing - database already exist
+    }
+    else
+    {
+
+        // By calling this method and empty database will be created into
+        // the default system path
+        // of your application so we are gonna be able to overwrite that
+        // database with our database.
+        this.getReadableDatabase();
+
+        try
+        {
+
+            copyDataBase();
+
+        }
+        catch (IOException e)
+        {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each
+ * time you open the application.
+ * 
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase()
+{
+
+    SQLiteDatabase checkDB = null;
+
+    try
+    {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+    catch (SQLiteException e)
+    {
+
+        // database does't exist yet.
+
+    }
+
+    if (checkDB != null)
+    {
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created
+ * empty database in the system folder, from where it can be accessed and
+ * handled. This is done by transfering bytestream.
+ * */
+
+
+
+private void copyDataBase() throws IOException
+{
+
+    // Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0)
+    {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException
+{
+
+    // Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close()
+{
+
+    if (myDataBase != null)
+        myDataBase.close();
+
+    super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db)
+{
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
+{
+
+}
+
+// Add your public helper methods to access and get content from the
+// database.
+// You could return cursors by doing "return myDataBase.query(....)" so it'd
+// be easy
+// to you to create adapters for your views.
+
+public VehicleData getInfo(String regno)
+{
+    VehicleData vData = new VehicleData();
+    String selectQuery = "SELECT  * FROM" + DB_NAME + " WHERE FIT_REF_NO = " + regno;
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor cursor = db.rawQuery(selectQuery, null);
+
+    // looping through all rows and adding to list
+    if (cursor.moveToFirst())
+    {
+        do
+        {
+
+            vData.regno = cursor.getString(1);
+            vData.ownername = cursor.getString(2);
+            vData.makername = cursor.getString(3);
+            vData.makermodel = cursor.getString(4);
+        }
+        while (cursor.moveToNext());
+
+    }
+
+    return vData;
+
+}
+
+}
+</code></pre>
+
+<p>The class VehicleData is like :</p>
+
+<pre><code>public class VehicleData
+{
+public String regno;
+public String ownername;
+public String makername;
+public String makermodel;
+public String picsnum;
+public String status;
+
+}
+</code></pre>
+
+<p>The Class where I'm trying to use the methods from Database Helper goes like this :</p>
+
+<pre><code>public class Reference extends Activity
+{
+public static String rslt = "";
+public static String picsNumber = "";
+public static String ipAdress;
+Button bproceed;
+Button bSendRef;
+TextView regno;
+TextView ownername;
+TextView vmake;
+TextView vmodel;
+DataBaseHelper controller;
+
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.reference);
+    // set color for fields
+    regno = ((TextView) findViewById(R.id.regnum));
+    regno.setTextColor(Color.parseColor("#34afdd"));
+    ownername = (TextView) findViewById(R.id.ownername);
+    ownername.setTextColor(Color.parseColor("#34afdd"));
+    vmake = ((TextView) findViewById(R.id.vmake));
+    vmake.setTextColor(Color.parseColor("#34afdd"));
+    vmodel = ((TextView) findViewById(R.id.vmodel));
+    vmodel.setTextColor(Color.parseColor("#34afdd"));
+    HideStaticTexts();
+    final TextView tvNotif = (TextView) findViewById(R.id.tvNotif);
+    tvNotif.setVisibility(View.INVISIBLE);
+    // disable proceed button until data recieved from web service
+    bproceed = (Button) findViewById(R.id.bproceed);
+    bSendRef = (Button) findViewById(R.id.bSendRef);
+    bproceed.setEnabled(false);
+    bproceed.setClickable(false);
+    /* Get data Against Ref Number using button Submit */
+
+
+    DataBaseHelper myDbHelper = new DataBaseHelper(this);
+
+
+    try
+    {
+
+        myDbHelper.createDataBase();
+
+    }
+    catch (IOException ioe)
+    {
+
+        throw new Error("Unable to create database");
+
+    }
+
+    try
+    {
+
+        myDbHelper.openDataBase();
+
+    }
+    catch (SQLException sqle)
+    {
+
+        throw sqle;
+
+    }
+
+    // handling send from keyboard
+    final EditText edt = (EditText) findViewById(R.id.editText1);
+    edt.setOnEditorActionListener(new OnEditorActionListener()
+    {
+        @Override
+        public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+        {
+            boolean handled = false;
+            if (actionId == EditorInfo.IME_ACTION_SEND)
+            {
+                bSendRef.callOnClick();
+                handled = true;
+            }
+            return handled;
+        }
+    });
+
+    ((Button) findViewById(R.id.bSendRef)).setOnClickListener(new View.OnClickListener()
+    {
+
+        @Override
+        public void onClick(View v)
+        {
+            // TODO Auto-generated method stub
+            String searchUser = edt.getText().toString();
+            VehicleData response = controller.getInfo(searchUser);
+
+            ShowStaticTexts();
+
+            ((TextView) findViewById(R.id.regnumval)).setText(response.regno); /*
+                                                                                 * Regn
+                                                                                 * No
+                                                                                 */
+            ((TextView) findViewById(R.id.ownerNameVal)).setText(response.ownername); /*
+                                                                                     * Owner
+                                                                                     * name
+                                                                                     */
+            ((TextView) findViewById(R.id.vehicleMakeVal)).setText(response.makername); /*
+                                                                                         * Manufacturer
+                                                                                         * Name
+                                                                                         */
+            ((TextView) findViewById(R.id.vehicleModelVal)).setText(response.makermodel); /*
+                                                                                         * Maker
+                                                                                         * Name
+                                                                                         */
+            picsNumber = response.picsnum;
+            Toast.makeText(Reference.this.getApplicationContext(), picsNumber + " images will be clicked", Toast.LENGTH_LONG).show();
+            tvNotif.setVisibility(View.VISIBLE);
+            tvNotif.setText(picsNumber + " IMAGES WILL BE CLICKED ");
+            bproceed.setEnabled(true);
+            bproceed.setClickable(true);
+
+        }
+
+    });
+    /* Start Camera Using Proceed Button */
+    bproceed.setOnClickListener(new View.OnClickListener()
+    {
+
+        @Override
+        public void onClick(View v)
+        {
+            // TODO Auto-generated method stub
+            if (picsNumber.equals("4"))
+            {
+                Intent intent = new Intent(Reference.this, Camera.class);
+                // ---use putExtra() to add new key/value pairs---
+                intent.putExtra("refnum", ((EditText) findViewById(R.id.editText1)).getText().toString());
+                intent.putExtra("regno", ((TextView) findViewById(R.id.regnumval)).getText().toString());
+                intent.putExtra("picnum", picsNumber);
+                startActivity(intent);
+                finish();
+            }
+            else
+            {
+                Intent intent = new Intent(Reference.this, Camera2.class);
+                // ---use putExtra() to add new key/value pairs---
+                intent.putExtra("refnum", ((EditText) findViewById(R.id.editText1)).getText().toString());
+                intent.putExtra("regno", ((TextView) findViewById(R.id.regnumval)).getText().toString());
+                intent.putExtra("picnum", picsNumber);
+                startActivity(intent);
+                finish();
+
+            }
+
+        }
+    });
+    /* Clear form using Clear Button */
+    ((Button) findViewById(R.id.bclear)).setOnLongClickListener(new OnLongClickListener()
+    {
+        @Override
+        public boolean onLongClick(View v)
+        {
+            // TODO Auto-generated method stub
+            Intent intent = new Intent(Reference.this, Settings.class);
+            String reset = "RESET";
+            intent.putExtra("reSet", reset);
+            startActivity(intent);
+            return true;
+        }
+    });
+
+    /* Clear All Controls Using Clear Button */
+    ((Button) findViewById(R.id.bclear)).setOnClickListener(new View.OnClickListener()
+    {
+
+        @Override
+        public void onClick(View v)
+        {
+            ((EditText) findViewById(R.id.editText1)).setText("");
+            clearAllControls();
+            // force keyboard to show up when reset is called
+            edt.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(edt, InputMethodManager.SHOW_IMPLICIT);
+            tvNotif.setVisibility(View.INVISIBLE);
+            HideStaticTexts();
+
+        }
+
+    });
+}
+
+private void HideStaticTexts()
+{
+    // TODO Auto-generated method stub
+    regno.setVisibility(View.INVISIBLE);
+    ownername.setVisibility(View.INVISIBLE);
+    vmake.setVisibility(View.INVISIBLE);
+    vmodel.setVisibility(View.INVISIBLE);
+}
+
+private void ShowStaticTexts()
+{
+    // TODO Auto-generated method stub
+    regno.setVisibility(View.VISIBLE);
+    ownername.setVisibility(View.VISIBLE);
+    vmake.setVisibility(View.VISIBLE);
+    vmodel.setVisibility(View.VISIBLE);
+}
+
+public void clearAllControls()
+{
+    ((TextView) findViewById(R.id.regnumval)).setText("");
+    ((TextView) findViewById(R.id.ownerNameVal)).setText("");
+    ((TextView) findViewById(R.id.vehicleMakeVal)).setText("");
+    ((TextView) findViewById(R.id.vehicleModelVal)).setText("");
+
+}
+
+public static void hideSoftKeyboard(Activity activity, View view)
+{
+    InputMethodManager imm = (InputMethodManager)        activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+    imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
+}
+
+}
+</code></pre>
+
+<p>When I input a string in the editText and press the button the application hangs. Can't even read LogCat. Please help me?</p>

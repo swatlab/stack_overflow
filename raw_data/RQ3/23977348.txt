@@ -1,0 +1,94 @@
+<p>I ran the example program for <a href="http://developer.android.com/guide/topics/ui/layout/gridview.html" rel="nofollow">Gridview</a>. I had set the layout params to 400, 400 which was working fine on the nexus 5. But when I executed the same for a samsung tablet and an emulator with 2.3.3 the image size was a chaos overlapping on each other. In one of the links I came to know that I should use a new dimension.xml file and setLayoutParams should pick the dimension from that file. It worked fine on the tablet and the emulator, the problem is in nexus 5 now. I am not able to see a single picture although application launches. I can see only a grey color page. Thanks in advance.</p>
+
+<p>My ImageAdapter class is as follows</p>
+
+<pre><code> public class ImageAdapter extends BaseAdapter {
+
+         private Context mContext;
+
+            public ImageAdapter(Context c) {
+                mContext = c;
+            }
+
+            public int getCount() {
+                return mThumbIds.length;
+            }
+
+            public Object getItem(int position) {
+                return null;
+            }
+
+            public long getItemId(int position) {
+                return 0;
+            }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {  // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8,8,8,8);
+                imageView.setLayoutParams(new GridView.LayoutParams(R.dimen.width,R.dimen.height));
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        // references to our images
+        private Integer[] mThumbIds = {
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_0, R.drawable.sample_1,
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_0, R.drawable.sample_1,
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_7, R.drawable.wallpaper,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_0, R.drawable.sample_1,
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_7, R.drawable.wallpaper
+        };
+    }
+</code></pre>
+
+<p>My activity_main.xml is as follows</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+    <GridView xmlns:android="http://schemas.android.com/apk/res/android" 
+        android:id="@+id/gridview"
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent"
+        android:columnWidth="2dp"
+        android:numColumns="2"
+        android:verticalSpacing="5dp"
+        android:horizontalSpacing="1dp"
+        android:stretchMode="columnWidth"
+        android:drawSelectorOnTop="True"
+
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_gravity="center"
+    />
+</code></pre>
+
+<p>My dimens.xml is as follows</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+    <resources>
+
+        <!-- Default screen margins, per the Android Design guidelines. -->
+
+        <dimen name="width">150dp</dimen>
+        <dimen name="height">150dp</dimen>
+    </resources>
+</code></pre>

@@ -1,0 +1,196 @@
+<p>Using horizontalpaging example in android studio,
+i put two activities, Tab1.Java and Tab2.Java.
+And i want to put textswitcher in both activity.
+But, TextView(Tab1.this) in Tab1.Java is make an error.
+And i think it has another problems.
+How can i make this codes work?</p>
+
+<p>MainActivity.Java</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements
+    ActionBar.TabListener {
+
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+ViewPager mViewPager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.sample_main);
+
+    final ActionBar actionBar = getActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+    mSectionsPagerAdapter = new SectionsPagerAdapter(
+            getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+
+    mViewPager
+            .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    actionBar.setSelectedNavigationItem(position);
+                }
+            });
+
+
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+
+        actionBar.addTab(actionBar.newTab()
+                .setText(mSectionsPagerAdapter.getPageTitle(i))
+                .setTabListener(this));
+    }
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab,
+                          FragmentTransaction fragmentTransaction) {
+    // When the given tab is selected, switch to the corresponding page in
+    // the ViewPager.
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab,
+                            FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab,
+                            FragmentTransaction fragmentTransaction) {
+}
+
+
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    Context mContext;
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+
+        switch(position) {
+            case 0:
+                return new Tab1(mContext);
+            case 1:
+                return new Tab2(mContext);
+
+        }
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages.
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+
+        }
+        return null;
+    }
+}
+
+
+public static class DummySectionFragment extends Fragment {
+
+    public static final String ARG_SECTION_NUMBER = "section_number";
+
+    public DummySectionFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main_dummy,
+                container, false);
+        TextView dummyTextView = (TextView) rootView
+                .findViewById(R.id.section_label);
+        dummyTextView.setText(Integer.toString(getArguments().getInt(
+                ARG_SECTION_NUMBER)));
+        return rootView;
+    }
+}}
+</code></pre>
+
+<p>Tab1.Java</p>
+
+<pre><code>public class Tab1 extends Fragment {
+Context mContext;
+
+public Tab1(Context context) {
+    mContext = context;
+}
+private TextSwitcher mSwitcher;
+Button button1;
+
+String textToShow[]={"st1","st2","st3","st4","st5","st6"};
+int messageCount=textToShow.length;
+
+int currentIndex=-1;
+
+public View onCreateView(LayoutInflater inflater,
+                        ViewGroup container,Bundle savedInstanceState)
+{
+    View view = inflater.inflate(R.layout.activity_tab1, null);
+    super.onCreate(savedInstanceState);
+
+    button1=(Button)view.findViewById(R.id.button1);
+    mSwitcher = (TextSwitcher) view.findViewById(R.id.textSwitcher);
+    mSwitcher.setFactory(new ViewSwitcher.ViewFactory() {
+@Override
+    public View makeView() {
+    TextView myText = new TextView(Tab1.this);
+    myText.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+    myText.setTextSize(36);
+    return myText; }});
+
+    button1.setOnClickListener(new View.OnClickListener() {
+
+        public void onClick(View v) {
+    // TODO Auto-generated method stub
+    currentIndex++;
+    // If index reaches maximum reset it
+    if (currentIndex == messageCount)
+        currentIndex = 0;
+    mSwitcher.setText(textToShow[currentIndex]);
+}});
+    return view; }
+}
+</code></pre>
+
+<p>activity_tab1.xml</p>
+
+<pre><code> <TextSwitcher
+    android:layout_marginTop="50dp"
+    android:id="@+id/textSwitcher"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal" />
+
+<Button
+    android:id="@+id/button1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Next"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentRight="true"
+    android:layout_alignParentEnd="true"
+    android:singleLine="false"
+    android:typeface="normal" />
+</code></pre>

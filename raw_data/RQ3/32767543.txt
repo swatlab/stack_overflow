@@ -1,0 +1,162 @@
+<p>I'm trying to create a navigation drawer. I have created it but the problem is that when i open the app the first time, the fragment is displayed in the content area but it is not highlighted in the navigation drawer.</p>
+
+<p>This is code i'm using:</p>
+
+<pre><code>    package com.hfad.evenit;
+
+    import android.app.Fragment;
+    import android.app.FragmentTransaction;
+    import android.content.res.Configuration;
+    import android.support.v4.widget.DrawerLayout;
+    import android.support.v7.app.ActionBarDrawerToggle;
+    import android.support.v7.app.AppCompatActivity;
+    import android.os.Bundle;
+    import android.view.Menu;
+    import android.view.MenuItem;
+    import android.view.View;
+    import android.widget.AdapterView;
+    import android.widget.ArrayAdapter;
+    import android.widget.ListView;
+
+    import com.hfad.evenit.Fragments.FourthFragment;
+    import com.hfad.evenit.Fragments.SecondFragment;
+    import com.hfad.evenit.Fragments.ThirdFragment;
+    import com.hfad.evenit.Fragments.TopFragment;
+
+    public class Home extends AppCompatActivity {
+
+        String []FragmentTitles;
+        ListView DrawerList;
+        DrawerLayout drawerLayout;
+        ActionBarDrawerToggle drawerToggle;
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.home);
+
+            FragmentTitles = getResources().getStringArray(R.array.fragment_titles);
+            DrawerList = (ListView) findViewById(R.id.drawer);
+
+            drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+            DrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_activated_1, FragmentTitles));
+
+            DrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    selectItem(position);
+                }
+            });
+
+
+            selectItem(0);
+            DrawerList.setSelection(0);
+
+
+            drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.open_drawer, R.string.close_drawer) {
+                @Override
+                public void onDrawerClosed(View view) {
+                    super.onDrawerClosed(view);
+                    invalidateOptionsMenu();
+                }
+
+                @Override
+                public void onDrawerOpened(View drawerView) {
+                    super.onDrawerOpened(drawerView);
+                    invalidateOptionsMenu();
+                }
+            };
+          drawerLayout.setDrawerListener(drawerToggle);
+
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+
+        }
+
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            drawerToggle.onConfigurationChanged(newConfig);
+        }
+
+        @Override
+        protected void onPostCreate(Bundle savedInstanceState) {
+            super.onPostCreate(savedInstanceState);
+            drawerToggle.syncState();
+        }
+
+        @Override
+        public boolean onPrepareOptionsMenu(Menu menu) {
+
+            boolean drawerOpen = drawerLayout.isDrawerOpen(DrawerList);
+            menu.findItem(R.id.action_share).setVisible(!drawerOpen);
+            return super.onPrepareOptionsMenu(menu);
+        }
+
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.menu_home, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+            if(drawerToggle.onOptionsItemSelected(item))
+            {
+                return  true;
+            }
+            int id = item.getItemId();
+
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_settings) {
+                return true;
+            }
+
+            return super.onOptionsItemSelected(item);
+        }
+
+        public void selectItem(int position)
+        {
+            Fragment fragment;
+            switch(position)
+            {
+                case 0:
+                    fragment = new TopFragment();
+                    break;
+                case 1:
+                    fragment = new SecondFragment();
+                    break;
+                case 2:
+                    fragment = new ThirdFragment();
+                    break;
+                case 3:
+                    fragment = new FourthFragment();
+                    break;
+                default:
+                    fragment = new TopFragment();
+            }
+
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.replace(R.id.content_frame, fragment);
+            ft.addToBackStack(null);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+
+            setActionBarTitle(position);
+
+            drawerLayout.closeDrawer(DrawerList);
+
+        }
+
+        public void setActionBarTitle(int position)
+        {
+            String title;
+            title = FragmentTitles[position];
+            getSupportActionBar().setTitle(title);
+        }
+
+}
+</code></pre>

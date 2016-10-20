@@ -1,0 +1,33 @@
+<p>I have a list adapter and this is my getView</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder holder;
+    if (convertView == null){
+        convertView= myInflater.inflate(R.layout.index, null);
+        holder= new ViewHolder();
+        holder.textView= (TextView)convertView.findViewById(R.id.empty);
+        holder.checkBox= (CheckBox) convertView.findViewById(R.id.Check);
+        convertView.setTag(holder);
+    }else{
+        holder=(ViewHolder)convertView.getTag();
+    }
+    holder.textView.setText(lista.get(position));
+    return convertView;
+}
+</code></pre>
+
+<p>and in my xml file of this activity i have the Checkbox  invisible... because when I press the bottom I want that appears all checkbox in my list, I do this...</p>
+
+<pre><code>public boolean onOptionsItemSelected( MenuItem item){
+    checkButton= (CheckBox) findViewById(R.id.Check);
+
+        if (item.getItemId()== 2){
+            for (int i =0; i< myAdapter.getCount(); i++){
+                //myAdapter.getItemId(i);
+                checkButton.setVisibility(View.VISIBLE);
+            }
+</code></pre>
+
+<p>But with this only appears one checkBox in the top of the list and not in the other elements of the list... How a can fix this problem?</p>
+
+<p>thanks in advance</p>

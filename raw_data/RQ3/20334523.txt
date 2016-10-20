@@ -1,0 +1,208 @@
+<p>I'm trying to take a sqlite database from assets folder to create a new database in system, so when you install the app on a device, it preloads some data -<strong>inserts</strong>- and the table form -<code>create table</code>-.
+I have created a class called '<code>SQLDataBase</code>' which extends from <code>SQLiteOpenHelper</code> and it has the following body:</p>
+
+<pre><code>public class SQLDataBase extends SQLiteOpenHelper {
+public static final String KEY_TITULO = "titulo";
+private static final String KEY_COD="id";
+private static final String KEY_GENERO="genero";
+private static final String KEY_DIRECTOR="director";
+private static final String KEY_DURACION="duracion";
+private static final String TABLA_BASEDATOS = "peliculas";
+private SQLiteDatabase myDataBase;
+private final Context myContext;
+private static final String DATABASE_NAME = "peliculass"; 
+public final static String DATABASE_PATH ="/data/data/com.bdsqlite/databases/";
+public static final int DATABASE_VERSION = 1;
+
+String sqlCreate ="create table peliculas (id integer primary key autoincrement, titulo text not null, director text not null,genero text not null, duracion int not null)";
+
+public SQLDataBase(Context contexto) {
+    super(contexto, DATABASE_NAME, null, DATABASE_VERSION);
+    this.myContext = contexto;
+}
+
+
+public void createDatabase() throws IOException
+{
+
+      boolean dbExist = checkDataBase();
+
+      if(dbExist)
+      {
+            Log.v("DB Exists", "db exists");
+      }
+
+      boolean dbExist1 = checkDataBase();
+      if(!dbExist1)
+      {
+            this.getReadableDatabase();
+            try
+            {
+                  this.close();    
+                  copyDataBase();
+            }
+            catch (IOException e)
+            {
+                  throw new Error("Error copiando base de datos");
+            }
+      }
+
+}
+
+//Comprobamos si la base de datos existe ya
+private boolean checkDataBase()
+{
+      boolean checkDB = false;
+      try
+      {
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            File dbfile = new File(myPath);
+            checkDB = dbfile.exists();
+      }
+      catch(SQLiteException e)
+      {
+      }
+      return checkDB;
+}
+//Copia la base de datos de la carpeta assets a la recien creada y vacia base de datos del sistema
+private void copyDataBase() throws IOException
+{
+      String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+      OutputStream myOutput = new FileOutputStream(outFileName);
+      InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+      byte[] buffer = new byte[1024];
+      int length;
+      while ((length = myInput.read(buffer)) > 0)
+      {
+            myOutput.write(buffer, 0, length);
+      }
+      myInput.close();
+      myOutput.flush();
+      myOutput.close();
+}
+
+//elimina la base de datos
+public void db_delete()
+{
+      File file = new File(DATABASE_PATH + DATABASE_NAME);
+      if(file.exists())
+      {
+            file.delete();
+            System.out.println("Base de datos eliminada.");
+      }
+}
+
+//Abrir base de datos
+public void openDatabase() throws SQLException
+{
+      String myPath = DATABASE_PATH + DATABASE_NAME;
+      myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+}
+
+public synchronized void closeDataBase()throws SQLException
+{
+      if(myDataBase != null)
+            myDataBase.close();
+      super.close();
+}
+
+public void onCreate(SQLiteDatabase db)
+{
+}
+
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
+{    
+      if (newVersion > oldVersion)
+      {
+            Log.v("Database Upgrade", "Database version higher than old.");
+            db_delete();
+      }
+}
+
+
+public void insertarContacto(String titulo, String director, String genero, int duracion) {
+    ContentValues valoresIniciales = new ContentValues();
+    valoresIniciales.put(KEY_TITULO, titulo);
+    valoresIniciales.put(KEY_DIRECTOR, director);
+    valoresIniciales.put(KEY_GENERO, genero);
+    valoresIniciales.put(KEY_DURACION, duracion);
+
+    //return db.insert(TABLA_BASEDATOS, null, valoresIniciales);
+    myDataBase.execSQL("INSERT INTO peliculas(titulo,director,genero,duracion) VALUES (titulo,director,genero,duracion)");
+}
+
+ public Cursor obtenerTodasLasPeliculas() {
+    return myDataBase.query(TABLA_BASEDATOS, new String[] { KEY_COD, KEY_TITULO,KEY_DIRECTOR,KEY_GENERO,KEY_DURACION}, null, null, null, null, null);
+}
+ public Cursor obtenerInfo(String nombre) {
+     return myDataBase.query(TABLA_BASEDATOS,new String[] { KEY_DIRECTOR,KEY_GENERO,KEY_DURACION} , "titulo=?", new String[] { nombre }, null, null, null);
+
+}
+
+ public void cerrar() {
+    myDataBase.close();
+}
+
+public Cursor obtenerPeliculasGenero(String genre) {
+
+    return myDataBase.query(TABLA_BASEDATOS, new String[] { KEY_COD, KEY_TITULO,KEY_DIRECTOR,KEY_DURACION}, "genero=?", new String[]{ genre }, null, null, null);
+
+}
+
+public void EliminarPelicula(String titulo){
+    myDataBase.execSQL("DELETE FROM peliculas WHERE titulo='"+titulo+"'");
+
+}
+
+public void ModificarPelicula(String titulo, String director, String genero, int duracion, String titulo2){
+    myDataBase.execSQL("UPDATE peliculas SET titulo='"+titulo+"', director='"+director+"',genero='"+genero+"',duracion="+duracion+" WHERE titulo='"+titulo2+"'");
+
+}
+}
+</code></pre>
+
+<p>Now at my main class:</p>
+
+<pre><code>SQLDataBase basededatos;
+</code></pre>
+
+<p>in method onCreate:</p>
+
+<pre><code>basededatos=new SQLDataBase(this);
+mostrarpelicula();
+</code></pre>
+
+<hr>
+
+<pre><code>public void mostrarPeliculas(){
+    cont=0;
+     basededatos.getReadableDatabase();
+     Cursor c=basededatos.obtenerTodasLasPeliculas();
+    resultados=new String[c.getCount()];
+     if (c.moveToFirst()) {
+            do {
+
+                DisplayFilm(c);
+            } while (c.moveToNext());
+        }
+
+     basededatos.cerrar(); 
+}
+
+public void DisplayFilm(Cursor c) {
+
+    resultados[cont]=c.getString(1);
+    cont++; 
+
+}
+</code></pre>
+
+<p>It doesnt actually work, it says:</p>
+
+<pre><code> java.lang.NullPointerException at "return myDataBase.query(TABLA_BASEDATOS,
+ new String[] { KEY_COD, KEY_TITULO,KEY_DIRECTOR,KEY_GENERO,KEY_DURACION}, null, null, null, null, null);"
+</code></pre>
+
+<p>Can you help me?</p>

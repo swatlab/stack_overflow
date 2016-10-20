@@ -1,0 +1,359 @@
+<p>I've a single activity(MainActivity) which extends actionbaractivity and implements NavigationDrawer. I've setup the drawertoggle in the activity itself.</p>
+
+<p>I'm creating new fragments from a fragment that was created by another fragment which is in turn created by the MainActivity. ( MainActivity -> HomeFragment ->AnotherFragment).</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements FragmentDrawer.FragmentDrawerListener, TitleSetter, NavigationDrawerEnabler{
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(myToolbar);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        drawerFragment = (FragmentDrawer)
+                getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+        setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), myToolbar);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerFragment.setDrawerListener(this);
+        // display the first navigation drawer view on app launch
+        displayView(0);
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.OncreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+
+        /*  This function is never called even if the Up caret button is pressed!!   */
+     if (mDrawerToggle.isDrawerIndicatorEnabled() &&
+                mDrawerToggle.onOptionsItemSelected(item))
+            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                /*This case doesn't occur*/
+                return true;
+            case R.id.action_settings:
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onDrawerItemSelected(View view, int position) {
+        mDrawerLayout.closeDrawer(containerView);
+        displayView(position);
+    }
+
+    private void displayView(int position) {
+        Fragment fragment = null;
+        String title = getString(R.string.app_name);
+        switch (position) {
+            case 0:
+                fragment = new HomeFragment();
+                title = getString(R.string.title_home);
+                break;
+            case 1:
+                fragment = new SomeFragment();
+                title = getString(R.string.title_something);
+                break;
+            case 2:
+                //fragment = new SomeotherFragment();
+                //title = getString(R.string.title_somethings);
+                break;
+            default:
+                break;
+        }
+        if (fragment != null) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.container_body, fragment);
+            fragmentTransaction.commit();
+            getSupportActionBar().setTitle(title);
+        }
+    }
+
+
+    @Override
+    public void setTitle(String title) {
+        getSupportActionBar().setTitle(title);
+    }
+
+
+    public void setUp(int fragmentId, DrawerLayout drawerLayout, final Toolbar toolbar) {
+        containerView = findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+        mDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close) {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getSupportActionBar().invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                getSupportActionBar().invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, slideOffset);
+                toolbar.setAlpha(1 - slideOffset / 2);
+            }
+        };
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        enableNavigationDrawer(true);
+    }
+
+    @Override
+    public void enableNavigationDrawer(boolean isEnabled) {
+        if ( isEnabled ) {
+            mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            mDrawerToggle.setDrawerIndicatorEnabled(true);
+            mDrawerToggle.syncState();
+
+        }
+        else {
+            mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            mDrawerToggle.setDrawerIndicatorEnabled(false);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            mDrawerToggle.syncState();
+        }
+    }
+}
+</code></pre>
+
+<p>HomeFragment.java</p>
+
+<pre><code>public class HomeFragment extends Fragment implements View.OnClickListener {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.home, container, false);
+        // Inflate the layout for this fragment
+        fab = (FloatingActionButton) rootView.findViewById(R.id.fab);
+        fab.setOnClickListener(this);
+        ((TitleSetter) getActivity()).setTitle("Home");
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        switch (v.getId()) {
+            case R.id.fab:
+                ((NavigationDrawerEnabler) getActivity()).enableNavigationDrawer(false);
+                Fragment newFragment = new NewWord();
+                FragmentManager fragmentManager = getFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.container_body, newFragment);
+                fragmentTransaction.addToBackStack(null);
+                // Commit the transaction
+                fragmentTransaction.commit();
+                break;
+        }
+
+    }
+
+
+}
+</code></pre>
+
+<p>AnotherFragment.java</p>
+
+<pre><code>public class NewWord extends Fragment {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Get item selected and deal with it
+        /*Not even this*/
+        Log.d("KEY: ", String.valueOf(item.getItemId()));
+        switch (item.getItemId()) {
+            case android.R.id.home:
+        /* Doesn't execute*/
+                Log.d("Fragment", "I'm here");
+                getActivity().onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.new_word, container, false);
+        return rootView;
+    }
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        ((TitleSetter) activity).setTitle("Text");
+    }
+</code></pre>
+
+<p>Also the drawer layout</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/drawer_layout"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/container_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <include
+            android:id="@+id/toolbar"
+            layout="@layout/toolbar" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/container_body"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+
+    </FrameLayout>
+
+
+</LinearLayout>
+<fragment
+    android:id="@+id/fragment_navigation_drawer"
+    android:name="com.calgen.wordbook.activity.FragmentDrawer"
+    android:layout_width="@dimen/nav_drawer_width"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    app:layout="@layout/fragment_nav_drawer"
+    tools:layout="@layout/fragment_nav_drawer" />
+</code></pre>
+
+<p></p>
+
+<p>And menu_main.xml</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+tools:context=".MainActivity">
+
+<item
+    android:id="@+id/action_search"
+    android:title="@string/action_search"
+    android:orderInCategory="100"
+    android:icon="@drawable/ic_action_search"
+    app:showAsAction="ifRoom" />
+
+<item
+    android:id="@+id/action_settings"
+    android:title="@string/action_settings"
+    android:orderInCategory="100"
+    app:showAsAction="never" />
+</code></pre>
+
+<p></p>
+
+<p>I actually referred this tutorial to setup navigation drawer fragment : <a href="http://www.androidhive.info/2015/04/android-getting-started-with-material-design/" rel="nofollow">Android Hive</a>. </p>
+
+<p>I also referred similar questions answered here on stackoverflow :</p>
+
+<p>1.<a href="http://stackoverflow.com/questions/17258020/switching-between-android-navigation-drawer-image-and-up-caret-when-using-fragme?lq=1">Switching between Android Navigation Drawer image and Up caret when using fragments</a></p>
+
+<p>2.My problem is similiar to this : <a href="http://Android%20Navigation%20Drawer%20Show%20Up%20Indicator%20for%20Lower%20Level%20Fragments" rel="nofollow">Android Navigation Drawer Show Up Indicator for Lower Level Fragments</a>.
+- I couldn't comment here as i do not have 50 reps. I implemented what was exactly told in the comments.</p>
+
+<p>But still clicking on the up caret doesn't run the function onOptionItemSelected, even though i've homebutton enabled.!</p>
+
+<p>I'm now adding my custom styles.xml, may be some error in this?</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<resources>
+<style name="MyMaterialTheme" parent="MyMaterialTheme.Base"></style>
+
+<style name="MyMaterialTheme.Base" parent="Theme.AppCompat">
+    <item name="windowNoTitle">true</item>
+    <item name="windowActionBar">false</item>
+    <item name="android:activatedBackgroundIndicator">@drawable/nav_background</item>
+    <item name="colorPrimary">@color/colorPrimary</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <item name="android:textColorPrimary">@color/textColorPrimary</item>
+    <item name="colorAccent">@color/colorAccent</item>
+</style>
+</resources>
+</code></pre>
+
+<p>Also the custom toolbar.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.Toolbar
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:local="http://schemas.android.com/apk/res-auto"
+android:id="@+id/toolbar"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:minHeight="?attr/actionBarSize"
+android:background="?attr/colorPrimary"
+local:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+local:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+</code></pre>

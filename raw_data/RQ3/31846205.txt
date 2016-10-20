@@ -1,0 +1,74 @@
+<p>Say I have class called MyClass as follow:</p>
+
+<pre><code>public class MyClass
+{
+     //Identifier is alpha-numeric. If the identifier starts will 'ZZ'
+     //is special special identifier.
+     private String identifier = null;
+     //Date string format YYYY-MM-DD
+     private String dateString = null;
+     //Just a flag (not important for this scenario)
+     private boolean isCoolCat = false;
+     //Default Constructor and getters/setters implemented
+     //Overrides the standard Java equals() method.
+     //This way, when ArrayList calls contains() for MyClass objects
+     //it will only check the Date (for ZZ identifier) 
+     //and identifier values against each other instead of
+     //also comparing the isCoolCat indicator value.
+     @Override
+     public boolean equals(Object obj)
+     {
+          if(this == obj)
+          {
+               return true;
+          }
+          if(obj == null)
+          {
+               return false;
+          }
+          if(getClass() != obj.getClass())
+          {
+               return false;
+          }
+          MyClass other = (MyClass) obj;
+          if(this.identifier == null)
+          {
+               if(other.identifier != null)
+               {
+                    return false;
+               }
+          } else if(!this.identifier.equals(other.identifier)) {
+               return false;
+          }
+          if(other.identifier.startsWith("ZZ"))
+          {
+               if(!this.dateString.equals(other.dateString))
+               {
+                    return false;
+               }
+          }
+          return true;
+     }
+}
+</code></pre>
+
+<p>In another class I have two List of MyClass type, <strong>each contain 100,000 objects</strong>.  I need to check if items in one list are in the other list and I currently accomplish this as follow:</p>
+
+<p>`   </p>
+
+<pre><code>List<MyClass> inList = new ArrayList<MyClass>();
+List<MyClass> outList = new ArrayList<MyClass>();
+inList = someMethodForIn();
+outList = someMethodForOut();
+//For loop iterates through inList and check if outList contains
+//MyClass object from inList if it doesn't then it adds it.
+for(MyClass inObj : inList)
+{
+     if(!outList.contains(inObj))
+     {
+          outList.add(inObj); 
+     }
+}
+</code></pre>
+
+<p>My question is: Is this the fastest way to accomplish this? If not can you please show me a better implementation that will give me a performance boost?  The list size is not always going to be 100,000.  Currently on my platform it takes about 2 minutes for 100,000 size.  Say it can vary from 1 to 1,000,000.</p>

@@ -1,0 +1,155 @@
+<p>I have a TabHost with five tabs, we'll call it tab 1-5.</p>
+
+<p>I would like Tab 3 to stay portrait - I don't want it to ever go landscape.</p>
+
+<p>How would I achieve this?</p>
+
+<p>Here is my current code (Main.class):</p>
+
+<pre><code>public class Main extends FragmentActivity {
+    TabHost mTabHost;
+    TabManager mTabManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.main);
+
+        mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+        mTabHost.setup();    
+
+        mTabManager = new TabManager(this, mTabHost, R.id.realtabcontent);
+
+        addTab(mTabManager, mTabHost, new String("Tab 1"), new String("tab1"),
+            Tab1.class);
+        addTab(mTabManager, mTabHost, new String("Tab 2"), new String("tab2"),
+            Tab2.class);
+        addTab(mTabManager, mTabHost, new String("Tab 3"), new String("tab3"),
+            Tab3.class);
+        addTab(mTabManager, mTabHost, new String("Tab 4"), new String("tab4"),
+            Tab4.class);
+        addTab(mTabManager, mTabHost, new String("Contact"), new String("contact"),
+            Tab5.class);
+
+        mTabHost.getTabWidget().getChildTabViewAt(0).setFocusable(false);
+        mTabHost.getTabWidget().getChildTabViewAt(1).setFocusable(false);
+        mTabHost.getTabWidget().getChildTabViewAt(2).setFocusable(false);
+        mTabHost.getTabWidget().getChildTabViewAt(3).setFocusable(false);
+        mTabHost.getTabWidget().getChildTabViewAt(4).setFocusable(false);
+        mTabHost.setSelected(false);
+        mTabHost.getTabWidget().setSelected(false);
+
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("tab", mTabHost.getCurrentTabTag());
+    }
+
+    private static View prepareTabView(Context context, String text) {
+        View view = LayoutInflater.from(context).inflate(R.layout.tab_bg, null);
+        ((TextView) view.findViewById(R.id.tabsText)).setText(text);
+        return view;
+    }
+
+    public static void addTab(TabManager manager, TabHost host, String title, String tag, Class<?> cl) {
+        TabHost.TabSpec spec = host.newTabSpec(tag);
+        View view = prepareTabView(host.getContext(), title);
+        spec.setIndicator(view);
+
+        manager.addTab(spec, cl, null);
+    }
+
+    public static class TabManager implements TabHost.OnTabChangeListener {
+        private final FragmentActivity mActivity;
+        private final TabHost mTabHost;
+        private final int mContainerId;
+        private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+        TabInfo mLastTab;
+
+        static final class TabInfo {
+            private final String tag;
+            private final Class<?> clss;
+            private final Bundle args;
+            private Fragment fragment;
+
+            TabInfo(String _tag, Class<?> _class, Bundle _args) {
+                tag = _tag;
+                clss = _class;
+                args = _args;
+            }
+        }
+
+        static class DummyTabFactory implements TabHost.TabContentFactory {
+            private final Context mContext;
+
+            public DummyTabFactory(Context context) {
+                mContext = context;
+            }
+
+            @Override
+            public View createTabContent(String tag) {
+                View v = new View(mContext);
+                v.setMinimumWidth(0);
+                v.setMinimumHeight(0);
+                return v;
+            }
+        }
+
+        public TabManager(FragmentActivity activity, TabHost tabHost, int containerId) {
+            mActivity = activity;
+            mTabHost = tabHost;
+            mContainerId = containerId;
+            mTabHost.setOnTabChangedListener(this);
+        }
+
+        public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+            tabSpec.setContent(new DummyTabFactory(mActivity));
+            String tag = tabSpec.getTag();
+
+            TabInfo info = new TabInfo(tag, clss, args);
+
+            info.fragment = mActivity.getSupportFragmentManager().findFragmentByTag(tag);
+            if (info.fragment != null && !info.fragment.isDetached()) {
+                FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+                ft.detach(info.fragment);
+                ft.commit();
+            }
+
+            mTabs.put(tag, info);
+            mTabHost.addTab(tabSpec);
+        }
+
+        @Override
+        public void onTabChanged(String tabId) {
+            TabInfo newTab = mTabs.get(tabId);
+            if (mLastTab != newTab) {
+                FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+                if (mLastTab != null) {
+                    if (mLastTab.fragment != null) {
+                        ft.detach(mLastTab.fragment);
+                    }
+                }
+                if (newTab != null) {
+                    if (newTab.fragment == null) {
+                        newTab.fragment = Fragment.instantiate(mActivity,
+                            newTab.clss.getName(), newTab.args);
+                        ft.add(mContainerId, newTab.fragment, newTab.tag);
+                    } else {
+                        ft.attach(newTab.fragment);
+                    }
+                }
+
+                mLastTab = newTab;
+                ft.commit();
+                mActivity.getSupportFragmentManager().executePendingTransactions();
+            }
+        }
+    }
+}
+</code></pre>

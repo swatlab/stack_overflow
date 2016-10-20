@@ -1,0 +1,160 @@
+<p>How can I save image that choosen from gridView (on the action bar) to  device gallery . </p>
+
+<p>Here my code :  </p>
+
+<p><strong>Gallery activty</strong></p>
+
+<pre><code>public class GalleryActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_gallery);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+                                   @Override
+                                   public void onClick(View view) {
+                                       Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                                               .setAction("Action", null).show();
+                                   }
+                               });
+
+                GridView gridView = (GridView) findViewById(R.id.gridview);
+                gridView.setAdapter(new ImageAdapter(this));
+                gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                        Intent intent = new Intent(GalleryActivity.this, ViewImageActivity.class);
+                        //int item =(int) parent.getSelectedItemPosition();
+                        intent.putExtra("id", position);
+
+
+                        startActivity(intent);
+
+                        // Toast.makeText(GalleryActivity.this,"" + position,Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+
+            }
+
+            public class ImageAdapter extends BaseAdapter {
+                private Context mContext;
+
+                public ImageAdapter(GalleryActivity context) {
+                    mContext = context;
+                }
+
+                public ImageAdapter() {
+
+                }
+
+                public int getCount() {
+                    return mThumbIds.length;
+                }
+
+                public Object getItem(int position) {
+                    return null;
+                }
+
+                public long getItemId(int position) {
+                    return 0;
+                }
+
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    ImageView imageView;
+                    if (convertView == null) {
+                        // if it's not recycled, initialize some attributes
+                        imageView = new ImageView(mContext);
+
+                        imageView.setLayoutParams(new GridView.LayoutParams(400, 400));
+                        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        imageView.setPadding(8, 8, 8, 8);
+
+
+                    } else {
+                        imageView = (ImageView) convertView;
+                    }
+
+                    imageView.setImageResource(mThumbIds[position]);
+                    return imageView;
+                }
+
+                public Integer[] mThumbIds = {
+
+                        R.drawable.car,
+                        R.drawable.wolf,
+                        R.drawable.dolphin,
+                        R.drawable.cat,
+                        R.drawable.car,
+                        R.drawable.car,
+
+
+                };
+
+
+            }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+        }
+</code></pre>
+
+<p><strong>View image activity</strong></p>
+
+<pre><code>public class ViewImageActivity extends GalleryActivity {
+
+    ImageAdapter imageAdapter = new ImageAdapter(this);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_view_image);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+
+
+        Intent i = getIntent();
+        int position = i.getExtras().getInt("id");
+
+
+        ImageAdapter imageAdapter = new ImageAdapter(this);
+        ImageView imageView = (ImageView) findViewById(R.id.image);
+        imageView.setImageResource(imageAdapter.mThumbIds[position]);
+
+
+    }
+
+
+}
+</code></pre>

@@ -1,0 +1,15 @@
+<p>How to trigger an action in an <code>actionbar</code> search widget ?</p>
+
+<pre><code> @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.menu_search:
+                finish();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+</code></pre>

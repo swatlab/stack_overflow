@@ -1,0 +1,218 @@
+<p>I've created an endless list to deal with my pagination coming from an API, I get the next page data in a JSON and it getting parsed to my activity. But, my adapter is not updating with the new items. I've called notifyDataSetChanged and it's just not updating. Any idea what I'm doing wrong? Here is my code below:</p>
+
+<pre><code>private void loadData(final boolean firstLoad) {
+
+    mDataFactory.getPostFeed(mThreads.getId(), mCurrentPage, new PostFeedDataFactory.PostFeedDataFactoryCallback() {
+        @Override
+        public void onPostDataReceived(PostResponse response) {
+            mData = response;
+            if (mData.getItems() != null) {
+                for (int i = 0; i < mData.getItems().size(); i++) {
+                    Posts singlePost = response.getItems().get(i);
+                    postList.add(singlePost);
+                }
+                if (firstLoad) {
+                    mIsLoading = false;
+                    mData.getItems().clear();
+                    mData.getItems().addAll(postList);
+
+
+                    mEmoticonDataFactory.getEmoticonFeed(new EmoticonFeedDataFactory.EmoticonFeedDataFactoryCallback() {
+                        @Override
+                        public void onEmoticonDataReceived(EmoticonResponse response) {
+                            mEmoticon = response;
+                            populateUIWithData();
+                        }
+
+                        @Override
+                        public void onEmoticonDataFailed(Exception exception) {
+
+                        }
+                    });
+
+                } else {
+                    mIsLoading = false;
+                    refreshPosts(postList);
+                }
+
+                if (mData.getItems().size() > 0) {
+                    if (Integer.valueOf(mData.getTotalPosts()) >= response.getItems().size()) {
+                        mCurrentPage++;
+                    } else {
+                        mIsLastPage = true;
+                    }
+                }
+
+            }
+        }
+
+        @Override
+        public void onPostDataFailed(Exception exception) {
+        }
+    });
+
+
+}
+
+private void populateUIWithData() {
+
+    mThreadText = (TextView) findViewById(R.id.threadText);
+
+
+    if (mThreads != null) {
+        if (mThreads.getName() != null) {
+            mThreadText.setText(mThreads.getName());
+        }
+    }
+    if (mAdapter == null){
+        mAdapter = new PostAdapter(this, mData, mEmoticon);
+        mRecyclerView.setAdapter(mAdapter);
+    } else {
+        mAdapter.setData(postList);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    mRecyclerView.addOnScrollListener(paginationListener);
+
+
+}
+
+private RecyclerView.OnScrollListener paginationListener = new RecyclerView.OnScrollListener() {
+    @Override
+    public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+        super.onScrollStateChanged(recyclerView, newState);
+    }
+
+    @Override
+    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+        super.onScrolled(recyclerView, dx, dy);
+        int visibleItemCount = mLayoutManager.getChildCount();
+        int totalItemCount = mLayoutManager.getItemCount();
+        int firstVisibleItemPosition = mLayoutManager.findFirstVisibleItemPosition();
+
+        if (!mIsLoading && !mIsLastPage) {
+            if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount) {
+                loadMoreItems();
+            }
+        }
+    }
+};
+
+private void loadMoreItems() {
+    mIsLoading = true;
+    loadData(false);
+}
+
+private void refreshPosts(ArrayList<Posts> newObjects) {
+    postList.addAll(newObjects);
+    populateUIWithData();
+
+}
+</code></pre>
+
+<p>Also, here is my adapter</p>
+
+<p><strong>PostAdapter.java</strong></p>
+
+<pre><code>@Override
+public void onBindViewHolder(ViewHolder holder, int position) {
+    Posts posts = mPost.getItem(position);
+    emoticons = mEmoticon.getItems();
+    String message = null;
+    String emoMessage = null;
+
+    if (posts.getPost() != null) {
+        if (posts.getPost().getMessage() != null) {
+            message = posts.getPost().getMessage();
+            emoMessage = message;
+
+
+            if (emoticons != null) {
+                for(Emoticons emoticon : this.emoticons) {
+                    if (message.contains(emoticon.getEmoticon().getCode())) {
+                        emoMessage = message.replaceAll(Constants.EMO_REGEX, emoticon.getEmoticon().getUrl());
+                    }
+
+                }
+            }
+        }
+
+        if (posts.getPost().getUsername() != null) {
+            holder.mAuthorTextView.setText("Posted by: " + posts.getPost().getUsername());
+        }
+
+        if (posts.getPost().getHighlighting().equals("op")) {
+            holder.mPostTextView.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+
+        }
+
+            holder.mPostTextView.setText(Html.fromHtml(emoMessage, new Html.ImageGetter() {
+                @Override
+                public Drawable getDrawable(String source) {
+                    Drawable d = null;
+                    try {
+                        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                        StrictMode.setThreadPolicy(policy);
+                        URL url = new URL(source);
+                        InputStream is = url.openStream();
+                        Bitmap b = BitmapFactory.decodeStream(is);
+                        d = new BitmapDrawable(Resources.getSystem(), b);
+                        d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return d;
+                }
+            }, new Html.TagHandler() {
+                @Override
+                public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
+                    if(tag.equalsIgnoreCase("strike") || tag.equals("s")) {
+                        processStrike(opening, output);
+                    }
+                }
+                private void processStrike(boolean opening, Editable output) {
+                    int len = output.length();
+                    if(opening) {
+                        output.setSpan(new StrikethroughSpan(), len, len, Spannable.SPAN_MARK_MARK);
+                    } else {
+                        Object obj = getLast(output, StrikethroughSpan.class);
+                        int where = output.getSpanStart(obj);
+
+                        output.removeSpan(obj);
+
+                        if (where != len) {
+                            output.setSpan(new StrikethroughSpan(), where, len, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
+                    }
+                }
+
+                private Object getLast(Editable text, Class kind) {
+                    Object[] objs = text.getSpans(0, text.length(), kind);
+
+                    if (objs.length == 0) {
+                        return null;
+                    } else {
+                        for(int i = objs.length;i>0;i--) {
+                            if(text.getSpanFlags(objs[i-1]) == Spannable.SPAN_MARK_MARK) {
+                                return objs[i-1];
+                            }
+                        }
+                        return null;
+                    }
+                }
+
+            }));
+
+    }
+
+@Override
+public int getItemCount() {
+    return mPost.getItems().size();
+}
+
+public void setData(ArrayList<Posts> array) {
+    ArrayList<Posts> postList = this.mPost.getItems();
+    postList = array;
+}
+</code></pre>

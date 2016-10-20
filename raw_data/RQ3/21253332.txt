@@ -1,0 +1,50 @@
+<p><code>LoaderManager</code> has this method <a href="https://developer.android.com/reference/android/app/LoaderManager.html#restartLoader%28int,%20android.os.Bundle,%20android.app.LoaderManager.LoaderCallbacks%3CD%3E%29" rel="nofollow"><code>restartLoader()</code></a>:</p>
+
+<blockquote>
+  <p><strong><code>public abstract Loader<D> restartLoader (int id, Bundle args, LoaderCallbacks<D> callback)</code></strong></p>
+  
+  <p>Starts a new or restarts an existing Loader in this manager, registers the callbacks to it, and (if the activity/fragment is currently started) starts loading it. If a loader with the same id has previously been started it will automatically be destroyed when the new loader completes its work. The callback will be delivered before the old loader is destroyed.</p>
+</blockquote>
+
+<p>Based on <a href="https://developer.android.com/guide/components/loaders.html#restarting" rel="nofollow">the dev guide</a>, I get the idea that indeed, a call to <code>onCreateLoader</code> will always result from <code>restartLoader()</code>:</p>
+
+<blockquote>
+  <h1>Restarting a Loader</h1>
+  
+  <p>...</p>
+  
+  <p>To discard your old data, you use restartLoader(). For example, this implementation of SearchView.OnQueryTextListener restarts the loader when the user's query changes. The loader needs to be restarted so that it can use the revised search filter to do a new query:</p>
+</blockquote>
+
+<pre><code>public boolean onQueryTextChanged(String newText) {
+    // Called when the action bar search text has changed.  Update
+    // the search filter, and restart the loader to do a new query
+    // with this filter.
+    mCurFilter = !TextUtils.isEmpty(newText) ? newText : null;
+    getLoaderManager().restartLoader(0, null, this);
+    return true;
+}
+
+public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    // NOTE: The Loader is instantiated with the user's query
+
+    Uri baseUri;       
+    if (mCurFilter != null) {
+        baseUri = Uri.withAppendedPath(Contacts.CONTENT_FILTER_URI,
+                  Uri.encode(mCurFilter));
+    } else {
+        baseUri = Contacts.CONTENT_URI;
+    }
+
+    // Now create and return a CursorLoader that will take care of
+    // creating a Cursor for the data being displayed.
+    String select = "((" + Contacts.DISPLAY_NAME + " NOTNULL) AND ("
+            + Contacts.HAS_PHONE_NUMBER + "=1) AND ("
+            + Contacts.DISPLAY_NAME + " != '' ))";
+    return new CursorLoader(getActivity(), baseUri,
+            CONTACTS_SUMMARY_PROJECTION, select, null,
+            Contacts.DISPLAY_NAME + " COLLATE LOCALIZED ASC");
+}
+</code></pre>
+
+<p>In the example, <code>onCreateLoader</code> is the only place where information about the user's query is passed to the Loader (on instantiation). However the docs throw me off, by saying 'Starts a new <strong>or restarts an existing Loader</strong>'.</p>

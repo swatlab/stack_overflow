@@ -1,0 +1,162 @@
+<p>I have a SQLite database in the <code>assets</code> folder, then I copy it in the app data folder.<br>
+Then I copy it on my PC for seeing the data of, but get the error below.</p>
+
+<p><a href="http://i.stack.imgur.com/1jx7W.png" rel="nofollow"><img src="http://i.stack.imgur.com/1jx7W.png" alt="enter image description here"></a></p>
+
+<p>Here is my DB.java :</p>
+
+<pre><code>public class DB extends SQLiteOpenHelper {
+    public static final String DIR_SDCARD = Environment
+            .getExternalStorageDirectory().getAbsolutePath();
+    public static final String DIR_DATABASE = DIR_SDCARD + "/Android/data/";
+    private static String DB_NAME = "Rulling_DB.sqlite";
+    private final Context myContext;
+    public static String PACKAGE_NAME;
+    public boolean flag = false;
+
+    private void copyDataBase() throws IOException {
+        // Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DIR_DATABASE + PACKAGE_NAME + "/Rulling/" + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        try {
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+        } catch (IOException e) {
+            Log.e("Copy", e.toString());
+        }
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+
+            checkDB = SQLiteDatabase.openDatabase(DIR_DATABASE + PACKAGE_NAME
+                    + "/Rulling/" + DB_NAME, null, 0);
+
+        } catch (SQLiteException e) {
+            Log.e("asdf", "checkDataBase-->" + e.toString());
+        }
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    @Override
+    public synchronized SQLiteDatabase getReadableDatabase() {
+        return super.getReadableDatabase();
+    }
+
+    public DB(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    public void CreateandOpenDataBase() throws IOException {
+        boolean dbExist = false;
+        try {
+            dbExist = checkDataBase();
+        } catch (Exception e) {
+            Log.i("ERROR", "ERROR in DB Class");
+        }
+        if (dbExist) {
+        } else {
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database --> " + e.toString());
+            }
+        }
+    }
+
+    public SQLiteDatabase openDataBase() throws SQLException {
+        return SQLiteDatabase.openOrCreateDatabase(DIR_DATABASE + PACKAGE_NAME
+                + "/Rulling/" + DB_NAME, null);
+    }
+
+    public boolean CreateFile() {
+        if (flag == false) {
+            File file = new File(DIR_DATABASE);
+            file.mkdirs();
+            return true;
+        } else {
+            return true;
+        }
+    }
+
+    public void GetPackageName(String res) {
+        PACKAGE_NAME = res;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>
+
+<p>And here is my save.java :</p>
+
+<pre><code>public class Save_GetResponse{
+
+    public static final String DIR_SDCARD = Environment.getExternalStorageDirectory().getAbsolutePath();
+    public static final String DIR_DATABASE = DIR_SDCARD +"/Android/data/";
+
+    public SQLiteDatabase sql;
+    public static String PACKAGE_NAME;
+
+    public long InsertData(GetReponse_Structure GRS,Context context){
+        DB db = new DB(context);
+        PACKAGE_NAME = context.getApplicationContext().getPackageName();
+        File file= new File(DIR_DATABASE + PACKAGE_NAME + "/Rulling");
+        file.mkdirs();
+        db.GetPackageName(PACKAGE_NAME);
+        db.CreateFile();
+        try {
+            db.CreateandOpenDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        sql = db.openDataBase();
+
+
+        ContentValues values = new ContentValues();
+        values.put("ID", GRS._Id );
+        values.put("Title",GRS._Title);
+        values.put("MetaDataID", GRS._MetaDataID);
+        values.put("Comment", GRS._Comment);
+        values.put("Tafsir", GRS._Tafsir);
+        values.put("CategoryID", GRS._CategoryID);
+        values.put("ParentID", GRS._ParentID);
+        values.put("LanguageID", GRS._LanguageID);
+        values.put("TypeInfo", GRS._TypeInfo);
+        values.put("TableName", GRS._TableName);
+        values.put("Pavaragi", GRS._Pavaragi);
+
+        long LastId = sql.insert("Response_tbl", null, values);
+        sql.close();
+        return LastId;
+    }
+}
+</code></pre>

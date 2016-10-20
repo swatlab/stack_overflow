@@ -1,0 +1,203 @@
+<p>I modified my sqliteopenhelper class as follows:</p>
+
+<pre><code>public class openingclass extends SQLiteOpenHelper
+    {
+        public openingclass(Context c) {
+            super(c,Db_NAME, null, DB_VERSION);
+        }
+         public void createDataBase() {
+
+                boolean dbExist;
+                try {
+
+                     dbExist = checkDataBase();
+
+
+                } catch (SQLiteException e) {
+
+                    e.printStackTrace();
+                    throw new Error("database dose not exist");
+
+                }
+
+                if(dbExist){
+                //do nothing - database already exist
+                }else{
+
+                    try {
+
+                        copyDataBase();
+
+
+                    } catch (IOException e) {
+
+                        e.printStackTrace();
+                        throw new Error("Error copying database");
+
+                    }
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+                this.getReadableDatabase();
+
+
+            }
+
+            }
+
+            /**
+              * Check if the database already exist to avoid re-copying the file each time you open the application.
+              * @return true if it exists, false if it doesn't
+              */
+            private boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+
+            try{
+                String myPath = DB_PATH +"/"+ Db_NAME;
+
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+            }catch(SQLiteException e){
+
+            //database does't exist yet.
+                throw new Error("database does't exist yet.");
+
+            }
+
+            if(checkDB != null){
+
+            checkDB.close();
+
+            }
+
+            return checkDB != null ? true : false;
+            }
+
+            /**
+              * Copies your database from your local assets-folder to the just created empty database in the
+              * system folder, from where it can be accessed and handled.
+              * This is done by transfering bytestream.
+              * */
+            private void copyDataBase() throws IOException{
+
+
+
+                    //copyDataBase();
+                    //Open your local db as the input stream
+                    InputStream myInput = c1.getAssets().open(Db_NAME);
+
+                    // Path to the just created empty db
+                    String outFileName = DB_PATH +"/"+ Db_NAME;
+                    File databaseFile = new File(DB_PATH);
+                     // check if databases folder exists, if not create one and its subfolders
+                    if (!databaseFile.exists()){
+                        databaseFile.mkdir();
+                    }
+
+                    //Open the empty db as the output stream
+                    OutputStream myOutput = new FileOutputStream(outFileName);
+
+                    //transfer bytes from the inputfile to the outputfile
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = myInput.read(buffer))>0){
+                    myOutput.write(buffer, 0, length);
+                    }
+
+                    //Close the streams
+                    myOutput.flush();
+                    myOutput.close();
+                    myInput.close();
+
+
+
+            }
+
+
+
+            @Override
+            public synchronized void close() {
+
+                if(myDataBase != null)
+                myDataBase.close();
+
+                super.close();
+
+            }
+
+        @Override
+        public void onCreate(SQLiteDatabase arg0) {
+            String S = "create table " +
+                    TABLE_NAME +
+                    " (" +
+                    TABLE_COL_MAIL + " text primary key," +
+                    TABLE_COL_NAME + " text," +
+                    TABLE_COL_PASS + " text," +
+                    TABLE_COL_PHO + " text," +
+                    TABLE_COL_ADD + " text," +
+                    TABLE_COL_GEN + " text," +
+                    TABLE_COL_DOB + " text" +
+                    ");";
+            arg0.execSQL(S);
+
+            String S1 = "create table " +
+                    SECOND_TABLE_NAME +
+                    " (" +
+                    TABLE_COL_USER + " text," +
+                    TABLE_COL_PRODUCT + " text," +
+                    TABLE_COL_QUANTITY + " integer" +
+                    ");";
+            arg0.execSQL(S1);
+
+
+
+
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+            // TODO Auto-generated method stub
+
+        }
+
+    }
+</code></pre>
+
+<p>I added the name and path of the database at class level as follows:</p>
+
+<pre><code>private final String DB_PATH="/data/data/com.example.shopkart/databases/";
+    private final String Db_NAME = "dbshopkart.db";
+</code></pre>
+
+<p>The path is not correct as the application cannot see the database on running on the device.The LOGCAT is as follows:</p>
+
+<pre><code>05-02 15:35:20.367: E/AndroidRuntime(7848): FATAL EXCEPTION: main  
+05-02 15:35:20.367: E/AndroidRuntime(7848): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.shopkart/com.example.shopkart.MainActivity}: android.database.sqlite.SQLiteException: no such table: products: , while compiling: SELECT NAME from products  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1651)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1667)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.ActivityThread.access$1500(ActivityThread.java:117)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:935)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.os.Handler.dispatchMessage(Handler.java:99)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.os.Looper.loop(Looper.java:130)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.ActivityThread.main(ActivityThread.java:3689)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at java.lang.reflect.Method.invokeNative(Native Method)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at java.lang.reflect.Method.invoke(Method.java:507)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:842)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:600)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at dalvik.system.NativeStart.main(Native Method)  
+05-02 15:35:20.367: E/AndroidRuntime(7848): Caused by: android.database.sqlite.SQLiteException: no such table: products: , while compiling: SELECT NAME from products  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteCompiledSql.compile(SQLiteCompiledSql.java:92)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:65)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:83)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:49)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:42)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1358)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.database.sqlite.SQLiteDatabase.rawQuery(SQLiteDatabase.java:1326)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at com.example.shopkart.datamanager.retrieveproducts(datamanager.java:218)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at com.example.shopkart.MainActivity.onCreate(MainActivity.java:54)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1615)  
+05-02 15:35:20.367: E/AndroidRuntime(7848):     ... 11 more  
+</code></pre>
+
+<p>I posted this many times , and the problem seems to be the hard coded path. Can someone tell me how to set the path?</p>

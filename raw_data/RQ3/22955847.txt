@@ -1,0 +1,140 @@
+<p>I am a newbie in Android. I have integrated Facebook in Android. The app works fine but it crashes after sometime giving the following errors. My Facebook integrated code is as follows:</p>
+
+<p>Login.class</p>
+
+<pre><code>public class Login extends Activity {
+private static final String URL_PREFIX_FRIENDS = "https://graph.facebook.com/me/friends?access_token=";
+private ImageButton buttonLoginLogout;
+public static final String PREFS_PRIVATE = "PREFS_PRIVATE";
+private Button b;
+
+private Session.StatusCallback statusCallback = new SessionStatusCallback();
+Databasehandler db=new Databasehandler(this);
+HashMap<String, String>map=new HashMap<String, String>();
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.login);
+    buttonLoginLogout = (ImageButton)findViewById(R.id.imageButton1);
+
+
+
+    Settings.addLoggingBehavior(LoggingBehavior.INCLUDE_ACCESS_TOKENS);
+
+    Session session = Session.getActiveSession();
+    if (session == null) {
+        if (savedInstanceState != null) {
+            session = Session.restoreSession(this, null, statusCallback, savedInstanceState);
+        }
+        if (session == null) {
+            session = new Session(this);
+        }
+        Session.setActiveSession(session);
+        if (session.getState().equals(SessionState.CREATED_TOKEN_LOADED)) {
+            session.openForRead(new Session.OpenRequest(this).setCallback(statusCallback));
+        }
+    }
+
+    updateView();
+}
+
+@Override
+public void onStart() {
+    super.onStart();
+    Session.getActiveSession().addCallback(statusCallback);
+}
+
+@Override
+public void onStop() {
+    super.onStop();
+    Session.getActiveSession().removeCallback(statusCallback);
+}
+
+
+
+@Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    Session session = Session.getActiveSession();
+    Session.saveSession(session, outState);
+}
+@Override
+protected void onDestroy() {
+
+    super.onDestroy();
+
+}
+private void updateView() {
+    Session session = Session.getActiveSession();
+    if (session.isOpened()) {
+        Request.executeMeRequestAsync(session,new Request.GraphUserCallback() {
+
+            @Override
+            public void onCompleted(GraphUser user, Response response) {
+                // TODO Auto-generated method stub
+                final String t1=user.getId();
+                final String t2=user.getName();
+                 // SharedPreferences myPrefs =getSharedPreferences("myprefs",MODE_WORLD_READABLE);
+                int count=db.getme();
+                if(count==0)
+                {
+                map.put("uid",t1.toString());
+                map.put("name",t2.toString());
+                db.insertnewuser(map);
+                }
+   }
+        });
+
+     Intent ik=new Intent(Login.this,MainActivity.class);
+
+        ik.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(ik);
+         } else {
+
+        buttonLoginLogout.setOnClickListener(new OnClickListener() {
+            public void onClick(View view) { onClickLogin(); }
+        });
+    }
+}
+
+private void onClickLogin() {
+    Session session = Session.getActiveSession();
+    if (!session.isOpened() && !session.isClosed()) {
+        session.openForRead(new Session.OpenRequest(this).setCallback(statusCallback));
+    } else {
+        Session.openActiveSession(this, true, statusCallback);
+    }
+}
+ private class SessionStatusCallback implements Session.StatusCallback {
+    @Override
+    public void call(Session session, SessionState state, Exception exception) {
+        updateView();
+    }
+}
+}
+</code></pre>
+
+<p>Error logs:</p>
+
+<pre><code> 04-09 01:59:15.200: E/AndroidRuntime(5726): FATAL EXCEPTION: main
+ 04-09 01:59:15.200: E/AndroidRuntime(5726): Process: com.smacon.task, PID: 5726
+ 04-09 01:59:15.200: E/AndroidRuntime(5726): java.lang.NullPointerException
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at com.smacon.task.Login$1.onCompleted(Login.java:355)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at com.facebook.Request$1.onCompleted(Request.java:269)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at com.facebook.Request$4.run(Request.java:1669)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at android.os.Handler.handleCallback(Handler.java:733)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at android.os.Handler.dispatchMessage(Handler.java:95)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at android.os.Looper.loop(Looper.java:136)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at android.app.ActivityThread.main(ActivityThread.java:5017)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at java.lang.reflect.Method.invokeNative(Native Method)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at java.lang.reflect.Method.invoke(Method.java:515)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+ 04-09 01:59:15.200: E/AndroidRuntime(5726):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

@@ -1,0 +1,59 @@
+<p>I can able to see the back button in the toolbar but when i click, nothing happens. It is not going to <code>onOptionsItemSelected</code> but when i remove the whole implementation of <code>ActionBarDrawerToggle</code> then the back button is working fine. I need to switch between both when i needed. Thank in advance.</p>
+
+<pre><code>package demo.sample.com.sample.base;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private DrawerLayout mDrawer;
+    private ActionBarDrawerToggle mDrawerToggle;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_digi_care);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this, mDrawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        mDrawer.setDrawerListener(mDrawerToggle);
+        mDrawerToggle.syncState();
+        mDrawer.setFocusable(false);
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setItemIconTintList(null);
+        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.getMenu().getItem(0).setChecked(true);
+
+
+        mDrawerToggle.setDrawerIndicatorEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Logger.i(TAG, "onOptionsItemSelected called");
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Logger.i(TAG, "Back button pressed"); //Never getting called
+                //onBackPressed();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.map_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+}
+</code></pre>

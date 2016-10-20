@@ -1,0 +1,295 @@
+<p>I have a big problem in my android application. I'm develop for the first time an android application with a sqlite database but i have problems that i cant solve.</p>
+
+<p>I have my sqlite database on assets folder of eclipse project with name saldb.sqlite</p>
+
+<p>I have the following class to manage Database with Singletone pattern:</p>
+
+<pre><code>package sal.app.logic;
+
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.io.InputStream;
+    import java.io.OutputStream;
+
+    import android.content.Context;
+    import android.database.Cursor;
+    import android.database.SQLException;
+    import android.database.sqlite.SQLiteDatabase;
+    import android.database.sqlite.SQLiteException;
+    import android.database.sqlite.SQLiteOpenHelper;
+
+    public class DataBaseManager extends SQLiteOpenHelper{
+
+    private static DataBaseManager dbManagerInstance = null;
+    private Context salContext;
+    private  SQLiteDatabase salDatabase;
+    private static  String DB_PATH = "/data/data/sal.app/databases/";
+    private static String DB_NAME = "saldb.sqlite";
+
+
+    private DataBaseManager(Context c)
+    {
+        super(c, DB_NAME, null, 1);
+        //this.salContext = c;
+    }
+
+    public static DataBaseManager getSalDatabase(Context c)
+    {
+        if (dbManagerInstance == null)
+        {
+            dbManagerInstance = new DataBaseManager(c);
+        }
+
+        return dbManagerInstance;
+    }
+
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+
+
+    private boolean checkDataBase()
+    {
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = salContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        //String outFileName = DB_PATH + DB_NAME;
+
+        String outFileName = "/data/data/sal.app/databases/saldb.sqlite";
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        salDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(salDatabase != null)
+                salDatabase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+        //db.execSQL("Insert Into Question(_id,level,text,idTopic) Values (1,1,'asa',0)");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+    public Question getOneQuestion()
+    {
+        //list of Versioni, search result with query text
+
+                Question quest = new Question();
+
+                try
+                {
+                    //open database to query
+                    openDataBase();
+
+                    //salDatabase.execSQL("Insert Into Question(_id,level,text,idTopic) Values (1,1,'asa',0)");
+
+                    //Cursor cursor = salDatabase.rawQuery("SELECT text, idTopic, level from Question WHERE level=2", null);
+
+                    Cursor cursor = salDatabase.rawQuery("SELECT * from Question", null);
+
+
+                    /*Cursor cursor = salDatabase.query("Question",
+
+                            new String[] { "text","idTopic","level"},
+                            "level=2",
+                            null ,
+                            null,
+                            null,
+                            "RANDOM() LIMIT 1");*/
+
+                    //Cursor c = db.rawQuery(select, null); */
+
+                //mapped all rows to data object
+
+
+                    if (cursor.moveToFirst())       
+                    {
+                        System.out.println(cursor.getString(2));
+                        do
+                        {
+                            Cursor cursor2 = salDatabase.rawQuery("SELECT * from Topic WHERE _id=0", null);
+                            cursor2.moveToFirst();
+                            Topic t = new Topic(cursor2.getString(1));
+                           quest = new Question(cursor.getString(2),t,(int)cursor.getShort(1));
+
+                           break;
+                        } while (cursor.moveToNext());
+
+                    }   
+                    //close cursor      
+                    cursor.close();     
+                }
+                catch(Exception ex)
+                {
+                    System.out.println("DatabaseHelper.search()- : ex " + ex.getClass() +", "+ ex.getMessage());
+                }
+                //  
+                return quest;
+
+    }
+
+    /*public ArrayList<Answer> getAnswersOfQuestion(Questin q)
+    {
+
+    }*/
+
+}
+</code></pre>
+
+<p>But in first time that i run my application i have de following erros:</p>
+
+<p>05-29 23:55:45.684: D/ddm-heap(221): Got feature list request
+05-29 23:55:46.295: D/dalvikvm(221): GC freed 519 objects / 45792 bytes in 109ms
+05-29 23:55:46.544: E/Database(221): sqlite3_open_v2("/data/data/sal.app/databases/saldb.sqlite", &handle, 1, NULL) failed</p>
+
+<p>05-29 23:55:46.594: D/AndroidRuntime(221): Shutting down VM
+05-29 23:55:46.604: W/dalvikvm(221): threadid=3: thread exiting with uncaught exception (group=0x4001b188)</p>
+
+<p>05-29 23:55:46.604: E/AndroidRuntime(221): Uncaught handler: thread main exiting due to uncaught exception</p>
+
+<p>in my main Activity im doing this:</p>
+
+<pre><code>public class SALActivity extends Activity {
+
+    Button back;
+    Button choiceA;
+    static int choice = 0;
+    DataBaseManager db;
+    //Button choiceB;
+    //Button choiceC;
+    //Button choiceD;
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        super.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        super.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.gamemenu);
+        //db= new DataBaseManager(this);
+        db=DataBaseManager.getSalDatabase(this);
+        try {
+            db.createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        //db=DataBaseManager.getSalDatabase(this);
+
+        Question q = db.getOneQuestion();
+
+        //back = (Button) findViewById(R.id.gaveup_button);
+        choiceA = (Button) findViewById(R.id.choice_a_button);
+        choiceA.setTextColor(0xffffffff);
+        //choiceA.setText("A: Académica");
+        choiceA.setText(q.getQuestionText());
+
+        choiceA.setOnClickListener(new View.OnClickListener() {
+
+
+            public void onClick(View v) {
+
+
+            }
+        });
+
+        //choiceA.setText(10);
+        //choiceB = (Button) findViewById(R.id.choice_b_button);
+        //choiceC = (Button) findViewById(R.id.choice_c_button);
+        //choiceD = (Button) findViewById(R.id.choice_d_button);
+
+        //Intent v = new Intent(this, SALActivity.class);
+
+        //this.startActivity(v);
+    }
+}
+</code></pre>
+
+<p>In the second time that i run app, error dont occur, database are in the correct path but only have the table android_metadata</p>
+
+<p><strong>I also could say that if i put the correct dataBase on /data/data/sal.app/databases/ the entire program just works...
+The error is in the copyDatabase.</strong></p>

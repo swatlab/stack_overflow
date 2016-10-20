@@ -1,0 +1,292 @@
+<p>I have read various on site about this issue but I am not able to figure this out. I am using pre-build database for this app.  I am using jellybean for this app.</p>
+
+<p><strong>AndroidManifest.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+    <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.example.quotes"
+        android:versionCode="1"
+        android:versionName="1.0" >
+
+        <uses-sdk
+            android:minSdkVersion="8"
+            android:targetSdkVersion="17" />
+
+        <application
+            android:allowBackup="true"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme" >
+            <activity
+                android:name="com.example.quotes.MainActivity"
+                android:label="@string/app_name" >
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+
+                    <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+            </activity>
+        </application>
+
+    </manifest>
+</code></pre>
+
+<p><strong>Logcat Output</strong></p>
+
+<p>according to logcat it's caused by SQLiteCantOpenDatabaseException</p>
+
+<pre><code>06-10 23:07:01.831: E/Trace(4419): error opening trace file: No such file or directory (2)
+06-10 23:07:03.611: E/SQLiteLog(4419): (14) cannot open file at line 30176 of [00bb9c9ce4]
+06-10 23:07:03.621: E/SQLiteLog(4419): (14) os_unix.c:30176: (2) open(/data/data/com.example.quotes/databasesQuotesdb) - 
+06-10 23:07:03.641: E/SQLiteDatabase(4419): Failed to open database '/data/data/com.example.quotes/databasesQuotesdb'.
+06-10 23:07:03.641: E/SQLiteDatabase(4419): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at com.example.quotes.DataBaseHelper.checkDataBase(DataBaseHelper.java:94)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at com.example.quotes.DataBaseHelper.createDataBase(DataBaseHelper.java:58)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at com.example.quotes.MainActivity.onCreate(MainActivity.java:34)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.Activity.performCreate(Activity.java:5104)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.os.Handler.dispatchMessage(Handler.java:99)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.os.Looper.loop(Looper.java:137)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at java.lang.reflect.Method.invokeNative(Native Method)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at java.lang.reflect.Method.invoke(Method.java:511)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+06-10 23:07:03.641: E/SQLiteDatabase(4419):     at dalvik.system.NativeStart.main(Native Method)
+06-10 23:07:03.731: E/SQLiteLog(4419): (14) cannot open file at line 30176 of [00bb9c9ce4]
+06-10 23:07:03.731: E/SQLiteLog(4419): (14) os_unix.c:30176: (2) open(/data/data/com.example.quotes/databasesQuotesdb) - 
+06-10 23:07:03.781: E/SQLiteDatabase(4419): Failed to open database '/data/data/com.example.quotes/databasesQuotesdb'.
+06-10 23:07:03.781: E/SQLiteDatabase(4419): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at com.example.quotes.DataBaseHelper.openDataBase(DataBaseHelper.java:145)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at com.example.quotes.MainActivity.onCreate(MainActivity.java:44)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.Activity.performCreate(Activity.java:5104)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.os.Handler.dispatchMessage(Handler.java:99)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.os.Looper.loop(Looper.java:137)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at java.lang.reflect.Method.invokeNative(Native Method)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at java.lang.reflect.Method.invoke(Method.java:511)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+06-10 23:07:03.781: E/SQLiteDatabase(4419):     at dalvik.system.NativeStart.main(Native Method)
+06-10 23:07:03.791: D/AndroidRuntime(4419): Shutting down VM
+06-10 23:07:03.791: W/dalvikvm(4419): threadid=1: thread exiting with uncaught exception (group=0x40a71930)
+06-10 23:07:03.831: E/AndroidRuntime(4419): FATAL EXCEPTION: main
+06-10 23:07:03.831: E/AndroidRuntime(4419): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.quotes/com.example.quotes.MainActivity}: android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.os.Handler.dispatchMessage(Handler.java:99)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.os.Looper.loop(Looper.java:137)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at java.lang.reflect.Method.invokeNative(Native Method)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at java.lang.reflect.Method.invoke(Method.java:511)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at dalvik.system.NativeStart.main(Native Method)
+06-10 23:07:03.831: E/AndroidRuntime(4419): Caused by: android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at com.example.quotes.DataBaseHelper.openDataBase(DataBaseHelper.java:145)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at com.example.quotes.MainActivity.onCreate(MainActivity.java:44)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.Activity.performCreate(Activity.java:5104)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+06-10 23:07:03.831: E/AndroidRuntime(4419):     ... 11 more
+06-10 23:07:04.083: D/dalvikvm(4419): GC_CONCURRENT freed 203K, 11% free 2676K/3000K, paused 25ms+18ms, total 306ms
+06-10 23:07:07.811: I/Process(4419): Sending signal. PID: 4419 SIG: 9
+</code></pre>
+
+<p><strong>DataBaseHelper.java</strong></p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.example.quotes/databases";
+
+    private static String DB_NAME = "Quotesdb";
+
+    // Table Names of Data Base.
+    static final String TABLE_Name = "Quotes";
+
+    // Contacts Table Columns names
+    //private static final String _Id = "_Id";
+    //private static final String quotes = "quotes";
+    //private static final String author = "author";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+        SQLiteDatabase db_Read = null;
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            db_Read = this.getReadableDatabase(); 
+            db_Read.close();
+
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                //throw new Error("Error copying database");
+                e.toString();
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+            //database does't exist yet.
+        }
+
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException{
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+    }
+
+    /*// Getting single contact
+    public List<Quotes> getQuote(int id) {
+        ArrayList<Quotes>();
+        getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_Name, new String[] { _Id,
+                qotes,author }, _Id + "=?", new String[] { String.valueOf(id) },
+                null, null, null, null);
+
+        //String query = "SELECT _Id, qotes, author From "+TABLE_Name;
+        //String query = "SELECT * From Quotes";
+
+        //Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor != null)
+            cursor.moveToFirst();
+        Quotes quotes = new Quotes(Integer.parseInt(cursor.getString(0)),
+        cursor.getString(1),cursor.getString(2));
+        QuoteList.add(quotes);
+        return QuoteList;
+    }
+    */
+}
+</code></pre>

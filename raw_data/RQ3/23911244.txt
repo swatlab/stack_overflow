@@ -1,0 +1,59 @@
+<p>How to move file one directory to another directory using in java? Please let me know if any alternative solution to do this in java.</p>
+
+<pre><code> public class FileTransform
+    {
+        public static void copyFile(File sourceFile, File destFile) throws IOException
+        {
+            if (!destFile.exists())
+            {
+                destFile.createNewFile();
+            }
+            System.out.println("Copy File Method");
+            FileChannel source = null;
+            FileChannel destination = null;
+            try
+            {
+                source = new FileInputStream(sourceFile).getChannel();
+                System.out.println("Destination File :"+destFile);
+                destination = new FileOutputStream(destFile).getChannel();
+
+                // previous code: destination.transferFrom(source, 0, source.size());
+                // to avoid infinite loops, should be:
+                long count = 0;
+                long size = source.size();
+                while ((count += destination.transferFrom(source, count, size - count)) < size);
+            }
+            finally
+            {
+                if (source != null)
+                {
+                    source.close();
+                }
+                if (destination != null)
+                {
+                    destination.close();
+                }
+            }
+        }
+        public static void main(String[] args) throws IOException
+        {
+             FileTransform ft = new FileTransform();
+             File src= new File("C:/File/File1/A10301A0003174228I_20140528080958095/A10301A0003174228I.xml");
+             File dest= new File("E:/FileDest/File1");
+
+             ft.copyFile(src,dest);
+        }
+    }
+</code></pre>
+
+<p>Above code i am getting exception is</p>
+
+<pre><code> Exception in thread "main" java.io.FileNotFoundException: E:\FileDest\File1 (Access is denied)
+    at java.io.FileOutputStream.open(Native Method)
+    at java.io.FileOutputStream.<init>(Unknown Source)
+    at java.io.FileOutputStream.<init>(Unknown Source)
+    at FileTransform.copyFile(FileTransform.java:22)
+    at FileTransform.main(FileTransform.java:48)
+</code></pre>
+
+<p>I am getting File not found exception, Please let me know how to do this in java</p>

@@ -1,0 +1,290 @@
+<p>My database contain 5000 records I wanted to fetch those records in Cursor object.</p>
+
+<p>Here my DBHelper.java</p>
+
+<pre><code>    import java.io.File;
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.io.InputStream;
+    import java.io.OutputStream;
+    import android.content.Context;
+    import android.database.Cursor;
+    import android.database.sqlite.SQLiteDatabase;
+    import android.database.sqlite.SQLiteOpenHelper;
+    import android.util.Log;
+
+    public class DBHelper extends SQLiteOpenHelper {
+
+        private static String DB_NAME = "StudentDetails";
+        private SQLiteDatabase db;
+        private final Context context;
+        private String DB_PATH;
+
+        public DBHelper(Context context) {
+            super(context, DB_NAME, null, 1);
+            this.context = context;
+            DB_PATH = "/data/data/" + context.getPackageName() + "/" + "databases/";
+        }
+
+        public void createDataBase() throws IOException {
+
+            boolean dbExist = checkDataBase();
+            if (dbExist) {
+
+            } else {
+                this.getReadableDatabase();
+                try {
+                    copyDataBase();
+                } catch (IOException e) {
+                    throw new Error("Error copying database");
+                }
+            }
+        }
+
+        private boolean checkDataBase() {
+            File dbFile = new File(DB_PATH + DB_NAME);
+            return dbFile.exists();
+        }
+
+        private void copyDataBase() throws IOException {
+
+            InputStream myInput = context.getAssets().open(DB_NAME);
+            String outFileName = DB_PATH + DB_NAME;
+            OutputStream myOutput = new FileOutputStream(outFileName);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+
+            // Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+
+        }
+
+        public Cursor getData() {
+            String myPath = DB_PATH + DB_NAME;
+            db = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+            Cursor c = db.rawQuery("SELECT * FROM Student where Phone='4085551212ll'",null);
+
+        }
+        public void getAllMembers()
+        {
+            Cursor c = getData();
+            if(c == null)
+            {
+                Log.d("No data", "Cursornot initialized.....");
+            }
+
+            String name;
+            c.moveToFirst();
+            do {
+                Log.d("Data", "Able to fetch ..........");
+                name = c.getString(1);
+                Log.d("Values",name);
+
+            } while (c.moveToNext());
+            c.close();
+        }
+        @Override
+        public void onCreate(SQLiteDatabase arg0) {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // TODO Auto-generated method stub
+        }
+}
+</code></pre>
+
+<p>My MainActivity.java</p>
+
+<pre><code>import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+
+import java.io.IOException;
+
+
+public class MainActivity extends ActionBarActivity {
+
+    private Button button;
+    private DBHelper databaseHelper;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main); //R - Resource
+        databaseHelper = new DBHelper(getApplicationContext());
+
+        button  =(Button) findViewById(R.id.btnBless);
+
+        databaseHelper = new DBHelper(this);
+        try {
+            databaseHelper.createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    public void onClick(View view)
+    {
+        databaseHelper.getAllMembers();
+
+    }
+}
+</code></pre>
+
+<p>As a layout I have only a Button.
+And in asset folder I have pasted my file <strong>StudentDetails</strong>.</p>
+
+<p>Is .sqlite extension is important ?
+But I have tried in both case its not working getting exception on logcat.
+Java Binder Exception.</p>
+
+<p>I have debug it, I am able to copy that database file but whenever I am clicking on Button I am getting following Error in logcat.</p>
+
+<p><strong>Log CAT</strong></p>
+
+<pre><code>08-15 00:14:21.796: E/SQLiteLog(2291): (26) file is encrypted or is not a database
+08-15 00:14:21.796: D/AndroidRuntime(2291): Shutting down VM
+08-15 00:14:21.796: D/AndroidRuntime(2291): --------- beginning of crash
+08-15 00:14:21.797: E/AndroidRuntime(2291): FATAL EXCEPTION: main
+08-15 00:14:21.797: E/AndroidRuntime(2291): Process: com.chahalnet.myadroid.mysos, PID: 2291
+08-15 00:14:21.797: E/AndroidRuntime(2291): java.lang.IllegalStateException: Could not execute method of the activity
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.view.View$1.onClick(View.java:4007)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.view.View.performClick(View.java:4756)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.view.View$PerformClick.run(View.java:19749)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.os.Handler.handleCallback(Handler.java:739)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.os.Handler.dispatchMessage(Handler.java:95)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.os.Looper.loop(Looper.java:135)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.app.ActivityThread.main(ActivityThread.java:5221)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at java.lang.reflect.Method.invoke(Native Method)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at java.lang.reflect.Method.invoke(Method.java:372)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+08-15 00:14:21.797: E/AndroidRuntime(2291): Caused by: java.lang.reflect.InvocationTargetException
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at java.lang.reflect.Method.invoke(Native Method)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at java.lang.reflect.Method.invoke(Method.java:372)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.view.View$1.onClick(View.java:4002)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     ... 10 more
+08-15 00:14:21.797: E/AndroidRuntime(2291): Caused by: android.database.sqlite.SQLiteDatabaseCorruptException: file is encrypted or is not a database (code 26): , while compiling: SELECT * FROM Members where Phone='4085551212ll'
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1316)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at android.database.sqlite.SQLiteDatabase.rawQuery(SQLiteDatabase.java:1255)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at com.chahalnet.myadroid.mysos.DBHelper.getData(DBHelper.java:71)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at com.chahalnet.myadroid.mysos.DBHelper.getAllMembers(DBHelper.java:76)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     at com.chahalnet.myadroid.mysos.MainActivity.onClick(MainActivity.java:38)
+08-15 00:14:21.797: E/AndroidRuntime(2291):     ... 13 more
+08-15 00:14:21.801: W/ActivityManager(1249):   Force finishing activity com.chahalnet.myadroid.mysos/.MainActivity
+08-15 00:14:21.806: W/AudioTrack(1249): AUDIO_OUTPUT_FLAG_FAST denied by client
+08-15 00:14:21.861: D/LightsService(1249): Excessive delay setting light: 71ms
+08-15 00:14:21.917: D/(1249): HostConnection::get() New Host Connection established 0xa04ffcb0, tid 1452
+08-15 00:14:21.943: E/EGL_emulation(933): tid 933: eglCreateSyncKHR(1237): error 0x3004 (EGL_BAD_ATTRIBUTE)
+08-15 00:14:22.065: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-11ms what=532486 arg1=13 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:22.065: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:22.092: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:22.155: D/OpenGLRenderer(1249): Render dirty regions requested: true
+08-15 00:14:22.156: D/Atlas(1249): Validating map...
+08-15 00:14:22.237: D/(1249): HostConnection::get() New Host Connection established 0x9fc14cd0, tid 2365
+08-15 00:14:22.253: I/OpenGLRenderer(1249): Initialized EGL, version 1.4
+08-15 00:14:22.280: D/OpenGLRenderer(1249): Enabling debug mode 0
+08-15 00:14:22.310: W/EGL_emulation(1249): eglSurfaceAttrib not implemented
+08-15 00:14:22.310: W/OpenGLRenderer(1249): Failed to set EGL_SWAP_BEHAVIOR on surface 0x9e6444c0, error=EGL_SUCCESS
+08-15 00:14:23.043: I/Choreographer(1249): Skipped 41 frames!  The application may be doing too much work on its main thread.
+08-15 00:14:23.079: W/ActivityManager(1249): Activity pause timeout for ActivityRecord{14b6752e u0 com.chahalnet.myadroid.mysos/.MainActivity t41 f}
+08-15 00:14:23.401: W/EGL_emulation(1506): eglSurfaceAttrib not implemented
+08-15 00:14:23.401: W/OpenGLRenderer(1506): Failed to set EGL_SWAP_BEHAVIOR on surface 0xb45b6f80, error=EGL_SUCCESS
+08-15 00:14:24.858: I/Choreographer(1348): Skipped 31 frames!  The application may be doing too much work on its main thread.
+08-15 00:14:24.892: I/Choreographer(1249): Skipped 34 frames!  The application may be doing too much work on its main thread.
+08-15 00:14:24.960: W/OpenGLRenderer(1506): Incorrectly called buildLayer on View: ShortcutAndWidgetContainer, destroying layer...
+08-15 00:14:24.960: W/OpenGLRenderer(1506): Incorrectly called buildLayer on View: ShortcutAndWidgetContainer, destroying layer...
+08-15 00:14:25.204: I/ActivityManager(1249): Killing 1813:com.android.music/u0a36 (adj 15): empty #17
+08-15 00:14:25.291: W/libprocessgroup(1249): failed to open /acct/uid_10036/pid_1813/cgroup.procs: No such file or directory
+08-15 00:14:25.301: I/Process(2291): Sending signal. PID: 2291 SIG: 9
+08-15 00:14:25.305: W/AudioTrack(1249): AUDIO_OUTPUT_FLAG_FAST denied by client
+08-15 00:14:25.323: D/OpenGLRenderer(1249): endAllStagingAnimators on 0xa2dc8f80 (RippleDrawable) with handle 0x9fc14eb0
+08-15 00:14:25.337: E/JavaBinder(1249): !!! FAILED BINDER TRANSACTION !!!
+08-15 00:14:25.338: W/InputMethodManagerService(1249): Got RemoteException sending setActive(false) notification to pid 2291 uid 10059
+08-15 00:14:25.338: E/JavaBinder(1249): !!! FAILED BINDER TRANSACTION !!!
+08-15 00:14:25.341: E/JavaBinder(1383): !!! FAILED BINDER TRANSACTION !!!
+08-15 00:14:25.342: E/JavaBinder(1383): !!! FAILED BINDER TRANSACTION !!!
+08-15 00:14:25.379: W/InputDispatcher(1249): channel '39c085de com.chahalnet.myadroid.mysos/com.chahalnet.myadroid.mysos.MainActivity (server)' ~ Consumer closed input channel or an error occurred.  events=0x9
+08-15 00:14:25.379: E/InputDispatcher(1249): channel '39c085de com.chahalnet.myadroid.mysos/com.chahalnet.myadroid.mysos.MainActivity (server)' ~ Channel is unrecoverably broken and will be disposed!
+08-15 00:14:25.417: I/ActivityManager(1249): Process com.chahalnet.myadroid.mysos (pid 2291) has died
+08-15 00:14:25.584: I/WindowState(1249): WIN DEATH: Window{39c085de u0 com.chahalnet.myadroid.mysos/com.chahalnet.myadroid.mysos.MainActivity}
+08-15 00:14:25.584: W/InputDispatcher(1249): Attempted to unregister already unregistered input channel '39c085de com.chahalnet.myadroid.mysos/com.chahalnet.myadroid.mysos.MainActivity (server)'
+08-15 00:14:25.607: W/AudioTrack(1249): AUDIO_OUTPUT_FLAG_FAST denied by client
+08-15 00:14:27.110: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-18ms what=532486 arg1=14 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:27.110: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:27.186: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:32.200: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-14ms what=532486 arg1=15 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:32.200: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:32.230: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:37.250: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-20ms what=532486 arg1=16 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:37.251: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:37.285: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:42.300: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-14ms what=532486 arg1=17 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:42.300: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:42.333: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:47.351: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-18ms what=532486 arg1=18 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:47.352: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:47.383: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:52.400: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-17ms what=532486 arg1=19 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:52.400: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:52.432: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:14:57.450: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-19ms what=532486 arg1=20 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:14:57.450: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:14:57.469: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:02.490: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-21ms what=532486 arg1=21 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:02.490: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:02.506: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:07.524: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-17ms what=532486 arg1=22 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:07.524: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:07.563: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:37.146: D/ConnectivityService(1249): reportBadNetwork(NetworkAgentInfo [MOBILE (UMTS) - 100]) by 10007
+08-15 00:15:37.150: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): OfflineState{ when=-5ms what=532488 arg1=10007 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:37.151: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): DefaultState{ when=-5ms what=532488 arg1=10007 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:37.151: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Forcing reevaluation
+08-15 00:15:37.151: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-1ms what=532486 arg1=23 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:37.151: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:37.172: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:42.191: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-18ms what=532486 arg1=24 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:42.191: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:42.212: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:47.230: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-18ms what=532486 arg1=25 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:47.231: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:47.246: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:52.261: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-15ms what=532486 arg1=26 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:52.262: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:52.302: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:15:57.321: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-19ms what=532486 arg1=27 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:15:57.322: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:15:57.362: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:16:02.382: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-19ms what=532486 arg1=28 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:16:02.382: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:16:02.419: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:16:07.445: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-26ms what=532486 arg1=29 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:16:07.445: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:16:27.531: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:16:32.552: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-20ms what=532486 arg1=30 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:16:32.552: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+08-15 00:16:52.653: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Probably not a portal: exception java.net.UnknownHostException: Unable to resolve host "clients3.google.com": No address associated with hostname
+08-15 00:16:57.673: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): EvaluatingState{ when=-19ms what=532486 arg1=31 target=com.android.internal.util.StateMachine$SmHandler }
+08-15 00:16:57.673: D/NetworkMonitorNetworkAgentInfo [MOBILE (UMTS) - null](1249): Checking http://clients3.google.com/generate_204 on epc.tmobile.com
+</code></pre>

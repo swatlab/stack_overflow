@@ -1,0 +1,424 @@
+<p>I have a problem with TextView in fragment. When the fragment is created the TV don't appear.
+Here is the RelatorioPontos when I call the fragment that contains the TextViews:</p>
+
+<pre><code>public class RelatorioPontos extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, TabInfo>();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+        private String tag;
+        private Class<?> clss;
+        private Bundle args;
+        private Fragment fragment;
+        TabInfo(String tag, Class<?> clazz, Bundle args) {
+            this.tag = tag;
+            this.clss = clazz;
+            this.args = args;
+        }
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+
+        /** 
+         * @param context 
+         */
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {        
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.relatorio_layout);
+
+        initialiseTabHost();
+    }   
+
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); //salva a tabela selecionada
+        super.onSaveInstanceState(outState);
+    }
+
+    private void initialiseTabHost() {
+        String id = getIntent().getExtras().getString("id");
+        Bundle args = new Bundle();
+        args.putString("id", id);
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        RelatorioPontos.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Dados").setIndicator("Dados"),
+                (tabInfo = new TabInfo("Dados", DadosPonto.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        RelatorioPontos.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Analises").setIndicator("Analises"),
+                (tabInfo = new TabInfo("Analises", AnalisesPonto.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        RelatorioPontos.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Multimidia").setIndicator("Multimidia"),
+                (tabInfo = new TabInfo("Multimidia", ArquivosMultimidia.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    }
+
+    /** 
+     * @param activity
+     * @param tabHost
+     * @param tabSpec
+     * @param clss
+     * @param args 
+     */
+    private static void addTab(RelatorioPontos activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+
+        tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+
+        tabHost.addTab(tabSpec);
+    }
+
+    public void onTabChanged(String tag) {
+        TabInfo newTab = this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this, newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+}
+</code></pre>
+
+<p>And here is the DadosPonto when I put the TextViews</p>
+
+<pre><code>public class DadosPonto extends Fragment {
+
+    public TextView idPonto;
+    public TextView idUser;
+    public TextView pontoNome;
+    public TextView dtCampo;
+    public TextView projeto;
+    public TextView UTMEste;
+    public TextView UTMNorte;
+    public TextView UTMFuso;
+    public TextView UTMHemisferio;
+    public TextView latDec;
+    public TextView longDec;
+    public TextView altitude;
+    public TextView localidade;
+    public TextView outrasUG;
+    public TextView descPonto;
+    public TextView complemento;
+    public TextView equipe;
+    public TextView fonteUG;
+
+    Ponto ponto = new Ponto();
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        getArguments().getString("id");
+
+        View view = inflater.inflate(R.layout.dados_ponto_layout, container, false);
+
+        idPonto = (TextView) view.findViewById(R.id.idPonto);
+        idUser = (TextView) view.findViewById(R.id.idUser);
+        pontoNome = (TextView) view.findViewById(R.id.nomePonto);
+        dtCampo = (TextView) view.findViewById(R.id.dtCampo);
+        projeto = (TextView) view.findViewById(R.id.projeto);
+        UTMEste = (TextView) view.findViewById(R.id.utmEste);
+        UTMNorte = (TextView) view.findViewById(R.id.utmNorte);
+        UTMFuso = (TextView) view.findViewById(R.id.utmFuso);
+        UTMHemisferio = (TextView) view.findViewById(R.id.utmHemisferio);
+        latDec = (TextView) view.findViewById(R.id.latDec);
+        longDec = (TextView) view.findViewById(R.id.longDec);
+        altitude = (TextView) view.findViewById(R.id.altitude);
+        localidade = (TextView) view.findViewById(R.id.localidade);
+        outrasUG = (TextView) view.findViewById(R.id.outrasUG);
+        descPonto = (TextView) view.findViewById(R.id.descPonto);
+        complemento = (TextView) view.findViewById(R.id.complemento);
+        equipe = (TextView) view.findViewById(R.id.equipe);
+        fonteUG = (TextView) view.findViewById(R.id.fonteUG);
+
+        idPonto.setText(ponto.getIdPonto());
+        idUser.setText(ponto.getIdUsuario());
+        pontoNome.setText(ponto.getPontoNome());
+        dtCampo.setText(ponto.getDtCampo());
+        projeto.setText(ponto.getProjeto());
+        UTMEste.setText(String.valueOf(ponto.getUTMEste()));
+        UTMNorte.setText(String.valueOf(ponto.getUTMNorte()));
+        UTMFuso.setText(ponto.getUTMFuso());
+        UTMHemisferio.setText(ponto.getUTMHemisferio());
+        latDec.setText(String.valueOf(ponto.getLatDec()));
+        longDec.setText(String.valueOf(ponto.getLongDec()));
+        altitude.setText(ponto.getAltitude());
+        localidade.setText(ponto.getLocalidade());
+        outrasUG.setText(ponto.getOutrasUG());
+        descPonto.setText(ponto.getDescPonto());
+        complemento.setText(ponto.getComplement());
+        equipe.setText(ponto.getEquipe());
+        fonteUG.setText(ponto.getFonteUG());
+
+        return view;
+    }
+
+}
+</code></pre>
+
+<p>I don't know what I'm doing wrong in this code, please help me.</p>
+
+<p>(EDIT)
+Here is the Ponto class where I have the getters and setters:</p>
+
+<pre><code>public class Ponto {
+    /**Identificador do ponto. Composto pela sigla + número atual (exemplo: XXX0000) */
+    private String idPonto;
+    /**Identificador do usuário */
+    private int idUsuario;
+    /** Nome do ponto. Mesma regra de nomenclatura que o id do ponto*/
+    private String pontoNome = null;
+    /**Data do campo */
+    private String dtCampo;
+    /** Projeto selecionado para esse ponto */
+    private int projeto = 0;
+    /** Coordenada de UTM Este */
+    private double UTMEste = 0;
+    /** Coordenada de UTM Norte */
+    private double UTMNorte = 0;
+    /** Coordenada de UTM Fuso */
+    private int UTMFuso = 0;
+    /** Hemisfério da UTM */
+    private String UTMHemisferio = "S";
+    /** Coordenadas decimais / geográficas para latitude. Necessárias para conversão para grau-minuto-segundo */
+    private double latDec = 0;
+    /** Coordenadas decimais / geográficas para longitude. Necessárias para conversão para grau-minuto-segundo */
+    private double longDec = 0;
+    /** Altitude para coordenadas */
+    private int altitude = 0;
+    /** Informações de descrição da localidade */
+    private String outrasUG = "NENHUMA";
+    /** Descrição do ponto */
+    private String descPonto = " - ";
+    /** Complemento de descrição do ponto */
+    private String complement = " - ";
+    /**descrição do localidade do ponto */
+    private String localidade = " - ";
+    /** participantes da atividade de compo*/
+    private String equipe = " - ";
+    /** ação a ser executada na exportação*/
+    private String acao = "";
+    /***/
+
+    private String fonteUG;
+
+    private ArrayList<PontoUnGeologica> unidadeGeologica;
+
+    /**Analíse de Campo do Ponto*/
+    private AnaliseCampo analiseCampo;
+
+
+    public Ponto() {
+        dtCampo = new Date().toString();
+        analiseCampo = new AnaliseCampo();
+        unidadeGeologica = new ArrayList<PontoUnGeologica>();
+
+    }
+
+    public String getPontoNome() {
+        return pontoNome;
+    }
+
+    public void setPontoNome(String pontoNome) {
+        this.pontoNome = pontoNome;
+    }
+
+    public String getDtCampo() {
+        return dtCampo;
+    }
+
+    public void setDtCampo(String dtCampo) {
+        this.dtCampo = dtCampo;
+    }
+
+    public double getUTMEste() {
+        return UTMEste;
+    }
+
+    public void setUTMEste(double uTMEste) {
+        UTMEste = uTMEste;
+    }
+
+    public double getUTMNorte() {
+        return UTMNorte;
+    }
+
+    public void setUTMNorte(double uTMNorte) {
+        UTMNorte = uTMNorte;
+    }
+
+    public int getUTMFuso() {
+        return UTMFuso;
+    }
+
+    public void setUTMFuso(int uTMFuso) {
+        UTMFuso = uTMFuso;
+    }
+
+    public double getLatDec() {
+        return latDec;
+    }
+
+    public void setLatDec(double latDec) {
+        this.latDec = latDec;
+    }
+
+
+    public double getLongDec() {
+        return longDec;
+    }
+    public void setLongDec(double longDec) {
+        this.longDec = longDec;
+    }
+
+
+    public String getUTMHemisferio() {
+        return UTMHemisferio;
+    }
+    public void setUTMHemisferio(String uTMHemisferio) {
+        UTMHemisferio = uTMHemisferio;
+    }
+
+
+    public int getAltitude() {
+        return altitude;
+    }
+    public void setAltitude(int altitude) {
+        this.altitude = altitude;
+    }
+
+
+    public String getOutrasUG() {
+        return outrasUG;
+    }
+    public void setOutrasUG(String outrasUG) {
+        this.outrasUG = outrasUG;
+    }
+
+
+    public String getDescPonto() {
+        return descPonto;
+    }
+    public void setDescPonto(String descPonto) {
+        this.descPonto = descPonto;
+    }
+
+
+    public String getComplement() {
+        return complement;
+    }
+    public void setComplement(String complemento) {
+        this.complement = complemento;
+    }
+
+
+    public String getIdPonto() {
+        return idPonto;
+    }
+
+    public void setIdPonto(String idPonto) {
+        this.idPonto = idPonto;
+    }
+
+    public AnaliseCampo getAnaliseCampo() {
+        return analiseCampo;
+    }
+
+    public void setAnaliseCampo(AnaliseCampo analiseCampo) {
+        this.analiseCampo = analiseCampo;
+    }
+
+    public int getProjeto() {
+        return projeto;
+    }
+    public void setProjeto(int projeto) {
+        this.projeto = projeto;
+    }
+
+    public int getIdUsuario() {
+        return idUsuario;
+    }
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+
+    public String getLocalidade() {
+        return localidade;
+    }
+    public void setLocalidade(String localidade) {
+        this.localidade = localidade;
+    }
+
+
+    public String getEquipe() {
+        return equipe;
+    }
+    public void setEquipe(String equipe) {
+        this.equipe = equipe;
+    }
+
+
+    public ArrayList<PontoUnGeologica> getUnidadeGeologica() {
+        return unidadeGeologica;
+    }
+
+    public void setUnidadeGeologica(ArrayList<PontoUnGeologica> unidadeGeologica) {
+        this.unidadeGeologica = unidadeGeologica;
+    }
+
+    public String getAcao() {
+        return acao;
+    }
+
+    public void setAcao(String acao) {
+        this.acao = acao;
+    }
+
+    public String getFonteUG() {
+        return fonteUG;
+    }
+
+    public void setFonteUG(String fonteUG) {
+        this.fonteUG = fonteUG;
+    }
+
+}
+</code></pre>

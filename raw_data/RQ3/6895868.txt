@@ -1,0 +1,200 @@
+<p>I'm new to hibernate and I want it to use the database connection from the application server via JNDI.</p>
+
+<p>The Strange thing is, that it creates my tables in the database but it doesn't save the entity. It seems, that it doesn't commit.</p>
+
+<p>Has someone experienced similar problems with hibernate?</p>
+
+<p>This is a little test-servlet:</p>
+
+<pre><code>public class WriteTest extends HttpServlet
+{
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    {
+        /*try
+        { 
+            User user = new User("Hans", "Maulwurf", "hans.maulwurf@test.de");
+
+            InitialContext ctx = new InitialContext();
+            UserFacadeBean bean = (UserFacadeBean) ctx.lookup("ejb/UserFacadeBeanService");
+            bean.persist(user);
+        }
+        catch (NamingException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }*/
+
+        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        //em.getTransaction().begin();
+
+        System.out.println("Begin transfer");
+
+        User user = new User("Hans", "Maulwurf", "hans.maulwurf@test.de");
+        Adress adress = new Adress("Deppenstraße 3","Deppingen");
+        //user.setAddress(adress);
+
+        System.out.println("Save User 'Hans Maulwurf'");
+
+        em.persist(user);
+        //em.persist(adress);
+        //em.getTransaction().commit();
+        em.close();
+
+        System.out.println("Everything went better than expected!");
+    }
+}
+</code></pre>
+
+<p>This is the little helper-class:</p>
+
+<pre><code>public class JpaUtil
+{
+    private static final EntityManagerFactory emf;
+
+    static
+    {
+        try
+        {
+            System.out.println("Initialize EntityManagerFactory...");
+            emf = Persistence.createEntityManagerFactory("testPU");
+        }
+        catch (Throwable ex)
+        {
+            System.err.println("Initial EntityManagerFactory creation failed." + ex);
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+
+    public static EntityManagerFactory getEntityManagerFactory()
+    {
+        return emf;
+    }
+}
+</code></pre>
+
+<p>My user-object:</p>
+
+<pre><code>@Entity
+@Table(name = "T_UserJpa")
+public class User implements Serializable
+{
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    @Embedded
+    @AttributeOverrides(
+    {
+        @AttributeOverride(name = "street", column =
+        @Column(name = "user_street")),
+        @AttributeOverride(name = "city", column =
+        @Column(name = "user_city", length = 50))
+    })
+    private Adress adress;
+    private String firstname;
+    private String lastname;
+    private String email;
+
+    public User()
+    {
+    }
+
+    public User(String firstname, String lastname, String email)
+    {
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.email = email;
+    }
+
+    public Long getId()
+    {
+        return id;
+    }
+
+    public void setId(Long id)
+    {
+        this.id = id;
+    }
+
+    public Adress getAddress()
+    {
+        return adress;
+    }
+
+    public void setAddress(Adress adress)
+    {
+        this.adress = adress;
+    }
+
+    public String getFirstname()
+    {
+        return firstname;
+    }
+
+    public void setFirstname(String firstname)
+    {
+        this.firstname = firstname;
+    }
+
+    public String getLastname()
+    {
+        return lastname;
+    }
+
+    public void setLastname(String lastname)
+    {
+        this.lastname = lastname;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public void setEmail(String email)
+    {
+        this.email = email;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+        if (!(obj instanceof User))
+        {
+            return false;
+        }
+        final User user = (User) obj;
+        return !(email != null ? !email.equals(user.email) : user.email != null);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return 29 * (email != null ? email.hashCode() : 0);
+    }
+}
+</code></pre>
+
+<p>My persistence.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="UTF-8"?>
+<persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence">
+  <persistence-unit name="testPU" transaction-type="JTA">
+    <provider>org.hibernate.ejb.HibernatePersistence</provider>
+    <jta-data-source>jdbc/testdb</jta-data-source>
+    <properties>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+      <property name="hibernate.show_sql" value="true"/>
+      <property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.JTATransactionFactory"/>
+      <property name="hibernate.hbm2ddl.auto" value="update"/>
+      <property name="hibernate.connection.autocommit" value="true"/>
+    </properties>
+  </persistence-unit>
+</persistence>
+</code></pre>
+
+<p>Edit: I forgot to mention, that I already used the information provided in this thread: <a href="http://stackoverflow.com/questions/3609430/learning-resource-for-configuring-hibernate-jpa-2-0-on-glassfish-server">Learning resource for Configuring Hibernate JPA 2.0 on Glassfish server</a></p>

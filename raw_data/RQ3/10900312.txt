@@ -1,0 +1,480 @@
+<p>As per the Google design patterns I have been implementing the dashboard layout by using the <a href="http://code.google.com/p/iosched/source/browse/android/src/com/google/android/apps/iosched/ui/widget/DashboardLayout.java" rel="nofollow">DashboardLayout.java</a> file used by Google in there Google IO app. This has been working fine when using buttons, but as soon as I add a custom view the grid view produced by the DashboardLayout.java file falls apart:</p>
+
+<p>Working without custom view:</p>
+
+<p><img src="http://i.stack.imgur.com/l6qpi.png" alt="enter image description here"></p>
+
+<p>Not working with custom view:</p>
+
+<p><img src="http://i.stack.imgur.com/j1ndF.png" alt="enter image description here"></p>
+
+<p>The code for the custom view is:</p>
+
+<pre><code>public class Countdown extends View {
+
+int viewWidth;
+int viewHeight;
+Paint textPaint;
+Paint titlePaint;
+Paint labelPaint;
+Paint rectanglePaint;
+PeriodFormatter daysFormatter;
+PeriodFormatter hoursFormatter;
+PeriodFormatter minutesFormatter;
+PeriodFormatter secondsFormatter;
+DateTimeZone frenchTimeZone;
+DateTime expiry;
+Context ctx;
+static int[] rectWidth;
+static int[] rectHeight;
+boolean flag = true;
+
+public Countdown(Context context) {
+    super(context);
+    ctx = context;
+    init();
+}
+
+public Countdown(Context context, AttributeSet attrs) {
+    super(context, attrs);
+    ctx = context;
+    init();
+}
+
+public Countdown(Context context, AttributeSet attrs, int defStyle) {
+    super(context, attrs, defStyle);
+    ctx = context;
+    init();
+}
+
+private void init()
+{
+    rectWidth = new int[]{0,0,0,0};
+    rectHeight = new int[]{0,0,0,0};
+
+    textPaint = new Paint();
+    titlePaint = new Paint();
+    labelPaint = new Paint();
+    rectanglePaint = new Paint();
+    frenchTimeZone = DateTimeZone.forID("Europe/Paris");
+    expiry = new DateTime(2012, 6, 17, 8, 30, frenchTimeZone);
+
+    //setup paints
+    //turn antialiasing on
+    textPaint.setAntiAlias(true);
+    int timerScaledSize = getResources().getDimensionPixelSize(R.dimen.text_size_dashboard_timer);
+    textPaint.setTextSize(timerScaledSize);       
+    textPaint.setColor(Color.WHITE);
+    textPaint.setTextAlign(Align.CENTER);
+
+    labelPaint.setAntiAlias(true);
+    int labelScaledSize = getResources().getDimensionPixelSize(R.dimen.text_size_dashboard_timer_boxes_label);
+    labelPaint.setTextSize(labelScaledSize);
+    labelPaint.setColor(Color.BLACK);
+    labelPaint.setTextAlign(Align.CENTER);
+    labelPaint.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
+
+    titlePaint.setAntiAlias(true);
+    int titleScaledSize = getResources().getDimensionPixelSize(R.dimen.text_size_dashboard_title);
+    titlePaint.setTextSize(titleScaledSize);
+    titlePaint.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
+    titlePaint.setColor(Color.WHITE);
+
+    rectanglePaint.setAntiAlias(true);
+
+    daysFormatter = new PeriodFormatterBuilder()
+    .printZeroIfSupported()
+    .minimumPrintedDigits(2)
+    .appendDays()
+    .toFormatter(); 
+
+    hoursFormatter = new PeriodFormatterBuilder()
+    .printZeroIfSupported()
+    .minimumPrintedDigits(2)
+    .appendHours()
+    .toFormatter(); 
+
+    minutesFormatter = new PeriodFormatterBuilder()
+    .printZeroIfSupported()
+    .minimumPrintedDigits(2)
+    .appendMinutes()
+    .toFormatter(); 
+
+    secondsFormatter = new PeriodFormatterBuilder()
+    .printZeroIfSupported()
+    .minimumPrintedDigits(2)
+    .appendSeconds()
+    .toFormatter(); 
+
+}
+
+@Override
+public void onDraw(Canvas canvas)
+{
+    DateTime now = new DateTime(); 
+
+    Period p = new Period(now, expiry, PeriodType.dayTime());
+
+    canvas.drawColor(Color.TRANSPARENT);
+
+    if(flag)
+    {
+        // To ensure the rectangles will be wide enough for all numbers we cheat and initially set the width based upon 00.
+        flag = false;
+        drawTextRectangle(0, textPaint, labelPaint, canvas, "00", "", scaleForDensity(20, ctx), scaleForDensity(33, ctx));
+        drawTextRectangle(1, textPaint, labelPaint, canvas, "00", "", scaleForDensity(53, ctx), scaleForDensity(33, ctx));
+        drawTextRectangle(2, textPaint, labelPaint, canvas, "00", "", scaleForDensity(87, ctx), scaleForDensity(33, ctx));
+        drawTextRectangle(3, textPaint, labelPaint, canvas, "00", "", scaleForDensity(120, ctx), scaleForDensity(33, ctx));     
+    }
+
+    String title = "Countdown";
+    float textWidth = titlePaint.measureText(title);
+    float titleStartPositionX = (viewWidth - textWidth) / 2;
+    canvas.drawText(title, titleStartPositionX, viewHeight - scaleForDensity(5, ctx), titlePaint);
+
+    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.dashboard_counter);
+    canvas.drawBitmap(bitmap, 0, 0, null);
+
+    drawTextRectangle(0, textPaint, labelPaint, canvas, daysFormatter.print(p), "DAYS", scaleForDensity(20, ctx), scaleForDensity(33, ctx));
+    drawTextRectangle(1, textPaint, labelPaint, canvas, hoursFormatter.print(p), "HRS", scaleForDensity(53, ctx), scaleForDensity(33, ctx));
+    drawTextRectangle(2, textPaint, labelPaint, canvas, minutesFormatter.print(p), "MINS", scaleForDensity(87, ctx), scaleForDensity(33, ctx));
+    drawTextRectangle(3, textPaint, labelPaint, canvas, secondsFormatter.print(p), "SECS", scaleForDensity(120, ctx), scaleForDensity(33, ctx));        
+
+    invalidate();
+}
+
+private void drawTextRectangle(int index, Paint paint, Paint labelPaint, Canvas canvas, String text, String label,  float x, float y) {
+    paint.setTextAlign(Align.CENTER);
+
+    Rect bounds = new Rect();
+
+    bounds = new Rect();
+
+    paint.getTextBounds(text, 0, text.length(), bounds);
+
+    if(rectWidth[index] == 0)
+    {
+        rectWidth[index] = Math.abs(bounds.right - bounds.left);
+        rectWidth[index] += scaleForDensity(5, ctx);
+    }
+
+    if(rectHeight[index] == 0)
+    {
+        rectHeight[index] = Math.abs(bounds.bottom - bounds.top);
+        rectHeight[index] += scaleForDensity(5, ctx);
+    }
+
+    bounds.left = (int) (x - (rectWidth[index] / 2));
+    bounds.top = (int) (y - rectHeight[index]);
+    bounds.right = bounds.left + rectWidth[index];
+    bounds.bottom = (int) (bounds.top + rectHeight[index] + scaleForDensity(7, ctx));       
+
+    Paint rectanglePaint = new Paint();
+    rectanglePaint.setAntiAlias(true);
+    rectanglePaint.setShader(new LinearGradient(bounds.centerX(), bounds.top, bounds.centerX(), bounds.bottom, 0xff8ed8f8, 0xff207d94, TileMode.MIRROR));
+
+    RectF boundsF = new RectF(bounds);
+
+    canvas.drawRoundRect(boundsF, 2f, 2f, rectanglePaint);
+
+    canvas.drawText(text, x, y, paint);
+
+    canvas.drawText(label, x, y + rectHeight[index], labelPaint);
+}
+
+public float scaleForDensity(float px, Context context)
+{
+    Resources resources = context.getResources();
+    DisplayMetrics metrics = resources.getDisplayMetrics();
+    return px * metrics.density + .5f;
+}
+
+@Override
+protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+{
+    int width = measureWidth(widthMeasureSpec);
+    int height = measureHeight(heightMeasureSpec, widthMeasureSpec);
+    viewWidth = width;
+    viewHeight = height;
+    setMeasuredDimension(width, height);
+}
+
+private int measureWidth(int measureSpec)
+{
+        int result = 0;
+        int specMode = MeasureSpec.getMode(measureSpec);
+        int specSize = MeasureSpec.getSize(measureSpec);
+
+        if (specMode == MeasureSpec.EXACTLY) {
+            // We were told how big to be
+            result = specSize;
+        } else {
+            // Measure the text
+            result = measureSpec;
+            if (specMode == MeasureSpec.AT_MOST) {
+                // Respect AT_MOST value if that was what is called for by measureSpec
+                result = Math.min(result, specSize);
+            }
+        }
+
+    return result;
+}
+
+private int measureHeight(int measureSpecHeight, int measureSpecWidth) {
+    int result = 0;
+    int specMode = MeasureSpec.getMode(measureSpecHeight);
+    int specSize = MeasureSpec.getSize(measureSpecHeight);
+
+    if (specMode == MeasureSpec.EXACTLY) {
+        // We were told how big to be
+        result = specSize;
+    } else {
+        // Measure the text (beware: ascent is a negative number)
+        result = viewWidth;
+        /*if (specMode == MeasureSpec.AT_MOST) {
+            // Respect AT_MOST value if that was what is called for by measureSpec
+            result = Math.min(result, specSize);
+        }*/
+    }
+    return result;
+}
+}
+</code></pre>
+
+<p>The DashboardLayout code that I am using:</p>
+
+<pre><code>/**
+ * Custom layout that arranges children in a grid-like manner, optimizing for even   horizontal and
+* vertical whitespace.
+*/
+public class DashboardLayout extends ViewGroup {
+
+private static final int UNEVEN_GRID_PENALTY_MULTIPLIER = 10;
+boolean run = true;
+
+private int mMaxChildWidth = 0;
+private int mMaxChildHeight = 0;
+
+public DashboardLayout(Context context) {
+    super(context, null);
+}
+
+public DashboardLayout(Context context, AttributeSet attrs) {
+    super(context, attrs, 0);
+}
+
+public DashboardLayout(Context context, AttributeSet attrs, int defStyle) {
+    super(context, attrs, defStyle);
+}
+
+@Override
+protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+
+    if(run)
+    {
+        run = false;
+
+        mMaxChildWidth = 0;
+        mMaxChildHeight = 0;
+
+        // Measure once to find the maximum child size.
+
+        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
+                MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.AT_MOST);
+        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
+                MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.AT_MOST);
+
+        final int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            final View child = getChildAt(i);
+            if (child.getVisibility() == GONE) {
+                continue;
+            }
+
+            child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+
+            mMaxChildWidth = Math.max(mMaxChildWidth, child.getMeasuredWidth());
+            mMaxChildHeight = Math.max(mMaxChildHeight, child.getMeasuredHeight());
+        }
+
+        // Measure again for each child to be exactly the same size.
+
+        childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
+                mMaxChildWidth, MeasureSpec.EXACTLY);
+        childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
+                mMaxChildHeight, MeasureSpec.EXACTLY);
+
+        for (int i = 0; i < count; i++) {
+            final View child = getChildAt(i);
+            if (child.getVisibility() == GONE) {
+                continue;
+            }
+
+            child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+        }
+    }
+
+    setMeasuredDimension(
+            resolveSize(mMaxChildWidth, widthMeasureSpec),
+            resolveSize(mMaxChildHeight, heightMeasureSpec));
+}
+
+@Override
+protected void onLayout(boolean changed, int l, int t, int r, int b) {
+    int width = r - l;
+    int height = b - t;
+
+    final int count = getChildCount();
+
+    // Calculate the number of visible children.
+    int visibleCount = 0;
+    for (int i = 0; i < count; i++) {
+        final View child = getChildAt(i);
+        if (child.getVisibility() == GONE) {
+            continue;
+        }
+        ++visibleCount;
+    }
+
+    if (visibleCount == 0) {
+        return;
+    }
+
+    // Calculate what number of rows and columns will optimize for even horizontal and
+    // vertical whitespace between items. Start with a 1 x N grid, then try 2 x N, and so on.
+    int bestSpaceDifference = Integer.MAX_VALUE;
+    int spaceDifference;
+
+    // Horizontal and vertical space between items
+    int hSpace = 0;
+    int vSpace = 0;
+
+    int cols = 1;
+    int rows;
+
+    while (true) {
+        rows = (visibleCount - 1) / cols + 1;
+
+        hSpace = ((width - mMaxChildWidth * cols) / (cols + 1));
+        vSpace = ((height - mMaxChildHeight * rows) / (rows + 1));
+
+        spaceDifference = Math.abs(vSpace - hSpace);
+        if (rows * cols != visibleCount) {
+            spaceDifference *= UNEVEN_GRID_PENALTY_MULTIPLIER;
+        }
+
+        if (spaceDifference < bestSpaceDifference) {
+            // Found a better whitespace squareness/ratio
+            bestSpaceDifference = spaceDifference;
+
+            // If we found a better whitespace squareness and there's only 1 row, this is
+            // the best we can do.
+            if (rows == 1) {
+                break;
+            }
+        } else {
+            // This is a worse whitespace ratio, use the previous value of cols and exit.
+            --cols;
+            rows = (visibleCount - 1) / cols + 1;
+            hSpace = ((width - mMaxChildWidth * cols) / (cols + 1));
+            vSpace = ((height - mMaxChildHeight * rows) / (rows + 1));
+            break;
+        }
+
+        ++cols;
+    }
+
+    // Lay out children based on calculated best-fit number of rows and cols.
+
+    // If we chose a layout that has negative horizontal or vertical space, force it to zero.
+    hSpace = Math.max(0, hSpace);
+    vSpace = Math.max(0, vSpace);
+
+    // Re-use width/height variables to be child width/height.
+    width = (width - hSpace * (cols + 1)) / cols;
+    height = (height - vSpace * (rows + 1)) / rows;
+
+    int left, top;
+    int col, row;
+    int visibleIndex = 0;
+    for (int i = 0; i < count; i++) {
+        final View child = getChildAt(i);
+        if (child.getVisibility() == GONE) {
+            continue;
+        }
+
+        row = visibleIndex / cols;
+        col = visibleIndex % cols;
+
+        left = hSpace * (col + 1) + width * col;
+        top = vSpace * (row + 1) + height * row;
+
+        child.layout(left, top,
+                (hSpace == 0 && col == cols - 1) ? r : (left + width),
+                (vSpace == 0 && row == rows - 1) ? b : (top + height));
+        ++visibleIndex;
+    }
+}
+}
+</code></pre>
+
+<p>And last but not least the layout:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+<TextView
+    style="@style/HeaderTextView"
+    android:text="@string/header_dashboard" />
+
+<View
+    android:layout_width="fill_parent"
+    android:layout_height="@dimen/content_divider_height"
+    android:layout_marginLeft="@dimen/content_divider_margin"
+    android:layout_marginRight="@dimen/content_divider_margin"
+    android:background="@color/content_divider_colour" /> 
+
+<com.a.b.ui.DashboardLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    style="@style/Container">
+
+    <!-- The custom view that once un-commented cause the problem -->
+    <!-- <com.a.b.widget.Countdown
+        style="@style/DashboardButton" /> -->
+
+    <Button android:id="@+id/home_btn_news"
+        style="@style/DashboardButton"
+        android:text="A"
+        android:drawableTop="@drawable/dashboard_counter" />
+
+    <Button android:id="@+id/home_btn_feed"
+        style="@style/DashboardButton"
+        android:text="B"
+        android:drawableTop="@drawable/dashboard_counter" />
+
+    <Button android:id="@+id/home_btn_guide"
+        style="@style/DashboardButton"
+        android:text="C"
+        android:drawableTop="@drawable/dashboard_counter" />
+
+    <Button android:id="@+id/home_btn_sessions"
+        style="@style/DashboardButton"
+        android:text="D"
+        android:drawableTop="@drawable/dashboard_counter" />
+
+    <Button android:id="@+id/home_btn_events"
+        style="@style/DashboardButton"
+        android:text="E"
+        android:drawableTop="@drawable/dashboard_counter" />
+
+</com.a.b.ui.DashboardLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p>Apologies over the amount of code posted, but I hope it makes it easier to see the issue(s).</p>

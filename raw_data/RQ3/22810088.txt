@@ -1,0 +1,119 @@
+<p>I am a newbiew in Android. I have intergarted <code>Facebook</code> in my <code>Android</code> app. I have a Login page with a button. On click of that button the FB login page appears.After the successful login of Facebook, the user gets to go to the MainActivity. I want to hide my Login page after the successful login of FB. That is, when I reload the app, if the user has already logged in then the MainActivity only should be dispalyed and not the Login page.</p>
+
+<p>My code is as follows:</p>
+
+<pre><code>public class Login extends Activity {
+private static final String URL_PREFIX_FRIENDS = "https://graph.facebook.com/me/friends?access_token=";
+
+//private TextView textInstructionsOrLink;
+ private ImageButton buttonLoginLogout;
+ public static final String PREFS_PRIVATE = "PREFS_PRIVATE";
+ private Button b;
+
+private Session.StatusCallback statusCallback = new SessionStatusCallback();
+Databasehandler db=new Databasehandler(this);
+HashMap<String, String>map=new HashMap<String, String>();
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.login);
+    buttonLoginLogout = (ImageButton)findViewById(R.id.imageButton1);
+    Settings.addLoggingBehavior(LoggingBehavior.INCLUDE_ACCESS_TOKENS);
+    Session session = Session.getActiveSession();
+    if (session == null) {
+        if (savedInstanceState != null) {
+            session = Session.restoreSession(this, null, statusCallback, savedInstanceState);
+        }
+        if (session == null) {
+            session = new Session(this);
+        }
+        Session.setActiveSession(session);
+        if (session.getState().equals(SessionState.CREATED_TOKEN_LOADED)) {
+            session.openForRead(new Session.OpenRequest(this).setCallback(statusCallback));
+        }
+    }
+
+    updateView();
+}
+
+@Override
+public void onStart() {
+    super.onStart();
+    Session.getActiveSession().addCallback(statusCallback);
+}
+
+@Override
+public void onStop() {
+    super.onStop();
+    Session.getActiveSession().removeCallback(statusCallback);
+}
+
+
+
+@Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    Session session = Session.getActiveSession();
+    Session.saveSession(session, outState);
+}
+@Override
+protected void onDestroy() {
+
+    super.onDestroy();
+
+}
+private void updateView() {
+    Session session = Session.getActiveSession();
+    if (session.isOpened()) {
+        Request.executeMeRequestAsync(session,new Request.GraphUserCallback() {
+
+            @Override
+            public void onCompleted(GraphUser user, Response response) {
+                // TODO Auto-generated method stub
+                final String t1=user.getId();
+                final String t2=user.getName();
+                 // SharedPreferences myPrefs =getSharedPreferences("myprefs",MODE_WORLD_READABLE);
+                int count=db.getme();
+                if(count==0)
+                {
+                map.put("uid",t1.toString());
+                map.put("name",t2.toString());
+                db.insertnewuser(map);
+                }
+    }
+        });
+
+      Intent ik=new Intent(Login.this,MainActivity.class);
+
+        ik.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(ik);
+     } else {
+
+        buttonLoginLogout.setOnClickListener(new OnClickListener() {
+            public void onClick(View view) { onClickLogin(); }
+        });
+    }
+}
+
+private void onClickLogin() {
+    Session session = Session.getActiveSession();
+    if (!session.isOpened() && !session.isClosed()) {
+        session.openForRead(new Session.OpenRequest(this).setCallback(statusCallback));
+    } else {
+        Session.openActiveSession(this, true, statusCallback);
+    }
+}
+  private class SessionStatusCallback implements Session.StatusCallback {
+    @Override
+    public void call(Session session, SessionState state, Exception exception) {
+        updateView();
+    }
+}
+}
+</code></pre>

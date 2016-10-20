@@ -1,0 +1,626 @@
+<p>I am working on an NFC reader app which uses <code>NfcA</code>, <code>MifareUltralight</code> and <code>Ndef</code> technologies. It works fine when I attempt to use sticker tags and by that I mean it reads the serial number correctly. When using another type of tag which according to NFC Tools seems to cover the same technology however the <code>getByteArrayExtra</code> returns <code>null</code> even though the tags have a valid serial number.</p>
+
+<p>On the other hand the last type of tags which I am having issues with does contain NDEF messages. </p>
+
+<p>In short these tags' serial numbers are used to identify users passing by an entry device.</p>
+
+<p>I am quite confused about it and any assistance is welcome. Code is below:</p>
+
+<p>MainActivity:</p>
+
+<pre><code>package org.bogdan.learning.gantopendemo;
+
+import org.bogdan.learning.gantopendemo.util.SystemUiHider;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.AssetManager;
+import android.media.MediaPlayer;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.nfc.NfcAdapter;
+import android.nfc.Tag;
+import android.nfc.tech.MifareUltralight;
+import android.nfc.tech.Ndef;
+import android.nfc.tech.NfcA;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ *
+ * @see SystemUiHider
+ */
+public class MainActivity extends Activity {
+    /**
+     * Whether or not the system UI should be auto-hidden after
+     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+     */
+    private static final boolean AUTO_HIDE = true;
+
+    /**
+     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+     * user interaction before hiding the system UI.
+     */
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    /**
+     * If set, will toggle the system UI visibility upon interaction. Otherwise,
+     * will show the system UI visibility upon interaction.
+     */
+    private static final boolean TOGGLE_ON_CLICK = true;
+
+    /**
+     * The flags to pass to {@link SystemUiHider#getInstance}.
+     */
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+
+    /**
+     * The instance of the {@link SystemUiHider} for this activity.
+     */
+    private SystemUiHider mSystemUiHider;
+
+    // NFC Related variables go here, namely the adapter and helpers
+
+    public static final String MIME_TEXT_PLAIN = "text/plain";
+    public static final String TAG = "EventTAG";
+    private NfcAdapter mNfcAdapter; // Used for accessing the NFC Hardware
+
+    // SQLite Variables go here
+    private EventTagDataSource dataSource;
+
+    // wait interval before screen is redrawn
+    private int miliseconds = 6000;
+
+    // Sound related activities
+    private MediaPlayer mediaPlayer;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_gant_open);
+
+        final View controlsView = findViewById(R.id.fullscreen_content_controls);
+        final View contentView = findViewById(R.id.fullscreen_content);
+
+        /**
+         * Open the database connection
+         */
+        dataSource = new EventTagDataSource(this);
+
+        try {
+            dataSource.open();
+        } catch (SQLException exp) {
+            Log.d("SQLExp", "SQL Exception ocurred", exp);
+        }
+
+
+        // return the default NFC adapter
+
+        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        // is NFC Enabled or not=
+        if (mNfcAdapter == null) {
+            finish();
+            return;
+        }
+
+        // is the NFC Reader enabled?
+        if (!mNfcAdapter.isEnabled()) {
+            Toast.makeText(this, "NFC Reader is not enabled. Please enable and try again", Toast.LENGTH_LONG).show();
+        }
+
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider
+                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                    // Cached values.
+                    int mControlsHeight;
+                    int mShortAnimTime;
+
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                    public void onVisibilityChange(boolean visible) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                            // If the ViewPropertyAnimator API is available
+                            // (Honeycomb MR2 and later), use it to animate the
+                            // in-layout UI controls at the bottom of the
+                            // screen.
+                            if (mControlsHeight == 0) {
+                                mControlsHeight = controlsView.getHeight();
+                            }
+                            if (mShortAnimTime == 0) {
+                                mShortAnimTime = getResources().getInteger(
+                                        android.R.integer.config_shortAnimTime);
+                            }
+                            controlsView.animate()
+                                    .translationY(visible ? 0 : mControlsHeight)
+                                    .setDuration(mShortAnimTime);
+                        } else {
+                            // If the ViewPropertyAnimator APIs aren't
+                            // available, simply show or hide the in-layout UI
+                            // controls.
+                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                        }
+
+                        if (visible && AUTO_HIDE) {
+                            // Schedule a hide().
+                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                        }
+                    }
+                });
+
+        // Set up the user interaction to manually show or hide the system UI.
+        contentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+            }
+        });
+
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        findViewById(R.id.dummy_button).setOnLongClickListener(new View.OnLongClickListener() {
+            public boolean onLongClick(View view) {
+                //Toast.makeText(getApplicationContext(), "Long Click Detected", Toast.LENGTH_LONG).show();
+                launchRingDialog(view);
+                return false;
+            }
+        });
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    Handler mHideHandler = new Handler();
+    Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
+
+    /**
+     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    /**
+     * onResume - when application returns from standby it reopens database connection
+     * and sets up foreground dispatch
+     */
+    @Override
+    protected void onResume() {
+        try {
+            dataSource.open();
+        } catch (SQLException exp) {
+            Log.d("SQLExp", "SQL Exception ocurred", exp);
+        }
+        super.onResume();
+        setupForegroundDispatch(this, mNfcAdapter);
+    }
+
+    /**
+     * onPause - closes database connection, stops foreground despatch and sets application in
+     * standby mode.
+     */
+    @Override
+    protected void onPause() {
+        dataSource.close();
+        stopForegroundDispatch(this, mNfcAdapter);
+        super.onPause();
+    }
+
+    /**
+     * creates a new intent and calles handleIntent(intent) to deal with it.
+     *
+     * @param intent
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
+    }
+
+    /**
+     *
+     */
+    public String uidByteToHexString(byte[] uid) {
+        int iCounter, jCounter, in;
+
+        String[] hex = {
+                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"
+        };
+        String out = "";
+
+        for (jCounter = 0; jCounter < uid.length; jCounter++) {
+            in = uid[jCounter] & 0xff;
+            iCounter = (in >> 4) & 0x0f;
+            out += hex[iCounter];
+            iCounter = in & 0x0f;
+            out += hex[iCounter];
+        }
+
+        return out;
+
+    }
+
+    /**
+     * Handles intent within the application (such as NFC Tag detected)
+     *
+     * @param intent
+     */
+    private void handleIntent(Intent intent) {
+
+        String action = intent.getAction();
+
+        if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action) || NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+            new NdefReaderTask().execute(tag);
+        }
+        /*else if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+            new NdefReaderTask().execute(tag);
+        }*/
+    }
+
+    /**
+     * Method: loadTagsFromFile
+     *
+     * @param - none
+     * @return - void
+     * @description - Loads a set of NFC Tags from a given CSV file into the SQLite Database
+     */
+    public void loadTagsFromFile(String fileName) {
+
+        AssetManager manager = getApplicationContext().getAssets();
+        InputStream inStream = null;
+
+        try {
+            inStream = manager.open(fileName);
+        } catch (IOException exp) {
+            exp.printStackTrace();
+        }
+
+        // open a buffered reader and start reading from the inputStream
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(inStream));
+        String line = ""; //current line in our CSV file
+
+        // open a transcation to start mass inserting data
+        dataSource.database.beginTransaction();
+
+        try {
+            while ((line = buffer.readLine()) != null) {
+                String[] columns = line.split(";");
+
+                if (columns.length != 4) {
+                    Log.d("CSVParser", "Skipping malformed CSV format");
+                    continue;
+                }
+
+                dataSource.createEventTag(columns[1].trim(), columns[2].trim(), columns[3]);
+            }
+        } catch (IOException exp) {
+            exp.printStackTrace();
+        }
+
+        dataSource.database.setTransactionSuccessful();
+        dataSource.database.endTransaction();
+    }
+
+    /**
+     * Method: launchRingDialog
+     * Description: Opens the Ring Dialog and loads the CSV File into the Database
+     *
+     * @param view
+     */
+    public void launchRingDialog(View view) {
+        final ProgressDialog ringProgressDialog = ProgressDialog.show(this, "Loading NFC Tags ...", "Loading records ...", true);
+
+        ringProgressDialog.setCancelable(true);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    //Thread.sleep(10000);
+                    loadTagsFromFile("nfccodes.csv");
+
+                } catch (Exception e) {
+                    Log.d("CSVLoader", "CSV Loader Exception occurred", e);
+                }
+                ringProgressDialog.dismiss();
+            }
+        }).start();
+    }
+
+    /**
+     * Sets up Foreground Dispatch system for the activity and NfcAdapter required
+     *
+     * @param activity
+     * @param adapter
+     */
+    public static void setupForegroundDispatch(final Activity activity, NfcAdapter adapter) {
+
+        final Intent intent = new Intent(activity.getApplicationContext(), activity.getClass());
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, 0);
+
+        IntentFilter[] filters = new IntentFilter[1];
+        String[][] techList = new String[][]{ new String[] {MifareUltralight.class.getName()},
+                                              new String[] {NfcA.class.getName()},
+                                              new String[] {Ndef.class.getName()}
+                                            };
+
+        filters[0] = new IntentFilter();
+        filters[0].addAction(NfcAdapter.ACTION_TECH_DISCOVERED);
+        filters[0].addAction(NfcAdapter.ACTION_NDEF_DISCOVERED);
+        filters[0].addAction(NfcAdapter.ACTION_TAG_DISCOVERED);
+
+
+        filters[0].addCategory(Intent.CATEGORY_DEFAULT);
+
+        try {
+            filters[0].addDataType(MIME_TEXT_PLAIN);
+        } catch (IntentFilter.MalformedMimeTypeException e) {
+            throw new RuntimeException("Check your mime type");
+        }
+
+        adapter.enableForegroundDispatch(activity, pendingIntent, filters, techList);
+    }
+
+    /**
+     * Stops the Foreground Dispatch system for specified activity and nfc adapter.
+     *
+     * @param activity
+     * @param adapter
+     */
+    public static void stopForegroundDispatch(final Activity activity, NfcAdapter adapter) {
+        adapter.disableForegroundDispatch(activity);
+    }
+
+    /**
+     * Internal class used to create an NFC Reading Task, triggered when an NFC card is brought
+     * close or in contact to the device's NFC reading system.
+     */
+    private class NdefReaderTask extends AsyncTask<Tag, Void, String> {
+
+        /**
+         * Overriden abstract method that performs the async task of reading the task.
+         *
+         * @param params
+         * @return - the contents of the Tag as String
+         */
+
+        @Override
+        protected String doInBackground(Tag... params) {
+            Tag tag = params[0];
+            byte[] uid = getIntent().getByteArrayExtra(NfcAdapter.EXTRA_ID);
+
+            String serialNumber = uidByteToHexString(uid);
+
+            if (serialNumber != null && !serialNumber.isEmpty()) {
+                return serialNumber;
+            }
+            return null;
+        }
+
+        /**
+         * Reads a NdefRecord and returns the string calculated from the tag's payload taken over as a
+         * byte array
+         *
+         * @param record
+         * @return String - the string representation of the NFC Tag's payload
+         * @throws UnsupportedEncodingException
+         */
+        private String readText(NdefRecord record) throws UnsupportedEncodingException {
+            byte[] payload = record.getPayload();
+
+            String textEncoding = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
+            int languageCodeLength = payload[0] & 0063;
+
+            return new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, textEncoding);
+        }
+
+
+        /**
+         * Overriden method - based on the result (Tag's code) it shows the correct screen,
+         * either OK or FAILURE screen, plays a sound and returns app to default screen.
+         * <p/>
+         * This method is executed after the AsyncTask is finished.
+         *
+         * @param result
+         */
+        @Override
+        protected void onPostExecute(String result) {
+            if (result != null) {
+                // Do SOMETHING HERE
+                // find the tag which has the same code as result
+                EventTag currentTag = dataSource.getEventTag(result);
+                if (currentTag != null) {
+                    //Toast.makeText(getApplicationContext(), "Welcome " + currentTag.getFullName() + " you are using tag: " + currentTag.getNfcCode(), Toast.LENGTH_LONG).show();
+                    findViewById(R.id.fullscreen_content).setBackgroundResource(R.drawable.bggreen);
+                    ((TextView) findViewById(R.id.fullscreen_content)).setText(getResources().getString(R.string.txt_tag_ok) + " " + currentTag.getFullName());
+
+                    // create a media player or better just play the music
+                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.gantsound_ok);
+                    mediaPlayer.start();
+
+                } else {
+                    //Toast.makeText(getApplicationContext(), "Tag with code: " + result + " not found in database", Toast.LENGTH_LONG).show();
+                    findViewById(R.id.fullscreen_content).setBackgroundResource(R.drawable.bgred);
+                    ((TextView) findViewById(R.id.fullscreen_content)).setText(getResources().getString(R.string.txt_tag_notok));
+
+                    // create a media player or better just play the music
+                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.error);
+                    mediaPlayer.start();
+
+                }
+
+                // use a handler here
+
+                final Handler handler = new Handler();
+
+                final Runnable runnable = new Runnable() {
+                    public void run() {
+                        findViewById(R.id.fullscreen_content).setBackgroundResource(R.drawable.bgblue);
+                        ((TextView) findViewById(R.id.fullscreen_content)).setText(getResources().getString(R.string.dummy_content));
+
+                        handler.postDelayed(this, miliseconds);
+                    }
+                };
+                handler.postDelayed(runnable, miliseconds);
+            }
+            else {
+
+                //Toast.makeText(getApplicationContext(), "Tag with code: " + result + " not found in database", Toast.LENGTH_LONG).show();
+                findViewById(R.id.fullscreen_content).setBackgroundResource(R.drawable.bgred);
+                ((TextView) findViewById(R.id.fullscreen_content)).setText(getResources().getString(R.string.txt_tag_notok));
+
+                // create a media player or better just play the music
+                mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.error);
+                mediaPlayer.start();
+
+                // use a handler here
+                final Handler handler = new Handler();
+
+                final Runnable runnable = new Runnable() {
+                    public void run() {
+                        findViewById(R.id.fullscreen_content).setBackgroundResource(R.drawable.bgblue);
+                        ((TextView) findViewById(R.id.fullscreen_content)).setText(getResources().getString(R.string.dummy_content));
+
+                        handler.postDelayed(this, miliseconds);
+                    }
+                };
+                handler.postDelayed(runnable, miliseconds);
+            }
+        }
+    }
+}
+</code></pre>
+
+<p>Application Manifest:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="my app and package" >
+
+    <!-- Application permissions go here, mainly NFC -->
+    <uses-permission android:name="android.permission.NFC" />
+    <users-feature android:name="android.hardware.nfc" android:required="true"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name"
+            android:theme="@style/FullscreenTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- NFC Intent Filters -->
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+
+            <meta-data android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_tech_filter" />
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>My technologies list:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <tech-list>
+        <tech>android.nfc.tech.Ndef</tech>
+    </tech-list>
+    <tech-list>
+        <tech>android.nfc.tech.NfcA</tech>
+    </tech-list>
+    <tech-list>
+        <tech>android.nfc.tech.MifareUltralight</tech>
+    </tech-list>
+</resources>
+</code></pre>

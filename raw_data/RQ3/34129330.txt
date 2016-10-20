@@ -1,0 +1,132 @@
+<p>I am using the <code>DrawerLayout</code> to have a side menu and I set up the drawer fragment using the default:</p>
+
+<pre><code>public void setUp(int fragmentId, DrawerLayout drawerLayout, Toolbar toolBar)
+</code></pre>
+
+<p>I also have a <code>FrameLayout</code> inside the MainActivity(which hosts the drawer fragment).
+And I transact fragments dynamically into this container.
+What I want to do is to change the toolbar title and show a back button when there are any fragments in the container. Else show the usual hamburger icon which opens the drawer.</p>
+
+<p>Is there a way I can use the same ActionBarDrawerToggle for back stack as well. Or is there a way I can use a toolbar inside each fragment which has a back button and title?</p>
+
+<p>I tried using a toolbar in each fragment, but it does not quite look like the default action bar(of course be cause fragments are meant to have action bars).</p>
+
+<p>I see Gmail app doing this with the ActionBarDrawerToggle itself(change it to back button when a new fragment comes up i.e when you open a mail). Can some one please point out how to do that.</p>
+
+<p>CODE:</p>
+
+<p>activity layout:</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include
+            android:id="@+id/tool_bar"
+            layout="@layout/tool_bar" />
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/tool_bar" />
+    </RelativeLayout>
+
+    <fragment
+        android:id="@+id/fragment_navigation_drawer"
+        android:name="com.xxx.yyy.NavigationDrawerFragment"
+        android:layout_width="@dimen/navigation_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        tools:layout="@layout/fragment_navigation_drawer" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>Activity onCreate:</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    setSupportActionBar(toolBar);
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setUp(
+            R.id.fragment_navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout), toolBar);
+    ((DrawerLayout) findViewById(R.id.drawer_layout)).closeDrawer(GravityCompat.START);
+}
+</code></pre>
+
+<p>Fragment's setUp method:</p>
+
+<pre><code>/**
+ * Users of this fragment must call this method to set up the navigation drawer interactions.
+ *
+ * @param fragmentId   The android:id of this fragment in its activity's layout.
+ * @param drawerLayout The DrawerLayout containing this fragment's UI.
+ * @param toolBar
+ */
+public void setUp(int fragmentId, DrawerLayout drawerLayout, Toolbar toolBar) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    // set a custom shadow that overlays the main content when the drawer opens
+    mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+    // set up the drawer's list view with items and click listener
+
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setHomeButtonEnabled(true);
+
+    // ActionBarDrawerToggle ties together the the proper interactions
+    // between the navigation drawer and the action bar app icon.
+    mDrawerToggle = new ActionBarDrawerToggle(
+            getActivity(),
+            mDrawerLayout,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+    ) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+            getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+    };
+
+    // Defer code dependent on restoration of previous instance state.
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+</code></pre>

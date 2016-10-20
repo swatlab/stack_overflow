@@ -1,0 +1,66 @@
+<p>I am trying to create an adjacency list representation of a graph. And each vertex is defined below with four different attributes but I only need to use the <code>node</code> attribute for identification purpose. </p>
+
+<pre><code>class Vertex{
+    private long node;
+    private String color;
+    private long d;
+    private long pi;
+
+public Vertex(long node){
+    this.node = node;
+}
+// to String
+public String toString(){
+    return node+"";
+}
+
+ public int hashCode(){
+     return (int)(node * 31);
+}
+
+public boolean equals(Object o) {
+    if (o == this){
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()){
+        return false;
+    }
+    Vertex other = (Vertex)o;
+    return node  == other.node;
+    }
+}
+</code></pre>
+
+<p>I use the code below to read in the data in a text file and create a <code>HashMap<Vertex, ArrayList<Vertex>></code> object below. The problem with my code below is that I am always creating a new object, even the the same <code>node</code> value has been seen once already,i.e. I could be creating two Vertex objects and both have <code>node = 5</code> This is actually quite inefficient. Moreover, when I make changes to the one of Vertex with <code>node = 5</code> and say I change its <code>color</code> attribute to <code>WHITE</code>. This will not be reflected in the other Vertex object that also has <code>node = 5</code>. </p>
+
+<p>So, I think in this situation, what I really need is to be able to make a copy of the reference to the same object, whenever I read the value <code>5</code> twice or more in the text file. But I do not know what is the best way to do this ? </p>
+
+<pre><code>class other_class{
+   public HashMap<Vertex, ArrayList<Vertex>> read_file(String file_loc) throws IOException {
+    HashMap<Vertex, ArrayList<Vertex>> graph = new HashMap<Vertex, ArrayList<Vertex>>();
+    FileInputStream fil = new FileInputStream(file_loc);
+    BufferedReader br = new BufferedReader( new InputStreamReader(fil));
+    String element = null;
+
+    while( (element = br.readLine()) != null){
+        String[] line = element.split("\\s");
+        Vertex v_l = new Vertex( Long.parseLong(line[0]) );
+        Vertex v_r = new Vertex( Long.parseLong(line[1]) );
+        if(graph.containsKey(v_l) == false){
+            ArrayList<Vertex> edges_of_this_vertex = new ArrayList<Vertex>();
+            edges_of_this_vertex.add(v_r);
+            graph.put(v_l, edges_of_this_vertex);
+        } else{
+            graph.get(v_l).add(v_r);
+        }
+    }
+   }
+}
+</code></pre>
+
+<p>Example data file</p>
+
+<pre><code>1   5    
+1   2
+5   1     <-- The 5 here creates a new Vertex object, which is not ideal, I want to be a copy of the reference to the Vertex object on line 1 with node equal to 5 .
+</code></pre>

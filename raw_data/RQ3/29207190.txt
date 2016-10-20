@@ -1,0 +1,52 @@
+<p>Using a <code>FragmentPagerAdapter</code>:</p>
+
+<pre><code>public static class MyPagerAdapter extends FragmentPagerAdapter {
+    //declating number of items statically
+    private static int NUM_ITEMS = 5;
+
+    private MyObject myobject;
+
+    public MyPagerAdapter(FragmentManager fragmentManager) {
+        super(fragmentManager);
+        //getting object as a public static from activity
+        myobject = MyActivity.object_holder;
+    }
+
+    // Returns total number of pages
+    @Override
+    public int getCount() {
+        return NUM_ITEMS;
+    }
+
+    // Returns the fragment to display for that page
+    @Override
+    public Fragment getItem(int position) {
+        switch (position) {
+            case 0: return ContentFragment.newInstance(myobject.getOverview(), "Overview");
+            case 1: return ContentFragment.newInstance(myobject.getGetting_around(), "Getting Around");
+            case 2: return ContentFragment.newInstance(myobject.getShopping(), "Shopping");
+            case 3: return ContentFragment.newInstance(myobject.getNightlife(), "Nightlife");
+            default:
+                return null;
+        }
+    }
+
+    // Returns the page title for the top indicator
+    @Override
+    public CharSequence getPageTitle(int position) {
+        switch (position){
+            case 0: return "Overview";
+            case 1: return "Getting Around";
+            case 2: return "Shopping";
+            case 3: return "Nightlife";
+            default: return null;
+        }
+    }
+}
+</code></pre>
+
+<p>My issue is that if the <code>myobject</code> object has an empty field, for example <code>Shopping</code> or <code>NightLife</code>. ie. it equals <code>null</code>.</p>
+
+<p>Then I don't want to show the whole pager item.</p>
+
+<p>How can I do this?</p>

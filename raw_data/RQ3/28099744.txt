@@ -1,0 +1,243 @@
+<p>I've read a lot of different threads but none of the answers seem to work or fit my code.</p>
+
+<p>I am trying to create an app with three tabs, one of which is a maps fragment. At the moment it runs fine and I can swipe between the tabs and the map does load and is usable, but whenever I try to add markers or enable location the app crashes on load. So I'm sure I am missing something obvious.</p>
+
+<p><strong>Code:</strong></p>
+
+<p>MainActivity.java</p>
+
+<pre><code>    public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    return StatsFragment.newInstance(0);
+                case 1:
+                    return MapsFragment.newInstance(1);
+                case 2:
+                    return GraphsFragment.newInstance(2);
+            }
+            return null;
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section3).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+}
+</code></pre>
+
+<p>activity_main.xml</p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:id="@+id/pager"
+android:layout_width="match_parent" android:layout_height="match_parent"
+tools:context=".MainActivity" />
+</code></pre>
+
+<p>MapsFragment.java</p>
+
+<pre><code>    public class MapsFragment extends Fragment {
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        View view = inflater.inflate(R.layout.fragment_map, container, false);
+        return view;
+    }
+
+    public MapsFragment() {
+    }
+
+    public static final String ARG_SECTION_NUMBER = "section_number";
+
+    public static MapsFragment newInstance(int sectionNumber) {
+        MapsFragment fragment = new MapsFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+}
+</code></pre>
+
+<p>fragment_map.xml</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffffd073">
+
+    <fragment
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:id="@+id/map_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</code></pre>
+
+<p></p>
+
+<p>Any help or advice would be fantastic, I'm sure I've just done something wrong and/or missing something. </p>
+
+<p><strong>Edit:</strong>
+Logcat:</p>
+
+<pre><code>01-22 23:35:17.598  18294-18294/com.example.mark.skipalalpha E/AndroidRuntime﹕ FATAL EXCEPTION: main
+Process: com.example.mark.skipalalpha, PID: 18294
+java.lang.NullPointerException: Attempt to invoke virtual method 'void com.google.android.gms.maps.GoogleMap.setMyLocationEnabled(boolean)' on a null object reference
+        at com.example.mark.skipalalpha.MapsFragment.onCreateView(MapsFragment.java:31)
+        at android.support.v4.app.Fragment.performCreateView(Fragment.java:1786)
+        at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:947)
+        at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1126)
+        at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:739)
+        at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1489)
+        at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:486)
+        at android.support.v4.app.FragmentPagerAdapter.finishUpdate(FragmentPagerAdapter.java:141)
+        at android.support.v4.view.ViewPager.populate(ViewPager.java:1073)
+        at android.support.v4.view.ViewPager.populate(ViewPager.java:919)
+        at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1441)
+        at android.view.View.measure(View.java:17462)
+        at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5472)
+        at android.widget.FrameLayout.onMeasure(FrameLayout.java:430)
+        at android.view.View.measure(View.java:17462)
+        at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5472)
+        at android.support.v7.internal.widget.ActionBarOverlayLayout.onMeasure(ActionBarOverlayLayout.java:453)
+        at android.view.View.measure(View.java:17462)
+        at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5472)
+        at android.widget.FrameLayout.onMeasure(FrameLayout.java:430)
+        at android.view.View.measure(View.java:17462)
+        at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5472)
+        at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1436)
+        at android.widget.LinearLayout.measureVertical(LinearLayout.java:722)
+        at android.widget.LinearLayout.onMeasure(LinearLayout.java:613)
+        at android.view.View.measure(View.java:17462)
+        at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5472)
+        at android.widget.FrameLayout.onMeasure(FrameLayout.java:430)
+        at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2601)
+        at android.view.View.measure(View.java:17462)
+        at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:2075)
+        at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1208)
+        at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1417)
+        at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1096)
+        at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5981)
+        at android.view.Choreographer$CallbackRecord.run(Choreographer.java:795)
+        at android.view.Choreographer.doCallbacks(Choreographer.java:599)
+        at android.view.Choreographer.doFrame(Choreographer.java:560)
+        at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:781)
+        at android.os.Handler.handleCallback(Handler.java:739)
+        at android.os.Handler.dispatchMessage(Handler.java:95)
+        at android.os.Looper.loop(Looper.java:135)
+        at android.app.ActivityThread.main(ActivityThread.java:5466)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:372)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:938)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:733)
+</code></pre>
+
+<p><strong>2nd Edit:</strong></p>
+
+<p>If I add the two googleMap lines then the app crashes. </p>
+
+<pre><code>    public class MapsFragment extends Fragment {
+
+    GoogleMap googleMap;
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        View view = inflater.inflate(R.layout.fragment_map, container, false);
+
+        // Added two googleMap entries below causes the crash
+        googleMap.setMyLocationEnabled(true);
+        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+        return view;
+    }
+
+    public MapsFragment() {
+    }
+
+    public static final String ARG_SECTION_NUMBER = "section_number";
+
+    public static MapsFragment newInstance(int sectionNumber) {
+        MapsFragment fragment = new MapsFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+}
+</code></pre>

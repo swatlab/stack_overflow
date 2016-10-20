@@ -1,0 +1,30 @@
+<p>I used J. Feinstein library to make awesome sliding menu(thanks for J. Feinstein), but I need to know whether sliding menu is opened or closed. I need to know because I have implemented ABC action bar while in some condition, sliding menu opened and user can open navigation drawer and make my app dimmed(overlay from navigation drawer).</p>
+
+<p>I know from documentation, slidingMenu.toggle() can automatically check condition of sliding menu, whether is closed or opened(If it is open, it will be closed, and vice versa). but please see my code bellow:</p>
+
+<pre><code>            @Override
+            public void onDrawerOpened(View drawerView) {
+                // here i wanna check if sliding menu opened or closed
+                if(isOpened)
+                  // if is opened then close the sliding menu first
+                  menu.toggle();
+
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (!mUserLearnedDrawer) {
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager
+                            .getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).commit();
+                }
+
+                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+</code></pre>
+
+<p>I want to check if sliding menu opened, then close sliding menu first and then draw navigation after that. How to do that?</p>
+
+<p>Many thanks. </p>

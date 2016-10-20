@@ -1,0 +1,289 @@
+<p>Im trying to display data from sqlite using baseadapter but when i run my codes. theres no display in the listview. Dont know what is wrong with my code. Need your help guys im only beginner in programming. Ill post my codes below.</p>
+
+<blockquote>
+  <p>MainActivity.java</p>
+</blockquote>
+
+<pre><code>    public class MainActivity extends Activity {
+
+        DatabaseHelper db;
+        DoctorListAdapter adapter;
+        Context context = MainActivity.this;
+
+
+        List<Doctor> doctor = new ArrayList<Doctor>();
+
+        ListView l1;
+
+        int startIndex = 0;
+        private static final int DISPLAY_LIMIT = 20;
+
+        public MainActivity() {
+        }
+
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
+
+            db = new DatabaseHelper(getApplication());
+
+
+            l1 = (ListView) findViewById(R.id.listView);
+            l1.setAdapter(new DoctorListAdapter(context,doctor ));
+            // set data
+        }
+    }
+
+> DoctorListAdapter.java
+
+public class DoctorListAdapter extends BaseAdapter {
+
+    private Context context;
+    private List<Doctor> doctorData = new ArrayList<Doctor>();
+
+    public DoctorListAdapter(Context context, List<Doctor> doctorData){
+        this.context = context;
+        this.doctorData = doctorData;
+
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return doctorData.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return doctorData.get(position);
+    }
+
+    @Override
+    public long getItemId(int positionId) {
+        // TODO Auto-generated method stub
+        return positionId;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+        ViewHolder holder;
+        Doctor doctor = doctorData.get(position);
+
+        if(convertView == null){
+
+            LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.item_doctor, parent, false);
+
+            holder = new ViewHolder();
+            holder.doctorlist_image = (ImageView)convertView.findViewById(R.id.doctorlist_image);
+            holder.doctorlist_name = (TextView)convertView.findViewById(R.id.doctorlist_name);
+            holder.doctorlist_id = (TextView)convertView.findViewById(R.id.doctorlist_id);
+            holder.doctorlist_gender = (TextView)convertView.findViewById(R.id.doctorlist_gender);
+
+            convertView.setTag(holder);
+
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        return convertView;
+    }
+
+    static class ViewHolder{
+
+        ImageView doctorlist_image;
+        TextView doctorlist_name,
+                doctorlist_gender,
+                doctorlist_id;
+    }
+
+
+}
+</code></pre>
+
+<blockquote>
+  <p>Doctor.java</p>
+</blockquote>
+
+<pre><code>public class Doctor implements Serializable {
+
+    private int doctorId;
+    private String fullName;
+    private String gender;
+
+    public Doctor(){
+
+    }
+
+    public Doctor(int doctorId,
+                  String gender,
+                  String fullName){
+
+        this.doctorId = doctorId;
+        this.gender = gender;
+        this.fullName = fullName;
+
+    }
+
+
+    public int getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(int doctorId) {
+        this.doctorId = doctorId;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+}
+</code></pre>
+
+<blockquote>
+  <p>DatabaseHelper.class</p>
+</blockquote>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static final String DB_PATH = "/data/data/com.example.jathniel.myapplication/databases/";
+    private static final String DB_NAME = "mydoctorfinder_new_migrate.sqlite";
+    private SQLiteDatabase myDataBase;
+    private Context myContext = null;
+
+    private static final String TABLE_DOCTOR = "doctors";
+
+    final static String KEY_ID = "id",
+            KEY_FULLNAME = "full_name",
+            KEY_GENDER = "gender";
+
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, (SQLiteDatabase.CursorFactory) null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = this.checkDataBase();
+        if(!dbExist) {
+            this.getReadableDatabase();
+
+            try {
+                this.copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error");
+            }
+        }
+    }
+
+    public void copyDataBase() throws IOException {
+        InputStream myInput = this.myContext.getAssets().open(DB_NAME);
+        String outFileName = DB_PATH + DB_NAME;
+        FileOutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+
+        int length;
+        while((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String e = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(e, (SQLiteDatabase.CursorFactory)null, 0);
+        } catch (SQLiteException e) {
+            ;
+        }
+
+        if(checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null;
+    }
+
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        this.myDataBase = SQLiteDatabase.openDatabase(myPath, (SQLiteDatabase.CursorFactory)null, 0);
+    }
+
+    public synchronized void close() {
+        if(this.myDataBase != null) {
+            this.myDataBase.close();
+        }
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    public void createDatabase() {
+    }
+
+    private Doctor getDoctor(int doctor_id){
+        Doctor doctor = new Doctor();
+        String selectQuery = "SELECT  * FROM " + TABLE_DOCTOR + " WHERE id = "+doctor_id;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+        if (c.moveToFirst()) {
+            //System.out.println("KEY_FIRSTNAME: "+c.getString(c.getColumnIndex(KEY_FIRSTNAME)));
+            doctor.setDoctorId(c.getInt(c.getColumnIndex(KEY_ID)));
+            doctor.setGender(c.getString(c.getColumnIndex(KEY_GENDER)));
+            doctor.setFullName(c.getString(c.getColumnIndex(KEY_FULLNAME)));
+        }
+        c.close();
+        return doctor;
+    }
+
+    public List<Doctor> getAllDoctor(int start) {
+        //@http://www.androidhive.info/2013/09/android-sqlite-database-with-multiple-tables/
+        final int maxCount = 20;
+        List<Doctor> doctorList = new ArrayList<Doctor>();
+        String selectQuery = "SELECT  * FROM " + TABLE_DOCTOR + " LIMIT "+maxCount+" OFFSET "+start;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+        // looping through all rows and adding to list
+        if (c.moveToFirst()) {
+            do {
+                Doctor doctor = new Doctor();
+                doctor.setDoctorId(c.getInt(c.getColumnIndex(KEY_ID)));
+                doctor.setGender(c.getString(c.getColumnIndex(KEY_GENDER)));
+                doctor.setFullName(c.getString(c.getColumnIndex(KEY_FULLNAME)));
+                doctorList.add(doctor);
+            } while (c.moveToNext());
+        }
+        c.close();
+        return doctorList;
+    }
+
+}
+</code></pre>

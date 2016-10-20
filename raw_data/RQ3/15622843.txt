@@ -1,0 +1,169 @@
+<p>After building ownCloud from source, I get a FC when scrolling to the bottom of the file display page.</p>
+
+<p>Logcat</p>
+
+<pre><code>03-25 14:45:05.868: E/AndroidRuntime(31619): FATAL EXCEPTION: main
+03-25 14:45:05.868: E/AndroidRuntime(31619): java.lang.ArrayIndexOutOfBoundsException: length=1; index=1
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at edu.sage.cloud.DisplayUtils.getResourceId(DisplayUtils.java:147)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at edu.sage.cloud.ui.adapter.FileListListAdapter.getView(FileListListAdapter.java:118)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.AbsListView.obtainView(AbsListView.java:2123)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.ListView.makeAndAddView(ListView.java:1772)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.ListView.fillDown(ListView.java:672)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.ListView.fillGap(ListView.java:636)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.AbsListView.trackMotionScroll(AbsListView.java:4684)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.AbsListView.scrollIfNeeded(AbsListView.java:2963)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.widget.AbsListView.onTouchEvent(AbsListView.java:3234)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.View.dispatchTouchEvent(View.java:5556)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1951)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1712)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1957)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1726)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1957)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1726)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1957)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1726)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1957)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1726)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1957)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1726)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:1957)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:1726)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at com.android.internal.policy.impl.PhoneWindow$DecorView.superDispatchTouchEvent(PhoneWindow.java:1940)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at com.android.internal.policy.impl.PhoneWindow.superDispatchTouchEvent(PhoneWindow.java:1390)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.app.Activity.dispatchTouchEvent(Activity.java:2414)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at com.android.internal.policy.impl.PhoneWindow$DecorView.dispatchTouchEvent(PhoneWindow.java:1888)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.View.dispatchPointerEvent(View.java:5736)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewRootImpl.deliverPointerEvent(ViewRootImpl.java:3017)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewRootImpl.handleMessage(ViewRootImpl.java:2582)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewRootImpl.processInputEvents(ViewRootImpl.java:887)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.view.ViewRootImpl.handleMessage(ViewRootImpl.java:2591)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.os.Handler.dispatchMessage(Handler.java:99)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.os.Looper.loop(Looper.java:137)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at android.app.ActivityThread.main(ActivityThread.java:4697)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at java.lang.reflect.Method.invokeNative(Native Method)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at java.lang.reflect.Method.invoke(Method.java:511)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:787)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:554)
+03-25 14:45:05.868: E/AndroidRuntime(31619):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>Relative code:</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    View view = convertView;
+    if (view == null) {
+        LayoutInflater inflator = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        view = inflator.inflate(R.layout.list_item, null);
+    }
+    if (mFiles != null && mFiles.size() > position) {
+        OCFile file = mFiles.get(position);
+        TextView fileName = (TextView) view.findViewById(R.id.Filename);
+        String name = file.getFileName();
+
+        fileName.setText(name);
+        ImageView fileIcon = (ImageView) view.findViewById(R.id.imageView1);
+        fileIcon.setImageResource(DisplayUtils.getResourceId(file.getMimetype()));
+        ImageView localStateView = (ImageView) view.findViewById(R.id.imageView2);
+        FileDownloaderBinder downloaderBinder = mTransferServiceGetter.getFileDownloaderBinder();
+        FileUploaderBinder uploaderBinder = mTransferServiceGetter.getFileUploaderBinder();
+        if (downloaderBinder != null && downloaderBinder.isDownloading(mAccount, file)) {
+            localStateView.setImageResource(R.drawable.downloading_file_indicator);
+            localStateView.setVisibility(View.VISIBLE);
+        } else if (uploaderBinder != null && uploaderBinder.isUploading(mAccount, file)) {
+            localStateView.setImageResource(R.drawable.uploading_file_indicator);
+            localStateView.setVisibility(View.VISIBLE);
+        } else if (file.isDown()) {
+            localStateView.setImageResource(R.drawable.local_file_indicator);
+            localStateView.setVisibility(View.VISIBLE);
+        } else {
+            localStateView.setVisibility(View.INVISIBLE);
+        }
+
+        TextView fileSizeV = (TextView) view.findViewById(R.id.file_size);
+        TextView lastModV = (TextView) view.findViewById(R.id.last_mod);
+        ImageView checkBoxV = (ImageView) view.findViewById(R.id.custom_checkbox);
+
+        if (!file.isDirectory()) {
+            fileSizeV.setVisibility(View.VISIBLE);
+            fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getFileLength()));
+            lastModV.setVisibility(View.VISIBLE);
+            lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
+            // this if-else is needed even thoe fav icon is visible by
+            // default
+            // because android reuses views in listview
+            if (!file.keepInSync()) {
+                view.findViewById(R.id.imageView3).setVisibility(View.GONE);
+            } else {
+                view.findViewById(R.id.imageView3).setVisibility(View.VISIBLE);
+            }
+
+            ListView parentList = (ListView) parent;
+            if (parentList.getChoiceMode() == ListView.CHOICE_MODE_NONE) {
+                checkBoxV.setVisibility(View.GONE);
+            } else {
+                if (parentList.isItemChecked(position)) {
+                    checkBoxV.setImageResource(android.R.drawable.checkbox_on_background);
+                } else {
+                    checkBoxV.setImageResource(android.R.drawable.checkbox_off_background);
+                }
+                checkBoxV.setVisibility(View.VISIBLE);
+            }
+
+        } else {
+            fileSizeV.setVisibility(View.GONE);
+            lastModV.setVisibility(View.GONE);
+            checkBoxV.setVisibility(View.GONE);
+            view.findViewById(R.id.imageView3).setVisibility(View.GONE);
+        }
+    }
+
+    return view;
+}
+</code></pre>
+
+<p>and:</p>
+
+<pre><code>public static int getResourceId(String mimetype) {
+
+    if (mimetype == null || "DIR".equals(mimetype)) {
+        return R.drawable.ic_menu_archive;
+
+    } else {
+        String[] parts = mimetype.split("/");
+        String type = parts[0];
+        String subtype = parts[1];
+
+        if (TYPE_TXT.equals(type)) {
+            return R.drawable.file_doc;
+
+        } else if (TYPE_IMAGE.equals(type)) {
+            return R.drawable.file_image;
+
+        } else if (TYPE_VIDEO.equals(type)) {
+            return R.drawable.file_movie;
+
+        } else if (TYPE_AUDIO.equals(type)) {
+            return R.drawable.file_sound;
+
+        } else if (TYPE_APPLICATION.equals(type)) {
+
+            if (SUBTYPE_PDF.equals(subtype)) {
+                return R.drawable.file_pdf;
+
+            } else if (SUBTYPES_DOCUMENT_SET.contains(subtype)) {
+                return R.drawable.file_doc;
+
+            } else if (SUBTYPES_COMPRESSED_SET.contains(subtype)) {
+                return R.drawable.file_zip;
+            }
+
+        }
+        // problems: RAR, RTF, 3GP are send as application/octet-stream from
+        // the server ; extension in the filename should be explicitly
+        // reviewed
+    }
+
+    // default icon
+    return R.drawable.file;
+}
+</code></pre>

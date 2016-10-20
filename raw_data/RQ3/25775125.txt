@@ -1,0 +1,236 @@
+<p>I want that the user is able to change the app language (strings are in folders like strings-de/strings.xml or strings-zh/strings.xml). It works fine when i change the phone settings to chinese or whatever, but what I am trying to do is the following:
+I have a MainActivity with a few fragments, and in my actionbar i have a settings icon, when the user clicks it, a settingsActivity opens, and i have a menu item where the user can choose his preferred language. When the user clicks it, the app should reload and use my strings from the selected language.
+How can i achieve this? and in which activity does the code belong? thank you in advance.</p>
+
+<p>here my settingsActivity:</p>
+
+<pre><code>public class SettingsActivity extends PreferenceActivity {
+    private static final boolean ALWAYS_SIMPLE_PREFS = false;
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        setupSimplePreferencesScreen();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void setupSimplePreferencesScreen() {
+        if (!isSimplePreferences(this)) {
+            return;
+        }
+
+        // In the simplified UI, fragments are not used at all and we instead
+        // use the older PreferenceActivity APIs.
+
+        // Add 'general' preferences.
+        addPreferencesFromResource(R.xml.pref_general);
+
+        // Add 'Cash-Game Ticker' preferences, and a corresponding header.
+        PreferenceCategory fakeHeader = new PreferenceCategory(this);
+        fakeHeader.setTitle(R.string.pref_header_cg_notifications);
+        getPreferenceScreen().addPreference(fakeHeader);
+        addPreferencesFromResource(R.xml.pref_cg_notification);
+
+        // Add 'Tournament Ticker' preferences, and a corresponding header.
+        PreferenceCategory fakeHeader2 = new PreferenceCategory(this);
+        fakeHeader2.setTitle(R.string.pref_header_tm_notifications);
+        getPreferenceScreen().addPreference(fakeHeader2);
+        addPreferencesFromResource(R.xml.pref_tm_notification);
+
+        // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
+        // their values. When their values change, their summaries are updated
+        // to reflect the new value, per the Android Design guidelines.
+        bindPreferenceSummaryToValue(findPreference("location_list"));
+        bindPreferenceSummaryToValue(findPreference("language_list"));
+        bindPreferenceSummaryToValue(findPreference("notifications_new_cg_ringtone"));
+        bindPreferenceSummaryToValue(findPreference("notifications_new_tm_ringtone"));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean onIsMultiPane() {
+        return isXLargeTablet(this) && !isSimplePreferences(this);
+    }
+
+    private static boolean isXLargeTablet(Context context) {
+        return (context.getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
+    }
+
+    private static boolean isSimplePreferences(Context context) {
+        return ALWAYS_SIMPLE_PREFS
+                || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
+                || !isXLargeTablet(context);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public void onBuildHeaders(List<Header> target) {
+        if (!isSimplePreferences(this)) {
+            loadHeadersFromResource(R.xml.pref_headers, target);
+        }
+    }
+
+    /**
+     * A preference value change listener that updates the preference's summary
+     * to reflect its new value.
+     */
+    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) {
+            String stringValue = value.toString();
+
+            if (preference instanceof ListPreference) {
+                // For list preferences, look up the correct display value in
+                // the preference's 'entries' list.
+                ListPreference listPreference = (ListPreference) preference;
+                int index = listPreference.findIndexOfValue(stringValue);
+
+                // Set the summary to reflect the new value.
+                preference
+                        .setSummary(index >= 0 ? listPreference.getEntries()[index]
+                                : null);
+
+            } else if (preference instanceof RingtonePreference) {
+                // For ringtone preferences, look up the correct display value
+                // using RingtoneManager.
+                if (TextUtils.isEmpty(stringValue)) {
+                    // Empty values correspond to 'silent' (no ringtone).
+                    preference.setSummary(R.string.pref_ringtone_silent);
+
+                } else {
+                    Ringtone ringtone = RingtoneManager.getRingtone(
+                            preference.getContext(), Uri.parse(stringValue));
+
+                    if (ringtone == null) {
+                        // Clear the summary if there was a lookup error.
+                        preference.setSummary(null);
+                    } else {
+                        // Set the summary to reflect the new ringtone display
+                        // name.
+                        String name = ringtone
+                                .getTitle(preference.getContext());
+                        preference.setSummary(name);
+                    }
+                }
+
+            } else {
+                // For all other preferences, set the summary to the value's
+                // simple string representation.
+                preference.setSummary(stringValue);
+            }
+            return true;
+        }
+    };
+
+    private static void bindPreferenceSummaryToValue(Preference preference) {
+        // Set the listener to watch for value changes.
+        preference
+                .setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+
+        // Trigger the listener immediately with the preference's
+        // current value.
+        sBindPreferenceSummaryToValueListener.onPreferenceChange(
+                preference,
+                PreferenceManager.getDefaultSharedPreferences(
+                        preference.getContext()).getString(preference.getKey(),
+                        ""));
+    }
+
+    /**
+     * This fragment shows general preferences only. It is used when the
+     * activity is showing a two-pane settings UI.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class GeneralPreferenceFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_general);
+
+            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
+            // to their values. When their values change, their summaries are
+            // updated to reflect the new value, per the Android Design
+            // guidelines.
+            bindPreferenceSummaryToValue(findPreference("example_text"));
+            bindPreferenceSummaryToValue(findPreference("example_list"));
+        }
+    }
+
+    /**
+     * This fragment shows notification preferences only. It is used when the
+     * activity is showing a two-pane settings UI.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class NotificationPreferenceFragment extends
+            PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_cg_notification);
+
+            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
+            // to their values. When their values change, their summaries are
+            // updated to reflect the new value, per the Android Design
+            // guidelines.
+            bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
+        }
+    }
+
+    /**
+     * This fragment shows data and sync preferences only. It is used when the
+     * activity is showing a two-pane settings UI.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class DataSyncPreferenceFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_tm_notification);
+
+            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
+            // to their values. When their values change, their summaries are
+            // updated to reflect the new value, per the Android Design
+            // guidelines.
+            bindPreferenceSummaryToValue(findPreference("sync_frequency"));
+        }
+    }
+}
+</code></pre>
+
+<p>here the part of the xml where the user can choose the language:</p>
+
+<pre><code><ListPreference
+    android:defaultValue="en"
+    android:entries="@array/pref_language_select"
+    android:entryValues="@array/pref_language_values"
+    android:key="language_list"
+    android:negativeButtonText="@null"
+    android:positiveButtonText="@null"
+    android:title="@string/pref_title_language" />
+</code></pre>
+
+<p>and here the array from the language selection list:</p>
+
+<pre><code><string-array name="pref_language_select">
+    <item>Deutsch</item>
+    <item>English</item>
+    <item>中文</item>
+    <item>Espanol</item>
+    <item>Magyar</item>
+    <item>Srpski</item>
+    <item>Nederlands</item>
+</string-array>
+<string-array name="pref_language_values">
+    <item>de</item>
+    <item>en</item>
+    <item>zh</item>
+    <item>es</item>
+    <item>mg</item>
+    <item>sr</item>
+    <item>nl</item>        
+</string-array>
+</code></pre>
+
+<p>I hope somebody can help me, thank you in advance!</p>

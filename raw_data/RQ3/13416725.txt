@@ -1,0 +1,211 @@
+<p>i have my database copied from asset to device but it can't read the data from database
+here the code</p>
+
+<pre><code>package ta.ex;
+
+import java.io.IOException;
+
+import android.app.Activity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+
+public class MainActivity extends Activity {
+    /** Called when the activity is first created. */
+    MyDatabase mydb;
+    ListView listtema;
+    SQLiteDatabase db;
+    Cursor cursor;
+    SimpleCursorAdapter adapter;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        mydb = new MyDatabase(this);
+        try {
+            mydb.createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        db = db.openDatabase("data/data/ta.ex/databases/ensiklopedia.sqlite", null, db.OPEN_READONLY);
+
+        listtema = (ListView)findViewById(R.id.listTema);
+        String[] columns = new String[]{"_id","tema"};       
+        cursor = db.query("tema", columns, null, null, null, null, null);
+        if (cursor != null){
+            adapter = new SimpleCursorAdapter(this,
+                    android.R.layout.simple_list_item_1,cursor,
+                    new String[]{"tema"},new int[]{android.R.id.text1});
+            listtema.setAdapter(adapter);
+        }
+
+
+    }
+}
+</code></pre>
+
+<p>MyDatabase.java</p>
+
+<pre><code>package ta.ex;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class MyDatabase extends SQLiteOpenHelper{   
+    private static final String DB_PATH = "/data/data/ta.ex/databases/";
+    private static final String DB_NAME = "ensiklopedia.sqlite";
+    private SQLiteDatabase sqldb;
+    private final Context myContext;
+
+
+    public MyDatabase(Context context) {
+        super(context,DB_NAME,null,1 );
+        // TODO Auto-generated constructor stub
+        this.myContext = context;
+    }
+
+     public void createDataBase() throws IOException{
+
+            boolean dbExist = checkDataBase();
+
+            if(dbExist){
+                //do nothing - database already exist
+            }else{
+
+                //By calling this method and empty database will be created into the default system path
+                   //of your application so we are gonna be able to overwrite that database with our database.
+                this.getReadableDatabase();
+
+                try {
+
+                    copyDataBase();
+
+                } catch (IOException e) {
+
+                    throw new Error("Error copying database");
+
+                }
+            }
+
+        }
+
+        /**
+         * Check if the database already exist to avoid re-copying the file each time you open the application.
+         * @return true if it exists, false if it doesn't
+         */
+        boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+            try{
+                String myPath = DB_PATH + DB_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+            }
+            catch(SQLiteException e){
+                //database doesn't exist yet.
+            }
+            if(checkDB != null){
+                checkDB.close();
+            }
+
+            return checkDB != null ? true : false;
+        }
+
+        /**
+         * Copies your database from your local assets-folder to the just created empty database in the
+         * system folder, from where it can be accessed and handled.
+         * This is done by transfering bytestream.
+         * */
+        private void copyDataBase() throws IOException{
+
+            //Open your local db as the input stream
+            InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+            // Path to the just created empty db
+            File outFileName = myContext.getDatabasePath(DB_NAME);
+
+            //Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            //transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer))>0){
+                myOutput.write(buffer, 0, length);
+            }
+            //Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+
+        }
+
+        public boolean isDatabaseExist() {
+            File dbFile = new File(DB_PATH+DB_NAME);
+            return dbFile.exists();
+        }
+
+        public void openDataBase(){
+            //Open the database
+            String myPath = DB_PATH + DB_NAME;
+            sqldb = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+        }
+
+        @Override
+        public synchronized void close() {
+
+                if(sqldb != null)
+                    sqldb.close();
+
+                super.close();
+
+        }
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p>log cat</p>
+
+<pre><code>11-16 19:18:12.182: ERROR/AndroidRuntime(5818): java.lang.RuntimeException: Unable to start activity ComponentInfo{ta.ex/ta.ex.MainActivity}: java.lang.NullPointerException
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2663)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2679)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.ActivityThread.access$2300(ActivityThread.java:125)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2033)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.os.Handler.dispatchMessage(Handler.java:99)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.os.Looper.loop(Looper.java:123)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.ActivityThread.main(ActivityThread.java:4627)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at java.lang.reflect.Method.invokeNative(Native Method)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at java.lang.reflect.Method.invoke(Method.java:521)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at dalvik.system.NativeStart.main(Native Method)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818): Caused by: java.lang.NullPointerException
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at ta.ex.MainActivity.onCreate(MainActivity.java:33)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+11-16 19:18:12.182: ERROR/AndroidRuntime(5818):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2627)
+</code></pre>
+
+<p>when i use createDatabase() database copied to system but whenever i try to open the database it's always force close java.lang.nullpointerexception.
+please help</p>

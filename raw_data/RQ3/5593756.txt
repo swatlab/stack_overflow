@@ -1,0 +1,36 @@
+<p>I'm working in a little method that hashes a String. Looking for information, I could find that MessageDigest can help me to make this task, here</p>
+
+<blockquote>
+  <p><a href="http://stackoverflow.com/questions/1515489/java-compute-sha-1">Java Compute SHA-1</a></p>
+</blockquote>
+
+<p>But now I have a question. It seems that the procedure to hash a String in Java it's always the same:</p>
+
+<ol>
+<li>You create your MessageDigester and specify the algorithm to use.</li>
+<li>You updates the MessageDigester with the String to hash</li>
+<li>Then you call MessageDigester.digest and you get a byte[].</li>
+</ol>
+
+<p>If one of the most used fonctionnalities of a hash it's to get the String version of this hash, why (in the question I refered and some other) people have to implement their convToHex method?</p>
+
+<pre><code>private static String convToHex(byte[] data) {
+            StringBuilder buf = new StringBuilder();
+            for (int i = 0; i < data.length; i++) {
+                int halfbyte = (data[i] >>> 4) & 0x0F;
+                int two_halfs = 0;
+                do {
+                    if ((0 <= halfbyte) && (halfbyte <= 9))
+                        buf.append((char) ('0' + halfbyte));
+                    else
+                            buf.append((char) ('a' + (halfbyte - 10)));
+                    halfbyte = data[i] & 0x0F;
+                } while(two_halfs++ < 1);
+            }
+            return buf.toString();
+        }
+</code></pre>
+
+<p>Is there a Java method that allows me to make this parse between the byte[] returned by the MessageDigester and a String?? If it exists, where is it?? If not, why do I have to make my own method?</p>
+
+<p>Thanks.</p>

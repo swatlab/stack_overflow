@@ -1,0 +1,310 @@
+<p>So, meet a brick wall. Finally confirmed that my database is coping to the data/data folder (it is a static database I have created), and it seems like the app is able to find it, but when trying to pull data from the database to inflate the ListView, I am running into an error that I can't resolve. (at least that is what I assume is happening)</p>
+
+<pre><code>08-15 00:11:36.771: E/AndroidRuntime(7000): FATAL EXCEPTION: main
+08-15 00:11:36.771: E/AndroidRuntime(7000): java.lang.RuntimeException: Unable to start activity ComponentInfo{table.periodic/table.periodic.elementList}: java.lang.NullPointerException
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.os.Handler.dispatchMessage(Handler.java:99)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.os.Looper.loop(Looper.java:137)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at java.lang.reflect.Method.invokeNative(Native Method)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at java.lang.reflect.Method.invoke(Method.java:511)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at dalvik.system.NativeStart.main(Native Method)
+08-15 00:11:36.771: E/AndroidRuntime(7000): Caused by: java.lang.NullPointerException
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at table.periodic.elementList.populateListViewFromDatabase(elementList.java:24)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at table.periodic.elementList.onCreate(elementList.java:19)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.Activity.performCreate(Activity.java:5104)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+08-15 00:11:36.771: E/AndroidRuntime(7000):     ... 11 more
+</code></pre>
+
+<p>So, I can see where it is saying that my error is, however, when I look at the code, nothing seems to be wrong. </p>
+
+<p>My DataBaseHelper.class</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+    private SQLiteDatabase myDataBase;
+
+    public static final int DATABASE_VERSION = 1;
+
+    private final Context myContext;
+
+    private static String DB_PATH = "data/data/table.periodic/databases/";
+    private static String DB_NAME = "elements";
+    public static final String DB_TABLE = "elements";
+    public static final String KEY_ROWID = "_id";
+    public static final String KEY_NAME = "name";
+    public static final String KEY_ATOMIC_NUMBER = "atomic number";
+    public static final String KEY_ATOMIC_WEIGHT = "atomic weight";
+    public static final String KEY_OXIDATION = "oxidation";
+    public static final String KEY_SYMBOL = "symbol";
+    public static final String KEY_BOILING_POINT = "boiling point";
+    public static final String KEY_MELTING_POINT = "melting point";
+    public static final String KEY_DENSITY = "density";
+    public static final String KEY_ELECTRON_CONFIGURATION = "electron configuration";
+    public static final String KEY_STRUCTURE = "structure";
+    public static final String KEY_COVALENT_RADIUS = "covalent radius";
+    public static final String KEY_ATOMIC_RADIUS = "atomic radius";
+    public static final String KEY_VOLUME = "volume";
+    public static final String KEY_ION_POTENTIAL = "ion potential";
+    public static final String KEY_HEAT_CAPACITY = "heat capacity";
+    public static final String KEY_ELECTRONEGATIVITY = "electronegativity";
+    public static final String KEY_VAPORATION = "vaporation";
+    public static final String KEY_FUSION = "fusion";
+    public static final String KEY_ELECTRO_CONDUCTIVITY = "electro conductivity";
+    public static final String KEY_THERMAL_CONDUCTIVITY = "thermal conductivity";
+
+    public static final int COL_ROWID = 0;
+    public static final int COL_NAME = 1;
+    public static final int COL_ATOMIC_NUMBER = 2;
+    public static final int COL_ATOMIC_WEIGHT = 3;
+    public static final int COL_OXIDATION = 4;
+    public static final int COL_SYMBOL = 5;
+    public static final int COL_BOILING_POINT = 6;
+    public static final int COL_MELTING_POINT = 7;
+    public static final int COL_DENSITY = 8;
+    public static final int COL_ELECTRON_CONFIGURATION = 9;
+    public static final int COL_STRUCTURE = 10;
+    public static final int COL_COVALENT_RADIUS = 11;
+    public static final int COL_ATOMIC_RADIUS = 12;
+    public static final int COL_VOLUME = 13;
+    public static final int COL_ION_POTENTIAL = 14;
+    public static final int COL_HEAT_CAPACITY = 15;
+    public static final int COL_ELECTRONEGATIVITY = 16;
+    public static final int COL_VAPORATION = 17;
+    public static final int COL_FUSION = 18;
+    public static final int COL_ELECTRO_CONDUCTIVITY = 19;
+    public static final int COL_THERMAL_CONDUCTIVITY = 20;
+
+    public static final String[] ALL_KEYS = new String[] {KEY_ROWID, KEY_NAME, KEY_ATOMIC_NUMBER, KEY_ATOMIC_WEIGHT,
+        KEY_OXIDATION, KEY_SYMBOL, KEY_BOILING_POINT, KEY_MELTING_POINT, KEY_DENSITY, KEY_ELECTRON_CONFIGURATION,
+        KEY_STRUCTURE, KEY_COVALENT_RADIUS, KEY_ATOMIC_RADIUS, KEY_VOLUME, KEY_ION_POTENTIAL, KEY_HEAT_CAPACITY,
+        KEY_ELECTRONEGATIVITY, KEY_VAPORATION, KEY_FUSION, KEY_ELECTRO_CONDUCTIVITY, KEY_THERMAL_CONDUCTIVITY};
+
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+
+    }
+
+    public void createDataBase() throws IOException {
+
+        boolean dbExists = checkDataBase();
+
+        if (dbExists) {
+
+        } else {
+
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+
+
+        }
+    }
+
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+        }
+
+        if (checkDB !=null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB !=null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        String outFileName = DB_PATH + DB_NAME;
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    public Cursor getAllRows() {
+        String where = null;
+        Cursor c = myDataBase.query(true, DB_TABLE, ALL_KEYS, 
+                where, null, null, null, null, null, null);
+
+        if (c != null) {
+            c.moveToFirst();
+        }
+        return c;
+    }
+
+    public Cursor getRow(long rowId) {
+        String where = KEY_ROWID + "=" + rowId;
+        Cursor c = myDataBase.query(true, DB_TABLE, ALL_KEYS, 
+                where, null, null, null, null, null, null);
+        if (c != null) {
+            c.moveToFirst();
+        }
+        return c;
+    }
+
+    @Override
+        public synchronized void close() {
+            if(myDataBase !=null)
+                myDataBase.close();
+
+            super.close();
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+
+        }
+
+
+}
+</code></pre>
+
+<p>My elementList.class</p>
+
+<pre><code>public class elementList extends Activity {
+
+    private String[] sElements;
+    DataBaseHelper myDB;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.list_view);
+added-->        openDB();
+**line 19-->**          populateListViewFromDatabase();
+
+    }
+
+    private void populateListViewFromDatabase() {
+
+  **line 24-->**        Cursor cursor = myDB.getAllRows();
+
+        startManagingCursor(cursor);
+
+        String[] fromFieldNames = new String[]
+                {DataBaseHelper.KEY_NAME};
+
+        int[] toViewIDs = new int[]
+                {R.id.elListText};
+
+        SimpleCursorAdapter myCursorAdapter =
+                new SimpleCursorAdapter(
+                        this,
+                        R.layout.el_list_item,
+                        cursor,
+                        fromFieldNames,
+                        toViewIDs
+                        );
+
+        ListView myList = (ListView) findViewById(R.id.list);
+        myList.setAdapter(myCursorAdapter);
+    }
+
+    private void openDB() {
+        myDB = new DataBaseHelper(this);
+        myDB.openDataBase();
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        closeDB();
+    }
+
+    private void closeDB() {
+        myDB.close();
+    }
+
+}
+</code></pre>
+
+<p>After adding the openDB(); I now get an error like this. </p>
+
+<pre><code>08-15 03:20:43.252: E/AndroidRuntime(20040): FATAL EXCEPTION: main
+08-15 03:20:43.252: E/AndroidRuntime(20040): java.lang.RuntimeException: Unable to start activity ComponentInfo{table.periodic/table.periodic.elementList}: android.database.sqlite.SQLiteException: no such table: elements (code 1): , while compiling: SELECT DISTINCT _id, name, atomic number, atomic weight, oxidation, symbol, boiling point, melting point, density, electron configuration, structure, covalent radius, atomic radius, volume, ion potential, heat capacity, electronegativity, vaporation, fusion, electro conductivity, thermal conductivity FROM elements
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.ActivityThread.access$600(ActivityThread.java:141)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.os.Handler.dispatchMessage(Handler.java:99)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.os.Looper.loop(Looper.java:137)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.ActivityThread.main(ActivityThread.java:5041)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at java.lang.reflect.Method.invokeNative(Native Method)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at java.lang.reflect.Method.invoke(Method.java:511)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at dalvik.system.NativeStart.main(Native Method)
+08-15 03:20:43.252: E/AndroidRuntime(20040): Caused by: android.database.sqlite.SQLiteException: no such table: elements (code 1): , while compiling: SELECT DISTINCT _id, name, atomic number, atomic weight, oxidation, symbol, boiling point, melting point, density, electron configuration, structure, covalent radius, atomic radius, volume, ion potential, heat capacity, electronegativity, vaporation, fusion, electro conductivity, thermal conductivity FROM elements
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:882)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:493)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1161)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1073)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at table.periodic.DataBaseHelper.getAllRows(DataBaseHelper.java:158)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at table.periodic.elementList.populateListViewFromDatabase(elementList.java:25)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at table.periodic.elementList.onCreate(elementList.java:20)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.Activity.performCreate(Activity.java:5104)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+08-15 03:20:43.252: E/AndroidRuntime(20040):    ... 11 more
+08-15 03:20:43.382: D/dalvikvm(20040): GC_CONCURRENT freed 114K, 6% free 4126K/4360K, paused 4ms+60ms, total 171ms
+08-15 03:20:43.382: W/SQLiteConnectionPool(20040): A SQLiteConnection object for database 'data/data/table.periodic/databases/elements' was leaked!  Please fix your application to end transactions in progress properly and to close the database when it is no longer needed.
+</code></pre>

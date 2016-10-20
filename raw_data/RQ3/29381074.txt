@@ -1,0 +1,320 @@
+<p>I am having a really strange problem. I am using a NavDrawerListAdapter for my NavigationDrawer in my Android App. If the list has 13 items (NavDrawerItem), it works OK. However, when I add a 14th element, the app appears to crash and give a NullPointerException. I checked the resources,strings,etc and everything appears to be correct. The stacktrace is pointing at this class inside getView() on the following line:</p>
+
+<p><strong>imgIcon.setImageResource(navDrawerItems.get(position).getIcon());</strong></p>
+
+<p>For some reason, the imgIcon is null.</p>
+
+<pre><code>public class NavDrawerListAdapter extends BaseAdapter {
+    private static final String TAG = "NavDrawerListAdapter";
+    private Context context;
+    private ArrayList<NavDrawerItem> navDrawerItems;
+    private List<Boolean> enabledDrawerItems;
+    private LayoutInflater mInflater;
+
+    public NavDrawerListAdapter(Context context,
+            ArrayList<NavDrawerItem> navDrawerItems) 
+    {
+        super();
+        this.context = context;
+        this.navDrawerItems = navDrawerItems;
+        this.mInflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+
+        // Toggle enabled/disabled navigation drawer items
+        enabledDrawerItems = new ArrayList<Boolean>(Arrays.asList(new Boolean[navDrawerItems.size()]));
+        Collections.fill(enabledDrawerItems, new Boolean(true));
+    }
+
+    @Override
+    public int getCount() {
+        return navDrawerItems.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return navDrawerItems.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent)   {
+        if(position == 0)       {
+            convertView = mInflater.inflate(R.layout.header_view, null);
+            return convertView;
+        }
+
+        if(convertView == null)     {
+            // Use the drawer list item view
+            convertView = mInflater.inflate(R.layout.drawer_list_item, null);
+        }
+
+        ImageView imgIcon = (ImageView) convertView.findViewById(R.id.icon);
+        TextView txtTitle = (TextView) convertView.findViewById(R.id.title);
+        TextView txtCounter = (TextView) convertView.findViewById(R.id.counter);
+
+        Log.d(TAG, "Position: " + position + ", Icon Resource: " + navDrawerItems.get(position).getIcon());
+        Log.d(TAG, "NavDrawerItems: " + navDrawerItems.size());
+        if(imgIcon == null){
+            Log.d(TAG, "imgIcon is null");
+        }
+        else{
+            Log.d(TAG, "imgIcon is not null");
+        }
+
+        imgIcon.setImageResource(navDrawerItems.get(position).getIcon());
+        txtTitle.setText(navDrawerItems.get(position).getTitle());
+
+        if(navDrawerItems.get(position).isCounterVisible()){
+            txtCounter.setText(navDrawerItems.get(position).getCount());
+        }
+        else{
+            txtCounter.setVisibility(View.GONE);
+        }
+
+        if(enabledDrawerItems.get(position) == false)       {
+            txtTitle.setTextColor(Color.LTGRAY);
+            convertView.setEnabled(enabledDrawerItems.get(position));
+        }
+        return convertView;
+    }
+
+    @Override
+    public boolean areAllItemsEnabled()     {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled(int position)  {
+        return enabledDrawerItems.get(position);
+    }
+
+    // Set state of navigation drawer item
+    public void setNavigationDrawerItem(int pos, boolean enabled)   {
+        enabledDrawerItems.set(pos, enabled);
+    }
+}
+</code></pre>
+
+<p><strong>strings.xml</strong></p>
+
+<pre><code><array name="nav_drawer_icons">
+        <item>@drawable/ic_home</item>
+        <item>@drawable/ic_people</item>
+        <item>@drawable/ic_photos</item>
+        <item>@drawable/ic_communities</item>
+        <item>@drawable/ic_pages</item>
+        <item>@drawable/ic_whats_hot</item>
+    </array>
+</code></pre>
+
+<p><strong>NavigationDrawerActivity</strong></p>
+
+<pre><code>public class NavigationDrawerActivity extends ActionBarActivity {
+    public DrawerLayout mDrawerLayout;
+    public ListView mDrawerList;
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    public CharSequence mDrawerTitle; // nav drawer title
+    public CharSequence mTitle; // store app title
+
+    public TypedArray navMenuIcons; // menu item icons
+    public String[] navMenuTitles; // menu item titles
+
+    public ArrayList<NavDrawerItem> navDrawerItems; // each drawer item
+    public NavDrawerListAdapter adapter; // nav drawer adapter
+
+    // Static Settings/Configuration
+    private static final int NAVIGATION_DRAWER_WIDTH_PERCENT = 85; // in percentage
+    private static final String TAG = "MainActivity";
+    public static final String INTENT_EXTRA_POSITION = "NavigationDrawerPosition";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Use ToolBar and set it as ActionBar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.my_awesome_toolbar);
+
+        setSupportActionBar(toolbar);
+
+        // Get Nav Menu Icons and Titles
+        navMenuIcons = getResources().obtainTypedArray(R.array.nav_drawer_icons);
+        navMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
+
+        // Get DrawerLayout and ListView
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
+
+        navDrawerItems = new ArrayList<NavDrawerItem>();
+
+        addNavDrawerItems(); // add each navigation drawer item
+
+        // Recycle the array
+        navMenuIcons.recycle();
+
+        // setup the nav drawer list adapter
+        adapter = new NavDrawerListAdapter(this.getApplicationContext(), navDrawerItems);
+
+        mDrawerList.setAdapter(adapter);
+        mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
+
+        // enabling action bar app icon and behaving it as toggle button
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        mDrawerToggle = new ActionBarDrawerToggle(this,
+                                                  mDrawerLayout,
+//                                                R.drawable.ic_drawer,
+                                                  R.string.app_name,
+                                                  R.string.app_name)
+        {
+            public void onDrawerClosed(View view){
+                getSupportActionBar().setTitle(mTitle);
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView){
+                getSupportActionBar().setTitle(mTitle);
+                invalidateOptionsMenu();
+            }
+        };
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        Intent intent = getIntent();
+        if(intent != null && intent.getExtras() != null) {
+            int drawerPosition = intent.getExtras().getInt(INTENT_EXTRA_POSITION);
+            if(drawerPosition != 0) {
+                // update selected item, title, and close drawer
+                mDrawerList.setItemChecked(drawerPosition, true);
+                mDrawerList.setSelection(drawerPosition);
+                setTitle(navMenuTitles[drawerPosition-1]);
+            }
+            else {
+                Log.w(TAG, "drawerPosition is 0");
+            }
+        }
+
+        mDrawerTitle = getTitle();
+        mTitle = mDrawerTitle;
+
+        configureNavigationDrawer();
+        configureEnabledDisabledNavDrawItems();
+    }
+
+    private void configureEnabledDisabledNavDrawItems() {
+        // Check if Device is connected (No: disable list item, Yes: enable list item)
+        if(SecondScreenIAB.getInstance().getDevice() == null)
+        {
+            getAdapter().setNavigationDrawerItem(2, false); 
+            getAdapter().setNavigationDrawerItem(3, false); 
+        }
+        else
+        {
+            getAdapter().setNavigationDrawerItem(2, true); 
+            getAdapter().setNavigationDrawerItem(3, true); 
+        }
+    }
+
+    private void addNavDrawerItems() {
+        navDrawerItems.add(new NavDrawerItem(0, "")); // Drawer Cover Image
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(0, -1), navMenuTitles[0]));             
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(1, -1), navMenuTitles[1]));             
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(2, -1), navMenuTitles[2]));             
+
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(3, -1), navMenuTitles[3]));             
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(4, -1), navMenuTitles[4], "23", false));
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(5, -1), navMenuTitles[5]));             
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(0, -1), navMenuTitles[6], "5", false)); 
+
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(1, -1), navMenuTitles[7]));             
+
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(2, -1), navMenuTitles[8]));             
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(3, -1), navMenuTitles[9]));             
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(4, -1), navMenuTitles[10]));            
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(5, -1), navMenuTitles[11]));            
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(0, -1), navMenuTitles[12]));            
+
+        navDrawerItems.add(new NavDrawerItem(navMenuIcons.getResourceId(1, -1), navMenuTitles[13]));            
+    }
+
+    public void configureActionBar()    {
+        SpannableString s = new SpannableString("Test");
+        s.setSpan(new TypefaceSpan(this, "Roboto-Regular.ttf"), 0, s.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // Update the action bar title with the TypefaceSpan instance
+        android.support.v7.app.ActionBar actionBar = this.getSupportActionBar();
+        actionBar.setTitle(s);
+    }
+
+    private void configureNavigationDrawer()    {
+        // Configure Navigation Drawer Width
+        DrawerLayout.LayoutParams params = (android.support.v4.widget.DrawerLayout.LayoutParams) mDrawerList.getLayoutParams();
+        params.width = (int) (getResources().getDisplayMetrics().widthPixels * (NAVIGATION_DRAWER_WIDTH_PERCENT/100.0));
+        mDrawerList.setLayoutParams(params);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(mDrawerToggle.onOptionsItemSelected(item)){
+            return true;
+        }
+
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu){
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        menu.findItem(R.id.action_settings).setVisible(!drawerOpen);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        mTitle = title;
+        getSupportActionBar().setTitle(mTitle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+    public ListView getmDrawerList() {
+        return mDrawerList;
+    }
+
+    public void setmDrawerList(ListView mDrawerList) {
+        this.mDrawerList = mDrawerList;
+    }
+
+    public NavDrawerListAdapter getAdapter() {
+        return adapter;
+    }
+
+    public void setAdapter(NavDrawerListAdapter adapter) {
+        this.adapter = adapter;
+    }
+}
+</code></pre>

@@ -1,0 +1,125 @@
+<p>I created a dummy READONLY database to make sure I get the connection right and app read's as it should. Check! Got that working, now I updated the database via sqlite manager but I read that overwriting an existing pre-populated db could wreck havoc, so I decided to export the newly updated version with a different name. Mind you I exported it the exact same way with the same sqlite extension as the first one (which still works) but this one is throwing the following encrypted / corrupt file exception</p>
+
+<blockquote>
+  <p>android.database.sqlite.SQLiteDatabaseCorruptException: file is encrypted or is not a database (code 26)</p>
+</blockquote>
+
+<p>I copy and pasted the new db into the assests folder then proceeded to comment out the old DB_NAME and then replace it all areas of the code with the new DB_NAME2</p>
+
+<p>I don't understand why this isn't working if I'm connecting it the same exact way I did before where it worked</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+private static String DB_PATH;
+private static final String DB_NAME2 = "DummyTestTwo.sqlite";
+//    private static final String DB_NAME = "DummyTestOne.sqlite";
+private SQLiteDatabase mDataBase;
+private final Context mContext;
+
+public static final String DBTABLENAME = "questiontable";
+public static final String COLUMN_ID = "_id";
+public static final String COLUMN_NAME = "question";
+public static final String COLUMN_FID = "fid";
+
+public DataBaseHelper(Context context) {
+    super(context, DB_NAME2, null, 2);
+    this.mContext = context;
+
+    DB_PATH = context.getDatabasePath(DB_NAME2).getPath();
+
+
+}
+
+public void createDataBase() {
+    boolean dbExist = checkDataBase();
+
+    if (dbExist) {
+
+    } else {
+        this.getReadableDatabase();
+    //            this.getWritableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+
+    try {
+        checkDB = SQLiteDatabase.openDatabase(DB_PATH, null, SQLiteDatabase.OPEN_READONLY);
+    } catch (SQLiteException e) {
+        Log.e(this.getClass().toString(), "Error while checking db");
+    }
+
+    if (checkDB != null) {
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException {
+    InputStream externalDbStream = mContext.getAssets().open(DB_NAME2);
+    OutputStream localDbStream = new FileOutputStream(DB_PATH);
+
+    byte[] buffer = new byte[1024];
+    int bytesRead;
+    while ((bytesRead = externalDbStream.read(buffer)) > 0) {
+        localDbStream.write(buffer, 0, bytesRead);
+    }
+
+    //Close the streams
+    localDbStream.flush();
+    localDbStream.close();
+    externalDbStream.close();
+}
+
+public void openDataBase() throws SQLException {
+
+    mDataBase = SQLiteDatabase.openDatabase(DB_PATH, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+    if (mDataBase != null) {
+        mDataBase.close();
+    }
+    super.close();
+}
+
+public Cursor getCursorForAllQs() {
+    SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+    queryBuilder.setTables(DBTABLENAME);
+
+    String[] asColumnsToReturn = new String[]{COLUMN_ID, COLUMN_NAME};
+
+    Cursor mCursor = queryBuilder.query(mDataBase, asColumnsToReturn, null,
+            null, null, null, "_id");
+
+    return mCursor;
+}
+
+public String getName(Cursor c) {
+    return (c.getString(1));
+}
+
+//    public String getFid(Cursor c) {
+//        return (c.getString(2));
+//    }
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+
+}
+</code></pre>

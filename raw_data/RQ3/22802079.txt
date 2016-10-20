@@ -1,0 +1,131 @@
+<p>I'm creating application for game. I'm using <code>GridView</code> with images when i click on <code>GridView</code> item that item is display on another activity.On the other activity i want to match the image logo and textview String(logo name). I have done some logic but when i run the application it goes to else statement.Can someone help me please how to do. Here is my code.</p>
+
+<p><strong>The GridView Activity code:</strong></p>
+
+<pre><code>public class GridView_Activity extends Activity
+{ 
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.gridview_layout);
+
+           GridView gridview = (GridView) findViewById(R.id.gridViewImage);
+           gridview.setAdapter(new ImageAdapter(this));
+
+
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View v, int position,
+                    long id) {
+                // TODO Auto-generated method stub
+
+                Toast.makeText(GridView_Activity.this, "" + position, Toast.LENGTH_SHORT).show();
+
+                Intent mInDisplay=new Intent(GridView_Activity.this, Activity_One.class);
+                mInDisplay.putExtra("Index", position);
+                startActivity(mInDisplay);
+            }
+        });
+
+    }
+
+}
+</code></pre>
+
+<p>** The Another Activity code**</p>
+
+<pre><code>public class Activity_One extends Activity {
+    Button btnSubmit;
+    ImageView imgDisplayImg;
+    String stringVAlue;
+    EditText edittext;
+    int index;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.display_image);
+
+        Bundle bdl = getIntent().getExtras();
+        index = bdl.getInt("Index");
+        System.out.println("Index Position = " + index);
+
+        ImageView mImage = (ImageView) findViewById(R.id.mImgView1);
+        mImage.setImageResource(Constants.mThumbIds[index]);
+
+        stringVAlue = String.valueOf(index);
+        System.out.println("stringVAlue  = " + stringVAlue);
+
+        btnSubmit = (Button) findViewById(R.id.buttonAdd);
+        btnSubmit.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                edittext = (EditText) findViewById(R.id.edittextString_ImageName);
+                String stringtext = edittext.getText().toString().trim();
+                System.out.println("stringtext  = " + stringtext);
+                if (stringVAlue != null) {
+                    if (stringVAlue == "13" && stringtext.equals("Catty")) {
+                        Toast.makeText(Activity_One.this,
+                                "This Logo Name Is Right ", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+
+                    else {
+                        Toast.makeText(Activity_One.this, "Wrong",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                }
+            }
+        });
+
+    }
+
+}
+</code></pre>
+
+<p><strong>This is ImageAdapter class</strong></p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter
+{
+     private Context mContext;
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return Constants.mThumbIds.length;
+        }
+
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {  // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageResource(Constants.mThumbIds[position]);
+            return imageView;
+        }
+    }
+</code></pre>
+
+<p>Thanks in Advanced.    </p>

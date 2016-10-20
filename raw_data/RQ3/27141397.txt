@@ -1,0 +1,161 @@
+<p>i am working on an android project where i want to list the data from my existing <code>sqlite</code> database (<code>TEST.sqlite</code>) into my android <code>Listview.i</code> achieved this but my problem is that my <code>listview</code> is not getting updated when i changes the datas in my sqlite database.my <code>listview</code> is remained with the datas when i first created the <code>sqlite</code> database.how to change the values of my <code>listview</code> when i modify the database?can anyone find me a solution regarding this??</p>
+
+<p><strong>Main activity</strong></p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+ ArrayAdapter<String> adapter;
+DatabaseHelper dbHeplper;
+ListView lvUsers;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    dbHeplper = new DatabaseHelper(getApplicationContext());
+    try {
+        dbHeplper.createDataBase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+ListView list=(ListView)findViewById(R.id.lvUsers); 
+ArrayList<String> listUsers = new ArrayList<String>();
+
+listUsers = (ArrayList<String>) dbHeplper.getAllUsers();
+
+    if(listUsers != null){
+         adapter = new ArrayAdapter<String>(getApplicationContext(),
+                android.R.layout.simple_list_item_1, android.R.id.text1,
+                listUsers);
+
+        list.setAdapter(adapter);
+         adapter.notifyDataSetChanged();
+
+
+    }
+
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+}
+</code></pre>
+
+<p><strong>databasehelper class</strong></p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+public static String DB_PATH = "/data/data/com.example.databaseandlist2/databases/";
+public static String DB_NAME = "Test.sqlite";
+public static final int DB_VERSION = 1;
+
+public static final String TB_USER = "Users";
+private SQLiteDatabase myDB;
+private Context context;
+public DatabaseHelper(Context context) {
+    super(context, DB_NAME, null, DB_VERSION);    
+    this.context = context;
+}
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+    // TODO Auto-generated method stub
+
+}
+public synchronized void close(){
+    if(myDB!=null){
+        myDB.close();
+    }
+    super.close();
+}
+private boolean checkDataBase() {
+    SQLiteDatabase tempDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        tempDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+    } catch (SQLiteException e) {
+        Log.e("tle99 - check", e.getMessage());
+    }
+    if (tempDB != null)
+        tempDB.close();
+    return tempDB != null ? true : false;
+}
+
+public void copyDataBase() throws IOException{
+    try {
+        InputStream myInput = context.getAssets().open(DB_NAME);
+        String outputFileName = DB_PATH + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outputFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+
+        while((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    } catch (Exception e) {
+        Log.e("tle99 - copyDatabase", e.getMessage());
+    }
+
+}
+
+public void openDataBase() throws SQLException{
+    String myPath = DB_PATH + DB_NAME;
+    myDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+}
+public void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();        
+
+    if (dbExist) {
+
+    } else {
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            Log.e("tle99 - create", e.getMessage());
+        }
+    }
+}
+
+public List<String> getAllUsers(){
+    List<String> listUsers = new ArrayList<String>();
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor c;
+
+    try {
+        c = db.rawQuery("SELECT * FROM " + TB_USER , null);
+        if(c == null) return null;
+
+        String name;
+        c.moveToFirst();
+        do {            
+            name = c.getString(1);            
+            listUsers.add(name);
+        } while (c.moveToNext()); 
+        c.close();
+    } catch (Exception e) {
+        Log.e("tle99", e.getMessage());
+    }
+
+    db.close();        
+
+    return listUsers;
+}
+}
+</code></pre>

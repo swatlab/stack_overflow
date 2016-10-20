@@ -1,0 +1,34 @@
+<p>I red different question here on StackOverflow but mine is a little bit newer.</p>
+
+<p>All of these don't work:
+<a href="http://stackoverflow.com/questions/17501133/android-copy-sqlite-database-from-asset-issue-i-got-a-database-without-any-tab">Question1</a>
+<a href="http://stackoverflow.com/questions/18805874/copy-database-from-assets-to-databases-folder">Question2</a>
+<a href="http://stackoverflow.com/questions/16354154/copy-sqlite-database-from-assets-folder">Question3</a></p>
+
+<p>I updated my devices to Android KitKat 4.4 and when I try to copy database with this code:</p>
+
+<pre><code>private void copyDataBase() throws IOException {
+    InputStream myInput = context.getAssets().open(DB_NAME);
+    String outFileName = DB_PATH + DB_NAME;
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+</code></pre>
+
+<p>I obtain a FileNotFoundException at line:</p>
+
+<pre><code>OutputStream myOutput = new FileOutputStream(outFileName);
+</code></pre>
+
+<p>Someone fix this issue on Android KitKat??? (other platforms works great)</p>
+
+<p>Thanks for help.</p>
+
+<p>Giulio</p>

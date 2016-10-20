@@ -1,0 +1,83 @@
+<p>What I get from the Developer site is "If in the loading time total size of the animation exceed the value of Virtual heap memory , this error will occur" and For the Solution use <code>BitmapFactory</code>. I tried in the below code :</p>
+
+<p>Now, the question is this, <strong>"what are responsible for this error ?"</strong> :</p>
+
+<ol>
+<li><p>Does dimensions of the image are count when the Images load for animation. </p>
+
+<p>Like : If I have 10 images dimensions( 1100 * 1100 ) and use ARGB_8888 pattern for the image.</p></li>
+<li><p>Size of images(500KB, 1MB etc )  also matter for this error.</p></li>
+<li><p>Or Both are responsible for this error. </p></li>
+<li><p><strong>If I am using more than one animation on a single activity than I <code>change this Activity to another Activity</code> , How to free all memory which I'm using in the previous Activity by <code>AnimationDrawable</code> ?</strong></p></li>
+</ol>
+
+<p>All suggestion are welcome. thanks </p>
+
+<p><strong>Code</strong></p>
+
+<pre><code>public class AdActivity extends Activity {
+
+ImageView iView;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_ad);
+
+    iView = (ImageView) findViewById(R.id.iView);
+
+    //iView.setBackgroundResource(R.drawable.anim); // ( 1 )
+
+    try{ 
+             //  (2)
+        iView.setImageBitmap(decodeSampleBitmapFromResource(getResources(), R.drawable.anim, 100, 100));
+
+        AnimationDrawable frameAnimation = (AnimationDrawable) iView.getBackground();
+        frameAnimation.start();
+    }
+    catch(Exception e){
+    }
+}
+
+public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+
+public static Bitmap decodeSampleBitmapFromResource(Resources res, int resId, int reqWidth, int reqHeight) {
+
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeResource(res, resId, options);
+
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    options.inJustDecodeBounds = false;
+    return BitmapFactory.decodeResource(res, resId, options);
+}
+
+}
+</code></pre>
+
+<p>Two thing:</p>
+
+<ol>
+<li><p>Where I mention a comment with ( 1 ), This is simple way to get the animation in a ImageView but in this case the toatal size used is around 44MB when the App is started. 'Run Perfect'</p></li>
+<li><p>Where I mention ( 2 ) in the try , This is solution which is given by Android developer website <a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html" rel="nofollow">here</a> .</p></li>
+</ol>
+
+<p>i tried no error and size is apporox 11Mb when the App is run but The Animation is not showing in the ImageView.</p>
+
+<p>Please Suggest me what I did wrong ?  </p>

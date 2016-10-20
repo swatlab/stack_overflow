@@ -1,0 +1,114 @@
+<p>how to display images from internet to gridview in android application.after display clicl om any image in gridview it will display full screen image after swipe left to right and right tp left.already i implemented some code, one error is there. after display fill image how to swipe those images.</p>
+
+<p><strong>ImageAdapter</strong></p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+// Keep all Images in array
+public Integer[] mThumbIds = {
+        R.drawable.img_2, R.drawable.img_3,
+        R.drawable.img_4
+};
+
+// Constructor
+public ImageAdapter(Context c){
+    mContext = c;
+}
+
+@Override
+public int getCount() {
+    // TODO Auto-generated method stub
+    return mThumbIds.length;
+}
+
+@Override
+public Object getItem(int position) {
+    // TODO Auto-generated method stub
+     return mThumbIds[position];
+}
+
+@Override
+public long getItemId(int position) {
+
+    return 0;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  
+     imageView = new ImageView(mContext);
+    //imageView.setImageResource(mThumbIds[position]);
+    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    imageView.setLayoutParams(new GridView.LayoutParams(70, 70));
+    } else {
+        imageView = (ImageView) convertView;
+    }
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+}
+</code></pre>
+
+<p>FullImage:</p>
+
+<pre><code>public class FullImageActivity extends Activity {
+
+
+ private static final String LOGID = "CHECKTHISOUT";
+
+private static final int SWIPE_MIN_DISTANCE = 160;
+private static final int SWIPE_MAX_OFF_PATH = 250;
+private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+private GestureDetector gestureDetector;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.full_image);
+
+     // get intent data
+    Intent i = getIntent();
+
+    // Selected image id
+    int position = i.getExtras().getInt("id");
+    ImageAdapter imageAdapter = new ImageAdapter(this);
+
+    ImageView imageView = (ImageView) findViewById(R.id.full_image_view);
+    imageView.setImageResource(imageAdapter.mThumbIds[position]);
+
+    gestureDetector = new GestureDetector(new MyGestureDetector());
+}
+private class MyGestureDetector extends SimpleOnGestureListener {
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                float velocityY) {
+        try {
+            if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+                return false;
+            // right to left swipe
+            if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE
+                    && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                next();
+            } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE
+                    && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                previous();
+            }
+        } catch (Exception e) {
+            // nothing
+        }
+        return false;
+    }
+    public void next()
+    {
+
+    }
+    public void previous()
+    {
+
+    }
+}
+}
+</code></pre>

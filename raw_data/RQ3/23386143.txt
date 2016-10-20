@@ -1,0 +1,70 @@
+<p>To run my code(my app) from Android Studio with AVD manager worked well. First I had a problem with the database not found there but then I used Monitor(DDMS) and just put the file in the right spot: /data/data/thePackagename/databases/database.sqlite</p>
+
+<p><strong>My app works just fine and all Sqlite queries works just fine if the code just finds the database somewhere!</strong></p>
+
+<p>Now I'm having problems with finding the actual database on a <strong>real phone(SGS4)</strong> where I have installed my app. 
+Correct me if I'm wrong but: I guess I have to copy/move my database from some memory card on my SGS4 to this location: <strong>/data/data/thePackagename/databases/database.sqlite</strong> ...right?
+Now how do I do that? Maybe I should just put the database in the internal or the external memory card then just copy it but I dont know how. I have followed some stackoverflow posts but I really dont know what I'm doing:)
+Can I really get the database from the assets folder when running on a real UE? This copy trick did not even work with the AVD manager UE. I guess I need some professional help:)</p>
+
+<p>I have used some of the code from here:
+<a href="http://stackoverflow.com/questions/9109438/how-to-use-an-existing-database-with-an-android-application?lq=1">How to use an existing database with an Android application</a></p>
+
+<p>I have tried this but it does not work:</p>
+
+<pre><code>        /**
+         * Creates a empty database on the system and rewrites it with your own database.
+         * By calling this method and empty database will be created into the default system path
+         * of your application so we are gonna be able to overwrite that database with our database.
+         */
+        public void createDataBase() throws IOException {
+                //check if the database exists
+                boolean databaseExist = checkDataBase();
+
+                if (databaseExist) {
+                // Do Nothing.
+                } else {
+                Log.d("Haze", "Create DB...");
+                SQLiteDb = SQLiteDatabase.openOrCreateDatabase(DB_NAME_AND_PATH, null);
+                Log.d("Haze", "Just created DB...");
+                copyDataBase();
+                Log.d("Haze", "Just copied DB...");
+                }// end if else dbExist
+                } // end createDataBase().
+
+        /**
+         * Check if the database already exist to avoid re-copying the file each time you open the application.
+         *
+         * @return true if it exists, false if it doesn't
+         */
+        public boolean checkDataBase() {
+                File databaseFile = new File(DB_PATH + DB_NAME);
+                return databaseFile.exists();
+                }
+
+        /**
+         * Copies your database from your local assets-folder to the just created empty database in the
+         * system folder, from where it can be accessed and handled.
+         * This is done by transferring byte stream.
+         */
+        private void copyDataBase() throws IOException {
+                //Open your local db as the input stream
+                InputStream myInput = context.getAssets().open(DB_NAME);
+                // Path to the just created empty db
+                String outFileName = DB_PATH + DB_NAME;
+                //Open the empty db as the output stream
+                OutputStream myOutput = new FileOutputStream(outFileName);
+                //transfer bytes from the input file to the output file
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+                }
+                //Close the streams
+                myOutput.flush();
+                myOutput.close();
+                myInput.close();
+                }
+</code></pre>
+
+<p><strong>Please help me with this problem:)</strong></p>

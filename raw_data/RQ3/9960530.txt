@@ -1,0 +1,254 @@
+<p>Even though I've been reading other topics about my kind of problem, I can't figure out the reason of my problem.</p>
+
+<p>I have an activity where there is on the left a ListView. On the right is a ListFragment as you can see it on the activity_question.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:orientation="horizontal" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/textViewCategoryTitle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_weight="10"
+                android:background="@drawable/in_progress_background"
+                android:gravity="center" />
+
+            <ListView
+                android:id="@+id/listViewQuestionsGroup"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <fragment
+            android:id="@+id/fragmentQuestions"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            class="com.firm.bonjour.visite.QuestionsFragment" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/buttonValidate"
+        style="@style/ButtonsValidation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:text="@string/validate" />
+
+</LinearLayout>
+</code></pre>
+
+<p>I have created an Adapter for the ListView of the Fragment:</p>
+
+<pre><code>public class QuestionsAdapter extends BaseAdapter {
+
+    private QuestionsBean questions = null;
+    private LayoutInflater inflater = null;
+
+    public QuestionsAdapter(LayoutInflater inflater) {
+        this.inflater = inflater;
+    }
+
+    @Override
+    public int getCount() {
+        return (questions != null && questions.getQuestionList() != null) ? questions.getQuestionList().size() : 0;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return (questions != null && questions.getQuestionList() != null) ? questions.getQuestionList().get(position) : null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+
+        if (convertView == null) {
+            holder = new ViewHolder();
+
+            convertView = inflater.inflate(R.layout.item_fragment_question, null);
+
+            holder.question = (TextView) convertView.findViewById(R.id.questionsLayout);
+
+            convertView.setTag(holder);
+
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.question.setText(((QuestionsBean) questions).getQuestionList().get(position).getQuestion());
+
+        return convertView;
+    }
+
+    private class ViewHolder {
+        TextView question;
+    }
+
+    public void setQuestions(QuestionsBean questions) {
+        this.questions = questions;
+        notifyDataSetChanged();
+    }
+
+}
+</code></pre>
+
+<p>When I start the Activity, I select the first item on the left side ListView to display detail in the Fragment.
+Once I click on one of the items of my left side ListView, the Fragment doesn't change.
+When I'm in debugg mod, I can see that the Adapter get the right object to display.</p>
+
+<p>Do you have any idea why the new Fragment isn't displaying ?</p>
+
+<p>My Activity code:</p>
+
+<pre><code>public class QuestionsActivity extends Activity implements OnItemClickListener {
+
+    public static final String QUESTIONS_LIST = "questionsList";
+    public static final String QUESTIONS = "questions";
+
+    private CategoryBean category;
+
+    private ListView questionsGroupListView;
+
+    private Fragment questionsFragment;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_questions);
+
+        category = (CategoryBean) getIntent().getExtras().get(MainActivity.CATEGORY);
+
+        questionsGroupListView = (ListView) findViewById(R.id.listViewQuestionsGroup);
+        QuestionListAdapter adapter = new QuestionListAdapter(this, category);
+        questionsGroupListView.setAdapter(adapter);
+        questionsGroupListView.setOnItemClickListener(this);
+
+        if (getFragmentManager().findFragmentById(R.id.fragmentQuestions) == null) {
+            questionsFragment = new QuestionsFragment();
+            getFragmentManager().beginTransaction().add(R.layout.activity_questions, questionsFragment).commit();
+        } else {
+            questionsFragment = getFragmentManager().findFragmentById(R.id.fragmentQuestions);
+        }
+    }
+
+    /**
+     * Called when a number gets clicked
+     */
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        displayFragment((QuestionsBean)questionsGroupListView.getItemAtPosition(position));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(questionsFragment != null && category.getCategoryList() != null && !category.getCategoryList().isEmpty()) {
+            ((QuestionsFragment)questionsFragment).refresh((QuestionsBean)category.getCategoryList().get(0));
+        } else {
+            Log.v("BUGGGGG", "PAS NORMAL !!!");
+        }
+    }
+
+    /**
+     * Add a Fragment to our stack with n Androids in it
+     */
+    private void displayFragment(QuestionsBean questions) {
+        Fragment fragment = QuestionsFragment.newInstance(questions);
+
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.fragmentQuestions, fragment);
+        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        fragmentTransaction.commit();
+    }
+
+}
+</code></pre>
+
+<p>My ListFragment code:</p>
+
+<pre><code>public class QuestionsFragment extends ListFragment {
+
+    private LayoutInflater inflater;
+    private QuestionsAdapter adapter;
+    private QuestionsBean questions;
+
+    /**
+     * Create a new instance of DetailsFragment, initialized to show the text at 'index'.
+     */
+    public static QuestionsFragment newInstance(QuestionsBean questions) {
+        QuestionsFragment questionFragment = new QuestionsFragment();
+
+        // Supply index input as an argument.
+        Bundle args = new Bundle();
+        args.putSerializable(QuestionsActivity.QUESTIONS, questions);
+        questionFragment.setArguments(args);
+
+        return questionFragment;
+    }
+
+    public int getShownIndex() {
+        return getArguments() != null ? getArguments().getInt("index", 0) : 0;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        this.inflater = inflater;
+        this.adapter = new QuestionsAdapter(inflater);
+
+        View questionsView = (LinearLayout) inflater.inflate(R.layout.layout_fragment_question, null);
+        setListAdapter(adapter);
+
+        return questionsView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getArguments() != null && getArguments().getSerializable(QuestionsActivity.QUESTIONS) != null) {
+            this.questions = (QuestionsBean) getArguments().getSerializable(QuestionsActivity.QUESTIONS);
+            adapter.setQuestions((QuestionsBean) getArguments().getSerializable(QuestionsActivity.QUESTIONS));
+        } else {
+            adapter.setQuestions(questions);
+        }
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+
+    }
+
+    public void refresh(QuestionsBean questions) {
+        if (getArguments() != null && getArguments().getSerializable(QuestionsActivity.QUESTIONS) != null) {
+            this.questions = (QuestionsBean) getArguments().getSerializable(QuestionsActivity.QUESTIONS);
+        } else {
+            this.questions = questions;
+        }
+    }
+
+}
+</code></pre>
+
+<p>I'm really stuck for many hours now ... Any help is really appreciated :)</p>

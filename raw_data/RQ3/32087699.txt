@@ -1,0 +1,170 @@
+<p>"intent" method was trying to call the GridView with a screen, but I get error code as follows . "imageview3 " to call the activity_universite.xml screen with the class for the clicked Universiteler.jav . Can you help what needs to be done , but I get no error in the work stopped ?</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+
+    ImageView imageView,imageView2,imageView3,imageView4;
+    ImageButton imageButton;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.anasayfa);
+
+        imageView = (ImageView)findViewById(R.id.imageView);
+        imageView2 = (ImageView)findViewById(R.id.imageView2);
+        imageView3 = (ImageView)findViewById(R.id.imageView3);
+        imageView4 = (ImageView)findViewById(R.id.imageView4);
+        imageButton= (ImageButton) findViewById(R.id.imageButton);
+
+
+
+        //son dakika
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        //Haberler
+        imageView2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        //Üniversiteler
+        imageView3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            Intent nextScreen = new Intent(getApplicationContext(), Universite.class);
+            startActivity(nextScreen);
+            }
+        });
+        //Makaleler
+        imageView4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        imageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+}
+
+
+public class Universite extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_universite);
+
+        GridView gridView = (GridView)findViewById(R.id.gridView);
+        gridView.setAdapter(new ImageAdapter(this));
+
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Uri link = Uri.parse("https://www.google.com.tr");
+                Intent tara = new Intent(Intent.ACTION_DEFAULT, link);
+                startActivity(tara);
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_universite, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c){
+            mContext =c;
+        }
+        @Override
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if(convertView==null){
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8,8,8,8);
+            }else{
+                imageView=(ImageView) convertView;
+            }
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        private Integer [] mThumbIds={
+                R.drawable.turkey,R.drawable.brazil,R.drawable.canada,R.drawable.china,R.drawable.china,R.drawable.france,
+                R.drawable.germany,R.drawable.india,R.drawable.iran,R.drawable.italy,R.drawable.japan,
+                R.drawable.korea,R.drawable.mexico,R.drawable.netherlands,R.drawable.portugal,R.drawable.russia,
+                R.drawable.saudi_arabia,R.drawable.spain,R.drawable.united_kingdom,R.drawable.united_states
+        };
+    }
+}
+</code></pre>

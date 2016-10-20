@@ -1,0 +1,100 @@
+<p>I've written a grid view code and it is displaying the images in grid view. Here, my problem is to add a button with the link under the grid view.(If user clicks on button then it should navigate to the corresponding link)</p>
+
+<p>Here is my java code is:</p>
+
+<pre><code>     public class some_class extends ActionBarActivity {
+       @Override
+       protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+           setContentView(R.layout.gridview);
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this));
+              }
+         public class ImageAdapter extends BaseAdapter{
+          private Context mContext;
+            public int getCount() {
+        return mThumbIds.length;
+            }
+              public Object getItem(int position) {
+               return mThumbIds[position];
+               }
+                public long getItemId(int position) {
+               return 0;
+                }
+              public ImageAdapter(Context c) {
+          mContext = c;
+           }
+
+             public View getView(int position, View convertView, ViewGroup parent) {
+              ImageView imageView;
+            if (convertView == null){
+                 imageView = new ImageView(mContext);
+                  imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                  imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                   imageView.setPadding(8, 8, 8, 8);
+                     }
+                          else{
+                    imageView = (ImageView) convertView;
+                   }
+                        imageView.setImageResource(mThumbIds[position]);
+                  return imageView;
+                      }
+
+                      private Integer[] mThumbIds = {
+                                   R.drawable.minee1,
+                      R.drawable.minee2, R.drawable.minee3,
+                     R.drawable.minee4, R.drawable.minee5,
+                          R.drawable.minee6, R.drawable.minee7,
+                     R.drawable.minee8, R.drawable.minee9,
+                          R.drawable.minee10, R.drawable.minee11,
+
+
+                };
+
+              }
+
+
+
+                    @Override
+                   public boolean onCreateOptionsMenu(Menu menu) {
+
+                    getMenuInflater().inflate(R.menu.bagavan_pics, menu);
+               return true;
+             }
+
+                 @Override
+              public boolean onOptionsItemSelected(MenuItem item) {
+                // Handle action bar item clicks here. The action bar will
+              // automatically handle clicks on the Home/Up button, so long
+              // as you specify a parent activity in AndroidManifest.xml.
+              int id = item.getItemId();
+                if (id == R.id.action_settings) {
+             return true;
+               }
+             return super.onOptionsItemSelected(item);
+               }
+                 }
+</code></pre>
+
+<p>and my the corresponding grid view XML is : 
+                 
+              
+          >
+          </p>
+
+<p>and my the corresponding grid view XML is : </p>
+
+<pre><code>             <?xml version="1.0" encoding="utf-8"?>
+          <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+         android:id="@+id/gridview"
+          android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+         android:numColumns="auto_fit"
+      android:columnWidth="90dp"
+        android:horizontalSpacing="10dp"
+         android:verticalSpacing="10dp"
+      android:gravity="center"
+        android:stretchMode="columnWidth"  
+      >
+   </GridView>     
+</code></pre>

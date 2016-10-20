@@ -1,0 +1,192 @@
+<p>I have two equals methods in code, yet neither of them work. I made one myself and then I also auto generated one from Eclipse via source. I've run the program multiple times with one or an other and again, neither work. </p>
+
+<pre><code>import java.util.Arrays;
+    import java.util.Scanner;
+    import java.math.*;
+public class Item {
+     static //the properties of an Item
+     double cash=59;
+     static double sum=0;
+    private int priority;
+    private String name;
+    private double price;
+
+
+
+
+    //default constructer
+    public Item() {
+        priority = -1;   //fill with default values
+        price = 0.0;
+        name = "No name yet";
+    }
+
+
+    public Item(int priority, String name, double price) {//constructor with all 3 arguments 
+        this.priority = priority; 
+        this.name = name;         
+        this.price = price;
+    }
+
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        //priority must be between 1 and 7
+        if (priority > 0 && priority <= 7) {
+
+            this.priority = priority;
+        } else {
+            //otherwise default to 0
+            System.err.println("Error, enter 1 through 7"); 
+            //this.priority = 0;
+        }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        //would I put equals method here. name.equals.name?
+
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+
+    }
+
+    public void setPrice(double price) {
+
+        //price between 0 and 100 inclusive
+        if (price >= 0.00) {
+            if (price <= 100.00) {
+                this.price = price;
+                cash = cash-=price;
+                sum=sum+=price;
+
+            } else {
+
+                System.err.println("Error: price to high");
+            }
+        } else {
+            System.err.println("Error: price to low");
+        }
+    }
+
+
+    public boolean equals(Item otherItem){
+        if(this.getPriority()==otherItem.getPriority());
+            System.err.println("Error, Same Priorities detected");
+            return true;
+
+
+
+
+
+     }
+
+
+
+
+
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + priority;
+        return result;
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof Item)) {
+            return false;
+        }
+        Item other = (Item) obj;
+        if (priority != other.priority) {
+            return false;
+        }
+        System.err.println("Error, Same Priorities detected");
+        return true;
+    }
+
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Item [Price=").append(getPrice()).append(", ");
+        if (getName() != null) {
+            builder.append("Name=").append(getName()).append(", ");
+        }
+        builder.append("Priority=").append(getPriority()).append("]");
+        return builder.toString();
+    }
+
+
+
+
+
+    public static void main(String[] args) {
+
+         Item[] list = new Item[2];
+        Scanner keyboard = new Scanner(System.in);
+
+        for (int i = 1; i <= list.length; i++) {
+
+            if(cash==59)
+            {
+                System.out.println("You have 59 dollars");
+            }
+
+
+            Item anItem = new Item(); // new item object created 7 times
+
+            System.out.println("Enter an item you want to add to your list " + i);
+            anItem.setName(keyboard.next());
+
+            System.out.println("Enter a price " + i);
+            anItem.setPrice(keyboard.nextDouble());
+
+            System.out.println("Enter the priority of the item " + i);
+            anItem.setPriority(keyboard.nextInt());
+
+
+            list[i-1] = anItem;
+            System.out.println(Arrays.toString(list));
+            System.out.println("Cash left "+cash);
+            System.out.println("Sum of Items "+sum); 
+
+
+
+
+
+      if(sum>59)
+     {System.out.println("Error, you ran out of money");
+
+     System.out.println(Arrays.toString(list));}
+
+        }
+
+    System.out.println( list[1].getPriority());
+
+
+    }
+
+
+
+
+    }
+</code></pre>

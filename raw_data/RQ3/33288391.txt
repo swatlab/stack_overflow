@@ -1,0 +1,426 @@
+<p>I've got a <code>timepicker</code> in my <code>preference activity</code>. The problem is that sometimes its summary properties (in the method <code>ActualizaSumarioHora()</code>) doesn't update the selected hour once I have closed the <code>timepicker</code>.</p>
+
+<p>For example, this always happened in the next situation:</p>
+
+<p>1) Open preference activity.</p>
+
+<p>2) Touch (open) the taskmanager key.</p>
+
+<p>3) Close the taskmanager and return to my preference activity.</p>
+
+<p>After that, the summary doesn't update with the time chosen in the <code>timepicker</code> anymore. Only works again if I close and reopen the preference activity.</p>
+
+<p>Here's my preference and <code>timepreference</code> activities codes...</p>
+
+<p>PREFERENCE ACTIVITY:</p>
+
+<pre><code>public class PreferenciasActivity extends PreferenceActivity
+{
+private SoundPool sPool;
+
+private int sonidoOpcionPulsada = 0;
+private String TIPO_ORDENACION = "";
+private Boolean RECORDATORIO_ACTIVADO = false;
+private Boolean SONIDO_RECORDATORIO_ACTIVADO = false;
+private Boolean VIBRACION_RECORDATORIO_ACTIVADA = false;
+private String HORA_RECORDATORIO = "";
+private int MI_ALARMA = 5;
+
+
+private CheckBoxPreference modoAlfabeticoCBP;
+private CheckBoxPreference modoIndiceCBP;
+private CheckBoxPreference activarRecordatorioCBP;
+private CheckBoxPreference sonidoRecordatorioCBP;
+private CheckBoxPreference vibracionRecordatorioCBP;
+private TimePreference selectorDeHora;
+
+private Button botonReinicioDialogosBT;
+
+SharedPreferences prefs;
+
+SharedPreferences.Editor editor;
+
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+
+    addPreferencesFromResource(R.xml.activity_preferencias);
+
+    getListView().setBackgroundDrawable(getResources().getDrawable(R.drawable.gradiente_malva_suave));
+
+    sPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+    sonidoOpcionPulsada = sPool.load(this, R.raw.opcion_pulsada, 1);
+
+    modoAlfabeticoCBP = (CheckBoxPreference) findPreference("modoTemas");
+    modoIndiceCBP = (CheckBoxPreference) findPreference("modoIndice");
+    activarRecordatorioCBP = (CheckBoxPreference) findPreference("activarRecordatorio");
+    sonidoRecordatorioCBP = (CheckBoxPreference) findPreference("sonidoRecordatorio");
+    vibracionRecordatorioCBP = (CheckBoxPreference) findPreference("vibracionRecordatorio");
+    selectorDeHora = (TimePreference) findPreference("horaRecordatorio");
+
+
+    prefs = getSharedPreferences("com.tonicc.opositest_preferences", Context.MODE_MULTI_PROCESS);
+
+    editor = prefs.edit();
+
+
+    CompruebaPreferencias();
+
+    modoAlfabeticoCBP.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newVal) {
+            final boolean Marcado = (Boolean) newVal;
+
+            if (Marcado) {
+                modoIndiceCBP.setChecked(false);
+                editor.putString("tipoOrdenacion", "modoTemas");
+            }
+            else {
+                modoIndiceCBP.setChecked(true);
+                editor.putString("tipoOrdenacion", "modoIndice");
+            }
+
+            editor.commit();
+
+            return true;
+        }
+    });
+
+    sonidoRecordatorioCBP.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newVal) {
+            final boolean Marcado = (Boolean) newVal;
+
+            if (Marcado)
+            {
+                editor.putBoolean("sonidoRecordatorio", true);
+            }
+            else
+            {
+                editor.putBoolean("sonidoRecordatorio", false);
+            }
+
+            editor.commit();
+
+            return true;
+        }
+    });
+
+    vibracionRecordatorioCBP.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newVal) {
+            final boolean Marcado = (Boolean) newVal;
+
+            if (Marcado)
+            {
+                editor.putBoolean("vibracionRecordatorio", true);
+            }
+            else
+            {
+                editor.putBoolean("vibracionRecordatorio", false);
+            }
+
+            editor.commit();
+
+            return true;
+        }
+    });
+
+    modoIndiceCBP.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newVal) {
+            final boolean Marcado = (Boolean) newVal;
+
+            if (Marcado)
+            {
+                modoAlfabeticoCBP.setChecked(false);
+                editor.putString("tipoOrdenacion", "modoIndice");
+            }
+            else
+            {
+                modoAlfabeticoCBP.setChecked(true);
+                editor.putString("tipoOrdenacion", "modoTemas");
+            }
+
+            editor.commit();
+
+            return true;
+        }
+    });
+
+    activarRecordatorioCBP.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newVal) {
+            final boolean Marcado = (Boolean) newVal;
+
+            if (Marcado)
+            {
+                editor.putBoolean("activarRecordatorio", true);
+            }
+            else
+            {
+                editor.putBoolean("activarRecordatorio", false);
+            }
+
+            editor.commit();
+
+            return true;
+        }
+    });
+
+    SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+            new SharedPreferences.OnSharedPreferenceChangeListener() {
+                public void onSharedPreferenceChanged(SharedPreferences prefs,
+                                                      String key) {
+                    if (key.equals("horaRecordatorio"))
+                    {
+PreferenceChanceListener para horaRecordatorio.", Toast.LENGTH_LONG).show();
+
+                        ActualizaSumarioHora();
+                    }
+                }
+            };
+
+    prefs.registerOnSharedPreferenceChangeListener(prefListener);
+}
+
+
+public void reiniciarDialogos(View view)
+{
+    sPool.play(sonidoOpcionPulsada, (float) 1.0, (float) 1.0, 1, 0, 1f);
+
+    editor.putBoolean("noMostrarEstadisticasGenerales", false);
+    editor.putBoolean("noMostrarPermisos", false);
+
+    editor.commit();
+
+    Toast.makeText(getApplicationContext(), getResources().getString(R.string.ac_preferencias_01), Toast.LENGTH_SHORT).show();
+}
+
+
+public void ActivarAlarmaRecordatorio()
+{
+    String[] HoraMinutos = prefs.getString("horaRecordatorio", "00:00").split(":");
+    int Hora = (Integer.parseInt(HoraMinutos[0]));
+    int Minutos = (Integer.parseInt(HoraMinutos[1]));
+
+    Calendar calSet = Calendar.getInstance();
+
+    calSet.set(Calendar.HOUR_OF_DAY, Hora);
+    calSet.set(Calendar.MINUTE, Minutos);
+    calSet.set(Calendar.SECOND, 0);
+
+    Intent intent = new Intent(getBaseContext(), ReceptorAlarma.class);
+    PendingIntent pendingIntent = PendingIntent.getBroadcast(getBaseContext(), MI_ALARMA, intent, 0);
+    AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calSet.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+}
+
+
+public void PararAlarmaRecordatorio()
+{
+    Intent intentstop = new Intent(this, ReceptorAlarma.class);
+    PendingIntent senderstop = PendingIntent.getBroadcast(this, MI_ALARMA, intentstop, 0);
+    AlarmManager alarmManagerstop = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+    alarmManagerstop.cancel(senderstop);
+}
+
+
+public void CompruebaPreferencias()
+{
+    TIPO_ORDENACION = prefs.getString("tipoOrdenacion", "modoTemas");
+    RECORDATORIO_ACTIVADO = prefs.getBoolean("activarRecordatorio", false);
+    SONIDO_RECORDATORIO_ACTIVADO = prefs.getBoolean("sonidoRecordatorio", false);
+    VIBRACION_RECORDATORIO_ACTIVADA = prefs.getBoolean("vibracionRecordatorio", false);
+
+    ActualizaSumarioHora();
+
+    if(TIPO_ORDENACION.equals("modoTemas"))
+    {
+        modoAlfabeticoCBP.setChecked(true);
+        modoIndiceCBP.setChecked(false);
+    }
+    else
+    {
+        modoAlfabeticoCBP.setChecked(false);
+        modoIndiceCBP.setChecked(true);
+    }
+
+    if(RECORDATORIO_ACTIVADO)
+    {
+        activarRecordatorioCBP.setChecked(true);
+    }
+    else
+    {
+        activarRecordatorioCBP.setChecked(false);
+    }
+
+    sonidoRecordatorioCBP.setChecked(SONIDO_RECORDATORIO_ACTIVADO);
+
+    vibracionRecordatorioCBP.setChecked(VIBRACION_RECORDATORIO_ACTIVADA);
+}
+
+public void ActualizaSumarioHora()
+{
+    HORA_RECORDATORIO =  prefs.getString("horaRecordatorio", "00:00");
+
+    selectorDeHora.setSummary(getResources().getString(R.string.ac_preferencias_02) + HORA_RECORDATORIO);
+}
+
+
+@Override
+public void onResume()
+{
+    super.onResume();
+
+    CompruebaPreferencias();
+}
+
+
+@Override
+public void onRestart()
+{
+    super.onRestart();
+
+    CompruebaPreferencias();
+}
+
+
+@Override
+public void onDestroy()
+{
+    super.onDestroy();
+
+    RECORDATORIO_ACTIVADO = prefs.getBoolean("activarRecordatorio", false);
+
+    if(RECORDATORIO_ACTIVADO)
+    {
+        ActivarAlarmaRecordatorio();
+    }
+    else
+    {
+        PararAlarmaRecordatorio();
+    }
+}
+}
+</code></pre>
+
+<p>TIMEPREFERENCE ACTIVITY:</p>
+
+<pre><code>public class TimePreference extends DialogPreference
+{
+private int lastHour=0;
+private int lastMinute=0;
+private TimePicker picker=null;
+
+private Context contexto;
+
+SharedPreferences prefs;
+SharedPreferences.Editor editor;
+
+
+public static int getHour(String time) {
+    String[] pieces=time.split(":");
+
+    return(Integer.parseInt(pieces[0]));
+}
+
+public static int getMinute(String time) {
+    String[] pieces=time.split(":");
+
+    return(Integer.parseInt(pieces[1]));
+}
+
+public TimePreference(Context ctxt, AttributeSet attrs) {
+    super(ctxt, attrs);
+
+    setPositiveButtonText(ctxt.getResources().getString(R.string.estandar_ACEPTAR));
+    setNegativeButtonText(ctxt.getResources().getString(R.string.estandar_CANCELAR));
+
+    contexto = ctxt;
+}
+
+@Override
+protected View onCreateDialogView()
+{
+    picker=new TimePicker(getContext());
+
+    picker.setIs24HourView(DateFormat.is24HourFormat(getContext()));
+
+    prefs = contexto.getSharedPreferences("com.tonicc.opositest_preferences", Context.MODE_MULTI_PROCESS);
+
+    return(picker);
+}
+
+@Override
+protected void onBindDialogView(View v) {
+    super.onBindDialogView(v);
+
+    picker.setCurrentHour(lastHour);
+    picker.setCurrentMinute(lastMinute);
+}
+
+@Override
+protected void onDialogClosed(boolean positiveResult) {
+    super.onDialogClosed(positiveResult);
+
+    if (positiveResult)
+    {
+        lastHour=picker.getCurrentHour();
+        lastMinute=picker.getCurrentMinute();
+
+        String time = (lastHour < 10?"0":"") + String.valueOf(lastHour) + ":" + (lastMinute < 10?"0":"") + String.valueOf(lastMinute);
+
+        editor = prefs.edit();
+
+        editor.putString("horaRecordatorio", time);
+
+        editor.commit();
+
+        if (callChangeListener(time))
+        {
+            persistString(time);
+        }
+    }
+}
+
+@Override
+protected Object onGetDefaultValue(TypedArray a, int index)
+{
+    return(a.getString(index));
+}
+
+@Override
+protected void onSetInitialValue(boolean restoreValue, Object defaultValue)
+{
+    String time=null;
+
+    if (restoreValue)
+    {
+        if (defaultValue==null)
+        {
+            time=getPersistedString("00:00");
+        }
+        else
+        {
+time=getPersistedString(prefs.getString("horaRecordatorio","00:00"));
+        }
+    }
+    else
+    {
+        time=defaultValue.toString();
+    }
+
+    lastHour=getHour(time);
+    lastMinute=getMinute(time);
+}
+}
+</code></pre>
+
+<p>I would appreciate any help, thanks in advance.</p>

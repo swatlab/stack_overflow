@@ -1,0 +1,466 @@
+<p>I'm using a CRUD framework called Tynamo, which in turn relies on Apache Tapestry and Hibernate. This all works fine, except for when I try to use it for CRUD on a table with a composite/compound primary key.</p>
+
+<p>I've decided not to go the <code>@EmbeddedId</code> route, since it seems to not work at all with the framework. That being said, I have been using the <code>@IdClass</code> method, which is mostly working; I think I'm a line or two of code away from success.</p>
+
+<p>The issue is that when it starts using reflection to build the objects, it blows up and says, <code>org.apache.tapestry5.ioc.internal.util.TapestryException</code>, caused by <code>java.lang.NullPointerException at org.apache.tapestry5.internal.hibernate.HibernateEntityValueEncoder.<init>(HibernateEntityValueEncoder.java:51)</code>.</p>
+
+<p>I honestly have no idea what's the deal here, but since I have normal table CRUD operation working for numerous other tables, I would assume this is somehow related to this table using a composite/compound primary key.</p>
+
+<p>One thing I did try was to move the static inner class to its own package and remove the <code>static</code> class modifier, but the exact same error occurred.</p>
+
+<p>You can see my class below:</p>
+
+<pre><code>package com.company.crud.entities;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+
+import com.company.crud.entities.TransferExtension.TransferExtensionPK;
+
+@Entity(name = "Transfer_Extensions")
+@IdClass(TransferExtensionPK.class)
+public class TransferExtension implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    // @NotNull(message = "Please supply a Script Code")
+    // @Length(min = 3, max = 4)
+    @Column(name = "Division", nullable = false)
+    private String scriptCode;
+
+    @Id
+    // @NotNull(message = "Please supply a Transfer Type")
+    // @Length(min = 3, max = 6)
+    @Column(name = "Transfer_Type", nullable = false)
+    private String transferType;
+
+    @Column(name = "Extension", nullable = true)
+    private String englishExtension;
+
+    @Column(name = "Span_Extension", nullable = true)
+    private String spanishExtension;
+
+    @Column(name = "Call_Type", nullable = true)
+    private String callType;
+
+    @Column(name = "Call_Center", nullable = true)
+    private String callCenter;
+
+    public TransferExtension() {
+    }
+
+    public TransferExtension(String scriptCode, String transferType,
+            String englishExtension, String spanishExtension, String callType,
+            String callCenter) {
+
+        this.callCenter = callCenter;
+        this.callType = callType;
+        this.englishExtension = englishExtension;
+        this.scriptCode = scriptCode;
+        this.spanishExtension = spanishExtension;
+        this.transferType = transferType;
+    }
+
+    public String getScriptCode() {
+        return this.scriptCode;
+    }
+
+    public void setScriptCode(String scriptCode) {
+        this.scriptCode = scriptCode;
+    }
+
+    public String getTransferType() {
+        return this.transferType;
+    }
+
+    public void setTransferType(String transferType) {
+        this.transferType = transferType;
+    }
+
+    public String getEnglishExtension() {
+        return this.englishExtension;
+    }
+
+    public void setEnglishExtension(String englishExtension) {
+        this.englishExtension = englishExtension;
+    }
+
+    public String getSpanishExtension() {
+        return this.spanishExtension;
+    }
+
+    public void setSpanishExtension(String spanishExtension) {
+        this.spanishExtension = spanishExtension;
+    }
+
+    public String getCallType() {
+        return this.callType;
+    }
+
+    public void setCallType(String callType) {
+        this.callType = callType;
+    }
+
+    public String getCallCenter() {
+        return this.callCenter;
+    }
+
+    public void setCallCenter(String callCenter) {
+        this.callCenter = callCenter;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TransferExtension [scriptCode=")
+                .append(this.scriptCode).append(", transferType=")
+                .append(this.transferType).append(", englishExtension=")
+                .append(this.englishExtension).append(", spanishExtension=")
+                .append(this.spanishExtension).append(", callType=")
+                .append(this.callType).append(", callCenter=")
+                .append(this.callCenter).append("]");
+        return builder.toString();
+    }
+
+    public static class TransferExtensionPK implements Serializable {
+        private static final long serialVersionUID = 4L;
+
+        private String scriptCode;
+        private String transferType;
+
+        public TransferExtensionPK() {
+        }
+
+        public TransferExtensionPK(String scriptCode, String transferType) {
+
+            this.scriptCode = scriptCode;
+            this.transferType = transferType;
+        }
+
+        public String getScriptCode() {
+            return this.scriptCode;
+        }
+
+        public void setScriptCode(String scriptCode) {
+            this.scriptCode = scriptCode;
+        }
+
+        public String getTransferType() {
+            return this.transferType;
+        }
+
+        public void setTransferType(String transferType) {
+            this.transferType = transferType;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("TransferExtensionPK [scriptCode=")
+                    .append(this.scriptCode).append(", transferType=")
+                    .append(this.transferType).append("]");
+            return builder.toString();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime
+                    * result
+                    + ((this.scriptCode == null) ? 0 : this.scriptCode
+                            .hashCode());
+            result = prime
+                    * result
+                    + ((this.transferType == null) ? 0 : this.transferType
+                            .hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof TransferExtensionPK)) {
+                return false;
+            }
+            TransferExtensionPK other = (TransferExtensionPK) obj;
+            if (this.scriptCode == null) {
+                if (other.scriptCode != null) {
+                    return false;
+                }
+            } else if (!this.scriptCode.equals(other.scriptCode)) {
+                return false;
+            }
+            if (this.transferType == null) {
+                if (other.transferType != null) {
+                    return false;
+                }
+            } else if (!this.transferType.equals(other.transferType)) {
+                return false;
+            }
+            return true;
+        }
+    }
+}
+</code></pre>
+
+<p>And the stack trace:  </p>
+
+<pre><code>Hibernate: 
+    select
+        count(*) as y0_ 
+    from
+        Transfer_Extensions this_
+Hibernate: 
+    select
+        top 25 this_.Division as Division1_0_,
+        this_.Transfer_Type as Transfer2_1_0_,
+        this_.Call_Center as Call3_1_0_,
+        this_.Call_Type as Call4_1_0_,
+        this_.Extension as Extension1_0_,
+        this_.Span_Extension as Span6_1_0_ 
+    from
+        Transfer_Extensions this_
+[ERROR] pages.List Render queue error in BeginRender[List:pagelink_0]: org.apache.tapestry5.ioc.internal.util.TapestryException
+org.apache.tapestry5.ioc.internal.util.TapestryException [at context:List.tml, line 16]
+    at org.apache.tapestry5.internal.structure.ComponentPageElementImpl$AbstractPhase.invoke(ComponentPageElementImpl.java:158)
+    at org.apache.tapestry5.internal.structure.ComponentPageElementImpl$BeginRenderPhase.render(ComponentPageElementImpl.java:214)
+    at org.apache.tapestry5.internal.services.RenderQueueImpl.run(RenderQueueImpl.java:72)
+    at org.apache.tapestry5.internal.services.PageRenderQueueImpl.render(PageRenderQueueImpl.java:124)
+    at $PageRenderQueue_11b9cd02019b.render(Unknown Source)
+    at $PageRenderQueue_11b9cd02019a.render(Unknown Source)
+    at org.apache.tapestry5.internal.services.MarkupRendererTerminator.renderMarkup(MarkupRendererTerminator.java:37)
+    at org.apache.tapestry5.services.TapestryModule$31.renderMarkup(TapestryModule.java:1994)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$30.renderMarkup(TapestryModule.java:1978)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$29.renderMarkup(TapestryModule.java:1960)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$28.renderMarkup(TapestryModule.java:1945)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$27.renderMarkup(TapestryModule.java:1931)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$26.renderMarkup(TapestryModule.java:1913)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$25.renderMarkup(TapestryModule.java:1894)
+    at $MarkupRenderer_11b9cd02019e.renderMarkup(Unknown Source)
+    at $MarkupRenderer_11b9cd020199.renderMarkup(Unknown Source)
+    at org.apache.tapestry5.internal.services.PageMarkupRendererImpl.renderPageMarkup(PageMarkupRendererImpl.java:47)
+    at $PageMarkupRenderer_11b9cd020192.renderPageMarkup(Unknown Source)
+    at org.apache.tapestry5.internal.services.PageResponseRendererImpl.renderPageResponse(PageResponseRendererImpl.java:67)
+    at $PageResponseRenderer_11b9cd020194.advised$renderPageResponse_11b9cd020196(Unknown Source)
+    at $PageResponseRenderer_11b9cd020194$Invocation_renderPageResponse_11b9cd020195.proceedToAdvisedMethod(Unknown Source)
+    at org.apache.tapestry5.internal.plastic.AbstractMethodInvocation.proceed(AbstractMethodInvocation.java:84)
+    at org.tynamo.services.TynamoCoreModule$2.advise(TynamoCoreModule.java:353)
+    at org.apache.tapestry5.internal.plastic.AbstractMethodInvocation.proceed(AbstractMethodInvocation.java:86)
+    at $PageResponseRenderer_11b9cd020194.renderPageResponse(Unknown Source)
+    at $PageResponseRenderer_11b9cd020189.renderPageResponse(Unknown Source)
+    at org.apache.tapestry5.internal.services.PageRenderRequestHandlerImpl.handle(PageRenderRequestHandlerImpl.java:64)
+    at org.apache.tapestry5.services.TapestryModule$38.handle(TapestryModule.java:2222)
+    at $PageRenderRequestHandler_11b9cd02018b.handle(Unknown Source)
+    at $PageRenderRequestHandler_11b9cd020186.handle(Unknown Source)
+    at org.apache.tapestry5.internal.services.ComponentRequestHandlerTerminator.handlePageRender(ComponentRequestHandlerTerminator.java:48)
+    at org.apache.tapestry5.services.InitializeActivePageName.handlePageRender(InitializeActivePageName.java:47)
+    at $ComponentRequestHandler_11b9cd020187.handlePageRender(Unknown Source)
+    at $ComponentRequestHandler_11b9cd020080.handlePageRender(Unknown Source)
+    at org.tynamo.routing.services.RouterDispatcher.dispatch(RouterDispatcher.java:26)
+    at $Dispatcher_11b9cd020084.dispatch(Unknown Source)
+    at $Dispatcher_11b9cd02007d.dispatch(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$RequestHandlerTerminator.service(TapestryModule.java:302)
+    at org.apache.tapestry5.internal.services.RequestErrorFilter.service(RequestErrorFilter.java:26)
+    at $RequestHandler_11b9cd02007e.service(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$3.service(TapestryModule.java:902)
+    at $RequestHandler_11b9cd02007e.service(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$2.service(TapestryModule.java:892)
+    at $RequestHandler_11b9cd02007e.service(Unknown Source)
+    at org.apache.tapestry5.internal.services.StaticFilesFilter.service(StaticFilesFilter.java:90)
+    at $RequestHandler_11b9cd02007e.service(Unknown Source)
+    at org.apache.tapestry5.internal.services.CheckForUpdatesFilter$2.invoke(CheckForUpdatesFilter.java:105)
+    at org.apache.tapestry5.internal.services.CheckForUpdatesFilter$2.invoke(CheckForUpdatesFilter.java:95)
+    at org.apache.tapestry5.ioc.internal.util.ConcurrentBarrier.withRead(ConcurrentBarrier.java:85)
+    at org.apache.tapestry5.internal.services.CheckForUpdatesFilter.service(CheckForUpdatesFilter.java:119)
+    at $RequestHandler_11b9cd02007e.service(Unknown Source)
+    at $RequestHandler_11b9cd020072.service(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$HttpServletRequestHandlerTerminator.service(TapestryModule.java:253)
+    at org.apache.tapestry5.internal.gzip.GZipFilter.service(GZipFilter.java:53)
+    at $HttpServletRequestHandler_11b9cd020074.service(Unknown Source)
+    at org.apache.tapestry5.upload.internal.services.MultipartServletRequestFilter.service(MultipartServletRequestFilter.java:44)
+    at $HttpServletRequestHandler_11b9cd020074.service(Unknown Source)
+    at org.apache.tapestry5.internal.services.IgnoredPathsFilter.service(IgnoredPathsFilter.java:62)
+    at $HttpServletRequestFilter_11b9cd020070.service(Unknown Source)
+    at $HttpServletRequestHandler_11b9cd020074.service(Unknown Source)
+    at org.apache.tapestry5.services.TapestryModule$1.service(TapestryModule.java:852)
+    at $HttpServletRequestHandler_11b9cd020074.service(Unknown Source)
+    at $HttpServletRequestHandler_11b9cd02006e.service(Unknown Source)
+    at org.apache.tapestry5.TapestryFilter.doFilter(TapestryFilter.java:171)
+    at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1476)
+    at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:501)
+    at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:137)
+    at org.eclipse.jetty.security.SecurityHandler.handle(SecurityHandler.java:557)
+    at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:231)
+    at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1086)
+    at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:429)
+    at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:193)
+    at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1020)
+    at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:135)
+    at org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:255)
+    at org.eclipse.jetty.server.handler.HandlerCollection.handle(HandlerCollection.java:154)
+    at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:116)
+    at org.eclipse.jetty.server.Server.handle(Server.java:370)
+    at org.eclipse.jetty.server.AbstractHttpConnection.handleRequest(AbstractHttpConnection.java:494)
+    at org.eclipse.jetty.server.AbstractHttpConnection.headerComplete(AbstractHttpConnection.java:971)
+    at org.eclipse.jetty.server.AbstractHttpConnection$RequestHandler.headerComplete(AbstractHttpConnection.java:1033)
+    at org.eclipse.jetty.http.HttpParser.parseNext(HttpParser.java:644)
+    at org.eclipse.jetty.http.HttpParser.parseAvailable(HttpParser.java:235)
+    at org.eclipse.jetty.server.AsyncHttpConnection.handle(AsyncHttpConnection.java:82)
+    at org.eclipse.jetty.io.nio.SelectChannelEndPoint.handle(SelectChannelEndPoint.java:696)
+    at org.eclipse.jetty.io.nio.SelectChannelEndPoint$1.run(SelectChannelEndPoint.java:53)
+    at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:608)
+    at org.eclipse.jetty.util.thread.QueuedThreadPool$3.run(QueuedThreadPool.java:543)
+    at java.lang.Thread.run(Thread.java:744)
+Caused by: java.lang.NullPointerException
+    at org.apache.tapestry5.internal.hibernate.HibernateEntityValueEncoder.<init>(HibernateEntityValueEncoder.java:51)
+    at org.apache.tapestry5.hibernate.HibernateModule$1.create(HibernateModule.java:103)
+    at org.apache.tapestry5.internal.services.ValueEncoderSourceImpl.getValueEncoder(ValueEncoderSourceImpl.java:48)
+    at $ValueEncoderSource_11b9cd0200bf.getValueEncoder(Unknown Source)
+    at org.apache.tapestry5.internal.services.ContextValueEncoderImpl.toClient(ContextValueEncoderImpl.java:35)
+    at $ContextValueEncoder_11b9cd0200cd.toClient(Unknown Source)
+    at org.apache.tapestry5.internal.services.ContextPathEncoderImpl.encodeValue(ContextPathEncoderImpl.java:48)
+    at org.apache.tapestry5.internal.services.ContextPathEncoderImpl.encodeIntoPath(ContextPathEncoderImpl.java:72)
+    at $ContextPathEncoder_11b9cd02008f.encodeIntoPath(Unknown Source)
+    at org.apache.tapestry5.internal.services.ComponentEventLinkEncoderImpl.appendContext(ComponentEventLinkEncoderImpl.java:516)
+    at org.apache.tapestry5.internal.services.ComponentEventLinkEncoderImpl.createPageRenderLink(ComponentEventLinkEncoderImpl.java:103)
+    at org.apache.tapestry5.internal.services.linktransform.LinkTransformerInterceptor.createPageRenderLink(LinkTransformerInterceptor.java:50)
+    at $ComponentEventLinkEncoder_11b9cd020082.createPageRenderLink(Unknown Source)
+    at org.apache.tapestry5.internal.services.LinkSourceImpl.createPageRenderLink(LinkSourceImpl.java:119)
+    at $LinkSource_11b9cd0200ce.createPageRenderLink(Unknown Source)
+    at org.apache.tapestry5.internal.structure.ComponentPageElementResourcesImpl.createPageRenderLink(ComponentPageElementResourcesImpl.java:111)
+    at org.apache.tapestry5.internal.structure.ComponentPageElementImpl.createPageLink(ComponentPageElementImpl.java:1271)
+    at org.apache.tapestry5.internal.structure.InternalComponentResourcesImpl.createPageLink(InternalComponentResourcesImpl.java:221)
+    at org.apache.tapestry5.corelib.components.PageLink.beginRender(PageLink.java:57)
+    at org.apache.tapestry5.corelib.components.PageLink.beginRender(PageLink.java)
+    at org.apache.tapestry5.internal.structure.ComponentPageElementImpl$BeginRenderPhase.invokeComponent(ComponentPageElementImpl.java:207)
+    at org.apache.tapestry5.internal.structure.ComponentPageElementImpl$AbstractPhase.invoke(ComponentPageElementImpl.java:138)
+    ... 94 more
+</code></pre>
+
+<p>Here's my <code>ValueEncoder</code> class:  </p>
+
+<pre><code>import org.apache.tapestry5.ValueEncoder;
+import org.apache.tapestry5.services.ValueEncoderFactory;
+
+import com.company.ivr.crud.entities.TransferExtension.TransferExtensionPK;
+
+public class TransferExtensionPKValueEncoder implements
+        ValueEncoderFactory<TransferExtensionPK>,
+        ValueEncoder<TransferExtensionPK> {
+
+    public ValueEncoder<TransferExtensionPK> create(
+            Class<TransferExtensionPK> type) {
+
+        return this;
+    }
+
+    public String toClient(TransferExtensionPK value) {
+
+        return value.getScriptCode() + ":" + value.getTransferType();
+    }
+
+    public TransferExtensionPK toValue(String clientValue) {
+
+        String[] values = clientValue.split(":");
+        return new TransferExtensionPK(values[0], values[1]);
+    }
+}
+</code></pre>
+
+<p>Here's the <code>AppModule</code>  class:  </p>
+
+<pre><code>package com.company.crud.services;
+
+import org.apache.tapestry5.SymbolConstants;
+import org.apache.tapestry5.ValueEncoder;
+import org.apache.tapestry5.hibernate.HibernateEntityPackageManager;
+import org.apache.tapestry5.ioc.Configuration;
+import org.apache.tapestry5.ioc.MappedConfiguration;
+import org.apache.tapestry5.ioc.ServiceBinder;
+import org.apache.tapestry5.ioc.annotations.Contribute;
+import org.apache.tapestry5.ioc.services.ApplicationDefaults;
+import org.apache.tapestry5.ioc.services.FactoryDefaults;
+import org.apache.tapestry5.ioc.services.SymbolProvider;
+import org.apache.tapestry5.services.BeanBlockContribution;
+import org.apache.tapestry5.services.BeanBlockSource;
+import org.apache.tapestry5.services.DisplayBlockContribution;
+import org.apache.tapestry5.services.ValueEncoderFactory;
+import org.apache.tapestry5.upload.services.UploadSymbols;
+import org.tynamo.builder.Builder;
+import org.tynamo.builder.BuilderDirector;
+
+import com.company.crud.encoders.TransferExtensionPKValueEncoder;
+import com.company.crud.entities.TransferExtension.TransferExtensionPK;
+
+public class AppModule {
+
+    /* 
+    *   This is the method I've added.
+    */
+    // @Contribute(ValueEncoderSource.class)
+    public static void contributeValueEncoderSource(
+            MappedConfiguration<Class<?>, ValueEncoderFactory<?>> config) {
+
+        config.addInstance(TransferExtensionPK.class,
+                TransferExtensionPKValueEncoder.class);
+    }
+
+    public static void bind(ServiceBinder binder) {
+    }
+
+    @Contribute(SymbolProvider.class)
+    @ApplicationDefaults
+    public static void provideSymbols(
+            MappedConfiguration<String, String> configuration) {
+        configuration.add(SymbolConstants.SUPPORTED_LOCALES, "en, es");
+        configuration.add(UploadSymbols.REQUESTSIZE_MAX, "2048000");
+        configuration.add(UploadSymbols.FILESIZE_MAX, "2048000");
+    }
+
+    @Contribute(SymbolProvider.class)
+    @FactoryDefaults
+    public static void overrideFactorySymbols(
+            MappedConfiguration<String, Object> configuration) {
+        configuration.override(SymbolConstants.APPLICATION_VERSION,
+                "0.0.1-SNAPSHOT");
+    }
+
+    @Contribute(BeanBlockSource.class)
+    public static void addCustomBlocks(
+            Configuration<BeanBlockContribution> configuration) {
+        configuration.add(new DisplayBlockContribution("boolean",
+                "blocks/DisplayBlocks", "check"));
+        configuration.add(new DisplayBlockContribution(
+                "single-valued-association", "blocks/DisplayBlocks",
+                "showPageLink"));
+        configuration.add(new DisplayBlockContribution(
+                "many-valued-association", "blocks/DisplayBlocks",
+                "showPageLinks"));
+    }
+
+    @Contribute(HibernateEntityPackageManager.class)
+    public static void addPackagesToScan(Configuration<String> configuration) {
+    }
+
+    @Contribute(BuilderDirector.class)
+    public static void addBuilders(
+            MappedConfiguration<Class<?>, Builder<?>> configuration) {
+    }
+}
+</code></pre>

@@ -1,0 +1,220 @@
+<p>I am trying to add icons to my Navigation Drawer in Android. I have the following code in my main</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+
+    private ListView mDrawerList;
+    private DrawerLayout mDrawerLayout;
+    private ArrayAdapter<String> mAdapter;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private String mActivityTitle;
+    private myAdapter MyAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mDrawerList = (ListView)findViewById(R.id.navList);mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mActivityTitle = getTitle().toString();
+
+        addDrawerItems();
+        setupDrawer();
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    private void addDrawerItems() {
+        String[] osArray = {"Math", "Physics", "Chemistry"};
+
+        MyAdapter = new myAdapter(this);
+        mDrawerList.setAdapter(MyAdapter);
+
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    switch(position) {
+                        case 0:
+                            Intent a = new Intent(MainActivity.this, MathActivity.class);
+                            startActivity(a);
+                            break;
+
+                        case 1:
+                            Intent b = new Intent(MainActivity.this, PhysicsActivity.class);
+                            startActivity(b);
+                            break;
+                        case 2:
+                            Intent c = new Intent(MainActivity.this, ChemistryActivity.class);
+                            startActivity(c);
+                            break;
+                        default:
+                    }
+
+            }
+
+        });
+
+
+    }
+
+
+
+
+
+
+
+    private void setupDrawer() {
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getSupportActionBar().setTitle("Navigation!");
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getSupportActionBar().setTitle(mActivityTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        // Activate the navigation drawer toggle
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    class myAdapter extends BaseAdapter {
+        private Context context;
+        String SchoolCategories[];
+        int[] images = {R.drawable.math_icon,R.drawable.physics_icon,R.drawable.chemistry_icon};
+
+        public myAdapter(Context context){
+            this.context = context;
+            SchoolCategories = context.getResources().getStringArray(R.array.school);
+
+        }
+        @Override
+        public int getCount() {
+            return SchoolCategories.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return SchoolCategories[position];
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View row = null;
+            if(convertView == null){
+                LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                inflater.inflate(R.layout.custom_row, parent, false);
+            }
+            else{
+                    row =convertView;
+            }
+
+            TextView titleTextView =(TextView) row.findViewById(R.id.textViewRow1);
+            ImageView titleImageView = (ImageView) row.findViewById(R.id.imageViewRow1);
+            titleTextView.setText(SchoolCategories[position]);
+            titleImageView.setImageResource(images[position]);
+        return row;
+        }
+    }
+}
+</code></pre>
+
+<p>And the following XML Layout file:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+
+    >
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/math_icon"
+        android:id="@+id/imageViewRow1"
+        />
+
+    <TextView
+        android:layout_margin="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Large Text"
+        android:id="@+id/textViewRow1"
+        />
+
+
+</LinearLayout>
+</code></pre>
+
+<p>I am simple just trying to add icons to the navigation drawer, but this does not work and I am not sure what goes wrong. The application just shuts down. All help is really appreciated! </p>
+
+<p>Here is my log-cat:</p>
+
+<pre><code>05-25 12:27:33.053    3909-3909/oscarorellana.nowwetryitmyway.physicsproject E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    Process: oscarorellana.nowwetryitmyway.physicsproject, PID: 3909
+    android.content.ActivityNotFoundException: Unable to find explicit activity class {oscarorellana.nowwetryitmyway.physicsproject/oscarorellana.nowwetryitmyway.physicsproject.MathActivity}; have you declared this activity in your AndroidManifest.xml?
+            at android.app.Instrumentation.checkStartActivityResult(Instrumentation.java:1761)
+            at android.app.Instrumentation.execStartActivity(Instrumentation.java:1485)
+            at android.app.Activity.startActivityForResult(Activity.java:3736)
+            at android.app.Activity.startActivityForResult(Activity.java:3697)
+            at android.support.v4.app.FragmentActivity.startActivityForResult(FragmentActivity.java:820)
+            at android.app.Activity.startActivity(Activity.java:4007)
+            at android.app.Activity.startActivity(Activity.java:3975)
+            at oscarorellana.nowwetryitmyway.physicsproject.MainActivity$1.onItemClick(MainActivity.java:57)
+</code></pre>

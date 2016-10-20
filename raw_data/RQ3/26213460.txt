@@ -1,0 +1,262 @@
+<p>I am new to android , I am trying to retrieve values from sqlite database based on the listview values,I tried to retrieve values using string variable. I can do this if I directly substitute the value in the place of variable.</p>
+
+<p>Following this I post my codes kindly help me to sort out this.</p>
+
+<p>DBhelper.java</p>
+
+<pre><code>public class DBHelper extends SQLiteOpenHelper{
+
+public SQLiteDatabase DB;
+public String DBPath;
+public static String DBName = "VERIFY ME1.sqlite3";
+public static final int version = '1';
+public static Context currentContext;
+public static String tableName = "FORM2";
+
+public DBHelper(Context context) {
+    super(context, DBName, null, version);
+    currentContext = context;
+    DBPath = "/data/data/" + context.getPackageName() + "/databases";
+    createDatabase();
+    Oninsert(DB);
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+}
+
+private void createDatabase() {
+    boolean dbExists = checkDbExists();
+
+    if (dbExists) {
+        // do nothing
+    } 
+    else {
+        DB = currentContext.openOrCreateDatabase(DBName, 0, null);
+        DB.execSQL("CREATE TABLE IF NOT EXISTS " +tableName +" (AppNo VARCHAR, AppName VARCHAR," +
+                " Area VARCHAR, FHcode INT(3));");
+
+
+    }}
+
+private boolean checkDbExists() {
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DBPath + DBName;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    } catch (SQLiteException e) {
+
+        // database does't exist yet.
+
+    }
+
+    if (checkDB != null) {
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+private void Oninsert(SQLiteDatabase dB2) {
+    // TODO Auto-generated method stub
+    DB = currentContext.openOrCreateDatabase(DBName, 0, null);
+    DB.execSQL("INSERT INTO " +
+            tableName +
+            " Values ('M001','shumi','India',250);");
+    DB.execSQL("INSERT INTO " +
+            tableName +
+            " Values ('C002','sarah','India',251);");
+    DB.execSQL("INSERT INTO " +
+            tableName +
+            " Values ('D003','Lavya','USA',252);");
+    DB.execSQL("INSERT INTO " +
+            tableName +
+            " Values ('V004','Avi','EU',253);");
+    DB.execSQL("INSERT INTO " +
+            tableName +
+            " Values ('T005','Shenoi','Bangla',254);");
+    DB.execSQL("INSERT INTO " +
+            tableName +
+            " Values ('L006','Lamha','Australia',255);");
+
+    DB.close();
+}
+
+}
+</code></pre>
+
+<p>ListActivity.java</p>
+
+<pre><code>public class login2 extends ListActivity implements OnItemClickListener {
+
+private static final login2 ListActivity = null;
+private static final AdapterView<?> parent = null;
+private static int mPosition = 0;
+private static final long id = 0;
+private ArrayList<String> results = new ArrayList<String>();
+
+private String tableName = DBHelper.tableName;
+private SQLiteDatabase newDB;
+private String AppName1,ApplID,FHcode,Area;
+
+
+
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    openAndQueryDatabase();
+
+    displayResultList();
+
+
+}
+private void displayResultList() {
+
+
+    setListAdapter(new ArrayAdapter<String>(this,
+    android.R.layout.simple_list_item_1, results));
+    getListView().setTextFilterEnabled(true);
+    getListView().setOnItemClickListener(this);
+
+}
+
+
+
+private String openAndQueryDatabase() {
+    try {
+        DBHelper dbHelper = new DBHelper(this.getApplicationContext());
+        newDB = dbHelper.getWritableDatabase();
+
+        Cursor c = newDB.rawQuery("SELECT * FROM " +tableName +"", null);
+
+        if (c != null ) {
+            if  (c.moveToFirst()) {
+                do {
+                AppName1 = c.getString(c.getColumnIndex("AppName"));
+
+                    results.add(AppName1 );
+
+
+                }while (c.moveToNext());
+            } 
+        }   
+        c.close();
+    } catch (SQLiteException se ) {
+        Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+    } finally {
+        //if (newDB == null) 
+        //  newDB.execSQL("DELETE FROM " + tableName);
+            //newDB.close();
+    }
+    return AppName1;
+
+        }
+
+
+
+    public void onClick(View arg0) {
+
+
+      login2 det = (login2)ListActivity;
+
+        det.onItemClick(parent, arg0, mPosition, id);
+
+    }
+
+
+@Override
+public void onItemClick(AdapterView<?> parent, View view, int position,
+        long id) {
+    // TODO Auto-generated method stub
+        String data=(String)parent.getItemAtPosition(position);
+        //showMessage("Successfully", data);
+
+    if (data != null ) {    
+    try {
+        DBHelper dbHelper = new DBHelper(this.getApplicationContext());
+        newDB = dbHelper.getWritableDatabase();
+
+        Cursor c1 = newDB.rawQuery("SELECT DISTINCT AppNo, AppName, FHcode, Area FROM "
+                +tableName +" where AppName ="+data+"" ,null);
+
+
+        if (c1 != null ) {   
+
+            if  (c1.moveToFirst()) {
+                do {
+
+                      ApplID= c1.getString(c1.getColumnIndex("AppNo"));
+                      String AppName =c1.getString(c1.getColumnIndex("AppName"));    
+                 Area = c1.getString(c1.getColumnIndex("Area"));
+                 FHcode  =c1.getString(c1.getColumnIndex("FHcode"));
+
+
+                 Intent intent = new Intent(getApplicationContext(), form.class);
+
+                    //Create a bundle object
+                    Bundle b = new Bundle();
+
+                    //Inserts a String value into the mapping of this Bundle
+                    b.putString("AppName", AppName.toString());
+                    b.putString("Apprefno", ApplID.toString());
+                    b.putString("FHcode", FHcode.toString());
+                    b.putString("Area", Area.toString());
+
+
+                    //Add the bundle to the intent.
+                    intent.putExtras(b);
+
+                    //start the DisplayActivity
+                    startActivity(intent);
+
+                }
+                 while (c1.moveToNext());
+
+            }
+            }   
+    }
+
+
+    catch (SQLiteException se ) {
+        Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+    } finally {
+        //if (newDB == null) 
+            //newDB.execSQL("DELETE FROM " + tableName);
+            newDB.close();
+    }
+
+    }
+        }       
+
+
+
+
+public void showMessage ( String title ,String message)
+{
+  Builder builder=new Builder(this);
+  builder.setCancelable(true);
+  builder.setTitle(title);
+  builder.setMessage(message);
+  builder.show();
+
+}
+
+
+
+
+}
+</code></pre>

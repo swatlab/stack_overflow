@@ -1,0 +1,24 @@
+<p>I have used following code for opening application settings from my code and it worked fine on samsung galaxy tab.</p>
+
+<pre><code>private  void showSettingsForPackage(String packageName) {
+    Intent intent = new Intent();
+    final int apiLevel = Build.VERSION.SDK_INT;
+    if (apiLevel >= 9) { // above 2.3
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", packageName, null);
+        intent.setData(uri);
+    } else { 
+        // below 2.3
+        String appPkgName = (apiLevel == 8 ? "pkg" : "com.android.settings.ApplicationPkgName");
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setClassName(APP_DETAILS_PACKAGE_NAME,   APP_DETAILS_CLASS_NAME);
+        intent.putExtra(appPkgName, packageName);
+    }
+    this.startActivity(intent);
+}
+</code></pre>
+
+<p><strong>My problem is that the above code does not opening settings in HTC One X+ Android 4.1.1. Please let me know is there is any solution?</strong></p>
+
+<p>Thanks and Regards
+@nish</p>

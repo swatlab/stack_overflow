@@ -1,0 +1,122 @@
+<p>I have an image adapter in a fragment I have the following code in Image Adapter :</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {
+            // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(185, 185));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7,
+            R.drawable.sample_0, R.drawable.sample_1,
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7,
+            R.drawable.sample_0, R.drawable.sample_1,
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7
+    };
+}
+</code></pre>
+
+<p>and onCreateView for the fragment is given below:</p>
+
+<pre><code>@Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        final View rootview=inflater.inflate(R.layout.fragment_movies, container, false);;
+
+        GridView gridview = (GridView) rootview.findViewById(R.id.moviesgrid);
+        gridview.setAdapter(new ImageAdapter(getActivity()));
+
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                Toast.makeText(getActivity(), "" + position,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        return rootview;
+}
+</code></pre>
+
+<p>Now when I run the project it shows the scrollable grid as desired but it also shows a static grid in the backgreound of the same images that are shown in the scrollable grid. Could you please point out where that extra background is coming from??</p>
+
+<p><strong>Edit 1 for adding XML files:</strong></p>
+
+<p>Please check below the XML for Main Activity :</p>
+
+<pre><code><fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment"
+    android:name="com.example.android.popularmovies.PopularMoviesFragment"
+    tools:layout="@layout/fragment_movies"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+</code></pre>
+
+<p>Please check below the XML for Fragment :</p>
+
+<pre><code><FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity$PPopularMoviesFragment"
+    android:id="@+id/fragment_main">
+    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/moviesgrid"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:columnWidth="145dp"
+        android:numColumns="auto_fit"
+        android:verticalSpacing="1dp"
+        android:horizontalSpacing="1dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"/>
+
+</FrameLayout>
+</code></pre>
+
+<p>I have attached the screenshot of the problem I am facing. Thanks</p>
+
+<p><a href="http://i.stack.imgur.com/0yxpg.png" rel="nofollow"><img src="http://i.stack.imgur.com/0yxpg.png" alt="enter image description here"></a></p>

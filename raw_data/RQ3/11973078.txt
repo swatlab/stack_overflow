@@ -1,0 +1,264 @@
+<p>I am new to ABS(ActionBarSherlock) and sometimes ABS seems to be very complicated to me. The whole point(or most of it) of ABS seemed to me to enable older androids(<11)to run actionbar.</p>
+
+<p>I needed to use fragments inside Actionbar tabs so i tried learning from "FragmentTabs.java" which is located inside fragments demo but suprisingly i find out that this example does not use ABS Actionbar and uses tabhost.</p>
+
+<p>my questions are:</p>
+
+<blockquote>
+  <ol>
+  <li><p>Why rather than ABS actionbar, tabhost is  implemented,while the whole point of ABS is usage of Actionbar? Is it incompatible with fragment's usage?</p></li>
+  <li><p>Because fragments are defined as static in this example so how can i get a reference to a non-static tabhost and setCurrentTab()? findViewById()
+  won't work because fragments are defined as static</p></li>
+  </ol>
+  
+  <p>3.How to switch between tabs based on code logic?The following code will never work.getParent() works neither.</p>
+</blockquote>
+
+<pre><code>          TabHost tabHost =  (TabHost) findViewById(android.R.id.tabhost);
+          tabHost.setCurrentTab(2);     
+</code></pre>
+
+<p>Here is the code extracted from Sherlock fragment demo:</p>
+
+<pre><code>public class FragmentTabs extends SherlockFragmentActivity {
+TabHost mTabHost;
+TabManager mTabManager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    setTheme(SampleList.THEME); // Used for theme switching in samples
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.fragment_tabs);
+    mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+
+    mTabManager = new TabManager(this, mTabHost, R.id.realtabcontent);
+
+    mTabManager.addTab(
+            mTabHost.newTabSpec("simple").setIndicator("Simple"),
+            FragmentStackSupport.CountingFragment.class, null);
+    mTabManager.addTab(
+            mTabHost.newTabSpec("contacts").setIndicator("Contacts"),
+            LoaderCursorSupport.CursorLoaderListFragment.class, null);
+    mTabManager.addTab(
+            mTabHost.newTabSpec("custom").setIndicator("Custom"),
+            LoaderCustomSupport.AppListFragment.class, null);
+    mTabManager.addTab(
+            mTabHost.newTabSpec("throttle").setIndicator("Throttle"),
+            LoaderThrottleSupport.ThrottledLoaderListFragment.class, null);
+
+    if (savedInstanceState != null) {
+        mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+    }
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putString("tab", mTabHost.getCurrentTabTag());
+}
+
+/**
+ * This is a helper class that implements a generic mechanism for
+ * associating fragments with the tabs in a tab host. It relies on a trick.
+ * Normally a tab host has a simple API for supplying a View or Intent that
+ * each tab will show. This is not sufficient for switching between
+ * fragments. So instead we make the content part of the tab host 0dp high
+ * (it is not shown) and the TabManager supplies its own dummy view to show
+ * as the tab content. It listens to changes in tabs, and takes care of
+ * switch to the correct fragment shown in a separate content area whenever
+ * the selected tab changes.
+ */
+public static class TabManager implements TabHost.OnTabChangeListener {
+    private final FragmentActivity mActivity;
+    private final TabHost mTabHost;
+    private final int mContainerId;
+    private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+    TabInfo mLastTab;
+
+    static final class TabInfo {
+        private final String tag;
+        private final Class<?> clss;
+        private final Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String _tag, Class<?> _class, Bundle _args) {
+            tag = _tag;
+            clss = _class;
+            args = _args;
+        }
+    }
+
+    static class DummyTabFactory implements TabHost.TabContentFactory {
+        private final Context mContext;
+
+        public DummyTabFactory(Context context) {
+            mContext = context;
+        }
+
+        @Override
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    public TabManager(FragmentActivity activity, TabHost tabHost,
+            int containerId) {
+        mActivity = activity;
+        mTabHost = tabHost;
+        mContainerId = containerId;
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+        tabSpec.setContent(new DummyTabFactory(mActivity));
+        String tag = tabSpec.getTag();
+
+        TabInfo info = new TabInfo(tag, clss, args);
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state. If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        info.fragment = mActivity.getSupportFragmentManager()
+                .findFragmentByTag(tag);
+        if (info.fragment != null && !info.fragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager()
+                    .beginTransaction();
+            ft.detach(info.fragment);
+            ft.commit();
+        }
+
+        mTabs.put(tag, info);
+        mTabHost.addTab(tabSpec);
+    }
+
+    @Override
+    public void onTabChanged(String tabId) {
+        TabInfo newTab = mTabs.get(tabId);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager()
+                    .beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(mActivity,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(mContainerId, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+
+            mLastTab = newTab;
+            ft.commit();
+            mActivity.getSupportFragmentManager()
+                    .executePendingTransactions();
+        }
+    }
+}
+}
+
+
+public class FragmentStackSupport extends SherlockFragmentActivity {
+int mStackLevel = 1;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    setTheme(SampleList.THEME); //Used for theme switching in samples
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.fragment_stack);
+
+    // Watch for button clicks.
+    Button button = (Button)findViewById(R.id.new_fragment);
+    button.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+            addFragmentToStack();
+        }
+    });
+
+    if (savedInstanceState == null) {
+        // Do first time initialization -- add initial fragment.
+        Fragment newFragment = CountingFragment.newInstance(mStackLevel);
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.add(R.id.simple_fragment, newFragment).commit();
+    } else {
+        mStackLevel = savedInstanceState.getInt("level");
+    }
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt("level", mStackLevel);
+}
+
+
+void addFragmentToStack() {
+    mStackLevel++;
+
+    // Instantiate a new fragment.
+    Fragment newFragment = CountingFragment.newInstance(mStackLevel);
+
+    // Add the fragment to the activity, pushing this transaction
+    // on to the back stack.
+    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+    ft.replace(R.id.simple_fragment, newFragment);
+    ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+    ft.addToBackStack(null);
+    ft.commit();
+}
+
+
+
+public static class CountingFragment extends SherlockFragment {
+    int mNum;
+
+    /**
+     * Create a new instance of CountingFragment, providing "num"
+     * as an argument.
+     */
+    static CountingFragment newInstance(int num) {
+        CountingFragment f = new CountingFragment();
+
+        // Supply num input as an argument.
+        Bundle args = new Bundle();
+        args.putInt("num", num);
+        f.setArguments(args);
+
+        return f;
+    }
+
+    /**
+     * When creating, retrieve this instance's number from its arguments.
+     */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mNum = getArguments() != null ? getArguments().getInt("num") : 1;
+    }
+
+    /**
+     * The Fragment's UI is just a simple text view showing its
+     * instance number.
+     */
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.hello_world, container, false);
+        View tv = v.findViewById(R.id.text);
+        ((TextView)tv).setText("Fragment #" + mNum);
+        tv.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.gallery_thumb));
+        return v;
+    }
+}
+
+}
+</code></pre>

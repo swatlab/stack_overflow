@@ -1,0 +1,124 @@
+<p>I got a time picker preference. From there i want to get the time via <code>ShardPreference</code> and display it via a button click.</p>
+
+<p>My time picker preference:</p>
+
+<pre><code>public class TimePreference extends DialogPreference {
+private int lastHour = 0;
+private int lastMinute = 0;
+private TimePicker picker = null;
+
+public static int getHour(String time) {
+    String[] pieces = time.split(":");
+
+    return (Integer.parseInt(pieces[0]));
+}
+
+public static int getMinute(String time) {
+    String[] pieces = time.split(":");
+
+    return (Integer.parseInt(pieces[1]));
+}
+
+public TimePreference(Context ctxt, AttributeSet attrs) {
+    super(ctxt, attrs);
+
+    setPositiveButtonText("Set");
+    setNegativeButtonText("Cancel");
+}
+
+@Override
+protected View onCreateDialogView() {
+    picker = new TimePicker(getContext());
+
+    return (picker);
+}
+
+@Override
+protected void onBindDialogView(View v) {
+    super.onBindDialogView(v);
+
+    picker.setCurrentHour(lastHour);
+    picker.setCurrentMinute(lastMinute);
+}
+
+@Override
+protected void onDialogClosed(boolean positiveResult) {
+    super.onDialogClosed(positiveResult);
+
+    if (positiveResult) {
+        lastHour = picker.getCurrentHour();
+        lastMinute = picker.getCurrentMinute();
+
+        String time = String.valueOf(lastHour) + ":" + String.valueOf(lastMinute);
+
+        if (callChangeListener(time)) {
+            persistString(time);
+        }
+    }
+}
+
+@Override
+protected Object onGetDefaultValue(TypedArray a, int index) {
+    return (a.getString(index));
+}
+
+@Override
+protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
+    String time;
+
+    if (restoreValue) {
+        if (defaultValue == null) {
+            time = getPersistedString("12:00");
+        } else {
+            time = getPersistedString(defaultValue.toString());
+        }
+    } else {
+        time = defaultValue.toString();
+    }
+
+    lastHour = getHour(time);
+    lastMinute = getMinute(time);
+}
+}
+</code></pre>
+
+<p>My preference xml:</p>
+
+<pre><code><de.example.app.TimePreference
+            android:key="@string/time_value"
+            android:title="@string/time_title"
+            android:summary="@string/time_summary"
+            />
+</code></pre>
+
+<p>And my Main:</p>
+
+<pre><code>public class Application extends Activity {
+
+public static final String PREFERENCES = "appPref";
+SharedPreferences sharedPreferences;
+
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+    sharedPreferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
+    final String time = sharedPreferences.getString("time_key", "12:00");
+
+
+    final Button btnTime = (Button) findViewById(R.id.time);
+    btnTime.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(getApplicationContext(), time, Toast.LENGTH_LONG).show();
+        }
+    });
+
+}
+</code></pre>
+
+<p>I know that <code>persistString(time);</code> should put a key and a value in my <code>SharedPreference</code> but I cant get it out of it. I don't know the key. </p>
+
+<p>Also i can't find a good tutorial about <code>SharedPreference</code> how they work, write and read or how they related to the <code>string.xml</code></p>

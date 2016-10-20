@@ -1,0 +1,252 @@
+<p>i'm new to android programing and working with sqlitedatabse.i want if i click on an list view item the corresponding datas from my database must be displayed in the second activities textview i got the answer but one problem i'm geting only the last data of each category.i need every data of a particular category.i'm working this for so many days .can somebody please help me ?</p>
+
+<p>this is my code for retreiving data from database</p>
+
+<pre><code> public class DatabaseHelper extends SQLiteOpenHelper {
+
+public static String DB_PATH = "/data/data/com.example.freshdatabase/databases/";
+public static String DB_NAME = "Android.sqlite";
+public static final int DB_VERSION = 1;
+
+public static final String TB_USER = "Users";
+private SQLiteDatabase myDB;
+private Context context;
+
+public DatabaseHelper(Context context) {
+    super(context, DB_NAME, null, DB_VERSION);    
+    this.context = context;
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public synchronized void close(){
+    if(myDB!=null){
+        myDB.close();
+    }
+    super.close();
+
+}
+private boolean checkDataBase() {
+    SQLiteDatabase tempDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        tempDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+    } catch (SQLiteException e) {
+        Log.e("tle99 - check", e.getMessage());
+    }
+    if (tempDB != null)
+        tempDB.close();
+    return tempDB != null ? true : false;
+}
+public void copyDataBase() throws IOException{
+    try {
+        InputStream myInput = context.getAssets().open(DB_NAME);
+        String outputFileName = DB_PATH + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outputFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+
+        while((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    } catch (Exception e) {
+        Log.e("tle99 - copyDatabase", e.getMessage());
+    }
+
+}
+public void openDataBase() throws SQLException{
+    String myPath = DB_PATH + DB_NAME;
+    myDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+}
+public void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();        
+
+    if (dbExist) {
+
+    } else {
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            Log.e("tle99 - create", e.getMessage());
+        }
+    }
+
+}
+
+public List<String> getAllUsers(){
+    List<String> listUsers = new ArrayList<String>();
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor c;
+
+    try {
+        c = db.rawQuery("SELECT * FROM " + TB_USER , null);
+        if(c == null) return null;
+        String id;
+        String name ;
+        c.moveToFirst();
+        do {  
+            name = c.getString(1);            
+            listUsers.add(name);
+        } while (c.moveToNext()); 
+        c.close();
+    } catch (Exception e) {
+        Log.e("tle99", e.getMessage());
+    }
+
+    db.close();        
+
+    return listUsers;
+}
+public String getPostDesc(String Name){
+
+String  desc = "";
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor c;
+
+    try {
+        c = db.rawQuery("Select * from Post INNER JOIN Users ON Users.ID=Post.ID WHERE NAME='"+Name+"'" , null);
+
+        if(c == null) return null;
+        while (c.moveToNext()) {
+            desc=c.getString(1);
+
+        System.out.println(desc);
+
+        }
+        c.close();
+
+    } catch (Exception e) {
+        Log.e("tle99", e.getMessage());
+    }
+
+    db.close();
+    return desc;        
+
+
+
+    }
+
+public String getPostdesc(String name){
+    String title="";
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor c;
+
+    try {
+        c = db.rawQuery("Select * from Post INNER JOIN Users ON Users.ID=Post.ID WHERE NAME='"+name+"'" , null);
+
+        if(c == null) return null;
+
+
+        if(c.moveToFirst()){
+            title= c.getString(2);  
+
+        }
+
+            {
+}
+            c.close();
+    } catch (Exception e) {
+        Log.e("tle99", e.getMessage());
+    }
+
+    db.close();        
+
+    return title;
+    }
+} 
+</code></pre>
+
+<p>this is my code for main activity method</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+
+DatabaseHelper dbHeplper;
+
+ListAdapter adapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    dbHeplper = new DatabaseHelper(getApplicationContext());
+    try {
+        dbHeplper.createDataBase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+    ListView lvUsers= (ListView)findViewById(R.id.lvUsers);
+    final List<String> listUsers = dbHeplper.getAllUsers();
+
+    if(listUsers != null){
+        adapter = new ArrayAdapter<String>(getApplicationContext(),
+                android.R.layout.simple_list_item_1, android.R.id.text1,
+                listUsers);
+        lvUsers.setAdapter(adapter);
+
+
+    }
+    lvUsers.setOnItemClickListener(new OnItemClickListener() {
+
+        @Override
+
+        public void onItemClick(AdapterView<?> parent, View view,
+                int position, long id) {
+
+                String Desc =(String) dbHeplper.getPostDesc(listUsers.get(position));
+                String title1 =(String) dbHeplper.getPostdesc(listUsers.get(position));
+
+                Toast.makeText(getApplicationContext(),
+                  "Desc is: " + Desc,   Toast.LENGTH_LONG)
+                  .show();
+                Toast.makeText(getApplicationContext(),
+                          "Desc is: " + title1,   Toast.LENGTH_LONG)
+                          .show();
+                Intent newActivity0 = new Intent(MainActivity.this, Second.class);
+                newActivity0.putExtra("title", Desc);
+                newActivity0.putExtra("title1", title1);
+                startActivity(newActivity0);
+                }
+                }); 
+
+
+}
+</code></pre>
+
+<p>this is my code for second activity</p>
+
+<pre><code>Bundle bundle = getIntent().getExtras();
+String message = bundle.getString("title");
+String message1 = bundle.getString("title1");
+
+TextView txtView = (TextView) findViewById(R.id.textView1);    
+txtView.setText(message);
+
+TextView txtView1 = (TextView) findViewById(R.id.TextView2);    
+txtView1.setText(message1);
+</code></pre>
+
+<p>this is my database tables</p>
+
+<p><img src="http://i.stack.imgur.com/27QEV.png" alt="enter image description here"></p>
+
+<p><img src="http://i.stack.imgur.com/rCrlT.png" alt="enter image description here"></p>

@@ -1,0 +1,108 @@
+<p>When I load images from SD card to ListView, it starts lagging. I can not scroll smoothly. So, I decided to use recycler view and maybe Picasso. The only problem I am facing is that, ListView adapter is not working with RecyclerView. </p>
+
+<p>How can I rewrite the following code/adapter to work with RecyclerView?</p>
+
+<p>All the best and Happy New Year!</p>
+
+<pre><code>public class Saveditems extends BaseActivity {
+
+ArrayList<String> f = new ArrayList<>();// list of file paths
+File[] listFile;
+
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.saveditems);
+
+    activateToolbarWithHomeEnabled().setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+
+            finish();
+
+        }
+
+    });
+
+    getFromSdcard();
+
+    RecyclerView imagelist = (RecyclerView) findViewById(R.id.PhoneImageGrid);
+
+    ImageAdapter imageAdapter = new ImageAdapter();
+
+    imagelist.setAdapter(imageAdapter); //error
+    //image adapter cannot be applied to recycler view
+
+}
+
+public void getFromSdcard() {
+
+    File file = new File(Environment.getExternalStorageDirectory() + "/FlickrBrowser");
+
+    if (file.isDirectory()) {
+
+        listFile = file.listFiles();
+
+        for (File aListFile : listFile) {
+
+            f.add(aListFile.getAbsolutePath());
+
+        }
+    }
+}
+
+public class ImageAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+
+    public ImageAdapter() {
+        mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public int getCount() {
+        return f.size();
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @SuppressLint("InflateParams")
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        ViewHolder holder;
+
+        if (convertView == null) {
+
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(
+                    R.layout.galleryitem, null);
+            holder.imageview = (ImageView) convertView.findViewById(R.id.thumbImage);
+
+            convertView.setTag(holder);
+
+        } else {
+
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        Bitmap myBitmap = BitmapFactory.decodeFile(f.get(position));
+        holder.imageview.setImageBitmap(myBitmap);
+        return convertView;
+
+    }
+
+}
+
+class ViewHolder {
+
+    ImageView imageview;
+
+}}
+</code></pre>

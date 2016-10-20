@@ -1,0 +1,55 @@
+<p>I am using Picasso library to load and display images in a ViewPager. The images being loaded have high resolution, I would like to add an insampling size to them. I do not know, however, how or where I should add this insampling size attribute. My ViewPagerAdapter.java class has the following.</p>
+
+<pre><code>@Override
+public Object instantiateItem(ViewGroup container, int position) {
+   ImageView iv_page_image;
+   inflater = (LayoutInflater) mContext
+      .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+   View itemView = inflater.inflate(R.layout.viewpager_item, container,false);
+   iv_page_image = (ImageView) itemView.findViewById(R.id.iv_page_image);
+   String path = pageList.get(position).getPageImage();
+   path = path.replaceAll(" ", "%20");
+   if (path != null && !(path.equalsIgnoreCase(""))) {
+      Picasso.with(mContext).load(path)
+         .placeholder(R.drawable.placeholder_empty)
+         .into(iv_page_image, new Callback() {
+         @Override
+         public void onSuccess() {
+
+         }
+         @Override
+         public void onError() {
+         }
+      });
+    }
+((ViewPager) container).addView(itemView);
+return itemView;
+}
+</code></pre>
+
+<p>I would like to add something like the following to the images</p>
+
+<pre><code>private static int calculateInSampleSize(BitmapFactory.Options options,
+        int reqWidth, int reqHeight) {
+
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and
+        // width
+        final int heightRatio = Math.round((float) height
+                / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will
+        // guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+    return inSampleSize;
+}
+</code></pre>

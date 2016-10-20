@@ -1,0 +1,114 @@
+<p>I have a swipe <code>Activity</code>, with 2 swipe pages, I added the content for the first page and on the second page the content is duplicated, how can I set different content to the second page in my swipe view?</p>
+
+<pre><code>public class ListItemClicked extends ActionBarActivity {
+
+static Bundle extras;
+
+SectionsPagerAdapter mSectionsPagerAdapter;
+static ImageLoader imageLoader;
+static DisplayImageOptions options;
+
+ViewPager mViewPager;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.list_item_clicked);
+
+
+
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    extras = getIntent().getExtras();
+
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+
+    ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
+    imageLoader = ImageLoader.getInstance();
+    imageLoader.init(config);
+
+    //Setup options for ImageLoader so it will handle caching for us.
+    options = new DisplayImageOptions.Builder()
+            .cacheInMemory()
+            .cacheOnDisc()
+            .build();
+
+
+
+}
+
+
+   public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        return PlaceholderFragment.newInstance(position + 1);
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section4).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section5).toUpperCase(l);
+        }
+        return null;
+    }
+}
+
+
+public static class PlaceholderFragment extends Fragment {
+
+
+    private static final String ARG_SECTION_NUMBER = "section_number";
+
+
+    public static PlaceholderFragment newInstance(int sectionNumber) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState)
+    {
+
+        View rootView = inflater.inflate(R.layout.fragment_list_item_clicked, container, false);
+
+
+        TextView pDate = (TextView) rootView.findViewById(R.id.textView);
+        pDate.setText( extras.getString("pdate") );
+
+
+        TextView ptitle = (TextView) rootView.findViewById(R.id.section_label);
+        ptitle.setText(extras.getString("pname"));
+
+
+        TextView pnText = (TextView) rootView.findViewById(R.id.textView2);
+        pnText.setText( extras.getString("pText"));
+
+        return rootView;
+    }
+}
+
+}
+</code></pre>

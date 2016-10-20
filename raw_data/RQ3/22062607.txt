@@ -1,0 +1,118 @@
+<pre><code>@Override
+public View getView(int position, View view, ViewGroup parent)
+{
+    ViewHolder holder;
+    if (view == null ) {
+        // We must create a new view if we're not given a recycle view or
+        // if the recycle view has the wrong layout.
+        view = mInflater.inflate(mExpandable ? R.layout.library_row_expandable : R.layout.library_row, null);
+        holder = new ViewHolder();  
+        view.setTag(holder);
+        if (mExpandable) {
+            holder.text = (TextView)view.findViewById(R.id.text);
+            holder.arrow = (ImageView)view.findViewById(R.id.arrow);
+            holder.arrow.setOnClickListener(this);
+        } else {
+            holder.text = (TextView)view.findViewById(R.id.title_row);
+            holder.text.setLongClickable(true);
+        }
+        holder.text.setOnClickListener(this);
+    } else {
+        holder = (ViewHolder)view.getTag();
+    }
+    Cursor cursor = mCursor;
+    cursor.moveToPosition(position);
+    holder.id = cursor.getLong(0);
+    if (mFields.length > 1) {
+        String line1 = cursor.getString(1);
+        String line2 = cursor.getString(2);
+        SpannableStringBuilder sb = new SpannableStringBuilder(line1);
+        sb.append('\n');
+        sb.append(line2);
+        sb.setSpan(new ForegroundColorSpan(Color.GRAY), line1.length() + 1, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        holder.text.setText(sb);
+        holder.title = line1;
+    } else {
+        String title = cursor.getString(1);
+        holder.text.setText(title);
+        holder.title = title;
+    }
+
+    return view;
+}
+</code></pre>
+
+<p>then the onClick where the error occours</p>
+
+<pre><code>@Override
+public Intent createData(View view)
+{
+    ViewHolder holder = new ViewHolder();
+    holder = (ViewHolder)view.getTag();//returns null   
+    Intent intent = new Intent();
+    intent.putExtra(LibraryAdapter.DATA_TYPE, mType);
+    intent.putExtra(LibraryAdapter.DATA_ID, (long)holder.id);//nullpointerexception
+    intent.putExtra(LibraryAdapter.DATA_TITLE,holder.text.getText());//exception
+    intent.putExtra(LibraryAdapter.DATA_EXPANDABLE, mExpandable);
+    return intent;
+}
+
+@Override
+public void onClick(View view)
+{
+    int id = view.getId();
+    if (mExpandable)
+        view = (View)view.getParent();      
+    Intent intent;      
+        intent = createData(view);
+        if (id == R.id.arrow) {
+            mActivity.onItemExpanded(intent);
+        } else {
+            mActivity.onItemClicked(intent);
+        }       
+
+}
+</code></pre>
+
+<p>Then the xml</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="vertical"
+> 
+<TextView android:id="@+id/title_row"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+ android:minHeight="44dip"
+ android:padding="3dip"
+  android:background="@drawable/selectable_item_bg"
+  android:layout_weight="1"
+  android:gravity="center_vertical"
+  android:textStyle="bold"
+  android:maxLines="2"
+  android:textColor="#ffff"
+  android:ellipsize="end"
+/>
+</code></pre>
+
+<p></p>
+
+<pre><code>02-27 13:32:33.664: E/AndroidRuntime(8239): FATAL EXCEPTION: main
+02-27 13:32:33.664: E/AndroidRuntime(8239): java.lang.NullPointerException
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at com.applicationpackge.MediaAdapter.createData(MediaAdapter.java:550)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at com.applicationpackge.MediaAdapter.onClick(MediaAdapter.java:563)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at android.view.View.performClick(View.java:4084)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at android.view.View$PerformClick.run(View.java:16987)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at android.os.Handler.handleCallback(Handler.java:615)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at android.os.Handler.dispatchMessage(Handler.java:92)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at android.os.Looper.loop(Looper.java:137)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at android.app.ActivityThread.main(ActivityThread.java:4794)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at java.lang.reflect.Method.invokeNative(Native Method)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at java.lang.reflect.Method.invoke(Method.java:511)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:789)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:556)
+02-27 13:32:33.664: E/AndroidRuntime(8239):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>However the onLongpressitem works perfect now I think Should setonclicklistner for each element in linearlayout what do you think.</p>

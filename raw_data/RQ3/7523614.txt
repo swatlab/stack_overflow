@@ -1,0 +1,106 @@
+<p>So I have a rather annoying issue with a listview. My app was working just fine until the Android 2.3.3 update on my Droid 2. (Still seems to work fine on a Samsung Evo)</p>
+
+<p>There are a few aspects of this issue.
+1. The background is always gray in empty slots.
+2. The last entry in the list appears to be invisible until it is selected. When selected you can see the black text, but no background.
+3. Other/Older entries in the list do show with the correct background color.</p>
+
+<p>I have tried quite a few things, and nothing seems to fix this.
+Thoughts?</p>
+
+<p>Listview definition</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_height="wrap_content" 
+ android:gravity="left|center"
+ android:layout_width="wrap_content" 
+ android:layout_alignParentBottom="true"
+ android:paddingLeft="1px">
+ <TextView android:text="" 
+ android:id="@+id/list_view_text_view"
+ android:layout_width="wrap_content" 
+ android:textSize="13sp"    
+ android:singleLine="false"
+ android:layout_height="wrap_content"
+ android:layout_marginLeft="1sp">
+</TextView>
+
+
+</LinearLayout>
+</code></pre>
+
+<p>Main Layout of listview</p>
+
+<pre><code>         <ListView android:id="@+id/ListView01" 
+        android:layout_width="wrap_content" 
+        android:layout_height="fill_parent" 
+        android:layout_alignRight="@+id/Button06" 
+        android:layout_below="@+id/TextView01" 
+        android:layout_alignLeft="@+id/TextView01"
+        android:layout_marginBottom="2sp"
+        android:layout_marginRight="2sp"
+        android:layout_marginLeft="2sp"
+        android:layout_above="@+id/EditText01" 
+        android:transcriptMode="normal"
+        android:footerDividersEnabled="false"
+        android:headerDividersEnabled="false"
+        android:gravity="bottom"
+ >
+ </ListView>
+</code></pre>
+
+<p>Listveiw Adapter</p>
+
+<pre><code>private class EfficientAdapter extends BaseAdapter {
+       private LayoutInflater mInflater;
+
+       public EfficientAdapter(Context context) {
+       mInflater = LayoutInflater.from(context);
+
+       }
+
+       public int getCount() {
+       return comment_list.size();
+       }
+
+       public Object getItem(int position) {
+       return position;
+       }
+
+       public long getItemId(int position) {
+       return position;
+       }
+       public View getView(int position, View convertView, ViewGroup parent) {
+       ViewHolder holder;
+
+       if (convertView == null) {
+       convertView = mInflater.inflate(R.layout.listview, null);
+       holder = new ViewHolder();
+       holder.text = (TextView) convertView
+       .findViewById(R.id.list_view_text_view);
+
+       convertView.setTag(holder);
+       } else {
+       holder = (ViewHolder) convertView.getTag();
+
+       }
+
+       holder.text.setText(comment_list.get(position).toString());
+
+       return convertView;
+       }
+
+       class ViewHolder {
+       TextView text;
+       }
+       }
+</code></pre>
+
+<p>This is the code i use to try and set the background in my main routine.</p>
+
+<pre><code>        list_view_comments.setBackgroundResource(R.color.color_con);
+        list_view_comments.setDrawingCacheBackgroundColor(R.color.color_con);
+        list_view_comments.setBackgroundColor(R.color.color_con);
+        list_view_comments.setCacheColorHint(R.color.color_con);
+</code></pre>

@@ -1,0 +1,172 @@
+<p>I have a method getting called from inside OnClick callback method.</p>
+
+<pre><code>public void onClick(View v) {
+    switch (v.getId()){
+        case R.id.irating:
+            ilist();
+            break;
+</code></pre>
+
+<p>The <code>ilist()</code> method looks like </p>
+
+<pre><code>public Arraylist ilist() {
+    final ArrayList selectedratings = new ArrayList();
+    // Have alert dialog with multichoice options and 
+    // Using Shared preference to store selected values and remind in dialog     
+    return selectedratings; 
+}
+</code></pre>
+
+<p>Now, how can I get the selectedrating arraylist inside another OnClick method of button and i need to pass the selectedrating list to another activity.</p>
+
+<p>Parent Activity:</p>
+
+<pre><code>public class AllMovieRating extends ActionBarActivity implements View.OnClickListener {
+
+private Views mViews;
+final ArrayList ilist = new ArrayList();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_all_movie_rating);
+
+    mViews=new Views();
+    mViews.irating.setOnClickListener(this);
+
+
+}
+
+@Override
+public void onClick(View v) {
+    switch (v.getId()){
+        case R.id.imdb_rating:
+            ilist();
+            break;
+
+    }
+
+}
+
+private void filtervalues() {
+    Intent intent = new Intent(AllRating.this,sharedcollect.class);
+    intent.putExtra("im",ilist);
+    startActivity(intent);
+
+}
+
+
+public ArrayList ilist() {
+
+    final CharSequence[] ratings = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+    final boolean[] ratingschecked = {false, false, false, false, false, false, false, false, false, false};
+    SharedPreferences sharedPreferences = this.getSharedPreferences("checkedrate_i", Context.MODE_PRIVATE);
+    final SharedPreferences.Editor editor = sharedPreferences.edit();
+
+    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+    int size = sharedPreferences.getInt("size", 0);
+    for(int j=0;j<size;j++)
+    {
+        ilist.add(sharedPreferences.getString("selectedratings" + j, null));
+       //Log.e("Kumar", "" + selectedratings);
+    }
+
+    for(int j=0;j<=ratingschecked.length;j++){
+        if(ilist.contains((String.valueOf(j)))) {
+            ratingschecked[j-1] = true;
+        }
+    }
+
+    builder.setTitle("Select Ratings");
+    builder.setMultiChoiceItems(ratings, ratingschecked, new DialogInterface.OnMultiChoiceClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+            if (isChecked) {
+                if(!ilist.contains((String)String.valueOf(ratings[which]))){
+                    ilist.add(String.valueOf(ratings[which]));
+
+                    ratingschecked[which]=true;
+                }
+            } else if ((ilist.contains((String)String.valueOf(ratings[which])))) {
+                ilist.remove(String.valueOf(ratings[which]));
+               // Log.e("Kumar", String.valueOf(ratings[which]));
+                ratingschecked[which]=false;
+
+            }
+        }
+    }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+
+            // editor.putString("checked", String.valueOf(selectedratings));
+            for (int i = 0; i < ilist.size(); i++) {
+                editor.putString("selectedratings" + i, String.valueOf(ilist.get(i)));
+            }
+            editor.putInt("size", ilist.size());
+            editor.apply();
+            //Log.e("Shiva", String.valueOf(selectedratings));
+
+
+        }
+    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+
+        }
+    });
+
+    AlertDialog dialog = builder.create();
+    builder.show();
+  return ilist;
+}
+</code></pre>
+
+<p>child Activity:</p>
+
+<pre><code>public class sharedcollect extends ActionBarActivity {
+
+ListView movielist;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_sharedcollect);
+
+    Intent i = getIntent();
+    ArrayList<String> list = i.getStringArrayListExtra("im");
+
+
+
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_sharedcollect, menu);
+    return true;
+}
+
+@Override
+public void onBackPressed() {
+    //do whatever to save the settings
+    moveTaskToBack(true);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+
+    switch (item.getItemId()){
+        case R.id.action_settings:
+           Intent intent = new Intent(sharedcollect.this,AllMovieRating.class);
+            startActivity(intent);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    } }}
+</code></pre>

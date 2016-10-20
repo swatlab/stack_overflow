@@ -1,0 +1,60 @@
+<p>I have an object that looks like this (I've using a bit of the Guava library in order to simply my equals and hashcode methods):</p>
+
+<pre><code>public class MyClass {
+    private Collection<Integer> integers;
+    private Collection<String> strings;
+
+    // Getters and Setters...
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        MyClass that = (MyClass) o;
+
+        return Objects.equal(integers, that.integers) &&
+               Objects.equal(strings, that.strings);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(integers, strings);
+    }
+}
+</code></pre>
+
+<p>The issue I'm running into is with code that essentially does this (this would be a typical test case):</p>
+
+<pre><code>// Produce a new instance of MyClass that users ArrayLists.
+MyClass expected = new MyClass();
+expected.setIntegers(Arrays.asList(1, 2, 3));
+expected.setStrings(Arrays.asList("a", "b"));
+
+// I don't normally construct the actual object here, 
+// but I've included the code so you get an understanding of what's happening
+
+// Produce a new instance of MyClass that uses HashSets.
+Set<Integer> someNumbers = new HashSet<Integer>();
+someNumbers.add(1);
+someNumbers.add(2);
+someNumbers.add(3);
+Set<String> someStrings = new HashSet<String>();
+someStrings.add("a");
+someStrings.add("b");
+MyClass actual = new MyClass();
+actual.setIntegers(someNumbers);
+actual.setIntegers(someStrings);
+
+assertEquals(expected, actual);
+</code></pre>
+
+<p>The problem I'm running into is that even though the contents of the collections are all the same and the compile-time type of those members is "Collection", the run-time types are used to evaluate equality so this assertion fails. Looking at the source code for AbstractSet.equals and AbstractList.equals, they check to see if the other object is a Set or a List, respectively, before they evaluate the contents. </p>
+
+<p>I suppose that makes some sense because order matters in a list and doesn't in a set, so, even if the contents are the same, you can't compare them.</p>
+
+<p>That said, in this case, I don't care what the underlying collection is - I just want to know if the contents are the same and order makes no difference. Is there any easy way to do this?</p>

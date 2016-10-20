@@ -1,0 +1,88 @@
+<p>my problem is this. I have two listfragments two TabPageIndicator (I'm using the library viewpagerindicator). I'm overriding the OnCreateView, creating a progressbar and listview. My problem is that the progressbar is the api level 10 and I wish the progressbar is the api level 16. 
+Is it possible? And if so how? </p>
+
+<p>Thank you.</p>
+
+<p>My code:</p>
+
+<p>main.xml is assigned a custom theme (called MyTheme) whose parent to Theme.Light</p>
+
+<p>main.xml </p>
+
+<pre><code><com.viewpagerindicator.TabPageIndicator 
+    android:id="@+id/indicator"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+     />
+
+
+<android.support.v4.view.ViewPager 
+android:id="@+id/pager"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent" 
+/>
+</code></pre>
+
+<p>styles.xml</p>
+
+<pre><code> <!-- CustomTabPageIndicator -->
+
+<style name="Theme.MyTheme" parent="@android:style/Theme.Light">
+    <item name="vpiTabPageIndicatorStyle">@style/MyTabPageIndicator</item>
+
+</style>
+
+<style name="MyTabPageIndicator" parent="Widget.TabPageIndicator">
+    <item name="android:textSize">14sp</item> 
+    <item name="android:textColor">#000000</item>    
+   <item name="android:background">@drawable/custom_tab_indicator</item>   
+ <!--    -->
+</style>
+</code></pre>
+
+<p>Code one of the listfragments</p>
+
+<pre><code>@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    //return super.onCreateView(inflater, container, savedInstanceState);
+        final Context context = getActivity();
+        FrameLayout root = new FrameLayout(context);
+
+        LinearLayout pframe = new LinearLayout(context);
+        pframe.setId(INTERNAL_PROGRESS_CONTAINER_ID);
+        pframe.setOrientation(LinearLayout.VERTICAL);
+        pframe.setVisibility(View.GONE);
+        pframe.setGravity(Gravity.CENTER);
+
+      ProgressBar progress = new ProgressBar(context, null, android.R.attr.progressBarStyleLarge);         
+       progress.setBackground(getResources().getDrawable(R.drawable.custombarprogress));
+
+        pframe.addView(progress, new FrameLayout.LayoutParams(
+               ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        //pframe.addView(progress, new FrameLayout.LayoutParams(50,50));
+        root.addView(pframe, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+
+        FrameLayout lframe = new FrameLayout(context);
+        lframe.setId(INTERNAL_LIST_CONTAINER_ID);
+
+       TextView tv = new TextView(getActivity());
+        tv.setId(INTERNAL_EMPTY_ID);
+        tv.setGravity(Gravity.CENTER);
+        lframe.addView(tv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+
+        ListView lv = new ListView(getActivity());
+        lv.setId(android.R.id.list);
+        lv.setDrawSelectorOnTop(false);
+        lframe.addView(lv, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+
+        root.addView(lframe, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+
+        root.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+
+        return root;
+}
+</code></pre>

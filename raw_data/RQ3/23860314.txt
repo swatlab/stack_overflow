@@ -1,0 +1,252 @@
+<p>i'm trying to use Button in a fragment when I click on a tab in an actionbar.
+Nothing happened when I click on this button and i don't understand why.
+I tried to find solutions on this forum but nothing works.
+I'm a beginner android developper so thank you for your help.</p>
+
+<p>This is the code of the Fragment class:</p>
+
+<pre><code>public class Tab2Fragment extends Activity {
+int i = 1;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    if (savedInstanceState == null) {
+        Fragment newFragment = Frag2.newInstance(i);
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.add(R.id.FrameLayout1, newFragment).commit();
+    } else {
+        i = savedInstanceState.getInt("level");
+    }
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt("level", i);
+}
+
+/*****************************************************/
+
+
+public static class Frag2 extends Fragment {
+
+public TextView tvStatus;
+public TextView tvResult;
+public TextView HeureArrivee;
+public File myFile;
+int mNum;
+
+static Frag2 newInstance(int num) {
+    Frag2 f = new Frag2();
+
+    Bundle args = new Bundle();
+    args.putInt("num", num);
+    f.setArguments(args);
+
+    return f;
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    mNum = getArguments() != null ? getArguments().getInt("num") : 1;
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+
+    View v = inflater.inflate(R.layout.tab2, container, false);
+
+    tvStatus = (TextView) v.findViewById(R.id.tvStatus);
+    tvResult = (TextView) v.findViewById(R.id.tvResult);
+    HeureArrivee = (TextView) v.findViewById(R.id.HeureArrivee);
+    Button scanBtn = (Button) v.findViewById(R.id.btnScan);
+    scanBtn.setOnClickListener(new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // here you set what you want to do when user clicks your button,
+            // e.g. launch a new activity
+            Toast.makeText(getActivity(),"Button is clicked!",    Toast.LENGTH_LONG).show();
+            tvStatus.setText("Press a button to start a scan.");
+        }
+    });
+
+    return v;
+}
+}
+}
+</code></pre>
+
+<hr>
+
+<p>this is the layout use in the fragment:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tab2"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+ <Button
+     android:id="@+id/btnScan"
+     android:layout_width="fill_parent"
+     android:layout_height="wrap_content"
+     android:layout_weight="0.34"
+     android:text="Scan"
+     android:textColor="@android:color/white"
+     android:textSize="25sp"
+     android:textStyle="bold"
+     android:clickable="True"
+     android:onClick="onClick" />
+  <TextView
+        android:id="@+id/tvStatuslbl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.03"
+        android:text="Status"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@android:color/white" />
+
+ <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+
+        android:textColor="@android:color/white"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+ <TextView
+        android:id="@+id/tvResultlbl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.03"
+        android:text="Result"
+        android:textColor="@android:color/white" />
+
+  <TextView
+      android:id="@+id/tvResult"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_weight="0.86"
+      android:textColor="@android:color/white" />
+
+  <TextView
+        android:id="@+id/heurelbl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Heure"
+        android:layout_weight="0.03"
+        android:textColor="@android:color/white"
+  />
+
+  <TextView
+      android:id="@+id/HeureArrivee"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_weight="0.61"
+      android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="0.34"
+        android:text="@string/body2" />
+
+</LinearLayout>
+</code></pre>
+
+<hr>
+
+<p>this is the main class :</p>
+
+<pre><code>public class TabActionBarActivity  extends Activity {
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    final ActionBar bar = getActionBar();
+    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+
+    bar.addTab(bar
+            .newTab()
+            .setText("Un")
+            .setTabListener(
+                    new TabListener<Tab1Fragment>(this,
+                            "Un", Tab1Fragment.class)));
+    bar.addTab(bar
+            .newTab()
+            .setText("Deux")
+            .setTabListener(
+                    new TabListener<Tab2Fragment.Frag2>(
+                            this, "list",
+                            Tab2Fragment.Frag2.class)));
+    if (savedInstanceState != null) {
+        bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
+    }
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt("tab", getActionBar().getSelectedNavigationIndex());
+}
+
+public static class TabListener<T extends Fragment> implements
+        ActionBar.TabListener {
+    private final Activity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+    private final Bundle mArgs;
+    private Fragment mFragment;
+
+    public TabListener(Activity activity, String tag, Class<T> clz) {
+        this(activity, tag, clz, null);
+    }
+
+    public TabListener(Activity activity, String tag, Class<T> clz,
+            Bundle args) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+        mArgs = args;
+
+        mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
+        if (mFragment != null && !mFragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getFragmentManager()
+                    .beginTransaction();
+            ft.detach(mFragment);
+            ft.commit();
+        }
+    }
+
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        if (mFragment == null) {
+            mFragment = Fragment.instantiate(mActivity, mClass.getName(),
+                    mArgs);
+            ft.add(android.R.id.content, mFragment, mTag);
+        } else {
+            ft.attach(mFragment);
+        }
+    }
+
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        if (mFragment != null) {
+            ft.detach(mFragment);
+        }
+    }
+
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        new CustomToast(mActivity, "Reselected!");
+    }
+}
+}
+</code></pre>

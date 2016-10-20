@@ -1,0 +1,139 @@
+<p>I need help with my shopping application favourites page. It is a gridview layout with images saved for illustration purposes. I require those images to be able to intent to each of their different product page and not all to the same page. Here are some code snippets of my sample.</p>
+
+<p>Favourites.java:</p>
+
+<pre><code>public class Favourites extends Activity implements OnClickListener {
+
+ImageView btnAllShops, btnFavourites, btnUploads, btnSettings, btnBuys;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_favourites);
+
+    GridView gvFavourites = (GridView) findViewById(R.id.gvFavourites);
+    gvFavourites.setAdapter(new ImageAdapter(this));
+
+    gvFavourites.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+            Toast.makeText(Favourites.this, "" + position, Toast.LENGTH_SHORT).show();
+            switch (position) {
+            case 0:
+            // start one activity
+            break;
+            case 1:
+            // start another activity
+            break;
+            // etc.
+
+        }
+        }});
+}
+
+private void findViewById() {
+    btnAllShops = (ImageView) findViewById(R.id.btnAllShops);
+    btnFavourites = (ImageView) findViewById(R.id.btnFavourites);
+    btnUploads = (ImageView) findViewById(R.id.btnUploads);
+    btnSettings = (ImageView) findViewById(R.id.btnSettings);
+    btnBuys = (ImageView) findViewById(R.id.btnBuys);
+
+    btnAllShops.setOnClickListener(this);
+    btnFavourites.setOnClickListener(this);
+    btnUploads.setOnClickListener(this);
+    btnSettings.setOnClickListener(this);
+    btnBuys.setOnClickListener(this);
+
+}
+
+@Override
+public void onClick(View arg0) {
+    switch (arg0.getId()) {
+    case R.id.btnAllShops:
+        Intent iA = new Intent(getApplicationContext(), AllShops.class);
+        startActivity(iA);
+        break;
+
+    case R.id.btnFavourites:
+        Intent iF = new Intent(getApplicationContext(), Favourites.class);
+        startActivity(iF);
+
+        break;
+
+    case R.id.btnUploads:
+        Intent iU = new Intent(getApplicationContext(), Uploads.class);
+        startActivity(iU);
+
+        break;
+
+    case R.id.btnSettings:
+        Intent iS = new Intent(getApplicationContext(),
+                SettingsActivity.class);
+        startActivity(iS);
+
+        break;
+
+    case R.id.btnBuys:
+        Intent iBuy = new Intent(getApplicationContext(), Buys.class);
+        startActivity(iBuy);
+
+        break;
+    }
+}
+
+}
+</code></pre>
+
+<p>ImageAdapter.java:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(266, 266));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(10, 10, 10, 10);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+// references to our images
+private Integer[] mThumbIds = {
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+        R.drawable.sample_6, R.drawable.sample_7,
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+        R.drawable.sample_6, R.drawable.sample_7,
+        R.drawable.sample_0, R.drawable.sample_1,
+        R.drawable.sample_2, R.drawable.sample_3,
+        R.drawable.sample_4, R.drawable.sample_5,
+        R.drawable.sample_6, R.drawable.sample_7
+};
+
+}
+</code></pre>

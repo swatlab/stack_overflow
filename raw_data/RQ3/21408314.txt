@@ -1,0 +1,255 @@
+<p>i am developing an application with an actionbarnavigator between two fragments, that means i have two different views for the user, who can swipe between them. the one fragment has a button, which opens another activity to show information from a database in a listview. but when i click on the button, i became a nullpointerexception. i dont know why. i hope that s.o. can help me. </p>
+
+<p>here is the mainactivity</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+SectionsPagerAdapter mSectionsPagerAdapter;
+Debtor debtor;
+Creditor creditor;
+public DataBaseHandler myDBHandler;
+ViewPager mViewPager;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    final ActionBar actionBar = getActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    actionBar.setSelectedNavigationItem(position);
+                }
+            });
+
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        actionBar.addTab(actionBar.newTab()
+                .setText(mSectionsPagerAdapter.getPageTitle(i))
+                .setTabListener(this));
+    }
+}
+
+@Override
+protected void onResume() {
+    super.onResume();
+
+    initFragments();
+    openDB();   
+}
+
+@Override
+protected void onDestroy() {
+    super.onDestroy();
+
+    closeDB();
+}
+
+private void initFragments() {
+    debtor    = (Debtor)mSectionsPagerAdapter.getItem(0);
+    creditor  = (Creditor)mSectionsPagerAdapter.getItem(1);
+}
+
+private void openDB() {
+    myDBHandler = new DataBaseHandler(this);
+    myDBHandler.open();
+}
+
+private void closeDB() {
+    myDBHandler.close();
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+
+@Override
+public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+ }
+</code></pre>
+
+<p>the fragment class</p>
+
+<pre><code>public class Debtor extends Fragment {
+
+private Button showDebtorsHistory;
+MainActivity mainActivity;
+
+public static final String ARG_SECTION_NUMBER = "section_number";
+
+public Debtor(int position) {       
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+    mainActivity = (MainActivity) getActivity();
+
+    View v = inflater.inflate(R.layout.debtor, container, false);
+
+    showDebtorsHistory = (Button)v.findViewById(R.id.button1);
+
+    showDebtorsHistory.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+
+            Intent i = new Intent(getActivity(), DebtorHistory.class);              
+            startActivityForResult(i, 100);
+        }
+    });
+
+    return v;
+}
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        mainActivity = (MainActivity) activity;
+    } 
+    catch (ClassCastException e) {
+        throw new ClassCastException(activity.toString() +  " Fehler: Keine MainActivity-Instanz!");
+    }
+}
+}
+</code></pre>
+
+<p>and the activity, which has to be opend, when the button is clicked</p>
+
+<pre><code>public class DebtorHistory extends Activity {
+
+Cursor cursor;
+private ListView mainList;
+MainActivity mainActivity;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.debtor_history);
+
+    mainList = (ListView)findViewById(R.id.listView_Debtors);
+    populateListViewFromDB();
+
+}
+
+@SuppressWarnings("deprecation")
+public void populateListViewFromDB() {                                                                          
+    cursor = mainActivity.myDBHandler.getAllDifferentNames1();
+
+    String[] colmn = new String[] {"n", "i", "d"};
+
+    int[] tolist = new int[] {R.id.txt_name,                        
+                                     R.id.list_userImage,
+                                     R.id.datum };
+
+    SimpleCursorAdapter myCursorAdapter 
+            = new SimpleCursorAdapter
+                        (this, R.layout.history_listrow, cursor, colmn, tolist);
+
+    mainList.setAdapter(myCursorAdapter);
+}
+
+}
+</code></pre>
+
+<p>the logcat message</p>
+
+<pre><code>01-28 15:19:31.967: E/AndroidRuntime(1205): java.lang.RuntimeException: Unable to start activity ComponentInfo{***.debtmanagerpro/***.debtmanagerpro.DebtorHistory}: java.lang.NullPointerException
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2073)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2098)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.ActivityThread.access$600(ActivityThread.java:138)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1204)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.os.Handler.dispatchMessage(Handler.java:99)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.os.Looper.loop(Looper.java:137)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.ActivityThread.main(ActivityThread.java:4872)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at java.lang.reflect.Method.invokeNative(Native Method)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at java.lang.reflect.Method.invoke(Method.java:511)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:790)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:557)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at dalvik.system.NativeStart.main(Native Method)
+01-28 15:19:31.967: E/AndroidRuntime(1205): Caused by: java.lang.NullPointerException
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at ***.debtmanagerpro.DebtorHistory.populateListViewFromDB(DebtorHistory.java:30)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at ***.debtmanagerpro.DebtorHistory.onCreate(DebtorHistory.java:23)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.Activity.performCreate(Activity.java:5191)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1082)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2037)
+01-28 15:19:31.967: E/AndroidRuntime(1205):     ... 11 more
+</code></pre>
+
+<p>line 23 in DebtorHistory is <strong>populateListViewFromDB();</strong> and 30 is <strong>cursor = mainActivity.myDBHandler.getAllDifferentNames1();</strong></p>
+
+<p>thanks in advance.</p>
+
+<p><strong>EDIT:</strong></p>
+
+<pre><code>public class DebtorHistory extends Activity {
+
+Cursor cursor;
+private ListView mainList;
+DataBaseHandler myDBHandler;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.debtor_history);
+
+    mainList = (ListView)findViewById(R.id.listView_Debtors);
+    populateListViewFromDB();
+
+}
+
+@Override
+protected void onResume() {
+    super.onResume();
+
+    myDBHandler = new DataBaseHandler(this);
+    myDBHandler.open();
+}
+
+@SuppressWarnings("deprecation")
+public void populateListViewFromDB() {                                                                      //MainList mit Werten aus der db befüllen
+
+    try {
+        startManagingCursor(cursor = myDBHandler.getAllDifferentNames1());
+    } catch (Exception e) {
+        if(cursor == null) {
+            Log.e("#################", "is null :(");
+        }
+
+    }
+    ;
+
+    String[] colm= new String[] {"n", "i", "d"};
+
+    int[] tolist= new int[] {R.id.txt_name, R.id.list_userImage, R.id.datum };
+
+    SimpleCursorAdapter myCursorAdapter 
+            = new SimpleCursorAdapter
+                        (this, R.layout.history_listrow, cursor, colm, tolist);
+
+    mainList.setAdapter(myCursorAdapter);
+}
+
+}
+</code></pre>

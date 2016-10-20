@@ -1,0 +1,149 @@
+<p><strong>MainActivity:</strong></p>
+
+<pre><code>public class AndroidCustomGalleryActivity extends Activity {
+    private int count;
+    private Bitmap[] thumbnails;
+    private boolean[] thumbnailsselection;
+    private String[] arrPath;
+    private ImageAdapter imageAdapter;
+    ArrayList<String> f = new ArrayList<String>();// list of file paths
+    File[] listFile;
+public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_android_custom_gallery);
+        getFromSdcard();
+        GridView imagegrid = (GridView) findViewById(R.id.PhoneImageGrid);
+        imageAdapter = new ImageAdapter();
+        imagegrid.setAdapter(imageAdapter);
+
+
+    }
+    public void getFromSdcard()
+    {
+        File file= new File(android.os.Environment.getExternalStorageDirectory(),"SnapBoard");
+
+            if (file.isDirectory())
+            {
+                listFile = file.listFiles();
+
+
+                for (int i = 0; i < listFile.length; i++)
+                {
+
+                    f.add(listFile[i].getAbsolutePath());
+
+                }
+            }
+    }
+
+    public class ImageAdapter extends BaseAdapter {
+        private LayoutInflater mInflater;
+
+        public ImageAdapter() {
+            mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+        public int getCount() {
+            return f.size();
+        }
+
+        public Object getItem(int position) {
+            return position;
+        }
+
+        public long getItemId(int position) {
+            return position;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder holder;
+            if (convertView == null) {
+                holder = new ViewHolder();
+                convertView = mInflater.inflate(
+                        R.layout.galleryitem, null);
+                holder.imageview = (ImageView) convertView.findViewById(R.id.thumbImage);
+
+                convertView.setTag(holder);
+            }
+            else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+
+            Bitmap myBitmap = BitmapFactory.decodeFile(f.get(position));
+            holder.imageview.setImageBitmap(myBitmap);
+            return convertView;
+        }
+    }
+    class ViewHolder {
+        ImageView imageview;
+
+
+    }
+        }
+</code></pre>
+
+<p><strong>XML:</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+
+<GridView
+    android:id="@+id/PhoneImageGrid"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:columnWidth="90dp"
+    android:gravity="center"
+    android:horizontalSpacing="10dp"
+    android:numColumns="auto_fit"
+    android:stretchMode="columnWidth"
+    android:verticalSpacing="10dp" />
+
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>GalleryItem.xml :</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <ImageView
+        android:id="@+id/thumbImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
+
+    <CheckBox
+        android:id="@+id/itemCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true" />
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>SnapShot:</strong></p>
+
+<p><img src="http://i.stack.imgur.com/JFqfw.png" alt="enter image description here"></p>
+
+<p><img src="http://i.stack.imgur.com/ZkjFV.png" alt="enter image description here"></p>
+
+<p>I am able to retrieve the images from a seperate folder from my SD card and display it in a grid view but the view seems rather collapsed. Does it has something to do with screen size ? I am using a Galaxy ACE DUOS (3.5 inch). Will try to post the screen shot shortly.  Help will be much appreciated. Thanks in advance.</p>
+
+<p><strong>EDIT:</strong></p>
+
+<p><strong>Logcat:</strong></p>
+
+<pre><code>12-19 11:08:25.335: D/dalvikvm(22171): GC_EXTERNAL_ALLOC freed 66K, 47% free 2957K/5511K, external 58486K/58486K, paused 39ms
+12-19 11:08:25.351: E/dalvikvm-heap(22171): 9830400-byte external allocation too large for this process.
+12-19 11:08:25.390: E/GraphicsJNI(22171): VM won't let us allocate 9830400 bytes
+12-19 11:08:25.390: D/dalvikvm(22171): GC_FOR_MALLOC freed <1K, 47% free 2957K/5511K, external 58486K/58486K, paused 30ms
+12-19 11:08:25.390: D/skia(22171): --- decoder->decode returned false
+</code></pre>

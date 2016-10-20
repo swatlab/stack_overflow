@@ -1,0 +1,284 @@
+<p><strong>opener.java</strong></p>
+
+<pre><code>    package com.example.camp;
+
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.io.InputStream;
+    import java.io.OutputStream;
+
+
+
+    import android.app.Activity;
+    import android.content.Context;
+    import android.database.Cursor;
+    import android.database.SQLException;
+    import android.database.sqlite.SQLiteDatabase;
+    import android.database.sqlite.SQLiteException;
+    import android.database.sqlite.SQLiteOpenHelper;
+    import android.os.Bundle;
+    import android.util.Log;
+
+    public class opener extends SQLiteOpenHelper {
+        private static final String dbpath="\\data\\data\\com.example.camp\\databases\\";
+        private static String dbname="mok";
+        private SQLiteDatabase myDataBase;
+        static String tname="javap";
+        static String qn="ques";
+        static String a="ans";
+    private Context CON;
+
+        public opener(Context context) {
+            super(context, dbname, null, 3);
+            this.CON=context;
+
+        }
+           public void createDataBase() throws IOException{
+
+                boolean dbExist = checkDataBase();
+
+                if(dbExist){
+
+                    Log.e("sd", "donothing db exist");
+                    //do nothing - database already exist
+                }else{
+
+                    //By calling this method and empty database will be created into the default system path
+                       //of your application so we are gonna be able to overwrite that database with our database.
+                    this.getReadableDatabase();
+
+                    try {
+         Log.e("pt", "calling copy");
+                        copyDataBase();
+
+                    } catch (IOException e) {
+
+                        throw new Error("Error copying database");
+
+                    }
+                }
+
+            }
+
+
+
+
+
+
+         private boolean checkDataBase(){
+
+                SQLiteDatabase checkDB = null;
+                Log.e("inside","chkdb");
+
+                try{
+
+                    Log.e("incd", "eroo");
+                    String myPath =dbpath +dbname;
+                    checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+                }catch(SQLiteException e){
+
+                    Log.e("l","dexist");
+
+                }
+
+                if(checkDB != null){
+                    Log.e("incd", "if");
+                    checkDB.close();
+                    Log.e("",""+checkDB);
+
+                }
+
+                return checkDB != null ? true : false;
+            }
+         private void copyDataBase() throws IOException{
+             Log.e("inside","copydb");
+
+                InputStream myInput = CON.getAssets().open(dbname);
+
+                String outFileName = dbpath + dbname;
+
+                //Open the empty db as the output stream
+                OutputStream myOutput = new FileOutputStream(outFileName);
+
+                //transfer bytes from the inputfile to the outputfile
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = myInput.read(buffer))>0){
+                    myOutput.write(buffer, 0, length);
+                }
+
+                //Close the streams
+                myOutput.flush();
+                myOutput.close(); 
+                myInput.close();
+
+            }
+
+            public void openDataBase() throws SQLException{
+
+                //Open the database
+                String myPath = dbpath + dbname;
+                myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+            }
+
+            @Override
+            public synchronized void close() {
+
+                    if(myDataBase != null)
+                        myDataBase.close();
+
+                    super.close();
+
+            }
+
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+            }
+
+
+
+
+        }
+</code></pre>
+
+<p><strong>jump.java</strong></p>
+
+<pre><code>    package com.example.camp;
+
+    import java.io.IOException;
+
+    import android.app.Activity;
+    import android.database.Cursor;
+    import android.database.sqlite.SQLiteDatabase;
+    import android.os.Bundle;
+    import android.util.Log;
+
+    public class jump extends Activity  {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            // TODO Auto-generated method stub
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_jump);
+            opener obj=new opener(this);
+            final SQLiteDatabase sqdb = obj.getWritableDatabase();
+            Log.e("ck1", "ok");
+
+        try{
+            Log.e("ck2", "ok");
+            obj.createDataBase();
+        }catch(IOException e){ 
+
+            Log.e("I/O", e.toString());
+
+        }
+
+
+        try{
+
+            obj.openDataBase();
+        }catch(Exception e)
+        {
+            Log.e("I/O2", e.toString());
+        }
+    try{
+           /*Cursor c = sqdb.query(opener.tname,
+                new String[] { opener.qn, opener.a },
+                null, null, null, null, null);
+
+         while (c.moveToNext()) {
+            // GET COLUMN INDICES + VALUES OF THOSE COLUMNS
+            int id = c.getInt(c.getColumnIndex(opener.qn));
+            String name =
+            c.getString(c.getColumnIndex(opener.a));
+            Log.i("LOG_TAG", "ROW " + id + " HAS NAME " + name);
+            */
+         //}\
+         }catch(Exception e){ 
+
+             Log.e("ck3",e.toString());
+         }
+
+
+
+
+
+
+
+
+        }}
+</code></pre>
+
+<p><strong>stacktrace</strong></p>
+
+<pre><code> 08-15 03:22:44.030: I/dalvikvm(1149): threadid=3: reacting to signal 3
+    08-15 03:22:44.160: I/dalvikvm(1149): Wrote stack traces to '/data/anr/traces.txt'
+    08-15 03:22:44.330: E/ck1(1149): ok
+    08-15 03:22:44.330: E/ck2(1149): ok
+    08-15 03:22:44.330: E/inside(1149): chkdb
+    08-15 03:22:44.340: E/incd(1149): eroo
+    08-15 03:22:44.340: I/SqliteDatabaseCpp(1149): sqlite returned: error code = 14, msg = cannot open file at line 27701 of [8609a15dfa], db=/data/data/com.example.camp/databases/camprep
+    08-15 03:22:44.340: I/SqliteDatabaseCpp(1149): sqlite returned: error code = 14, msg = os_unix.c: open() at line 27701 - "" errno=2 path=//\data\data\com.example.camp\databases\camprep, db=/data/data/com.example.camp/databases/camprep
+    08-15 03:22:44.340: E/SqliteDatabaseCpp(1149): sqlite3_open_v2("\data\data\com.example.camp\databases\camprep", &handle, 1, NULL) failed
+    08-15 03:22:44.351: E/SQLiteDatabase(1149): Failed to open the database. closing it.
+    08-15 03:22:44.351: E/SQLiteDatabase(1149): android.database.sqlite.SQLiteCantOpenDatabaseException: unable to open database file
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:1013)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:986)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:962)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at com.example.camp.opener.checkDataBase(opener.java:77)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at com.example.camp.opener.createDataBase(opener.java:37)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at com.example.camp.jump.onCreate(jump.java:24)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.Activity.performCreate(Activity.java:4465)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1920)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.ActivityThread.access$600(ActivityThread.java:123)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.os.Handler.dispatchMessage(Handler.java:99)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.os.Looper.loop(Looper.java:137)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at android.app.ActivityThread.main(ActivityThread.java:4424)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at java.lang.reflect.Method.invokeNative(Native Method)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at java.lang.reflect.Method.invoke(Method.java:511)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+    08-15 03:22:44.351: E/SQLiteDatabase(1149):     at dalvik.system.NativeStart.main(Native Method)
+    08-15 03:22:44.351: E/l(1149): dexist
+    08-15 03:22:44.351: E/pt(1149): calling copy
+    08-15 03:22:44.351: E/inside(1149): copydb
+    08-15 03:22:44.360: E/unable(1149): copydbjava.io.FileNotFoundException: camprep
+    08-15 03:22:44.360: D/AndroidRuntime(1149): Shutting down VM
+    08-15 03:22:44.360: W/dalvikvm(1149): threadid=1: thread exiting with uncaught exception (group=0x409c01f8)
+    08-15 03:22:44.370: E/AndroidRuntime(1149): FATAL EXCEPTION: main
+    08-15 03:22:44.370: E/AndroidRuntime(1149): java.lang.Error: Error copying database
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at com.example.camp.opener.createDataBase(opener.java:56)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at com.example.camp.jump.onCreate(jump.java:24)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.Activity.performCreate(Activity.java:4465)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1920)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.ActivityThread.access$600(ActivityThread.java:123)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.os.Handler.dispatchMessage(Handler.java:99)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.os.Looper.loop(Looper.java:137)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at android.app.ActivityThread.main(ActivityThread.java:4424)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at java.lang.reflect.Method.invokeNative(Native Method)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at java.lang.reflect.Method.invoke(Method.java:511)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+    08-15 03:22:44.370: E/AndroidRuntime(1149):     at dalvik.system.NativeStart.main(Native Method)
+    08-15 03:22:44.530: I/dalvikvm(1149): threadid=3: reacting to signal 3
+    08-15 03:22:44.560: I/dalvikvm(1149): Wrote stack traces to '/data/anr/traces.txt'
+    08-15 03:22:44.979: I/dalvikvm(1149): threadid=3: reacting to signal 3
+    08-15 03:22:44.989: I/dalvikvm(1149): Wrote stack traces to '/data/anr/traces.txt'
+</code></pre>
+
+<p>after chaniging the path it still isnt starting. i' ve acathed starce trace. i 'vw noticed filenotfound and failed to open database.but file is there in assets folder of my project.   </p>

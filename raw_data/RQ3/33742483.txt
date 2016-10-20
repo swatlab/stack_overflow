@@ -1,0 +1,502 @@
+<p>Hi After three days of browsing, debugging i couldn't find the reason of the error</p>
+
+<p>I created database using SQLite DB Browser extension - firefox
+I added in my assets (but its showing a question mark in the icon to the left of the DB name in ndroid studio.)</p>
+
+<p>After days of browsing i tried changing the version, changing db name, extension, tried changing the "<strong>this.getReadableDatabase();</strong>" to"<strong>this.getWriteableDatabase();</strong>" vice versa..</p>
+
+<p>But still I am getting the mentioned error some one guide me.</p>
+
+<pre><code>java.lang.RuntimeException: Unable to start activity ComponentInfo{com.jalil.justquiz/com.jalil.justquiz.MainActivity}: android.database.sqlite.SQLiteException: no such table: quiz_title (code 1): , while compiling: SELECT DISTINCT quiz_title FROM quiz_title WHERE _id = 1
+</code></pre>
+
+<p><strong>My databaseHelper:</strong></p>
+
+<pre><code>    package com.jalil.justquiz;
+
+   import java.io.File;
+   import java.io.FileOutputStream;
+   import java.io.IOException;
+   import java.io.InputStream;
+   import java.io.OutputStream;
+
+   import android.content.ContentValues;
+   import android.content.Context;
+   import android.database.Cursor;
+   import android.database.SQLException;
+   import android.database.sqlite.SQLiteDatabase;
+   import android.database.sqlite.SQLiteException;
+   import android.database.sqlite.SQLiteOpenHelper;
+
+   /*
+    * Created by Jalil on 14-11-2015.
+    */
+   public class DatabaseOpenHelper extends SQLiteOpenHelper{
+public static String DATABASE_NAME = "";
+private static final int DATABASE_VERSION = 3;
+
+private static final String QUIZ_USER_DETAILS_TABLE = "quiz_user_details";
+private static final String COLUMN_USERCOUNT = "User_Count";
+private static final String COLUMN_USERNAME = "User_Name";
+private static final String COLUMN_USRID = "User_Id";
+private static final String COLUMN_USERSCORE = "User_Score";
+
+private static final String QUIZ_TITLE_TABLE = "quiz_title";
+private static final String COLUMN_QUIZTITLEID = "_id";
+private static final String COLUMN_QUIZTITLE = "quiz_title";
+
+
+private static final String QUIZ_QUESTION_TABLE = "quiz_question";
+private static final String COLUMN_QUESTION_ID = "_id";
+private static final String COLUMN_QUESTION_TITLE_ID = "quiz_title_id";
+private static final String COLUMN_QUESTION = "quiz_question";
+private static final String COLUMN_QUESTION_ANSWERED = "quiz_question_answered";
+private static final String COLUMN_QUESTION_ANSWERED_CORRECT = "quiz_question_answered_correct";
+
+
+private static final String QUIZ_OPTION_TABLE = "quiz_option";
+private static final String COLUMN_OPTION_ID = "_id";
+private static final String COLUMN_OPTION_QUESTION_ID = "quiz_question_id";
+private static final String COLUMN_OPTION_1 = "quiz_option_1";
+private static final String COLUMN_OPTION_2 = "quiz_option_2";
+private static final String COLUMN_OPTION_3 = "quiz_option_3";
+private static final String COLUMN_OPTION_4 = "quiz_option_4";
+private static final String COLUMN_CORRECT_OPTION = "quiz_correct_option";
+
+
+   //    private static final String QUIZ_USER_ANSWER_TABLE = "quiz_user_answer";
+   //    private static final String QUIZ_USER_ANSWER__ID = "quiz_user_answer";
+   //    private static final String QUIZ_USER_ANSWER__OPTION = "quiz_option_id";
+
+
+private SQLiteDatabase database;
+
+private final Context context;
+
+// database path
+private static String DATABASE_PATH;
+
+/** constructor */
+public DatabaseOpenHelper(Context ctx,String databaseName)  {
+    super(ctx, databaseName, null, DATABASE_VERSION);
+    DATABASE_NAME = databaseName;
+    this.context = ctx;
+    //DATABASE_PATH = context.getDatabasePath(DATABASE_NAME).getPath() ;
+    DATABASE_PATH = context.getApplicationInfo().dataDir + "/databases/";
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own
+ * database.
+ * */
+public void create() throws IOException {
+    boolean dbExist = checkDataBase();
+
+    if (dbExist) {
+    } else {
+        SQLiteDatabase db = this.getReadableDatabase();
+        if (db.isOpen()){
+            db.close();
+        }
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each
+ * time you open the application.
+ *
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DATABASE_PATH + DATABASE_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READWRITE);
+
+    } catch (SQLiteException e) {
+        // database does't exist yet.
+    }
+
+    if (checkDB != null) {
+        checkDB.close();
+    }
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created
+ * empty database in the system folder, from where it can be accessed and
+ * handled. This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException {
+
+    // Open your local db as the input stream
+    InputStream myInput = context.getAssets().open(DATABASE_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+/** open the database */
+public void open() throws SQLException {
+    String myPath = DATABASE_PATH + DATABASE_NAME;
+    database = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READWRITE);
+}
+
+/** close the database */
+@Override
+public synchronized void close() {
+    if (database != null)
+        database.close();
+    super.close();
+}
+
+//region User Detail Table
+// insert a user into the database
+public long insert_QUIZ_USER_DETAILS(int usrCount, String usrName, int userId,int userScore) {
+    ContentValues initialValues = new ContentValues();
+    initialValues.put(COLUMN_USERCOUNT, usrCount);
+    initialValues.put(COLUMN_USERNAME, usrName);
+    initialValues.put(COLUMN_USRID, userId);
+    initialValues.put(COLUMN_USERSCORE, userScore);
+    return database.insert(QUIZ_USER_DETAILS_TABLE, null, initialValues);
+}
+
+// updates a user
+public boolean update_QUIZ_USER_DETAILS(int rowId,int usrCount, String usrName, int userId,int userScore) {
+    ContentValues args = new ContentValues();
+    args.put(COLUMN_USERCOUNT, usrCount);
+    args.put(COLUMN_USERNAME, usrName);
+    args.put(COLUMN_USRID, userId);
+    args.put(COLUMN_USERSCORE, userScore);
+    return database.update(QUIZ_USER_DETAILS_TABLE, args, COLUMN_USRID + "=" + rowId, null) > 0;
+}
+
+// retrieves a particular user
+public Cursor get_QUIZ_USER_DETAILS(long rowId) throws SQLException {
+    Cursor mCursor = database.query(true, QUIZ_USER_DETAILS_TABLE, new String[] {
+                      COLUMN_USERNAME, COLUMN_USRID, COLUMN_USERSCORE },
+   //                        COLUMN_USERCOUNT, COLUMN_USERNAME, COLUMN_USRID, COLUMN_USERSCORE },
+            COLUMN_USRID + " = " + rowId, null, null, null, null, null);
+    if (mCursor != null) {
+        mCursor.moveToFirst();
+    }
+
+    return mCursor;
+}
+
+// delete a particular user
+public boolean delete_SELECTED_QUIZ_USER_DETAILS(long rowId) {
+    return database.delete(QUIZ_USER_DETAILS_TABLE, COLUMN_USRID + "=" + rowId, null) > 0;
+}
+
+// retrieves all users
+public Cursor getAll_QUIZ_USER_DETAILS() {
+    return database.query(QUIZ_USER_DETAILS_TABLE, new String[] {
+                    COLUMN_USERNAME, COLUMN_USRID, COLUMN_USERSCORE }, null, null,
+   //                COLUMN_USERCOUNT,COLUMN_USERNAME, COLUMN_USRID, COLUMN_USERSCORE }, null, null,
+            null, null, null);
+}
+//endregion
+
+
+//region Quiz Title
+// insert a quiz title
+public long insert_QUIZ_TITLE(int quizTitleId, String quizTitle) {
+    ContentValues initialValues = new ContentValues();
+    initialValues.put(COLUMN_QUIZTITLEID, quizTitleId);
+    initialValues.put(COLUMN_QUIZTITLE, quizTitle);
+    return database.insert(QUIZ_TITLE_TABLE, null, initialValues);
+}
+
+// updates a quiz title
+public boolean update_QUIZ_TITLE(int rowId,int quizTitleId, String quizTitle) {
+    ContentValues args = new ContentValues();
+    args.put(COLUMN_QUIZTITLEID, quizTitleId);
+    args.put(COLUMN_QUIZTITLE, quizTitle);
+    return database.update(QUIZ_TITLE_TABLE, args, COLUMN_QUIZTITLEID + "=" + rowId, null) > 0;
+}
+
+// retrieves a quiz title
+public Cursor get_QUIZ_TITLE(long rowId) throws SQLException {
+    Cursor mCursor = database.query(true, QUIZ_TITLE_TABLE, new String[] {
+                    COLUMN_QUIZTITLE,  },
+            COLUMN_QUIZTITLEID + " = " + rowId, null, null, null, null, null);
+    if (mCursor != null) {
+        mCursor.moveToFirst();
+    }
+
+    return mCursor;
+}
+
+// delete a particular quiz title
+public boolean delete_SELECTED_QUIZ_TITLE(long rowId) {
+    return database.delete(QUIZ_TITLE_TABLE, COLUMN_QUIZTITLEID + "=" + rowId, null) > 0;
+}
+
+// retrieves all quiz titles
+public Cursor getAll_QUIZ_TITLE() {
+    return database.query(QUIZ_TITLE_TABLE, new String[] { COLUMN_QUIZTITLE }, null, null,
+            null, null, null);
+}
+//endregion
+
+
+//region Quiz Question
+// insert a quiz Question
+public long insert_QUIZ_QUESTION_TABLE(int quizQuestionId,int quizQuestionTitleId, String quizQuestion,int quizAnswered,int quizAnsweredCorct) {
+    ContentValues initialValues = new ContentValues();
+    initialValues.put(COLUMN_QUESTION_ID, quizQuestionId);
+    initialValues.put(COLUMN_QUESTION_TITLE_ID, quizQuestionTitleId);
+    initialValues.put(COLUMN_QUESTION, quizQuestion);
+    initialValues.put(COLUMN_QUESTION_ANSWERED, quizAnswered);
+    initialValues.put(COLUMN_QUESTION_ANSWERED_CORRECT, quizAnsweredCorct);
+    return database.insert(QUIZ_QUESTION_TABLE, null, initialValues);
+}
+
+// updates a quiz Question
+public boolean update_QUIZ_QUESTION_TABLE(long rowId,int quizQuestionId,int quizQuestionTitleId, String quizQuestion,int quizAnswered,int quizAnsweredCorct) {
+    ContentValues args = new ContentValues();
+    args.put(COLUMN_QUESTION_ID, quizQuestionId);
+    args.put(COLUMN_QUESTION_TITLE_ID, quizQuestionId);
+    args.put(COLUMN_QUESTION, quizQuestion);
+    args.put(COLUMN_QUESTION_ANSWERED, quizAnswered);
+    args.put(COLUMN_QUESTION_ANSWERED_CORRECT, quizAnsweredCorct);
+    return database.update(QUIZ_QUESTION_TABLE, args, COLUMN_QUESTION_ID + "=" + rowId, null) > 0;
+}
+
+// retrieves a quiz Question
+public Cursor get_QUIZ_QUESTION_TABLE(long rowId) throws SQLException {
+    Cursor mCursor = database.query(true, QUIZ_QUESTION_TABLE, new String[] {
+                    COLUMN_QUESTION_TITLE_ID,COLUMN_QUESTION,COLUMN_QUESTION_ANSWERED,COLUMN_QUESTION_ANSWERED_CORRECT  },
+            COLUMN_QUESTION_ID + " = " + rowId, null, null, null, null, null);
+    if (mCursor != null) {
+        mCursor.moveToFirst();
+    }
+
+    return mCursor;
+}
+
+// delete a particular quiz Question
+public boolean delete_SELECTED_QUIZ_QUESTION_TABLE(long rowId) {
+    return database.delete(QUIZ_QUESTION_TABLE, COLUMN_QUESTION_ID + "=" + rowId, null) > 0;
+}
+
+// retrieves all quiz Questions
+public Cursor getAll_QUIZ_QUESTION_TABLE() {
+    return database.query(QUIZ_QUESTION_TABLE, new String[] { COLUMN_QUESTION }, null, null,
+            null, null, null);
+}
+//endregion
+
+
+//region Quiz Options
+// insert quiz Options
+public long insert_QUIZ_OPTION_TABLE(int quizOptionId,int quizQuestionId, String quizOption_1, String quizOption_2, String quizOption_3, String quizOption_4,int quizCorrectOption) {
+    ContentValues initialValues = new ContentValues();
+    initialValues.put(COLUMN_OPTION_ID, quizOptionId);
+    initialValues.put(COLUMN_OPTION_QUESTION_ID, quizQuestionId);
+    initialValues.put(COLUMN_OPTION_1, quizOption_1);
+    initialValues.put(COLUMN_OPTION_2, quizOption_2);
+    initialValues.put(COLUMN_OPTION_3, quizOption_3);
+    initialValues.put(COLUMN_OPTION_4, quizOption_4);
+    initialValues.put(COLUMN_CORRECT_OPTION, quizCorrectOption);
+    return database.insert(QUIZ_OPTION_TABLE, null, initialValues);
+}
+
+// updates a quiz Options
+public boolean update_QUIZ_OPTION_TABLE(long rowId, int quizOptionId,int quizQuestionId, String quizOption_1, String quizOption_2, String quizOption_3, String quizOption_4,int quizCorrectOption) {
+    ContentValues args = new ContentValues();
+    args.put(COLUMN_OPTION_ID, quizOptionId);
+    args.put(COLUMN_OPTION_QUESTION_ID, quizQuestionId);
+    args.put(COLUMN_OPTION_1, quizOption_1);
+    args.put(COLUMN_OPTION_2, quizOption_2);
+    args.put(COLUMN_OPTION_3, quizOption_3);
+    args.put(COLUMN_OPTION_4, quizOption_4);
+    args.put(COLUMN_CORRECT_OPTION, quizCorrectOption);
+    return database.update(QUIZ_OPTION_TABLE, args, COLUMN_OPTION_ID + "=" + rowId, null) > 0;
+}
+
+// retrieves a quiz Options
+public Cursor get_QUIZ_OPTION_TABLE(long rowId) throws SQLException {
+    Cursor mCursor = database.query(true, QUIZ_OPTION_TABLE, new String[] {
+                    COLUMN_OPTION_1,COLUMN_OPTION_2,COLUMN_OPTION_3, COLUMN_OPTION_4,COLUMN_CORRECT_OPTION  },
+            COLUMN_OPTION_ID + " = " + rowId, null, null, null, null, null);
+    if (mCursor != null) {
+        mCursor.moveToFirst();
+    }
+
+    return mCursor;
+}
+
+// delete a particular quiz Option
+public boolean delete_SELECTED_QUIZ_OPTION_TABLE(long rowId) {
+    return database.delete(QUIZ_OPTION_TABLE, COLUMN_OPTION_ID + "=" + rowId, null) > 0;
+}
+
+// retrieves all quiz Option
+public Cursor getAll_QUIZ_OPTION_TABLE() {
+    return database.query(QUIZ_OPTION_TABLE, new String[] { COLUMN_QUESTION }, null, null,
+            null, null, null);
+}
+//endregion
+
+
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+}
+
+   }
+</code></pre>
+
+<p>My MainActivity:</p>
+
+<pre><code>   package com.jalil.justquiz;       
+   import android.os.Bundle;
+   import android.view.Menu;
+   import android.view.MenuItem;
+
+   import java.io.IOException;
+   import android.widget.Toast;
+   import android.app.Activity;
+   import android.database.Cursor;
+   import android.database.SQLException;
+
+   public class MainActivity extends Activity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    DatabaseOpenHelper myDbHelper = new DatabaseOpenHelper(this,"QUIZ_db.sqlite");
+    try {
+        // check if database exists in app path, if not copy it from assets
+        myDbHelper.create();
+    }
+    catch(IOException ioe) {
+        throw new Error("Unable to create database");
+    }
+
+    try {
+        // open the database
+        myDbHelper.open();
+        myDbHelper.getWritableDatabase();
+    } catch (SQLException sqle) {
+        throw sqle;
+    }
+
+    // retrieve a particular question
+    Cursor c = myDbHelper.get_QUIZ_TITLE(1);
+    Toast.makeText(this, "id: " + c.getInt(0) , Toast.LENGTH_LONG).show();
+    c.close();
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>}</p>
+
+<p><strong>My Database:</strong></p>
+
+<p><a href="http://i.stack.imgur.com/DymqT.png" rel="nofollow"><img src="http://i.stack.imgur.com/DymqT.png" alt="enter image description here"></a></p>
+
+<p><strong>My Logcat:</strong></p>
+
+<pre><code>    11-16 22:51:39.537  16947-16947/com.jalil.justquiz E/SQLiteLog﹕ (1) no such table: quiz_title
+    11-16 22:51:39.577  16947-16947/com.jalil.justquiz E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    Process: com.jalil.justquiz, PID: 16947
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.jalil.justquiz/com.jalil.justquiz.MainActivity}: android.database.sqlite.SQLiteException: no such table: quiz_title (code 1): , while compiling: SELECT DISTINCT quiz_title FROM quiz_title WHERE _id = 1
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+        at android.app.ActivityThread.access$800(ActivityThread.java:135)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:136)
+        at android.app.ActivityThread.main(ActivityThread.java:5017)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+        at dalvik.system.NativeStart.main(Native Method)
+ Caused by: android.database.sqlite.SQLiteException: no such table: quiz_title (code 1): , while compiling: SELECT DISTINCT quiz_title FROM quiz_title WHERE _id = 1
+        at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+        at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+        at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+        at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+        at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+        at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+        at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+        at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+        at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1161)
+        at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1032)
+        at com.jalil.justquiz.DatabaseOpenHelper.get_QUIZ_TITLE(DatabaseOpenHelper.java:230)
+        at com.jalil.justquiz.MainActivity.onCreate(MainActivity.java:37)
+        at android.app.Activity.performCreate(Activity.java:5231)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+        at android.app.ActivityThread.access$800(ActivityThread.java:135)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:136)
+        at android.app.ActivityThread.main(ActivityThread.java:5017)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+        at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>Thank you.</p>
+
+<p><strong>UPDATE:</strong>   On opening the database from DDMS it seems only the android_metadata tabel is present in the database. Hence it <em>shows no such table</em>  but why is are the tables from database in 'assets' folder copied to the database in '/databases' folder</p>

@@ -1,0 +1,50 @@
+<p>I'm following a course on Udacity on building an Android app (weather, in this case). I've been having trouble implementing a Share action. After getting some advice from another forum, I changed the min SDK version from 10 or 11 to 17, since this is just a learning activity. Currently, I have the "Share" button showing up in the action bar, but tapping on it does nothing. I tried putting it in the overflow menu, but still, nothing. I tried some debugging, but I don't know where the button click is supposed to be handled; the debugger goes through and creates the shareIntent object, but then nothing seems to happen with it. I looked at <a href="http://developer.android.com/guide/topics/ui/actionbar.html#ActionEvents" rel="nofollow">this doc</a>, but when I try to handle the sharing in the view's onOptionsItemSelected, I get a null pointer exception on the call to createShareIntent. What am I missing?</p>
+
+<p>Here's the nested fragment's onCreateOptionsMenu:</p>
+
+<pre><code>@Override
+public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    inflater.inflate(R.menu.detail_fragment, menu);
+    MenuItem item = menu.findItem(R.id.action_share);
+
+    ShareActionProvider mShareActionProvider = new ShareActionProvider(getActivity());
+    if(mShareActionProvider != null) {
+        mShareActionProvider.setShareIntent(createShareIntent());
+    } else {
+        Log.d(LOG_TAG, "Share action provider is null");
+    }
+}
+</code></pre>
+
+<p>Here's the containing view's onOptionsItemSelected, with the problematic code commented out:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        startActivity(new Intent(this, SettingsActivity.class));
+        return true;
+    } else if (id == R.id.action_share) {
+        //DetailFragment details = (DetailFragment) getFragmentManager().findFragmentByTag("detailFragment");
+        //startActivity(details.createShareIntent());
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>And here's the createShareIntent method:</p>
+
+<pre><code>private Intent createShareIntent() {
+    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+    shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+    shareIntent.setType("text/plain");
+    shareIntent.putExtra(Intent.EXTRA_TEXT, mForecastStr + FORECAST_SHARE_HASHTAG);
+    return shareIntent;
+}
+</code></pre>

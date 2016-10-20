@@ -1,0 +1,245 @@
+<p>I'm trying to use this example ( <a href="http://droidista.blogspot.co.uk/2011/04/using-cwacs-endlessadapter-with-custom.html?showComment=1369770178127#c166648792344448629" rel="nofollow">http://droidista.blogspot.co.uk/2011/04/using-cwacs-endlessadapter-with-custom.html?showComment=1369770178127#c166648792344448629</a> ) with in a fragment and I'm running in to problems</p>
+
+<pre><code>class DataAdapter extends EndlessAdapter {
+private RotateAnimation rotate=null;
+ArrayList tempList = new ArrayList();
+
+CustomAdapter() {
+super(new CustomArrayAdapter(EndlessCustom.this, 
+android.R.layout.simple_list_item_1, android.R.id.text1, eventsSub));
+
+// problem at CustomArrayAdapter
+
+rotate=new RotateAnimation(0f, 360f, Animation.RELATIVE_TO_SELF,
+0.5f, Animation.RELATIVE_TO_SELF,
+0.5f);
+rotate.setDuration(600);
+rotate.setRepeatMode(Animation.RESTART);
+rotate.setRepeatCount(Animation.INFINITE);
+}
+</code></pre>
+
+<blockquote>
+  <p>"The constructor EndlessCustom.CustomArrayAdapter(EndlessCustom, int,
+  int, ArrayList) is undefined"</p>
+</blockquote>
+
+<p>I suspect its a context issue which I am trying to work though but if you could give me any suggestions on how to work this issue out I would appreciate it. Thanks</p>
+
+<p>EDIT - The Whole class....</p>
+
+<pre><code>// http://droidista.blogspot.co.uk/2011/04/using-cwacs-endlessadapter-with-custom.html
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.app.ListActivity;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
+
+import com.commonsware.cwac.endless.EndlessAdapter;
+
+public class EndlessCustom extends Fragment {
+
+ static int LIST_SIZE;
+ private int mLastOffset = 0;
+
+ static final int BATCH_SIZE = 10;
+
+ ArrayList<String> eventsSub = new ArrayList<String>();
+
+ @Override
+ public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+     View root = inflater.inflate(R.layout.fragment_dod_events, container, false);
+  //Do Stuff Here
+     init();
+     return root;
+ }
+
+ private void init() {
+  LIST_SIZE = EVENTS.length;  
+  for (int i=0; i<=BATCH_SIZE; i++){
+   eventsSub.add(EVENTS[i]);   
+  }
+  setLastOffset(BATCH_SIZE);
+  displayList(eventsSub);
+ }
+
+ private void setLastOffset(int i) {
+  mLastOffset = i;  
+ }
+
+ private int getLastOffset(){
+  return mLastOffset;
+ }
+
+ private void displayList(ArrayList<String> eventsSub) {  
+  setListAdapter(new DataAdapter());
+ }
+
+ private class CustomArrayAdapter extends ArrayAdapter<String>{
+
+  public CustomArrayAdapter(Context endlessCustom, int resource,
+    int textViewResourceId, List<String> objects) {
+   super(endlessCustom, resource, textViewResourceId, objects);
+  }  
+
+  @Override
+  public View getView(int position, View convertView, ViewGroup parent) {
+
+   ViewHolder holder;    
+
+   if(convertView==null){
+    // http://stackoverflow.com/questions/4321343/android-getsystemservice-inside-custom-arrayadapter   
+    LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    //EndlessCustom.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    convertView = inflater.inflate(android.R.layout.simple_list_item_1, null);
+    holder = new ViewHolder();
+    holder.word = (TextView)convertView.findViewById(android.R.id.text1);
+
+    convertView.setTag(holder);
+   } else{
+    holder=(ViewHolder)convertView.getTag();
+   }
+
+   holder.word.setText(String.valueOf(position+1) + ". " + eventsSub.get(position));
+   return convertView;
+  }
+
+  public class ViewHolder{
+   public TextView word;        
+  }  
+ }
+
+
+
+
+
+ class DataAdapter extends EndlessAdapter {
+  private RotateAnimation rotate=null;
+  ArrayList<String> tempList = new ArrayList<String>();
+
+  DataAdapter() {
+   super(new CustomArrayAdapter(EndlessCustom.this, 
+     android.R.layout.simple_list_item_1, android.R.id.text1, eventsSub));
+
+   // problem at CustomArrayAdapter
+
+   rotate=new RotateAnimation(0f, 360f, Animation.RELATIVE_TO_SELF,
+     0.5f, Animation.RELATIVE_TO_SELF,
+     0.5f);
+   rotate.setDuration(600);
+   rotate.setRepeatMode(Animation.RESTART);
+   rotate.setRepeatCount(Animation.INFINITE);
+  }
+
+
+
+
+
+
+  @Override
+  protected View getPendingView(ViewGroup parent) {
+
+   View row=getLayoutInflater().inflate(R.layout.row, null);
+
+   View child=row.findViewById(android.R.id.text1);
+   child.setVisibility(View.GONE);
+   child=row.findViewById(R.id.throbber);
+   child.setVisibility(View.VISIBLE);
+   child.startAnimation(rotate);
+
+   return(row);
+  }
+
+  @Override
+  protected boolean cacheInBackground() {
+      // update here to get data method rather than string
+      // ParseJSONurl
+   tempList.clear();
+   int lastOffset = getLastOffset();
+   if(lastOffset < LIST_SIZE){
+    int limit = lastOffset + BATCH_SIZE;
+    for(int i=(lastOffset+1); (i<=limit && i<LIST_SIZE); i++){
+     tempList.add(EVENTS[i]);
+    }    
+    setLastOffset(limit);
+
+    if(limit<LIST_SIZE){
+     return true;
+    } else {
+     return false;
+    }
+   } else  {
+    return false;
+   }
+  }
+
+
+  @Override
+  protected void appendCachedData() {
+
+   @SuppressWarnings("unchecked")
+   ArrayAdapter<String> arrAdapterNew = (ArrayAdapter<String>)getWrappedAdapter();
+
+   int listLen = tempList.size();
+   for(int i=0; i<listLen; i++){
+    arrAdapterNew.add(tempList.get(i));
+   }
+  }
+ }
+
+
+ static final String[] EVENTS = new String[] {
+        "Afghanistan", "Albania", "Algeria", "American Samoa", "Andorra", 
+        "Angola", "Anguilla", "Antarctica", "Antigua and Barbuda", "Argentina",
+        "Armenia", "Aruba", "Australia", "Austria", "Azerbaijan",
+        "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
+        "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia",
+        "Bosnia and Herzegovina", "Botswana", "Bouvet Island", "Brazil", "British Indian Ocean Territory",
+        "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+        "Cote d'Ivoire", "Cambodia", "Cameroon", "Canada", "Cape Verde",
+        "Cayman Islands", "Central African Republic", "Chad", "Chile", "China",
+        "Christmas Island", "Cocos (Keeling) Islands", "Colombia", "Comoros", "Congo",
+        "Cook Islands", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
+        "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+        "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea",
+        "Estonia", "Ethiopia", "Faeroe Islands", "Falkland Islands", "Fiji", "Finland",
+        "Former Yugoslav Republic of Macedonia", "France", "French Guiana", "French Polynesia",
+        "French Southern Territories", "Gabon", "Georgia", "Germany", "Ghana", "Gibraltar",
+        "Greece", "Greenland", "Grenada", "Guadeloupe", "Guam", "Guatemala", "Guinea", "Guinea-Bissau",
+        "Guyana", "Haiti", "Heard Island and McDonald Islands", "Honduras", "Hong Kong", "Hungary",
+        "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica",
+        "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos",
+        "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+        "Macau", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands",
+        "Martinique", "Mauritania", "Mauritius", "Mayotte", "Mexico", "Micronesia", "Moldova",
+        "Monaco", "Mongolia", "Montserrat", "Morocco", "Mozambique", "Myanmar", "Namibia",
+        "Nauru", "Nepal", "Netherlands", "Netherlands Antilles", "New Caledonia", "New Zealand",
+        "Nicaragua", "Niger", "Nigeria", "Niue", "Norfolk Island", "North Korea", "Northern Marianas",
+        "Norway", "Oman", "Pakistan", "Palau", "Panama", "Papua New Guinea", "Paraguay", "Peru",
+        "Philippines", "Pitcairn Islands", "Poland", "Portugal", "Puerto Rico", "Qatar",
+        "Reunion", "Romania", "Russia", "Rwanda", "Sqo Tome and Principe", "Saint Helena",
+        "Saint Kitts and Nevis", "Saint Lucia", "Saint Pierre and Miquelon",
+        "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Saudi Arabia", "Senegal",
+        "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands",
+        "Somalia", "South Africa", "South Georgia and the South Sandwich Islands", "South Korea",
+        "Spain", "Sri Lanka", "Sudan", "Suriname", "Svalbard and Jan Mayen", "Swaziland", "Sweden",
+        "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "The Bahamas",
+        "The Gambia", "Togo", "Tokelau", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey",
+        "Turkmenistan", "Turks and Caicos Islands", "Tuvalu", "Virgin Islands", "Uganda",
+        "Ukraine", "United Arab Emirates", "United Kingdom",
+        "United States", "United States Minor Outlying Islands", "Uruguay", "Uzbekistan",
+        "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Wallis and Futuna", "Western Sahara",
+        "Yemen", "Yugoslavia", "Zambia", "Zimbabwe"
+    };
+}
+</code></pre>

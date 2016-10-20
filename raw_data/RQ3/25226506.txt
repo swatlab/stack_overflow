@@ -1,0 +1,466 @@
+<p>This is my first time trying to use SQLite databases in Android. I have a database I made containing a bunch of movies. I have a loading activity that has an AsyncTask in a retainedFragment. In the AsyncTask I try to get the cursor with my query from the database. Then I add all my items to an ArrayList and from there the mainActivity is launched.</p>
+
+<p>However, I am getting a NullPointerException when I try to create my SQLiteOpenHelper. From reading similar problems online it seems like the issue might be with my context, but I cannot fins a way to make it work. I created the SQLiteOpenHelper following this tutorial: <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<p>Here is my LoadingActivity:</p>
+
+<pre><code>package com.example.pickmymovie;
+
+import java.util.ArrayList;
+
+import com.example.pickmymovie.LoadingFragment.LoadingCallback;
+
+import android.app.Activity;
+import android.app.FragmentManager;
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.ProgressBar;
+
+public class LoadingActivity extends Activity implements LoadingCallback {
+
+    private ProgressBar bar;
+    private LoadingFragment loadFrag;
+    private ArrayList<Movie> movies;
+    public final static String TAG_TASK_FRAGMENT = "LDFRAG";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.loading);
+
+        bar = (ProgressBar)findViewById(R.id.progress1);
+        bar.setMax(10000);
+
+        onPreExecute();
+    }
+
+    @Override
+    public void onPreExecute() {
+        connectWithRetainedFragment().executeTask();
+    }
+
+    @Override
+    public void onCancelled() {
+        // nothing
+    }
+
+    @Override
+    public void onRunning(int progress) {
+        bar.setProgress(progress);
+
+    }
+
+    @Override
+    public void onPostExecute(Boolean bool) {
+        if (bool) {
+            Intent intent = new Intent(LoadingActivity.this, MainActivity.class );
+            intent.putParcelableArrayListExtra("movies", movies);
+            startActivity(intent);
+        }
+    }
+
+    /**
+     * find the retained fragment and connect to it. then return it so you can
+     * calculate stuffs
+     * 
+     * @return
+     */
+    public LoadingFragment connectWithRetainedFragment() {
+        FragmentManager fm = getFragmentManager();
+        // r1 = (RetainedFragment)fm.findFragmentByTag(TAG_TASK_FRAGMENT);
+        if (getFragmentManager().findFragmentByTag(TAG_TASK_FRAGMENT) == null) {
+            loadFrag = new LoadingFragment();
+            fm.beginTransaction().add(loadFrag, TAG_TASK_FRAGMENT).commit();
+        }
+        return loadFrag;
+    }
+
+    @Override
+    public void setMovieList(ArrayList<Movie> movies) {
+        this.movies = movies;
+    }
+
+}
+</code></pre>
+
+<p>Here is my Fragment with the AsyncTask:</p>
+
+<pre><code>package com.example.pickmymovie;
+
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.app.Fragment;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
+
+public class LoadingFragment extends Fragment {
+
+    DataBaseHelper DbHelper;
+
+    /**
+     * interface to call back to the loading activity
+     */
+    static interface LoadingCallback {
+        void onPreExecute();
+
+        void onCancelled();
+
+        void onRunning(int progress);
+
+        void onPostExecute(Boolean bool);
+
+        void setMovieList(ArrayList<Movie> movies);
+    }
+
+    private LoadingCallback activity;
+    private LoadingTask task;
+    private Activity context;
+
+    /**
+     * Hold a reference to the parent Activity so we can report the task's
+     * current progress and results. The Android framework will pass us a
+     * reference to the newly created Activity after each configuration change.
+     */
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        context = activity;
+        this.activity = (LoadingCallback) activity;
+
+        //Create and open the database.
+        DbHelper = new DataBaseHelper(activity);
+        try {
+            DbHelper.createDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            DbHelper.openDataBase();
+        }catch(SQLException sqle){
+            throw sqle;
+        }
+    }
+
+    /**
+       * execute the LoadingTask
+       * @param param
+       */
+      public void executeTask() {
+          task = new LoadingTask();
+          task.execute();
+      }
+
+    /**
+       * Set the callback to null so we don't accidentally leak the 
+       * Activity instance.
+       */
+      @Override
+      public void onDetach() {
+        super.onDetach();
+        activity = null;
+      }
+
+    /**
+     * A dummy task that performs some (dumb) background work and proxies
+     * progress updates and results back to the Activity.
+     * 
+     * Note that we need to check if the callbacks are null in each method in
+     * case they are invoked after the Activity's and Fragment's onDestroy()
+     * method have been called.
+     */
+    private class LoadingTask extends AsyncTask<Cursor, Integer, Boolean> {
+
+        private Cursor cursor;
+        ArrayList<Movie> movieList;
+
+        /**
+         * nothing here
+         */
+        @Override
+        protected void onPreExecute() {
+            //Create and open the database.
+            DbHelper = new DataBaseHelper(getActivity().getApplicationContext());
+            try {
+                DbHelper.createDataBase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                DbHelper.openDataBase();
+            }catch(SQLException sqle){
+                throw sqle;
+            }
+            cursor = DbHelper.getCursor();
+        }
+
+        /**
+         * Note that we do NOT call the callback object's methods directly from
+         * the background thread, as this could result in a race condition.
+         */
+        @Override
+        protected Boolean doInBackground(Cursor... param) {
+            int total = cursor.getCount();
+            int margin = 10000 / total;
+            movieList = new ArrayList<Movie>();
+
+            // do the stuff and report back to the home activity.
+            for (int i = 0; i < cursor.getCount(); i++) {
+                if (cursor.moveToFirst()) {
+                    do {
+                        Movie movie = new Movie();
+                        movie.setId(Integer.parseInt(cursor.getString(0)));
+                        movie.setName(cursor.getString(1));
+                        movie.setGenre(cursor.getString(2));
+                        movie.setImage(cursor.getString(3));
+                        movie.setRating(Integer.parseInt(cursor.getString(4)));
+                        // Adding movie to the list
+                        movieList.add(movie);
+                        publishProgress(i * margin);
+                    } while (cursor.moveToNext());
+
+                    // I don't think I've ever used a Do/While in java
+                    // they taught us this in HS C++, but I've never touched it since.
+                    // Oh well, it was in the example code
+                }
+            }
+            return true;
+        }
+
+        /**
+         * cancel the thing
+         */
+        @Override
+        protected void onCancelled() {
+            if (activity != null) {
+                activity.onCancelled();
+            }
+        }
+
+        /**
+         * update the activity
+         */
+        protected void publishProgress(Integer progress) {
+            if (activity != null) {
+                activity.onRunning(progress);
+            }
+        }
+
+        /**
+         * publish the result
+         */
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (activity != null) {
+                activity.onPostExecute(result);
+            }
+        }
+
+    }
+}
+</code></pre>
+
+<p>Here is my SQLiteOpenHelper:</p>
+
+<pre><code>package com.example.pickmymovie;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.example.pickmymovie/databases/";
+
+    private static String DB_NAME = "movieDatabase";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        //return checkDB != null ? true : false;
+        // ^ was in the example code. Seems like a goober way to do it.
+        return (checkDB != null);
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    public Cursor getCursor() {
+        ArrayList<Movie> movieList = new ArrayList<Movie>();
+        // Select All Query
+        String selectQuery = "SELECT  * FROM movies";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        return cursor;
+    }
+}
+</code></pre>
+
+<p>And here is the LogCat when I try to run the application:</p>
+
+<pre><code>08-10 03:20:30.745: W/dalvikvm(18469): threadid=1: thread exiting with uncaught exception (group=0x417b2da0)
+08-10 03:20:30.745: E/AndroidRuntime(18469): FATAL EXCEPTION: main
+08-10 03:20:30.745: E/AndroidRuntime(18469): Process: com.example.pickmymovie, PID: 18469
+08-10 03:20:30.745: E/AndroidRuntime(18469): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.pickmymovie/com.example.pickmymovie.LoadingActivity}: java.lang.NullPointerException
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2334)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2392)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.ActivityThread.access$900(ActivityThread.java:169)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1280)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.os.Handler.dispatchMessage(Handler.java:102)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.os.Looper.loop(Looper.java:146)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.ActivityThread.main(ActivityThread.java:5487)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at java.lang.reflect.Method.invokeNative(Native Method)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at java.lang.reflect.Method.invoke(Method.java:515)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1283)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1099)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at dalvik.system.NativeStart.main(Native Method)
+08-10 03:20:30.745: E/AndroidRuntime(18469): Caused by: java.lang.NullPointerException
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at com.example.pickmymovie.LoadingFragment$LoadingTask.onPreExecute(LoadingFragment.java:102)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.os.AsyncTask.executeOnExecutor(AsyncTask.java:587)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.os.AsyncTask.execute(AsyncTask.java:535)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at com.example.pickmymovie.LoadingFragment.executeTask(LoadingFragment.java:70)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at com.example.pickmymovie.LoadingActivity.onPreExecute(LoadingActivity.java:33)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at com.example.pickmymovie.LoadingActivity.onCreate(LoadingActivity.java:28)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.Activity.performCreate(Activity.java:5451)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1093)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2298)
+08-10 03:20:30.745: E/AndroidRuntime(18469):    ... 11 more
+08-10 03:20:33.467: I/Process(18469): Sending signal. PID: 18469 SIG: 9
+</code></pre>
+
+<p>I'm not entirely sure how the SQLite opening works, which is probably why I can't seem to figure this out myself. Thanks for any help.</p>

@@ -1,0 +1,37 @@
+<p>I want to implement interactive TabPageIndicatot in android. I am using ViewPager.TabPageIndicator to make object of indicator.I am trying to implement scrollTo in  TabPageIndicator class.</p>
+
+<p>This is the code in my class. <strong>indicator</strong> is object of TabPageIndicator.</p>
+
+<pre><code>public void onPageScrolled(int pageNo, float arg1, final int arg2) {
+            // TODO Auto-generated method stub
+            indicator.scrollTo(arg2, 0);                                    
+        }
+</code></pre>
+
+<p>This is the code in TabPageIndicator class.</p>
+
+<pre><code>private void animateToTab(final int x) {
+
+     if (mTabSelector != null) {
+         removeCallbacks(mTabSelector);
+     }
+     mTabSelector = new Runnable() {
+         public void run() {
+         //    final int scrollPos = tabView.getLeft() - (getWidth() - tabView.getWidth()) / 2;
+             smoothScrollTo(x, 0);
+             mTabSelector = null;
+         }
+     };
+     post(mTabSelector);
+
+}
+ @Override
+public void scrollTo(int x, int y) {
+    // TODO Auto-generated method stub
+    super.scrollTo(x, y);
+    //Log.i("Hi", Integer.toString(x));
+    animateToTab(x);
+}
+</code></pre>
+
+<p>Here animateToTab() function is called infinite times. Why?</p>

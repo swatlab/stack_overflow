@@ -1,0 +1,68 @@
+<p>I have created applicaiton by using Eclipse default ViewPager application parameters. Main activity contains 2 tabs(tabA and tabB). Each tab refers to its fragment(fragmentA and fragmentB).</p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int index) {
+
+        switch (index) {
+        case 0:
+            // Top Rated fragment activity
+            return new Cars();
+        case 1:
+            // Games fragment activity
+            return new News();
+        }
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 2 total pages.
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.title_section1).toUpperCase(l);
+        case 1:
+            return getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>
+
+<p>On the second tab(tabB), there is a listview. I am trying to change fragment(without opening new activity) to new fragment(fragmentC) on second tab(tabB) when one list item is selected.</p>
+
+<pre><code>public class News extends ListFragment {
+...
+            ListAdapter adapter = new LazyAdapter(getActivity(), carsList);
+            setListAdapter(adapter);
+
+            getListView().setOnItemClickListener(new OnItemClickListener() {
+
+                @Override
+                public void onItemClick(AdapterView<?> arg0, View view,
+                        int position, long arg3) {
+                    // TODO Auto-generated method stub
+
+                    TextView tvId = (TextView) view.findViewById(R.id.tvId);
+
+
+                    Toast.makeText(getActivity(), "Item was clicked. id:"+tvId.getText(),
+                            Toast.LENGTH_SHORT).show();
+
+                    //WHAT SHOULD I WRITE HERE?
+                }
+            });
+</code></pre>
+
+<p>How to change fragment inside FragmentPagerAdapter at the same time enabling "BACK" button(if back button will be pressed on fragmentC, it should return to fragmentB)?</p>

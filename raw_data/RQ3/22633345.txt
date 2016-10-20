@@ -1,0 +1,109 @@
+<p>Actually , I am trying to implement <a href="http://stackoverflow.com/questions/22602559/how-do-implement-this-in-android">This</a> .I have a little problem ,When i click <code>Image Circle 1</code> Button ,on that time <code>Passcode</code> Field change background color of 1st field . But when i click Image Circle 1 <code>Button</code> there are no change in 2nd <code>Passcode</code> field.I think <code>getId()</code> Properly not working .May I know what is the correct way to achieve my objective?Maybe this question too basic, but i did't find any suitable solution.Please Help me out.Please check this statement <code>View.OnClickListener imgButtonHandlerone = new View.OnClickListener()</code></p>
+
+<p>Here is my code :</p>
+
+<pre><code>public class UserPasscode extends Activity {
+
+ImageButton Imagepassone ;
+ImageButton Imagepasstwo ;
+ImageButton Imagepassthree ;
+ImageView image;
+ImageView image2;
+ImageView image3;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_user_passcode);
+
+    ActionBar ab = getActionBar(); 
+    ab.setDisplayUseLogoEnabled(false);
+    ab.setDisplayShowHomeEnabled(true);
+    ab.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM); 
+    ab.setCustomView(R.layout.actionbar);
+    ab.setDisplayHomeAsUpEnabled(true);
+    ColorDrawable colorDrawable = new ColorDrawable(Color.parseColor("#33CCFF"));     
+    ab.setBackgroundDrawable(colorDrawable);
+
+    Imagepassone = (ImageButton) findViewById(R.id.ButtonPassOne);
+    Imagepasstwo = (ImageButton) findViewById(R.id.ButtonPassTwo);
+    Imagepassthree = (ImageButton) findViewById(R.id.ButtonPassThree);
+
+    Imagepassone.setOnClickListener(imgButtonHandlerone); 
+    Imagepasstwo.setOnClickListener(imgButtonHandlertwo); 
+    Imagepassthree.setOnClickListener(imgButtonHandlerthree); 
+
+    image = (ImageView) findViewById(R.id.imagefirstpasscode);
+    image2 = (ImageView) findViewById(R.id.imagesecondpasscode);
+    image3=(ImageView)findViewById(R.id.imagethirdpasscode);
+
+}
+
+
+View.OnClickListener imgButtonHandlerone = new View.OnClickListener() {
+
+    public void onClick(View v) {     
+
+          if(v.isPressed()){
+
+              int d ; 
+              d = R.drawable.passselect;
+
+                if(image.getId()!=d)
+                    {
+                    image.setImageResource(d);
+                     }          
+                 if(image.getId()==d && (image2.getId()!=d))
+                  {
+                 image2.setImageResource(d);
+                  }
+             }
+                }
+
+};
+
+
+View.OnClickListener imgButtonHandlertwo = new View.OnClickListener() {
+
+    public void onClick(View v) {
+
+
+                }
+};
+
+View.OnClickListener imgButtonHandlerthree = new View.OnClickListener() {
+
+    public void onClick(View v) {
+
+
+                }
+};
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            // app icon in action bar clicked; go home
+            Intent intent = new Intent(this, UserDobActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+            default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+
+@Override
+public void onBackPressed() {
+   moveTaskToBack(true); 
+   UserPasscode.this.finish();
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.user_passcode, menu);
+    return true;
+}}
+</code></pre>

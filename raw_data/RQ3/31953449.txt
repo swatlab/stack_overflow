@@ -1,0 +1,173 @@
+<p>I've created a custom list navigation drawer in my app and i want it to start a new activity when an item is clicked. I've tried a lot of the solutions suggested in other similar questions but none of them seem to work for me. Here is my Main Activity code.</p>
+
+<pre><code>package com.nav.drawer;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+
+
+
+public class MainActivity extends ActionBarActivity implements OnItemClickListener {
+    private DrawerLayout drawer_layout;
+    private ListView listview;
+    private ActionBarDrawerToggle drawerListener;
+    private MyAdapter myadapter;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        drawer_layout = (DrawerLayout) findViewById (R.id.drawer_layout);
+        drawer_layout.setDrawerListener(drawerListener);
+        drawerListener = new ActionBarDrawerToggle (this, drawer_layout, R.drawable.ic_drawer, 0, 0){
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                // TODO Auto-generated method stub
+                super.onDrawerClosed(drawerView);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                // TODO Auto-generated method stub
+                super.onDrawerOpened(drawerView);
+            }
+
+        };
+        drawer_layout.setDrawerListener(drawerListener);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+
+        listview = (ListView) findViewById (R.id.left_drawer);
+        myadapter = new MyAdapter(this);
+        listview.setAdapter(myadapter);
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onPostCreate(savedInstanceState);
+        drawerListener.syncState();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;    
+        }
+        if (drawerListener.onOptionsItemSelected(item)){
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
+        // TODO Auto-generated method stub
+        selectItem(position);
+
+
+    }
+
+    private void selectItem(int position) {
+        // TODO Auto-generated method stub
+        listview.setItemChecked(position, true);
+        Intent intent1;
+        switch(position){
+        case 0:
+            intent1 = new Intent(MainActivity.this, NewActivity.class);
+            startActivity(intent1);
+            break;
+
+        }
+
+    }
+
+    public void SetTitle(String title){
+        getSupportActionBar().setTitle(title);
+
+    }
+}
+
+class MyAdapter extends BaseAdapter{
+    private Context context;
+    String [] pages;
+    int[] images = {R.drawable.forward_button, R.drawable.forward_button2, R.drawable.forward_button3, R.drawable.forward_button4, R.drawable.forward_button5, R.drawable.forward_button6, R.drawable.forward_button7};
+
+
+
+    public MyAdapter (Context context){
+        this.context=context;
+        pages = context.getResources().getStringArray(R.array.pages);
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return pages.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return pages[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+        View row=null;
+        if(convertView == null){
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            row=inflater.inflate (R.layout.row, parent, false);
+        }else{
+            row=convertView;
+        }
+        TextView titletextView1 = (TextView) row.findViewById(R.id.textView1);
+        ImageView titleimageview = (ImageView) row.findViewById(R.id.imageView1);
+        titletextView1.setText(pages[position]);
+        titleimageview.setImageResource(images[position]);
+        return row;
+    }
+
+}
+</code></pre>
+
+<p>Any help will be greatly appreciated.</p>

@@ -1,0 +1,127 @@
+<p>I am using gridview for images from specific folder. i want to create code in onitemclick event. that when i click on image it is showed in full size. I have tried some codes from stackoverflow but that weren't working in my case. My code for gridview is </p>
+
+<pre><code>public class PrivateGallery extends Activity {
+private int count;
+private Bitmap[] thumbnails;
+private boolean[] thumbnailsselection;
+private String[] arrPath;
+private ImageAdapter imageAdapter;
+ArrayList<String> f = new ArrayList<String>();// list of file paths
+File[] listFile;
+private Context mcontext;
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.gallery);
+    getFromSdcard();
+    GridView imagegrid = (GridView) findViewById(R.id.PhoneImageGrid);
+    imageAdapter = new ImageAdapter();
+    imagegrid.setAdapter(imageAdapter);
+    imagegrid.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view,
+                int position, long id) {
+            // TODO Auto-generated method stub
+            File afile = new File(f.get(position));
+            if (afile.delete()) {
+                Toast.makeText(getApplicationContext(), "file deleted",
+                        Toast.LENGTH_LONG).show();
+            } else {
+
+                Toast.makeText(getApplicationContext(), "file not deleted",
+                        Toast.LENGTH_LONG).show();
+            }
+            return false;
+        }
+    });
+    ;
+
+    imagegrid.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v,
+                int position, long id) {
+            File afile = new File(f.get(position));
+            Toast.makeText(getApplicationContext(), f.get(position),
+                    Toast.LENGTH_LONG).show();
+
+
+        }
+
+    });
+
+}
+
+public void getFromSdcard() {
+    File file = new File(
+            "/data/data/com.mati.testprivatefolder/cache/MyPrivateFolder2//");
+
+    if (file.isDirectory()) {
+        listFile = file.listFiles();
+
+        for (int i = 0; i < listFile.length; i++) {
+            if (listFile[i].isDirectory()) {
+            } else {
+                f.add(listFile[i].getAbsolutePath());
+            }
+
+        }
+    }
+}
+
+public class ImageAdapter extends BaseAdapter {
+
+    public LayoutInflater mInflater;
+
+    public ImageAdapter() {
+        mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public ImageAdapter(Context c) {
+        mcontext = c;
+    }
+
+    public int getCount() {
+        return f.size();
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(R.layout.galleryitem, null);
+            holder.imageview = (ImageView) convertView
+                    .findViewById(R.id.thumbImage);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        Bitmap myBitmap = BitmapFactory.decodeFile(f.get(position));
+        holder.imageview.setImageBitmap(myBitmap);
+
+        return convertView;
+    }
+
+}
+
+class ViewHolder {
+    ImageView imageview;
+
+}
+
+}
+</code></pre>
+
+<p>Please help me to write code for it. Thanks.</p>

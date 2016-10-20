@@ -1,0 +1,17 @@
+<p>I have many fragments in an activity. I move to some activity from one of the fragments. There are two cases. If I press hardware back button, I move back to the fragment from which current activity was called. But using action bar back button, previous activity is launched from onCreate state,like the very first fragment that I use when that activity is launched at first. Here is the code for action bar back button for second activity:
+in onCreate: <code>getActionBar().setDisplayHomeAsUpEnabled(true);</code>
+then I use:</p>
+
+<pre><code> @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+            }
+        }
+</code></pre>
+
+<p>How do I get the same function in action bar back button as in hardware bach button: onbackpressed??</p>

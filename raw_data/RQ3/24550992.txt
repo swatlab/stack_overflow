@@ -1,0 +1,159 @@
+<p><strong>Issue1:</strong>
+ whenever after I call a <code>setOnPreferenceChangeListener</code> to a referenced key in <code>onCreate</code>, the preference summary updates but when I go back to the previous activity(home) and back again to this activity,the summary is destroyed along side the option to be stored for the value previously selected (like the activity is recreated)</p>
+
+<p><strong>Issue2:</strong>
+I set a <code>setOnPreferenceChangeListener</code> to an <code>EditTextPreference</code> which should update its preference summary whenever a new value is added and set the preference summary to a defined text if such a value is 0. The issue is whenever I put that method in onCreate the app force closes.
+Also here,the new value is not stored as the preference summary when  I try removing the method in onCreate.</p>
+
+<p>Below is my code:</p>
+
+<pre><code>public class MainSettingsActivity 
+  extends SherlockPreferenceActivity implements
+    SharedPreferences.OnSharedPreferenceChangeListener, Constants {
+
+
+private static CheckBoxPreference query_checkbox;
+private static EditTextPreference http_Headers;
+private static CheckBoxPreference iPROXY;
+private static ListPreference connection_Modes;
+private static CheckBoxPreference globalization1;
+private static ListPreference iMethod;
+private static EditTextPreference localportEditTextPreference;
+private static EditTextPreference httpPortEditTextPreference;
+private static ProgressDialog progress;
+private static boolean isRooted = false;
+private boolean exited = false;
+private final Handler mIncomingHandler = null;
+private static SharedPreferences mPreferences = null;
+
+@SuppressWarnings("deprecation")
+@Override
+protected void onCreate(Bundle bundle) {
+    super.onCreate(bundle);
+
+
+    //Animation to handle (slide in/out)
+    overridePendingTransition(android.R.anim.slide_in_left , android.R.anim.slide_out_right);
+
+    //Add the preferences
+    addPreferencesFromResource(R.xml.preferences);
+
+    //Set actionbar background when setting activity is called
+    getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(R.drawable.action_bar_background));
+
+    //UP
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+    localportEditTextPreference = (EditTextPreference)findPreference("local_port");
+    httpPortEditTextPreference = (EditTextPreference)findPreference("http_proxy_port");
+    connection_Modes = (ListPreference)findPreference("connection_modes");
+    iMethod = (ListPreference)findPreference("injection_method");
+    iPROXY = (CheckBoxPreference)findPreference("iProxy");
+    globalization1 = (CheckBoxPreference)findPreference("globalization");
+    http_Headers = (EditTextPreference)findPreference("http_headers");
+    query_checkbox = (CheckBoxPreference)findPreference("parent_query_checkbox");
+    connection_Modes.setSummary(getText(R.string.connection_using).toString() + " " + connection_Modes.getEntry());
+    connection_Modes.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener(){
+
+        @Override
+        public boolean onPreferenceChange(Preference preference,
+                Object newValue) {
+
+            preference.setSummary(MainSettingsActivity.this.getText(R.string.connection_using).toString() + " " + GMUtils.toUC(newValue.toString()));
+
+            if(connection_Modes.getEntry().toString().compareToIgnoreCase("http") !=0){
+                http_Headers.setEnabled(false);
+                http_Headers.setSummary(R.string.http_summary);
+                query_checkbox.setEnabled(false);
+                query_checkbox.setSummary(R.string.http_summary);
+            }
+
+            if(newValue.toString().compareToIgnoreCase("http") == 0){
+                http_Headers.setEnabled(true);
+                http_Headers.setSummary(R.string.pref_http_headers_summary);
+                query_checkbox.setEnabled(true);
+                query_checkbox.setSummary(R.string.pref_query_summary);
+                iPROXY.setEnabled(false);
+                iPROXY.setSummary(R.string.option_not_available);
+            }
+
+            if(newValue.toString().compareToIgnoreCase("http") !=0){
+                http_Headers.setEnabled(false);
+                http_Headers.setSummary(R.string.http_summary);
+                query_checkbox.setEnabled(false);
+                query_checkbox.setSummary(R.string.http_summary);
+            }
+
+            return true;
+        }
+
+    });
+
+    SetPortSummary(localportEditTextPreference, getText(R.string.pref_local_port_summary).toString(), getText(R.string.setport).toString());
+    localportEditTextPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue) {
+            if ((newValue.toString().length() == 0) || (Integer.parseInt(newValue.toString()) > 65535) || (Integer.parseInt(newValue.toString()) < 0)){
+                return false;
+                }
+                if (newValue.toString().contentEquals("0")) {
+                  preference.setSummary(R.string.setport);
+                }
+
+                preference.setSummary(MainSettingsActivity.this.getText(R.string.pref_local_port_summary).toString() + " " + newValue.toString());
+
+                return true;
+        }
+    });
+
+    SetPortSummary(localportEditTextPreference, getText(R.string.pref_local_port_summary).toString(), getText(R.string.setport).toString());
+    httpPortEditTextPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue) {
+            if ((newValue.toString().length() == 0) || (Integer.parseInt(newValue.toString()) > 65535) || (Integer.parseInt(newValue.toString()) < 0)){
+                return false;
+                }
+                if (newValue.toString().contentEquals("0")) {
+                  preference.setSummary(R.string.setport);
+                }
+                preference.setSummary(MainSettingsActivity.this.getText(R.string.pref_http_proxy_port_summary).toString() + " " + newValue.toString());
+            return true;
+
+        }
+    });
+
+}
+
+
+public void SetPortSummary(EditTextPreference paramEditTextPreference, String paramString1, String paramString2){
+    if ((paramEditTextPreference.getText().length() == 0) || (Integer.parseInt(paramEditTextPreference.getText()) > 65535) || (Integer.parseInt(paramEditTextPreference.getText()) < 0)) {
+      paramEditTextPreference.setText("0");
+    }
+    if (paramEditTextPreference.getText().contentEquals("0"))
+    {
+      paramEditTextPreference.setSummary(paramString2);
+      return;
+    }
+    paramEditTextPreference.setSummary(paramString1 + " " + paramEditTextPreference.getText());
+  }
+
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch(item.getItemId()){
+    case android.R.id.home:
+        onBackPressed();
+        finish();
+        return true;
+        default:
+            break;
+    }
+        return super.onOptionsItemSelected(item);
+}
+
+@Override
+public void onSharedPreferenceChanged(SharedPreferences paramSharedPreferences, String key) {
+
+  };
+}
+</code></pre>

@@ -1,0 +1,143 @@
+<p>I want to start a new activity, the activity plays a live stream from a source. When I start the activity, it plays the content on the whole screen. I want to display the contents of the stream in a small screen which is a surfaceview. I am doing this by using a handler which runs a runnable and so on. This is how I am doing it:</p>
+
+<pre><code>//new activity played from here
+ Intent localIntent3 = new Intent("android.intent.action.MAIN");
+//intent flag set to start a new task over the previous one
+ localIntent3.setFlags(270532608);
+ startActivity(localIntent3);
+</code></pre>
+
+<p>Once this activity is started, I run the runnable on the respective handler, which renders the contents played on the stream on a surface view. Here is how I do this:</p>
+
+<pre><code>Runnable handlerRuntv = new Runnable() {
+        public void run() {
+            try {
+                MainActivity.this.surfaceView = new SurfaceView(
+                        MainActivity.this.getApplicationContext());
+                MainActivity.this.openSurfaceView();
+
+                //method to scale the surface view to a smaller display
+                MainActivity.this.setPipscale();
+
+            } catch (Exception localException) {
+                localException.printStackTrace();
+            }
+        }
+    };
+</code></pre>
+
+<p>This is how I run it on the handler:</p>
+
+<pre><code>      this.handlerTV.postDelayed(handlerRuntv, 300L);
+</code></pre>
+
+<p>Once the runnable starts to run on the handler, I do a <code>back press</code> on the device to take me to the previous activity where the content is already playing.</p>
+
+<p><strong><code>Question</code></strong>: I want to start the activity directly on the scaled display of the surface i.e. I do not want the user to press the back button to see the stream. How should this be done? </p>
+
+<p><code>**EDIT:**</code></p>
+
+<p>Using fragments to start activity in a fragment:</p>
+
+<pre><code>//In mainactivity.java
+llFragment =(LinearLayout) findViewById(R.id.llfragment);
+FragmentTransaction t = getFragmentManager().beginTransaction();
+RunTVFragment fragment = new RunFragment();
+t.add(llFragment.getId(), fragment, "fragment");
+t.commit();
+
+//llfragment in .xml
+<LinearLayout
+    android:id="@+id/llfragment"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
+</LinearLayout>
+</code></pre>
+
+<p><code>RunFragment.java</code> that would start the activity:</p>
+
+<pre><code>@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+        View v = inflater.inflate(R.layout.fragmentlayout, container, false);
+        return v;
+}
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onActivityCreated(savedInstanceState);
+      Intent localIntent3 = new Intent("android.intent.action.MAIN");
+      localIntent3.addCategory("android.intent.category.LAUNCHER");
+      startActivity(localIntent3);
+      this.handlerTV.postDelayed(handlerRuntv, 300L);
+}
+
+//fragmentlayout.xml
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/back"
+    android:orientation="horizontal" >
+
+  <FrameLayout
+            android:id="@+id/surframelayout"
+            android:layout_width="340dp"
+            android:layout_height="280dp"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/textView1"/>
+
+</RelativeLayout>
+</code></pre>
+
+<p>Still, the activity does not start/display in the region of the screen required. Instead, it is started as a new task, over the previous activity..</p>
+
+<p><code>EDIT II:</code></p>
+
+<p>Definition of NONUIFragment:</p>
+
+<pre><code>@Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onActivityCreated(savedInstanceState);
+        ComponentName localComponentName2 = new ComponentName("mstar.tvsetting.ui", "mstar.tvsetting.ui.RootActivity");
+          Intent localIntent3 = new Intent("android.intent.action.MAIN");
+          localIntent3.addCategory("android.intent.category.LAUNCHER");
+          localIntent3.setComponent(localComponentName2);
+          localIntent3.setFlags(270532608);
+          startActivity(localIntent3);
+          this.handlerTV.postDelayed(handlerRuntv, 1000L);
+    }
+</code></pre>
+
+<p>Calling <code>NONUI-Fragment</code> from the <code>UI-Fragment</code>:</p>
+
+<pre><code>@Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onActivityCreated(savedInstanceState);
+
+         FragmentManager fm = getFragmentManager();
+
+         // Check to see if we have retained the worker fragment.
+         NonUITVFragment mWorkFragment = (NonUITVFragment)fm.findFragmentByTag("work");
+
+         // If not retained (or first time running), we need to create it.
+         if (mWorkFragment == null) {
+             mWorkFragment = new NonUITVFragment();   //create instance of NON UI Fragment
+             // Tell it who it is working with.
+             mWorkFragment.setTargetFragment(this, 0);
+             fm.beginTransaction().add(mWorkFragment, "work").commit();  //NON UI Fragment
+         }
+    }
+</code></pre>
+
+<p>Calling <code>UI-Fragment</code> from my main activity:</p>
+
+<pre><code>if (savedInstanceState == null) {    //UI Fragement
+                getFragmentManager().beginTransaction().add(R.id.llfragment, new RunTVFragment()).commit();
+            }
+</code></pre>

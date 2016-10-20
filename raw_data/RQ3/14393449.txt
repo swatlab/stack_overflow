@@ -1,0 +1,189 @@
+<p>I found a code to implement tab with fragment. I tried to put listview in the fragment, but the application is crashing with the following error. Could you please take a look on the code and guide me. Thank you.</p>
+
+<pre><code>01-18 11:44:49.130: E/AndroidRuntime(1908): FATAL EXCEPTION: main
+01-18 11:44:49.130: E/AndroidRuntime(1908): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.abe/com.example.abe.TabsFragmentActivity}: java.lang.NullPointerException
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2059)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2084)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.ActivityThread.access$600(ActivityThread.java:130)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1195)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.os.Handler.dispatchMessage(Handler.java:99)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.os.Looper.loop(Looper.java:137)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.ActivityThread.main(ActivityThread.java:4745)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at java.lang.reflect.Method.invokeNative(Native Method)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at java.lang.reflect.Method.invoke(Method.java:511)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:786)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at dalvik.system.NativeStart.main(Native Method)
+01-18 11:44:49.130: E/AndroidRuntime(1908): Caused by: java.lang.NullPointerException
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at com.example.abe.Tab1Fragment.onCreateView(Tab1Fragment.java:44)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.support.v4.app.Fragment.performCreateView(Fragment.java:1460)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:911)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1088)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1070)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.support.v4.app.FragmentManagerImpl.dispatchActivityCreated(FragmentManager.java:1861)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.support.v4.app.FragmentActivity.onStart(FragmentActivity.java:547)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.Instrumentation.callActivityOnStart(Instrumentation.java:1163)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.Activity.performStart(Activity.java:5018)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2032)
+01-18 11:44:49.130: E/AndroidRuntime(1908):     ... 11 more
+</code></pre>
+
+<p>TABFRAGMENTACTIVITY class:</p>
+
+<pre><code>import java.util.HashMap;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
+public class TabsFragmentActivity extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, TabsFragmentActivity.TabInfo>();
+    private TabInfo mLastTab = null;
+    private class TabInfo {
+        private String tag;
+    private Class<?> clss;
+    private Bundle args;
+    private Fragment fragment;
+    TabInfo(String tag, Class<?> clazz, Bundle args) {
+        this.tag = tag;
+        this.clss = clazz;
+        this.args = args;
+    }
+
+    }
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+    public TabFactory(Context context) 
+    {
+        mContext = context;
+    }
+    public View createTabContent(String tag) 
+    {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+    }
+
+    }
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.tabs_layout);
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+    mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); //set the tab as per the saved state
+    }
+    }
+protected void onSaveInstanceState(Bundle outState) {
+    outState.putString("tab", mTabHost.getCurrentTabTag()); //save the tab selected
+    super.onSaveInstanceState(outState);
+}
+    private void initialiseTabHost(Bundle args) {
+        mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+    TabInfo tabInfo = null;
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab1").setIndicator("Tab 1"), ( tabInfo = new TabInfo("Tab1", Tab1Fragment.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab2").setIndicator("Tab 2"), ( tabInfo = new TabInfo("Tab2", Tab2Fragment.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab3").setIndicator("Tab 3"), ( tabInfo = new TabInfo("Tab3", Tab3Fragment.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    this.onTabChanged("Tab1");
+
+    mTabHost.setOnTabChangedListener(this);
+    }
+    private static void addTab(TabsFragmentActivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+    tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+    if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+    FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+    ft.detach(tabInfo.fragment);
+    ft.commit();
+    activity.getSupportFragmentManager().executePendingTransactions();
+    }
+    tabHost.addTab(tabSpec);
+    }
+    public void onTabChanged(String tag) {
+        TabInfo newTab = this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+    if (mLastTab != null) {
+        if (mLastTab.fragment != null) {
+            ft.detach(mLastTab.fragment);
+        }
+    }
+    if (newTab != null) {
+        if (newTab.fragment == null) {
+        newTab.fragment = Fragment.instantiate(this,
+            newTab.clss.getName(), newTab.args);
+        ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+        } else {
+        ft.attach(newTab.fragment);
+        }
+    }
+    mLastTab = newTab;
+    ft.commit();
+    this.getSupportFragmentManager().executePendingTransactions();
+        }
+}
+
+
+}
+</code></pre>
+
+<p>TABFRAGMENT class - this is where i tried to put listview:</p>
+
+<pre><code>import android.annotation.TargetApi;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+public class Tab1Fragment extends ListFragment {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        ListView lv = (ListView)getView().findViewById(R.id.listView1);
+        String android_array1[] = new String[50];
+        for(int i=0;i<50;i++)
+        {
+            android_array1[i]="ab"+i;
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, android_array1);
+        lv.setAdapter(adapter);                     
+        return (LinearLayout)inflater.inflate(R.layout.tab_frag1_layout, container, false);
+    }
+}
+</code></pre>
+
+<p>This is the xml for the tabfragment class:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:background="#FF0000"
+>
+
+<ListView
+    android:id="@+id/listView1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1" >
+</ListView>
+
+</LinearLayout>  
+</code></pre>

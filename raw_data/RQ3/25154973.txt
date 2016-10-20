@@ -1,0 +1,544 @@
+<p>I´ve got the following problem. After parsing a local xml file from the assets folder to a list I would like to send this parsed list to a fragment, which should show specific entries from this list in a listview. </p>
+
+<p>Parsing works, the listview works, but I´m not sure, how to send lists via intent bundle extra to a fragment and how I can get this intent within the fragment.</p>
+
+<p>At this example I would like to send the <code>List<RowItem> pois</code> to the <code>static fragment class RouteItemFragment</code>. The error is at </p>
+
+<pre><code>pois = getActivity().getIntent().getParcelableArrayListExtra("pois"); 
+</code></pre>
+
+<p>Message: </p>
+
+<pre><code>inferred type for type parameter T is not within its bound. should implement android.os.parcelable
+</code></pre>
+
+<p>Has anyone a hint for me?</p>
+
+<pre><code>public class RouteView extends ActionBarActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     *
+     */
+
+    Integer citySave;
+    Integer routeSave;
+    String routeTitel;
+    private static int NUM_ITEMS = 2;
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ListView listView;
+    List<RowItem> pois;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_route_view);
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        routeSave = b.getInt("route");
+        routeTitel = b.getString("titel_route");
+        b.putString("titel_route",routeTitel);
+        b.putInt("route", routeSave);
+        RouteItemFragment fragobj = new RouteItemFragment();
+        fragobj.setArguments(b);
+
+        try {
+            PoiParser parser = new PoiParser();
+            pois = parser.parse(getAssets().open("poi_passau1.xml"));
+            b.putParcelableArrayList("pois", (java.util.ArrayList<? extends android.os.Parcelable>) pois);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.route_view, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            switch (position){
+                case 0:
+                    return RouteItemFragment.newInstance(position);
+                case 1:
+                    return MapFragment.newInstance(position);
+                default:
+                    return PlaceholderFragment.newInstance(position);
+            }
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return NUM_ITEMS;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    public static class RouteItemFragment extends ListFragment implements AdapterView.OnItemClickListener {
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        ListView listView;
+        List<RowItem> pois;
+
+        public static RouteItemFragment newInstance(int sectionNumber) {
+            RouteItemFragment fragment = new RouteItemFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public RouteItemFragment() {
+
+        }
+
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+
+            super.onActivityCreated(savedInstanceState);
+
+            pois  = getActivity().getIntent().getParcelableArrayListExtra("pois");
+            CityListViewAdapter adapter = new CityListViewAdapter(getActivity(), R.layout.row_items, pois);
+                /**Collections.sort(pois, new Comparator<RowItem>() {
+                    public int compare(RowItem s1, RowItem s2) {
+                        return s1.getID().compareTo(s2.getID());
+                    }
+                });*/
+                listView.setAdapter(adapter);
+                listView.setOnItemClickListener(this);
+
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_route_item, container, false);
+            TextView textView = (TextView) rootView.findViewById(R.id.textRouteitem);
+            listView = (ListView) rootView.findViewById(android.R.id.list);
+            textView.setText(String.format(getResources().getString(R.string.routeViewfragment)) + " "
+                    + getActivity().getIntent().getStringExtra("titel_route"));
+            return rootView;
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View parent, int position, long l) {
+            Intent intent = new Intent();
+            intent.setClass(getActivity(), PoiView.class);
+            RowItem pois = (RowItem) getListView().getItemAtPosition(position);
+            Bundle b = new Bundle();
+            //b.putInt("stadt", cities.getID());
+            b.putParcelableArrayList("titel_stadt", pois);
+            intent.putExtras(b);
+            startActivity(intent);
+        }
+
+    }
+
+    public static class MapFragment extends Fragment implements
+            GooglePlayServicesClient.ConnectionCallbacks,
+            GooglePlayServicesClient.OnConnectionFailedListener {
+
+        private static final String ARG_SECTION_NUMBER = "section_number";
+        private GoogleMap mMap;
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static MapFragment newInstance(int sectionNumber) {
+            MapFragment fragment = new MapFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+        }
+        public void onResume() {
+            super.onResume();
+            setUpMapIfNeeded();
+        }
+
+        private void setUpMap() {
+            mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        }
+
+        private void setUpMapIfNeeded() {
+            // Do a null check to confirm that we have not already instantiated the map.
+            if (mMap == null) {
+                // Try to obtain the map from the SupportMapFragment.
+                mMap = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map))
+                        .getMap();
+                // Check if we were successful in obtaining the map.
+                if (mMap != null) {
+                    setUpMap();
+                }
+            }
+        }
+
+        public MapFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_map, container, false);
+            setUpMapIfNeeded();
+            return rootView;
+        }
+
+        @Override
+        public void onConnected(Bundle bundle) {
+
+        }
+
+        @Override
+        public void onDisconnected() {
+
+        }
+
+        @Override
+        public void onConnectionFailed(ConnectionResult connectionResult) {
+
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_route_view, container, false);
+            return rootView;
+        }
+    }
+
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent();
+        intent.setClass(RouteView.this, RouteChooseActivity.class);
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        intent.putExtras(b);
+        startActivity(intent);
+        finish();
+    }
+
+    public void onPause() {
+        super.onPause();
+        Bundle b = new Bundle();
+        b.putInt("stadt", citySave);
+        b.putInt("route", routeSave);
+        b.putString("route_titel",routeTitel);
+        finish();
+    }
+
+    public void onResume() {
+        super.onResume();
+
+        Bundle b = getIntent().getExtras();
+        citySave = b.getInt("stadt");
+        routeSave = b.getInt("route");
+        routeTitel = b.getString("route_titel");
+
+    }
+
+    public void onStop() {
+        super.onStop();
+        finish();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        switch (item.getItemId()) {
+            case R.id.action_stadt:
+                setContentView(R.layout.activity_stadt);
+                Intent stadt = new Intent(RouteView.this, StadtActivity.class);
+                startActivity(stadt);
+                return true;
+            case R.id.action_route:
+                setContentView(R.layout.activity_route_choose);
+                Intent route = new Intent(RouteView.this, RouteChooseActivity.class);
+                startActivity(route);
+                return true;
+            case R.id.action_help:
+                setContentView(R.layout.activity_help);
+                Intent help = new Intent(RouteView.this, Help.class);
+                startActivity(help);
+                return true;
+            case R.id.action_exit:
+                moveTaskToBack(true);
+                System.exit(0);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+}
+</code></pre>
+
+<p>PoiParser:</p>
+
+<pre><code>public class PoiParser {
+    List<RowItem> pois;
+    private RowItem poi;
+    private String text;
+
+    public PoiParser() {
+        pois = new ArrayList<RowItem>();
+    }
+
+    public List<RowItem> getPois() {
+        return pois;
+    }
+
+    public List<RowItem> parse(InputStream is) {
+        XmlPullParserFactory factory = null;
+        XmlPullParser parser = null;
+        try {
+            factory = XmlPullParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            parser = factory.newPullParser();
+
+            parser.setInput(is, null);
+
+            int eventType = parser.getEventType();
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                String tagname = parser.getName();
+                switch (eventType) {
+                    case XmlPullParser.START_TAG:
+                        if (tagname.equalsIgnoreCase("poi")) {
+                            poi = new RowItem();
+                        }
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        text = parser.getText();
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        if (tagname.equalsIgnoreCase("poi")) {
+                            pois.add(poi);
+                        } else if (tagname.equalsIgnoreCase("image")) {
+                            poi.setImage(text);
+                        } else if (tagname.equalsIgnoreCase("id")) {
+                            poi.setID(Integer.parseInt(text));
+                        } else if (tagname.equalsIgnoreCase("name")) {
+                            poi.setTitle(text);
+                        } else if (tagname.equalsIgnoreCase("desc")) {
+                            poi.setDesc(text);
+                        } else if (tagname.equalsIgnoreCase("imagedesc")) {
+                            poi.setImageDesc(text);
+                        } else if (tagname.equalsIgnoreCase("infotext")) {
+                            poi.setInfoText(text);
+                        } else if (tagname.equalsIgnoreCase("audio")) {
+                            poi.setAudioPoi(text);
+                        } else if (tagname.equalsIgnoreCase("latitude")) {
+                            poi.setLatitudePoi(Double.parseDouble(text));
+                        } else if (tagname.equalsIgnoreCase("longitude")) {
+                            poi.setLongitudePoi(Double.parseDouble(text));
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+                eventType = parser.next();
+            }
+
+        } catch (XmlPullParserException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return pois;
+    }
+}
+</code></pre>
+
+<p>RowItem</p>
+
+<pre><code>public class RowItem extends ArrayList<Parcelable> {
+    private String Bild;
+    private String Titel;
+    private String Desc;
+    private String imageDesc;
+    private String infoText;
+    private String audioPoi;
+    private int ID;
+    private double latitudePoi;
+    private double longitudePoi;
+
+    public RowItem() {
+        this.Bild = Bild;
+        this.Titel = Titel;
+        this.Desc = Desc;
+        this.imageDesc = imageDesc;
+        this.infoText = infoText;
+        this.audioPoi = audioPoi;
+        this.ID = ID;
+        this.latitudePoi = latitudePoi;
+        this.longitudePoi = longitudePoi;
+    }
+
+
+    public int getID() {return ID;}
+    public void setID(int ID) {this.ID = ID;}
+    public double getLatitudePoi() {return latitudePoi;}
+    public void setLatitudePoi(double latitudePoi) {this.latitudePoi = latitudePoi;}
+    public double getLongitudePoi() {return longitudePoi;}
+    public void setLongitudePoi(double longitudePoi) {this.longitudePoi = longitudePoi;}
+    public String getImage() {
+        return Bild;
+    }
+    public void setImage(String imageId) {
+        this.Bild = imageId;
+    }
+    public String getDesc() {
+        return Desc;
+    }
+    public void setDesc(String desc) {
+        this.Desc = desc;
+    }
+    public String getTitle() {
+        return Titel;
+    }
+    public void setTitle(String title) {
+        this.Titel = title;
+    }
+    public String getImageDesc() {return imageDesc;}
+    public void setImageDesc(String imageDesc){this.imageDesc = imageDesc;}
+    public String getInfoText() {return infoText;}
+    public void setInfoText(String infoText) {this.infoText = infoText;}
+    public String getAudioPoi() {return audioPoi;}
+    public void setAudioPoi(String audioPoi) {this.audioPoi = audioPoi;}
+
+    @Override
+    public String toString() {
+        return Titel + "\n" + Desc;
+    }
+
+}
+</code></pre>

@@ -1,0 +1,87 @@
+<p>I need help to retrieve data from the database in the asset folder by using getter and setter. I dont have any idea on how to retrieve the data since im new to android. What will be the code to be add to retrieve data in the database.</p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "/data/data/com.example.user.displayname/databases/";
+    private static String DB_NAME = "displayname";
+    private SQLiteDatabase myDataBase;
+    private Context myContext = null;
+
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, (SQLiteDatabase.CursorFactory) null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = this.checkDataBase();
+        if(!dbExist) {
+            this.getReadableDatabase();
+
+            try {
+                this.copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error");
+            }
+        }
+    }
+
+    public void copyDataBase() throws IOException {
+        InputStream myInput = this.myContext.getAssets().open(DB_NAME);
+        String outFileName = DB_PATH + DB_NAME;
+        FileOutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+
+        int length;
+        while((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String e = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(e, (SQLiteDatabase.CursorFactory)null, 0);
+        } catch (SQLiteException e) {
+            ;
+        }
+
+        if(checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null;
+    }
+
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        this.myDataBase = SQLiteDatabase.openDatabase(myPath, (SQLiteDatabase.CursorFactory)null, 0);
+    }
+
+    public synchronized void close() {
+        if(this.myDataBase != null) {
+            this.myDataBase.close();
+        }
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    public void createDatabase() {
+    }
+}
+</code></pre>

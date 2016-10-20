@@ -1,0 +1,198 @@
+<p>I am creating an app that needs to save account information for multiple accounts.   This data we want to store in an SQL database.   We also want to use the familiar, built-in shared preference code format to create and edit this data for each account.     </p>
+
+<p>We have created code for a shared preference with the various items for each account.    </p>
+
+<p>We also created the code for an SQL database that has all the same fields for each item in the preference as well as a unique, auto incremented, id field (called acct_id).   I have the various setters and getters for each field in the record... as well as the typical code for adding a record, deleting a record, and updating a record.</p>
+
+<p>Both the preference screen and the sqllite helper code work... in testing... separately.</p>
+
+<p>What I am not sure of is how to "load" the shared preference screen from the appropriate database record and how to "save" the changes to the appropriate database record. From what I have read on here and the internet, I "think" I need to use a preference editor... but, from what I have read, all the examples I can find are using a flat-file or XML file.   Not sure how to use those examples for the database.</p>
+
+<p>Here is my preference fragment code...</p>
+
+<pre><code>public class PrefAcctFrag extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    addPreferencesFromResource(R.xml.prefacct);
+    for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
+        initSummary(getPreferenceScreen().getPreference(i));
+    }
+}
+
+@Override
+public void onResume() {
+    super.onResume();
+    // Set up a listener whenever a key changes
+    getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+}
+
+@Override
+public void onPause() {
+    super.onPause();
+    // Unregister the listener whenever a key changes
+    getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+}
+
+public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+    updatePrefSummary(sharedPreferences, findPreference(key));
+}
+
+private void initSummary(Preference p) {
+    if (p instanceof PreferenceCategory) {
+        PreferenceCategory pCat = (PreferenceCategory) p;
+        for (int i = 0; i < pCat.getPreferenceCount(); i++) {
+            initSummary(pCat.getPreference(i));
+        }
+    } else {
+        updatePrefSummary(getPreferenceManager().getSharedPreferences(),p);
+    }
+
+}
+
+private void updatePrefSummary(SharedPreferences sharedPreferences, Preference p) {
+    if (p==null)
+        return;
+    if (p instanceof ListPreference) {
+        ListPreference listPref = (ListPreference) p;
+        p.setSummary(listPref.getEntry());
+    } else if (p instanceof EditTextPreference) {
+        EditTextPreference editTextPref = (EditTextPreference) p;
+        if (p.getKey().equalsIgnoreCase("editKey")) {
+            p.setSummary("I am not going to display a password!");
+        } else {
+            p.setSummary(editTextPref.getText());
+        }
+    } else if (p instanceof MultiSelectListPreference) {
+        // MultiSelectList Preference
+        MultiSelectListPreference mlistPref = (MultiSelectListPreference) p;
+        String summaryMListPref = "";
+        String and = "";
+
+        // Retrieve values
+        Set<String> values = mlistPref.getValues();
+        for (String value : values) {
+            // For each value retrieve index
+            int index = mlistPref.findIndexOfValue(value);
+            // Retrieve entry from index
+            CharSequence mEntry = index >= 0
+                    && mlistPref.getEntries() != null ? mlistPref
+                    .getEntries()[index] : null;
+            if (mEntry != null) {
+                // add summary
+                summaryMListPref = summaryMListPref + and + mEntry;
+                and = ";";
+            }
+        }
+        // set summary
+        mlistPref.setSummary(summaryMListPref);
+
+    } else if (p instanceof RingtonePreference) {
+        // RingtonePreference
+        RingtonePreference rtPref = (RingtonePreference) p;
+        String uri;
+        if (rtPref != null) {
+            uri = sharedPreferences.getString(rtPref.getKey(), null);
+            if (uri != null) {
+                Ringtone ringtone = RingtoneManager.getRingtone(
+                        getActivity(), Uri.parse(uri));
+                p.setSummary(ringtone.getTitle(getActivity()));
+            }
+        }
+    }
+}
+}
+</code></pre>
+
+<p>As stated, that works fine as is and stores a single account in the typical preferences.   I now need to add the code to store it in the sql database.</p>
+
+<p>My SQLLiteHelper looks like this...</p>
+
+<pre><code>public class MySQLiteHelper extends SQLiteOpenHelper {
+private static final int DATABASE_VERSION=1;
+private static final String DATABASE_NAME="MyDB";
+
+public static final String ACCT_TABLE="acct";
+public static final String ACCT_FLD_ID="id";
+public static final String ACCT_FLD_TYPE="type";
+
+private static final String CREATE_TABLE_ACCT="CREATE TABLE " + ACCT_TABLE + " ( "+
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+        "name TEXT, " +
+        "type TEXT)";
+
+
+public MySQLiteHelper(Context context) {
+    super(context,DATABASE_NAME,null, DATABASE_VERSION);
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    db.execSQL(CREATE_TABLE_ACCT);
+}
+
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+    db.execSQL("DROP TABLE IF EXISTS " + ACCT_TABLE);
+
+    this.onCreate(db);
+}
+
+public void addAccount(TblAccount acct){
+    SQLiteDatabase db = this.getWritableDatabase();
+
+    ContentValues values = new ContentValues();
+    values.put(ACCT_FLD_NAME,acct.get_name());
+    values.put(ACCT_FLD_TYPE,acct.get_type());
+
+    db.insert(ACCT_TABLE, null, values);
+    db.close();
+}
+
+public TblAccount getAccount(int id){
+    SQLiteDatabase db = this.getReadableDatabase();
+
+    String SQL_STRING="SELECT * FROM "+ACCT_TABLE+" WHERE "+ACCT_FLD_ID+" = "+String.valueOf(id);
+    Cursor cursor =
+            db.rawQuery(SQL_STRING, null);
+
+    TblAccount acct = new TblAccount();
+
+    if (cursor!=null) {
+        cursor.moveToFirst();
+
+        acct.set_id(cursor.getInt((cursor.getColumnIndex(ACCT_FLD_ID))));
+                    acct.set_name(cursor.getString(cursor.getColumnIndex(ACCT_FLD_NAME)));
+        acct.set_type(cursor.getString(cursor.getColumnIndex(ACCT_FLD_TYPE)));
+                    cursor.close();
+    } else {
+        acct = null;
+    }
+    db.close();
+    return acct;
+}
+
+public int updateAccount(TblAccount acct){
+    SQLiteDatabase db = this.getWritableDatabase();
+
+    ContentValues values = new ContentValues();
+    values.put(ACCT_FLD_NAME,acct.get_name());
+    values.put(ACCT_FLD_TYPE,acct.get_type());
+
+    int i = db.update(ACCT_TABLE, values, ACCT_FLD_ID+" = ?",new String[] { String.valueOf(acct.get_id())});
+    db.close();
+    return i;
+}
+
+public void deleteAccount(TblAccount acct) {
+    SQLiteDatabase db = this.getWritableDatabase();
+
+    db.delete(ACCT_TABLE,ACCT_FLD_ID+" = ?",new String[] { String.valueOf(acct.get_id())});
+    db.close();
+}
+}
+</code></pre>
+
+<p>So that is where I am stuck.   Any help, suggestions, or links to some sample code would be great to get me in the right direction.</p>
+
+<p>Thanks</p>

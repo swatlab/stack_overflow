@@ -1,0 +1,43 @@
+<p>I have a large SQLiteDatabase that I copy from Assets to SDCard before opening that database. But I seem to be missing something because the Activity that uses that database can query the database before the copy is done, which causes a SQLiteException.</p>
+
+<p>In my constructor I do this:</p>
+
+<pre><code>private DataBaseHelper(Context context) {
+    super(context, DB_NAME, null, 1);
+    mContext = context;
+    DB_FILE_PATH = context.getExternalFilesDir(null);
+    try {
+
+        createDataBase();
+        openDataBase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+</code></pre>
+
+<p>The createDatabase method is doing:</p>
+
+<pre><code>public void createDataBase() throws IOException {
+
+        dbExist = checkDataBase();
+
+        if (dbExist) {
+
+        } else {
+            this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+</code></pre>
+
+<p>I think you understand. However, my issue and question is how I can check if the database is completed copy before opening the database? Clearly I'm not doing it correctly now.</p>
+
+<p>Regards,
+Jonas</p>

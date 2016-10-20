@@ -1,0 +1,414 @@
+<p>I have a listView which displays clothing items in my shopping cart from my existing database and at the bottom it shows you the total price of all the items in my cart. When I delete items from my cart, the listView does get updated, it removes the item, but the total price that displays at the bottom does not get updated when I delete this item and this total price just comes from a query that does SUM(Price) from my table which contains my items in my cart. I've posted my some of my code below and if anyone can help, that would be great. </p>
+
+<p><strong>DatabaseHelper.java</strong></p>
+
+<pre><code>package ankitkaushal.app.healthysizing;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+    public static String DB_PATH = "/data/data/ankitkaushal.app.healthysizing/databases/";
+    public static String DB_NAME = "AppDatabase";
+    public static final int DB_VERSION = 1;
+    public static final String shoppingCartTable = "OPS_insert";
+    private SQLiteDatabase myDB;
+    private Context context;
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        this.context = context;
+    }
+
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public synchronized void close(){
+        if(myDB!=null){
+            myDB.close();
+        }
+        super.close();
+    }
+
+
+    // Retrieves all the types of clothing items of the specified brand typed into the search bar
+    public ArrayList<Item> getAllSearchedItems(String brand, String table_name) {
+
+        ArrayList<Item> shirtList = new ArrayList<Item>();
+        String query = "SELECT * FROM " + table_name + " WHERE Brand LIKE '" + brand + "' ORDER BY Price ASC"; //query to get all the shirts for brand typed in
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()){
+            do {
+                Item item = new Item();
+                item.setBrand(cursor.getString(0));
+                item.setStore(cursor.getString(1));
+                item.setPrice(cursor.getString(2));
+                item.setDescription(cursor.getString(3));
+                item.setSize(cursor.getString(4));
+                item.setGender(cursor.getString(5));
+                item.setID(cursor.getString(6));
+                shirtList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        return shirtList;
+
+    }
+
+
+    // Retrieves all the items of a certain type from the database
+    public ArrayList<Item> getAllItems(String table_name) {
+
+        ArrayList<Item> shirtList = new ArrayList<Item>();
+        String query = "SELECT * FROM " + table_name + " ORDER BY Price ASC"; //query to get all the shirts
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()){
+            do {
+                Item item = new Item();
+                item.setBrand(cursor.getString(0));
+                item.setStore(cursor.getString(1));
+                item.setPrice(cursor.getString(2));
+                item.setDescription(cursor.getString(3));
+                item.setSize(cursor.getString(4));
+                item.setGender(cursor.getString(5));
+                item.setID(cursor.getString(6));
+                shirtList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        return shirtList;
+
+    }
+
+
+    // Retrieves all the items in the cart
+    public ArrayList<Item> getItemsInCart() {
+
+        ArrayList<Item> cartList = new ArrayList<Item>();
+        String query = "SELECT * FROM " + shoppingCartTable + " ORDER BY Price ASC"; // query to get all the items in the cart
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()){
+            do {
+                Item item = new Item();
+                item.setBrand(cursor.getString(0));
+                item.setStore(cursor.getString(1));
+                item.setPrice(cursor.getString(2));
+                item.setDescription(cursor.getString(3));
+                item.setSize(cursor.getString(4));
+                item.setGender(cursor.getString(5));
+                item.setID(cursor.getString(6));
+                cartList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        return cartList;
+
+    }
+
+
+    // Adds the item chosen from the listView to your shopping cart.
+    public void addToCart(Item item) {
+
+        String description = item.getDescription();
+        description = "\"" + description + "\"";
+        String query = "INSERT INTO " + shoppingCartTable + " (Brand, Store, Price, Description, Size, Gender, ID) " +
+                       "VALUES ('" + item.getBrand() + "', '" + item.getStore() + "', '" + item.getPrice() + "', "
+                       + description + ", '" + item.getSize() + "', '" + item.getGender() + "', '" + item.getID() + "')";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+
+    }
+
+
+    // Deletes the item from the shopping cart
+    public void deleteItemFromCart(String ID) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(shoppingCartTable, " ID = '" + ID + "'", null);
+    }
+
+
+    // Returns total price of items in shopping cart
+    public String getTotalCartPrice() {
+        String SQLQuery = "SELECT SUM(Price) FROM OPS_insert";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor c = db.rawQuery(SQLQuery, null);
+        c.moveToFirst();
+        String priceTotal = c.getString(0);
+        return priceTotal;
+    }
+
+
+    public void setLimitSize(String limit, String clothingType) {
+
+        String query = "UPDATE clothingLimit SET " + clothingType + " = " + limit;
+
+    }
+
+    /***
+     * Open database
+     * @throws android.database.SQLException
+     */
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        myDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+    }
+
+
+    /**
+     * Copy database from source code assets to device
+     * @throws java.io.IOException
+     */
+    public void copyDataBase() throws IOException {
+        try {
+            InputStream myInput = context.getAssets().open(DB_NAME);
+            String outputFileName = DB_PATH + DB_NAME;
+            OutputStream myOutput = new FileOutputStream(outputFileName);
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while((length = myInput.read(buffer))>0){
+                myOutput.write(buffer, 0, length);
+            }
+
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        } catch (Exception e) {
+            Log.e("tle99 - copyDatabase", e.getMessage());
+        }
+
+    }
+
+
+    /***
+     * Check if the database doesn't exist on device, create new one
+     * @throws IOException
+     */
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+
+        } else {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                Log.e("tle99 - create", e.getMessage());
+            }
+        }
+    }
+
+
+    // ---------------------------------------------
+    // PRIVATE METHODS
+    // ---------------------------------------------
+
+    /***
+     * Check if the database is exist on device or not
+     * @return
+     */
+    private boolean checkDataBase() {
+        SQLiteDatabase tempDB = null;
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            tempDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READWRITE);
+        } catch (SQLiteException e) {
+            Log.e("tle99 - check", e.getMessage());
+        }
+        if (tempDB != null)
+            tempDB.close();
+        return tempDB != null ? true : false;
+    }
+
+}
+</code></pre>
+
+<p><strong>CartItemsAdapter.java</strong></p>
+
+<pre><code>package ankitkaushal.app.healthysizing;
+
+import java.util.ArrayList;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public final class CartItemsAdapter extends ArrayAdapter<Item> implements View.OnClickListener {
+
+    public CartItemsAdapter(Context context, ArrayList<Item> shirtItems) {
+        super(context, 0, shirtItems);
+    }
+
+    @Override
+    public View getView(final int position, View convertView, ViewGroup parent) {
+
+        // Get the data item for this position
+        Item item = getItem(position);
+
+        // Check if an existing view is being reused, otherwise inflate the view
+        if (convertView == null) {
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.cart_layout, parent, false);
+        }
+
+        // Lookup view for data population
+        TextView brand = (TextView) convertView.findViewById(R.id.txt_cart_brand);
+        TextView price = (TextView) convertView.findViewById(R.id.txt_cart_price);
+        TextView store = (TextView) convertView.findViewById(R.id.txt_cart_store);
+        TextView size = (TextView) convertView.findViewById(R.id.txt_cart_size);
+        TextView description = (TextView) convertView.findViewById(R.id.txt_cart_description);
+        ImageView shirtsImage = (ImageView) convertView.findViewById(R.id.image_view_cart);
+        Button deleteFromCartButton = (Button) convertView.findViewById(R.id.deleteItemButton);
+
+        // Populate the data into the template view using the data object
+        brand.setText("Brand:" + "  " + item.getBrand());
+        price.setText("Price:" + "  $" + item.getPrice());
+        store.setText("Store:" + "  " + item.getStore());
+        size.setText("Size:" + "  " + item.getSize());
+        description.setText("Description:" + "  " + item.getDescription());
+
+        Context context = parent.getContext();
+
+        try { // Find the image name from database ID column and link that up with the name of image in drawable folder
+            String itemName = item.getID();
+            String uri = "@drawable/"+itemName;
+            int imageResource = context.getResources().getIdentifier(uri, null, context.getApplicationContext().getPackageName());
+            Drawable drawable = context.getResources().getDrawable(imageResource);
+            shirtsImage.setImageDrawable(drawable);
+        }
+
+        catch (Exception e) { // If no image found for item, just set the image to a default image in drawable folder
+            // TODO Auto-generated catch block
+            Drawable drawable = context.getResources().getDrawable(R.drawable.shirts); // Default image
+            shirtsImage.setImageDrawable(drawable);
+        }
+
+        deleteFromCartButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                // TODO Auto-generated method stub
+
+                // To get the item from the listView for which the Add to Cart button is pressed
+                Item item = getItem(position);
+
+                // Delete the item from the cart by pressing the delete item button
+                DatabaseHelper db = new DatabaseHelper(getContext());
+                db.deleteItemFromCart(item.getID());
+                remove(item);
+
+                // Update the listView to reflect the changes
+                notifyDataSetChanged();
+            }
+
+        });
+
+        // Return the completed view to render on screen
+        return convertView;
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p><strong>shoppingCart.java</strong></p>
+
+<pre><code>    package ankitkaushal.app.healthysizing;
+
+    import android.support.v7.app.ActionBarActivity;
+    import android.os.Bundle;
+    import android.widget.ListAdapter;
+    import android.widget.ListView;
+    import android.widget.TextView;
+    import java.io.IOException;
+    import java.util.ArrayList;
+
+    public class shoppingCart extends ActionBarActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_shopping_cart);
+
+            final DatabaseHelper dbhelper;
+            final ListView listView;
+            final ListAdapter cartAdapter;
+
+            dbhelper = new DatabaseHelper(getApplicationContext());
+            try {
+                dbhelper.createDataBase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            listView = (ListView) findViewById(R.id.itemsInCartList);
+            ArrayList<Item> cartList = dbhelper.getItemsInCart();
+
+            if (cartList != null) {
+                cartAdapter = new CartItemsAdapter(getApplicationContext(), cartList);
+                listView.setAdapter(cartAdapter);
+            }
+
+            listView.setEmptyView(findViewById(R.id.emptyCartMessage));
+
+            TextView displayTotalPrice = (TextView) findViewById(R.id.totalCartPrice);
+            String totalCartPrice = dbhelper.getTotalCartPrice();
+
+            if (totalCartPrice != null) {
+                displayTotalPrice.setText("Total Price: $" + totalCartPrice);
+            }
+
+            else {
+                displayTotalPrice.setText("Total Price: $0.00");
+            }
+
+        }
+
+    }
+</code></pre>

@@ -1,0 +1,111 @@
+<p>I'm creating an app that uses a Sqlite database. The database contains one table which I'm updating using sqlitebrowser. However whenever I up the database the changes are not seen in the app, possibly due to the app reading the old database. I'm changing the <code>DATABASE_VERSION</code> each time I update the databse but it doesn't seem to help.</p>
+
+<p>I believe the issue is to do with my <code>onUpgrade()</code> method but I'm unsure what to place inside it.</p>
+
+<p>DBHelper class:</p>
+
+<pre><code>public class DBHelper extends SQLiteOpenHelper {
+    public static final String DATABASE_NAME = "BB2SoulDatabase.db";
+    public String DB_PATH ="";
+    private static final int DATABASE_VERSION = 2;
+    public static final String TABLE_NAME = "SOULS";
+    public static final String SOUL_COLUMN_NAME = "Name";
+    private final Context myContext;
+    private SQLiteDatabase myDataBase;
+
+    public DBHelper(Context context) {
+        super(context, DATABASE_NAME , null, DATABASE_VERSION);
+        this.myContext = context;
+        DB_PATH = myContext.getDatabasePath(DATABASE_NAME).getPath();
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if(dbExist){ }
+        else {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+        try {
+            String myPath = DB_PATH;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        } catch(SQLiteException e) { }
+        if(checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+        InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+        String outFileName = DB_PATH;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0) {
+            myOutput.write(buffer, 0, length);
+        }
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void open() throws SQLException {
+        try {
+            createDataBase();
+        } catch (IOException e) {
+            throw new Error("\n" +
+                    "It was impossible to create the database");
+        }
+        String myPath = DB_PATH;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+
+    public Cursor getAllItems(String sortBy, String sortByAffinity, String sortByRace) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String orderBy = " DESC";
+        String affinity = "";
+        String race = "";
+        String raceAnd = " WHERE";
+        if(sortByAffinity.equals("Quickstrike")) {
+            affinity = " WHERE Quickstrike = 'y'";
+            raceAnd = " AND";
+        }
+        else if(!sortByAffinity.equals("Affinity/All")){
+            affinity = " WHERE Affinity = '"+sortByAffinity+ "'";
+            raceAnd = " AND";
+        }
+
+        if(!sortByRace.equals("Race/All")){
+            race = raceAnd+" Race = '"+sortByRace+ "'";
+        }
+
+        if(sortBy.equals("Name")) orderBy = " ASC";
+
+        Cursor res =  db.rawQuery( "SELECT * FROM " + TABLE_NAME + affinity + race + " ORDER BY "+ sortBy + orderBy , null );
+        return res;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+}
+</code></pre>

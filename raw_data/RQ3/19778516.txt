@@ -1,0 +1,160 @@
+<p>As usual, I am afraid I am in way over my head with this.</p>
+
+<p>I have successfully modified a tutorial to get a set of images from a folder on the SDCard to show in an GridView</p>
+
+<p>What I am attempting to do, is allow the user to select one to set as a wallpaper.</p>
+
+<p>My issue is that whist I know that the folder location of the image has to have been received for it to be appearing I cant work out how to get it and then subsequently set it as a wallpaper.</p>
+
+<p>I have included a small part of one of my many attempts but it throws all kinda errors, mainly NullPointers at the moment as I am trying to access the ImageView from the galleryitem.xml file.</p>
+
+<pre><code> public class MyWallpapers extends Activity {
+
+
+private boolean[] thumbnailsselection;
+private String[] arrPath;
+private ImageAdapter imageAdapter;
+
+ImageView Selected;
+
+
+ArrayList<String> f = new ArrayList<String>();// list of file paths
+File[] listFile;
+
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.wallpaper_view_activity);
+
+
+    getFromSdcard();
+    GridView imagegrid = (GridView) findViewById(R.id.PhoneImageGrid);
+    imageAdapter = new ImageAdapter();
+    imagegrid.setAdapter(imageAdapter);
+
+
+    final ImageView Selected = (ImageView) findViewById(R.id.thumbImage);
+      Selected.setOnClickListener(new OnClickListener() {
+
+          public void onClick(View v) {
+
+
+              //need to get the position of the file and set it as wallpaper when the user clicks the image
+
+              Context context = this.getAbsolutePath();
+              Bitmap mBitmap = BitmapFactory.decodeResource(getResources(),
+                      mImageIds[pos]);
+              context.setWallpaper(context);
+
+          }
+      });
+  }
+
+
+
+public void getFromSdcard()
+{
+    File file= new File(android.os.Environment.getExternalStorageDirectory(),"Wallpaper");
+
+        if (file.isDirectory())
+        {
+            listFile = file.listFiles();
+
+
+            for (int i = 0; i < listFile.length; i++)
+            {
+
+                f.add(listFile[i].getAbsolutePath());
+
+            }
+        }
+}
+
+public class ImageAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+
+    public ImageAdapter() {
+        mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public int getCount() {
+        return f.size();
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(
+                    R.layout.galleryitem, null);
+            holder.imageview = (ImageView) convertView.findViewById(R.id.thumbImage);
+
+            convertView.setTag(holder);
+        }
+        else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+
+        Bitmap myBitmap = BitmapFactory.decodeFile(f.get(position));
+        holder.imageview.setImageBitmap(myBitmap);
+        return convertView;
+    }
+}
+class ViewHolder {
+    ImageView imageview;
+
+
+}
+    }
+</code></pre>
+
+<p>This is my GridView in the wallpaper_view_activity.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent" >
+
+<GridView
+    android:id="@+id/PhoneImageGrid"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_above="@+id/button1"
+    android:columnWidth="90dp"
+    android:gravity="center"
+    android:horizontalSpacing="10dp"
+    android:numColumns="auto_fit"
+    android:stretchMode="columnWidth"
+    android:verticalSpacing="10dp" />
+</code></pre>
+
+<p></p>
+
+<p>And finally the galleryitem.xml</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent" >
+
+<ImageView
+    android:id="@+id/thumbImage"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true" />
+</code></pre>
+
+<p></p>
+
+<p>Any help with this would be, as always, greatly appreciated</p>

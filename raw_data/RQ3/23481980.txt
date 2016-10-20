@@ -1,0 +1,265 @@
+<p>I am new on Android. I have Application and it connected with sqlite expert database.I added my db on assets folder. My problem is first cursor is reading but program never read second cursor. </p>
+
+<p>I am looking this question but I did not find my answer
+<a href="http://stackoverflow.com/questions/2342346/problem-about-sqlite-database-no-such-table">problem about sqlite database, no such table: </a></p>
+
+<pre><code>package com.qozix.data;
+
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.qozix.sqlite.DataBaseHelper;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+public class ClassRepository {
+
+    private List<ClassData> classDataList=new ArrayList<ClassData>();
+    private List<EventData> EventDataList=new ArrayList<EventData>();
+    private Context myContext;
+    private DataBaseHelper dataBaseHelper;
+
+    public ClassRepository(Context context) {
+        myContext=context;
+        dataBaseHelper=new DataBaseHelper(context);
+        loadData();
+        loadData2();
+    }
+    public void loadData(){
+        try {
+
+            dataBaseHelper.openDataBase();
+            SQLiteDatabase database=dataBaseHelper.getMyDataBase();
+            String[] columns={"_id","name","x","y"};
+            Cursor cursor=database.query("classroom", columns,null , null, null, null, null, null);
+            while(cursor.moveToNext()){
+                int _id=cursor.getInt(cursor.getColumnIndexOrThrow("_id"));
+                String name=cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                String codename= name;
+                int x=cursor.getInt(cursor.getColumnIndexOrThrow("x"));
+                int y=cursor.getInt(cursor.getColumnIndexOrThrow("y"));
+                String message=""+_id+" "+name+" "+x+" "+y;
+                Log.i("[InDoorMap]", message);
+                classDataList.add(new ClassData(codename,name,x,y));
+
+            }
+        } catch (Exception e) {
+            Log.e("[InDoorMap]", "Database exception first cursor ",e);
+        }       
+    }
+
+    public void loadData2(){
+        try {
+
+            dataBaseHelper.openDataBase();
+            SQLiteDatabase database=dataBaseHelper.getMyDataBase();
+                String[] column2={"_id","description","hour","name"};
+                Cursor cursor2=database.query("events", column2,null , null, null, null, null, null);
+                while(cursor2.moveToNext()){
+                    int _id1=cursor2.getInt(cursor2.getColumnIndexOrThrow("_id"));
+                    String description=cursor2.getString(cursor2.getColumnIndexOrThrow("description"));
+                    String hour = cursor2.getString(cursor2.getColumnIndexOrThrow("hour"));
+                    String nameevent = cursor2.getString(cursor2.getColumnIndexOrThrow("name"));
+                    String message2=""+_id1+" "+description+" "+hour+" "+nameevent;
+                    Log.i("[event]", message2);
+                    System.out.println(message2);
+                    EventDataList.add(new EventData(nameevent,hour,description));
+                    Log.e("[InDoorMap]", "Evente girmedi");
+                }
+
+        } catch (Exception e) {
+            Log.e("[InDoorMap]", "Database exception secon cursor ",e);
+        }       
+    }
+
+}
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/CfJaD.jpg" alt="enter image description here"></p>
+
+<p>taken Assets folder</p>
+
+<p>�StableeventseventsCREATE TABLE [events] (</p>
+
+<p>This is log cat </p>
+
+<pre><code>05-06 00:12:33.598: (29244): Database already exists 
+05-06 00:12:33.598: (29244): Database opened. 
+05-06 00:12:44.910: (29244): 1 PigastroCafe 1336 1688 // it read other table
+05-06 00:12:44.910: (29244): 2 Pigastro 540 344
+05-06 00:12:44.910: E/SQLiteLog(29244): (1) no such table: events
+05-06 00:12:44.926: (29244): Database exception secon cursor 
+05-06 00:12:44.926: (29244): android.database.sqlite.SQLiteException: no such table: events (code 1): , while compiling: SELECT _id, description, hour, name FROM events
+05-06 00:12:44.926: (29244):    at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+05-06 00:12:44.926: (29244):    at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1013)
+</code></pre>
+
+<p>And this my databasehelper class It connection on this page. I really did not find problem :(((</p>
+
+<pre><code>package com.qozix.sqlite;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
+import android.util.Log;
+
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+
+    //The Android's default system path of your application database.
+
+
+    private static String DB_NAME = "KhasIndoor6";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 3);
+        this.myContext = context;
+    }   
+
+  public SQLiteDatabase getMyDataBase() {
+        return myDataBase;
+    }
+
+/**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            Log.i("[InDoorMap]", "Database already exists ");
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            Log.i("[InDoorMap]", "Database created ");
+            try {
+
+                copyDataBase();
+
+                Log.i("[InDoorMap]", "Database copied ");
+            } catch (IOException e) {
+                Log.e("[InDoorMap]", "Database exception ",e);
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath =  myContext.getFilesDir().getPath() +"/"+ DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+            myDataBase=checkDB;
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = myContext.getFilesDir().getPath()+"/" + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+        File outFile=new File(outFileName);
+        Log.i("[InDoorMap]", "Output file "+outFile.getAbsolutePath()+" "+outFile.exists()+" "+outFile.length());
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = myContext.getFilesDir().getPath()+"/" + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+
+}
+</code></pre>

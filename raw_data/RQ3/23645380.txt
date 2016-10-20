@@ -1,0 +1,71 @@
+<p>I am having trouble querying a SQLite database on my Android app. I used <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">this tutorial</a> to set up my database helper class.</p>
+
+<p>I made a simple query function: </p>
+
+<pre><code>public Cursor queryDB(String Query,String[] args){  
+
+Cursor cursor = myDataBase.rawQuery(Query, args);
+
+return cursor;
+</code></pre>
+
+<p>and then I call it like this:</p>
+
+<pre><code> String[] testarg = {"Denver Bake"};
+ myDataBase.getReadableDatabase();
+ Cursor results = myDataBase.queryDB("SELECT * FROM Recipes WHERE r_name = ?", testarg);
+</code></pre>
+
+<p>The error I am getting is:</p>
+
+<pre><code> E/AndroidRuntime(30483): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.dbtest/com.example.dbtest.MainActivity}: android.database.sqlite.SQLiteException: no such table: Recipes: , while compiling: SELECT * FROM Recipes WHERE r_name = ?
+</code></pre>
+
+<p>I know that the Recipes table does exist in my database because it appears in the SQLite database browser in the tutorial. I've tried some of the suggestions in the tutorial comments but I still get the same error, and I'm not really sure what to do now.</p>
+
+<p>Thanks is advance.</p>
+
+<p>Here is my create </p>
+
+<pre><code>public void createDataBase() throws IOException{
+    boolean dbExist = checkDataBase();
+    if(dbExist){
+            //do nothing - database already exist
+    }else{
+
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+            } catch (IOException e) {
+
+            throw new Error("Error copying database");
+            }
+    }
+}
+</code></pre>
+
+<p>And here is my copy code:</p>
+
+<pre><code>private void copyDataBase() throws IOException{
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+       }
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+</code></pre>
+
+<p>Lastly, I do have my database in my assets folder. The error message is telling me that the table in the database does not exist.</p>

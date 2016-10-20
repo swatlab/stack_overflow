@@ -1,0 +1,326 @@
+<p>I am new to android development and I am facing an issue when I capture an image from camera, it doesn't show up in the gridview immediately, if I refresh the activity or reload it than it is appearing in the gridview.
+I have searched a lot and implemented various solutions but no one worked for me, please advice, following is my code.</p>
+
+<p>My xml file is as:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+</code></pre>
+
+<p></p>
+
+<pre><code>    <RelativeLayout
+            android:id="@+id/userHeader"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+        <include
+           android:layout_width="fill_parent"
+           android:layout_height="wrap_content"
+           layout="@layout/header_user" />
+    </RelativeLayout>
+<TableLayout
+    android:layout_below="@id/userTable"
+    android:layout_width="fill_parent"
+    android:layout_height="match_parent"
+    android:stretchColumns="*" >
+    <TableRow android:id="@+id/historyDateRow">
+        <TextView  android:text="@string/historyDateCaption" style="@style/captionStyle" />
+        <TextView  android:id="@+id/viwHistoryDate" style="@style/captionStyle" />
+    </TableRow>
+    <TableRow android:id="@+id/historyUpdateDateRow">
+        <TextView  android:text="@string/historyUpdateDateCaption" style="@style/captionStyle" />
+        <TextView  android:id="@+id/viwHistoryUpdateDate" style="@style/captionStyle" />
+    </TableRow>
+    <TableRow android:layout_marginTop="2dp">
+        <TextView  android:text="@string/historyCaption"  style="@style/captionStyle" />
+        <TextView  android:text=""  style="@style/captionStyle" />
+    </TableRow>
+    <EditText
+        android:id="@+id/txtHistory"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="5dp"
+        android:scrollbars="vertical"
+        android:gravity="top"
+        android:layout_marginRight="5dp" android:layout_marginLeft="5dp"
+        android:inputType="textMultiLine" />
+
+    <GridView
+        android:id="@+id/gridview"
+        android:layout_width="fill_parent" 
+        android:layout_height="0dp"
+        android:columnWidth="90dp"
+        android:numColumns="auto_fit"
+        android:verticalSpacing="10dp"
+        android:horizontalSpacing="10dp"
+        android:stretchMode="columnWidth"
+        android:layout_weight="1"
+        android:gravity="center"/>
+
+    <Button android:id="@+id/btnSave"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="5dp" android:layout_marginLeft="5dp"
+        android:text="@string/save"/>
+
+    <Button android:id="@+id/btnCapture"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="5dp" android:layout_marginLeft="5dp"
+        android:text="Capture"/>
+</TableLayout>
+</RelativeLayout>
+</code></pre>
+
+<p>and in my java file I have code like:</p>
+
+<pre><code>    String userId=null;
+    String historyId = null;
+    private Uri outputFileUri;
+    ImageAdapter myImageAdapter;
+    File root = null;
+    final String filesPath = Environment.getExternalStorageDirectory() + File.separator + "MyProj" + File.separator+ "Images" + File.separator;
+    private  List<String> listOfImagesPath;
+    Boolean needsRefresh = false;
+    GridView gridview = null;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.casehistory);
+        GlobalVariables gv = ((GlobalVariables)getApplicationContext());
+
+        userId=gv.getsUserId();
+        historyId=getIntent().getStringExtra(ListHistory.ID_History);
+
+        gridview = (GridView) findViewById(R.id.gridview);
+        myImageAdapter = new ImageAdapter(this);
+        gridview.setAdapter(myImageAdapter);
+
+        String targetPath = "";
+
+        if(historyId == null)
+        {
+            targetPath = filesPath + userId + File.separator;
+            root = new File(filesPath + userId + File.separator);
+        }
+        else
+        {
+            targetPath = filesPath + userId + File.separator + historyId + File.separator;
+            root = new File(filesPath + userId + File.separator + historyId + File.separator);
+            gv.setsHistoryId(historyId);
+        }
+
+        root.mkdirs();
+        File targetDirector = new File(targetPath);
+
+        File[] files = targetDirector.listFiles();
+
+        if(files!=null)
+        {
+            for (File file : files){
+             myImageAdapter.add(file.getAbsolutePath());
+            } 
+        }
+        Button btCapture=(Button)findViewById(R.id.btnCapture);
+        btCapture.setOnClickListener(onCapture);
+    }
+</code></pre>
+
+<p>than I have onCapture as:</p>
+
+<pre><code>private View.OnClickListener onCapture=new View.OnClickListener() {
+    public void onClick(View v) {
+
+        openImageIntent();
+    }
+};
+</code></pre>
+
+<p>than my openImageIntent is as:</p>
+
+<pre><code>private void openImageIntent() {
+    // Determine Uri of camera image to save.
+
+    final String fname = "img_"+ System.currentTimeMillis() + ".jpg";
+    final File sdImageMainDirectory = new File(root, fname);
+    outputFileUri = Uri.fromFile(sdImageMainDirectory);
+
+    // Camera.
+    final List<Intent> cameraIntents = new ArrayList<Intent>();
+    final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+    final PackageManager packageManager = getPackageManager();
+    final List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
+    for(ResolveInfo res : listCam) {
+        final String packageName = res.activityInfo.packageName;
+        final Intent intent = new Intent(captureIntent);
+        intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
+        intent.setPackage(packageName);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+        cameraIntents.add(intent);
+    }
+
+    // Filesystem.
+    final Intent galleryIntent = new Intent();
+    galleryIntent.setType("image/*");
+    galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+
+    // Chooser of filesystem options.
+    final Intent chooserIntent = Intent.createChooser(galleryIntent, "Select Source");
+
+    // Add the camera options.
+    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[]{}));
+
+    startActivityForResult(chooserIntent, 212);
+}
+
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data)
+{
+    //CommonHelper.ShowErrorMessage("Result Code: " + String.valueOf(resultCode), CaseHistory.this);
+    if(resultCode == RESULT_OK)
+    {
+        //CommonHelper.ShowErrorMessage("Request Code: " + String.valueOf(requestCode), CaseHistory.this);
+        if(requestCode == 212)
+        {
+            final boolean isCamera;
+            if(data == null)
+            {
+                isCamera = true;
+            }
+            else
+            {
+                final String action = data.getAction();
+                if(action == null)
+                {
+                    isCamera = false;
+                }
+                else
+                {
+                    isCamera = action.equals(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                }
+            }
+
+            Uri selectedImageUri;
+            if(isCamera)
+            {
+                selectedImageUri = outputFileUri;
+            }
+            else
+            {
+                selectedImageUri = data == null ? null : data.getData();
+            }
+
+            myImageAdapter.add(selectedImageUri.toString());
+            //GridView gridview = (GridView) findViewById(R.id.gridview);
+            //gridview.setAdapter(myImageAdapter);
+            myImageAdapter.notifyDataSetChanged();
+
+            gridview.invalidateViews();
+            gridview.setAdapter(myImageAdapter);
+            needsRefresh = true;
+            //CommonHelper.ShowErrorMessage("Image URI: " + selectedImageUri.toString(), CaseHistory.this);
+
+            //CommonHelper.ShowErrorMessage("Extra Data URI: " + data.getExtras().get("data"), CaseHistory.this);
+        }
+    }
+}
+</code></pre>
+
+<p>and in end my Image adapter is as:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+
+    private Context mContext;
+    ArrayList<String> itemList = new ArrayList<String>();
+
+    public ImageAdapter(Context c) {
+        mContext = c; 
+    }
+
+    void add(String path){
+         itemList.add(path); 
+    }
+
+    @Override
+    public int getCount() {
+        return itemList.size();
+    }
+
+    @Override
+    public Object getItem(int arg0) {
+        //  TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+         if (convertView == null) {  // if it's not recycled, initialize some attributes
+             imageView = new ImageView(mContext);
+             imageView.setLayoutParams(new GridView.LayoutParams(220, 220));
+             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+             imageView.setPadding(8, 8, 8, 8);
+         } else {
+             imageView = (ImageView) convertView;
+         }
+
+         Bitmap bm = decodeSampledBitmapFromUri(itemList.get(position), 220, 220);
+
+         imageView.setImageBitmap(bm);
+         return imageView;
+    }
+
+    public Bitmap decodeSampledBitmapFromUri(String path, int reqWidth, int reqHeight) {
+
+        Bitmap bm = null;
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        //  Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        bm = BitmapFactory.decodeFile(path, options); 
+
+        return bm;   
+    }
+
+    public int calculateInSampleSize(
+
+        BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            if (width > height) {
+                inSampleSize = Math.round((float)height / (float)reqHeight);    
+            } else {
+                inSampleSize = Math.round((float)width / (float)reqWidth);    
+            }   
+        }
+
+        return inSampleSize;    
+    }
+ }
+</code></pre>
+
+<p>I have been struggling hard with it for last few days and have been trying different solutions from web but all in vain.
+Can any body please help me in it?</p>
+
+<p><em><strong>Humble Request</em></strong>  This is my first android project as well as Java project, so if anyone have time and want to feed back on the way I am coding is more than welcome.</p>
+
+<p>Thanks in advance.</p>

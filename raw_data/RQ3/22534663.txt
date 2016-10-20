@@ -1,0 +1,211 @@
+<p><img src="http://i.stack.imgur.com/EYQUu.png" alt="enter image description here"></p>
+
+<p>I have this code </p>
+
+<pre><code>public class BarChartBuilder extends SherlockFragment implements Serializable {
+
+    @InjectView(R.id.chart)
+    LinearLayout chartContainer;
+    private XYMultipleSeriesDataset ChartDataSeries;
+    private XYMultipleSeriesRenderer DataRenderer = new XYMultipleSeriesRenderer();
+    private GraphicalView ChartView;
+    public Chart chart;
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        View parent = inflater.inflate(R.layout.xy_chart, null);
+        ButterKnife.inject(this, parent);
+        String[] titles = chart.categories.toArray(new String[0]);
+        List<double[]> values = new ArrayList<double[]>();
+        DataRenderer = buildBarRenderer(chart.values.size());
+
+        DataRenderer.setLabelsColor(Color.BLACK);
+        DataRenderer.setLabelsTextSize(18);
+        DataRenderer.setChartTitleTextSize(12);
+        DataRenderer.setAxisTitleTextSize(18);
+        DataRenderer.setBarWidth(18);
+        DataRenderer.setXLabelsAlign(Paint.Align.CENTER);
+        DataRenderer.setXLabels(0);
+        DataRenderer.setYLabels(0);
+        DataRenderer.setOrientation(XYMultipleSeriesRenderer.Orientation.HORIZONTAL);
+        double max = getMaxValue();
+        setChartSettings(DataRenderer, "", chart.metadata.xAxis.labels.get(0),
+                chart.metadata.yAxis.labels.get(0),
+                0.0, chart.values.size() + 2,
+                0.0, max + Math.round(max / 2),
+                Color.GRAY, Color.LTGRAY);
+        DataRenderer.setShowLegend(false);
+        DataRenderer.setPanEnabled(true, false);
+        int length = DataRenderer.getSeriesRendererCount();
+        for (int i = 0; i < length; i++) {
+            XYSeriesRenderer seriesRenderer = (XYSeriesRenderer) DataRenderer.getSeriesRendererAt(i);
+            seriesRenderer.setDisplayChartValues(true);
+
+        }
+
+        for (Double value : chart.values) {
+            values.add(new double[]{value});
+        }
+        ChartDataSeries = buildBarDataSet(titles, values);
+        prepareChartView();
+        ChartView.repaint();
+        ChartView.toString();
+        return parent;
+    }
+
+    private double getMaxValue() {
+        double max = 0;
+        for (Double d : chart.values) {
+
+            if (d > max) {
+                max = d;
+            }
+
+        }
+        return max;
+    }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("current_series", ChartDataSeries);
+        outState.putSerializable("current_renderer", DataRenderer);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState != null) {
+            //    ChartDataSeries = (CategorySeries) savedInstanceState.getSerializable("current_series");
+            //  DataRenderer = (DefaultRenderer) savedInstanceState.getSerializable("current_renderer");
+        }
+    }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (ChartView == null) {
+
+            prepareChartView();
+        } else {
+            ChartView.repaint();
+        }
+    }
+
+    private void prepareChartView() {
+        ChartView = ChartFactory.getBarChartView(getActivity(), ChartDataSeries, DataRenderer, BarChart.Type.DEFAULT);
+        DataRenderer.setClickEnabled(true);
+        ChartView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SeriesSelection seriesSelection = ChartView.getCurrentSeriesAndPoint();
+                if (seriesSelection == null) {
+                    Toast.makeText(getActivity(), "No chart element selected", Toast.LENGTH_SHORT)
+                            .show();
+                } else {
+                   /* for (int i = 0; i < ChartDataSeries.getItemCount(); i++) {
+                        DataRenderer.getSeriesRendererAt(i).setHighlighted(i == seriesSelection.getPointIndex());
+                    }*/
+                    ChartView.repaint();
+                    Toast.makeText(
+                            getActivity(),
+                            "Chart data point index " + seriesSelection.getPointIndex() + " selected"
+                                    + " point value=" + seriesSelection.getValue(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        chartContainer.addView(ChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT));
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        menu.clear();
+        MenuInflater menuInflater = getSherlockActivity().getSupportMenuInflater();
+        menuInflater.inflate(R.menu.user_profile, menu);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    protected XYMultipleSeriesDataset buildBarDataSet(String[] titles, List<double[]> values) {
+        XYMultipleSeriesDataset dataSet = new XYMultipleSeriesDataset();
+        int length = titles.length;
+        for (int i = 0; i < length; i++) {
+            DataRenderer.addXTextLabel(i + 1, titles[i]);
+            XYSeries series = new XYSeries("");
+            double[] v = values.get(i);
+            int seriesLength = v.length;
+            for (int k = 0; k < seriesLength; k++) {
+                series.add((i + 1), v[k]);
+            }
+
+            dataSet.addSeries(series);
+        }
+        return dataSet;
+    }
+
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int size) {
+
+        int[] colors = new int[]{Color.GREEN, Color.BLUE, Color.MAGENTA, Color.CYAN, Color.GRAY, Color.YELLOW, Color.RED};
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+
+        for (int i = 0; i < size; i++) {
+            XYSeriesRenderer r = new XYSeriesRenderer();
+
+            r.setColor(colors[i % colors.length]);
+            r.setChartValuesTextSize(24);
+            r.setChartValuesTextAlign(Paint.Align.CENTER);
+            renderer.addSeriesRenderer(r);
+        }
+        return renderer;
+    }
+
+
+    protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+                                    String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,
+                                    int labelsColor) {
+        renderer.setChartTitle(title);
+        renderer.setXTitle(xTitle);
+        renderer.setYTitle(yTitle);
+        renderer.setXAxisMin(xMin);
+        renderer.setXAxisMax(xMax);
+        renderer.setYAxisMin(yMin);
+        renderer.setYAxisMax(yMax);
+        renderer.setAxesColor(axesColor);
+        renderer.setLabelsColor(labelsColor);
+    }
+
+}
+</code></pre>
+
+<p>I think the problem is in this part </p>
+
+<pre><code>  DataRenderer.addXTextLabel(i + 1, titles[i]);
+            XYSeries series = new XYSeries("");
+            double[] v = values.get(i);
+            int seriesLength = v.length;
+            for (int k = 0; k < seriesLength; k++) {
+                series.add((i + 1), v[k]);
+            }
+</code></pre>
+
+<p>but I am using i+1 for x part for the label and for the column , why are the lablels not appearing correctly aligned under their columns ?</p>

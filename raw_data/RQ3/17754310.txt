@@ -1,0 +1,145 @@
+<p>I've been trying to make a dialogFragment for my app but it's proving to be quite hard to do with a lack of examples available on the internet. Below is an image of something similar that I'd want.
+<img src="http://i.stack.imgur.com/xdduc.png" alt="dialogFragment Example"></p>
+
+<p>Having a similar design to the image above would be great. I'm not sure if what I'm doing is correct and so far this is what I have done. </p>
+
+<p><img src="http://i.stack.imgur.com/o6u32.png" alt="My attempt at dialogFragment"></p>
+
+<p>I don't know how to lay out the dialogFragment like the way it has been done for the first picture and I'm not sure how to get fields where my users can enter data to. Below is the code I currently have.</p>
+
+<pre><code>import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.*;
+import android.widget.Button;
+import android.widget.ListView;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Reminders extends Activity
+{
+
+    Button add, edit, remove;
+    ListView lv;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.reminders);
+        initializeVariables();
+
+        add.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showDialog();
+            }
+        });
+
+        List<ListViewItem> items = new ArrayList<Reminders.ListViewItem>();
+        items.add(new ListViewItem()
+        {
+            {
+                ThumbnailResource = R.drawable.ic_launcher;
+                Title = "Item1 Title";
+                Date = "Item1 Date";
+                Time = "Item1 Time";
+                Amount = "£0.00";
+            }
+        });
+        items.add(new ListViewItem()
+        {
+            {
+                ThumbnailResource = R.drawable.ic_launcher;
+                Title = "Item2 Title";
+                Date = "Item2 Date";
+                Time = "Item2 Time";
+                Amount = "£0.00";
+            }
+        });
+
+        CustomListViewAdapter adapter = new CustomListViewAdapter(this, items);
+        lv.setAdapter(adapter);
+
+    }
+
+    private void initializeVariables()
+    {
+        add = (Button) findViewById(R.id.bAdd);
+        edit = (Button) findViewById(R.id.bEdit);
+        remove = (Button) findViewById(R.id.bRemove);
+        lv = (ListView) findViewById(R.id.LVReminder);
+    }
+
+    class ListViewItem
+    {
+        public int ThumbnailResource;
+        public String Title;
+        public String Date;
+        public String Time;
+        public String Amount;
+    }
+
+
+    void showDialog() {
+        DialogFragment newFragment = MyAlertDialogFragment
+                .newInstance(R.string.dialog_title);
+        newFragment.show(getFragmentManager(), "New");
+    }
+
+    public void doPositiveClick() {
+        // Do stuff here.
+        Log.i("FragmentAlertDialog", "Positive click!");
+    }
+
+    public void doNegativeClick() {
+        // Do stuff here.
+        Log.i("FragmentAlertDialog", "Negative click!");
+    }
+
+    public static class MyAlertDialogFragment extends DialogFragment
+    {
+
+        public static MyAlertDialogFragment newInstance(int title)
+        {
+            MyAlertDialogFragment frag = new MyAlertDialogFragment();
+            Bundle args = new Bundle();
+            args.putInt("title", title);
+            frag.setArguments(args);
+            return frag;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState)
+        {
+            int title = getArguments().getInt("title");
+
+            return new AlertDialog.Builder(getActivity())
+                    .setIcon(R.drawable.ic_launcher)
+                    .setTitle(title)
+                    .setPositiveButton(R.string.alert_dialog_ok,
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog,
+                                                    int whichButton) {
+                                    ((Reminders) getActivity())
+                                            .doPositiveClick();
+                                }
+                            })
+                    .setNegativeButton(R.string.alert_dialog_cancel,
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog,
+                                                    int whichButton) {
+                                    ((Reminders) getActivity())
+                                            .doNegativeClick();
+                                }
+                            }).create();
+        }
+    }
+}
+</code></pre>
+
+<p>I'd appreciate any advice on how to get a DialogFragment like the one in the first pic I provided. Thanks to anyone who tries to help me with this.</p>

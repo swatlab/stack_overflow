@@ -1,0 +1,38 @@
+<p>Summary: if I override onCreate of FragmentActivity, and call super.onCreate first, will onAttach be called after super.onCreate and before subclass's onCreate finish?</p>
+
+<p>I have checked source code of onCreate() from FragmentActivity, it seems onAttach, onCreate and onCreateView is called at the end of Activity's onCreate() :</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    mFragments.attachActivity(this, mContainer, null);
+    // Old versions of the platform didn't do this!
+    if (getLayoutInflater().getFactory() == null) {
+        getLayoutInflater().setFactory(this);
+    }
+
+    super.onCreate(savedInstanceState);
+
+    NonConfigurationInstances nc = (NonConfigurationInstances)
+            getLastNonConfigurationInstance();
+    if (nc != null) {
+        mAllLoaderManagers = nc.loaders;
+    }
+    if (savedInstanceState != null) {
+        Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG);
+        mFragments.restoreAllState(p, nc != null ? nc.fragments : null);
+    }
+    mFragments.dispatchCreate();// Fragment's onAttach() and so on start from here
+}
+</code></pre>
+
+<p>However, my subclass of FragmentActivity will call onCreate() first, and it looks as follows:</p>
+
+<pre><code>protected final void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(getContentView());
+    injectDependencies();
+    injectViews();
+｝
+</code></pre>
+
+<p>Since super.onCreate() may eventually call onAttach() and onCreateView(), I wonder if injectDependencies() already called when onAttach() is called? And what about onActivityCreated()? The doc said it will be called after Activity created, but I can't figure it out from source code s</p>

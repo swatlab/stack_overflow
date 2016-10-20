@@ -1,0 +1,116 @@
+<p>I have a problem with the Main method. I have a button called studentLife, wherever I click it, it brings a grid view with pictures. That part works fine, but when I click a particular image I want to bring the FullImage.class. When I click an image i get (GMITApp has stopped !) </p>
+
+<pre><code>I got a nullPointerException at line 141 which is: 
+          Intent i = new Intent(getApplicationContext(), FullImage.class);
+</code></pre>
+
+<p>My code:</p>
+
+<pre><code> @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    final Button studentLife = (Button) findViewById(R.id.student_life);
+    //declare a grid view variable 
+    GridView gridView = (GridView)findViewById(R.id.grid_view);
+
+    studentLife.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+
+            setContentView(R.layout.activity_gallery);
+            GridView gridView = (GridView) findViewById(R.id.grid_view);
+            // instance of ImageAdapter class
+            gridView.setAdapter(new ImageAdapter(getApplicationContext()));
+
+        }
+    }); // end of studentLife.setOnClickListener
+
+
+
+
+    gridView.setOnItemClickListener(new OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View v, int position,
+                long id) {
+            // sending image id to FullScreenActivity
+            Intent i = new Intent(getApplicationContext(), FullImage.class);
+            // passing array index
+            i.putExtra("id", position);
+            startActivity(i);       
+        }
+    });
+
+
+}// end of onCreate
+</code></pre>
+
+<p>here is the Image Class:</p>
+
+<pre><code>    public class FullImage extends Activity {
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_full_image);
+        //get intent data
+        Intent i = getIntent();
+        // selected image id
+        int position = i.getExtras().getInt("id");
+        ImageAdapter imageAdapter = new ImageAdapter(this);
+        ImageView imageView = (ImageView)findViewById(R.id.full_image_view);
+        imageView.setImageResource(imageAdapter.mThumbIds[position]);
+
+        //implement up navigation
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_full_image, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // TODO Auto-generated method stub
+        switch (item.getItemId()){
+        case android.R.id.home:
+            //this is called when the home up button is pressed in the action bar
+            Intent parentActivityIntent = new Intent(this, MainActivity.class);
+            parentActivityIntent.addFlags(
+            Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(parentActivityIntent);
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+}
+</code></pre>
+
+<p>here is what i got when i changed <code>getApplicationContext()</code> to <code>MainActivity.this</code></p>
+
+<pre><code>03-29 12:34:05.523: E/StrictMode(635): null
+03-29 12:34:05.523: E/StrictMode(635): android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cf36d8 that was originally bound here
+03-29 12:34:05.523: E/StrictMode(635):  at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+03-29 12:34:05.523: E/StrictMode(635):  at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+03-29 12:34:05.523: E/StrictMode(635):  at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+03-29 12:34:05.523: E/StrictMode(635):  at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+03-29 12:34:05.523: E/StrictMode(635):  at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+03-29 12:34:05.523: E/StrictMode(635):  at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+03-29 12:34:05.523: E/StrictMode(635):  at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+03-29 12:34:05.523: E/StrictMode(635):  at com.android.emailcommon.service.ServiceProxy.test(ServiceProxy.java:191)
+03-29 12:34:05.523: E/StrictMode(635):  at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1850)
+03-29 12:34:05.523: E/StrictMode(635):  at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+03-29 12:34:05.523: E/StrictMode(635):  at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+</code></pre>

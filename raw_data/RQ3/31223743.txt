@@ -1,0 +1,283 @@
+<p>I have a <code>ViewPager</code> which has several tabs that allow a user to navigate through different listviews. For example if a user selects the a tab, the <code>ListView</code> should show the user the appropriate content(which is different for each tab).<br>
+The actual <code>ListView</code> is inside a <code>Fragment</code> that has the width and height set to <code>match_parent</code>. I used <code>BaseAdapter</code> to create each <code>ListView</code> item and populate the <code>ListView</code>. After i try to display the results in the <code>ListView</code> if i open the <code>DrawerLayout</code> it does display the list but if i close the <code>DrawerLayout</code> it hides it. This is my code: <br></p>
+
+<pre><code>public class ItemListActivity extends FragmentActivity implements TabListener {
+
+    private ActionBar actionBar;
+    private DrawerLayout drawerLayout;
+    private ExpandableListView expListView;
+    private ActionBarDrawerToggle drawerToggle;
+    private ExpandableListAdapter listAdapter;
+    private ProductsPagerAdapter pagerAdapter;
+    private Button logOutBtn;
+    private ViewPager viewPager;
+    private List<String> group;
+    private HashMap<String, List<String>> child;
+    private List<Product> products;
+    private ProductsListViewAdapter listViewAdapter;
+    private int childId;
+    private String bundleCategory, bundleSubCategory;
+    private String category, subCategory;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_item_list);
+
+        products = new ArrayList<Product>();
+
+        initComponents();
+        prepareListData();
+
+        actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        Bundle bundle = getIntent().getExtras();
+        bundleCategory = bundle.getString("CATEGORY");
+        bundleSubCategory= bundle.getString("SUBCATEGORY");
+        childId = bundle.getInt("CHILD_ID");
+
+
+        initTabs(bundleCategory, bundleSubCategory, childId);
+
+        listAdapter = new ExpandableListAdapter(this, group, child);
+        expandableListView.setAdapter(listAdapter);
+
+        expandableListView.setOnChildClickListener(new OnChildClickListener() {
+
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v,
+                    int groupPosition, int childPosition, long id) {
+
+                actionBar.removeAllTabs();
+                bundleCategory = (String) listAdapter.getGroup(groupPosition);
+                bundleSubCategory = (String) listAdapter.getChild(groupPosition, childPosition);
+                int childId = (int) listAdapter.getChildId(groupPosition, childPosition);
+                initTabs(bundleCategory, bundleSubCategory, childId);
+                products.clear();
+                getProducts(bundleCategory, bundleSubCategory);
+                drawerLayout.closeDrawers();
+
+                return false;
+            }
+        });
+
+        pagerAdapter = new ProductsPagerAdapter(getSupportFragmentManager(), products);
+        viewPager.setAdapter(pagerAdapter);
+        listViewAdapter = new ProductsListViewAdapter(this, products);
+
+//      getProducts(bundleCategory, bundleSubCategory);
+        actionBar.setHomeButtonEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout,
+                R.drawable.ic_navigation_drawer, R.string.drawer_open,
+                R.string.drawer_close) {
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+            }
+
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, slideOffset);
+
+                boolean drawerState = drawerLayout.isDrawerVisible(Gravity.START);
+                float previousOffset = 0f;
+
+                if (slideOffset > previousOffset && drawerState) {
+                    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+                }
+            }
+        };
+        drawerLayout.setDrawerListener(drawerToggle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        drawerToggle.syncState();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.item_list, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(drawerToggle.onOptionsItemSelected(item)){
+            return true;
+        }
+
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void initComponents() 
+    {
+        viewPager = (ViewPager) findViewById(R.id.productsViewPager);
+        expandableListView = (ExpandableListView) findViewById(R.id.expandable);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        logOutBtn = (Button) findViewById(R.id.logoutBtn);
+    }
+
+    private void prepareListData() {
+
+        group = new ArrayList<String>();
+        child = new HashMap<String, List<String>>();
+
+        group.add("Men");
+        group.add("Women");
+
+        List<String> men = new ArrayList<String>();
+        men.add("Shoes");
+        men.add("Jeans");
+
+        List<String> women = new ArrayList<String>();
+        women.add("Shoes");
+        women.add("Jeans");
+
+        child.put(group.get(0), men);
+        child.put(group.get(1), women);
+    }
+
+    private void initTabs(String category, String subCategory, int tabId)
+    {
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        if (category.contains("Men")) 
+        {
+            ActionBar.Tab tab1 = actionBar.newTab();
+            tab1.setText("Shoes");
+            tab1.setTabListener(this);
+
+            ActionBar.Tab tab2 = actionBar.newTab();
+            tab2.setText("Jeans");
+            tab2.setTabListener(this);
+
+            actionBar.addTab(tab1);
+            actionBar.addTab(tab2);
+            actionBar.setSelectedNavigationItem(tabId);
+
+        } else {
+            ActionBar.Tab tab1 = actionBar.newTab();
+            tab1.setText("Shoes");
+            tab1.setTabListener(this);
+
+            ActionBar.Tab tab2 = actionBar.newTab();
+            tab2.setText("Jeans");
+            tab2.setTabListener(this);
+
+            actionBar.addTab(tab1);
+            actionBar.addTab(tab2);
+            actionBar.setSelectedNavigationItem(tabId);
+        }
+
+    }
+
+    private void getProducts(final String category, final String subCategory)
+    {
+        Log.d("cat si sub", category + subCategory);
+        String URL = "http://10.0.3.2/androidapi/index.php";
+
+        StringRequest registerReq = new StringRequest(Method.POST, URL, new Listener<String>() {
+
+            @Override
+            public void onResponse(String response) {
+
+                try {
+                    JSONArray myArray = new JSONArray(response);
+
+                    for(int i = 0; i < myArray.length(); i++)
+                    {
+                        JSONObject jObj = myArray.getJSONObject(i);
+
+                        String _id = jObj.getString("_id");
+                        String user_email = jObj.getString("user_email");
+                        String title = jObj.getString("title");
+                        String description = jObj.getString("description");
+                        String price = jObj.getString("price");
+                        String quantity= jObj.getString("quantity");
+                        String size = jObj.getString("size");
+                        String category = jObj.getString("category");
+                        String sub_category = jObj.getString("sub_category");
+                        String image_one = jObj.getString("image_one");
+
+                        Product product = new Product(title, image_one, description, category, sub_category, quantity, price);
+                        Log.d("get from refresh", sub_category);
+                        products.add(product);
+
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                listViewAdapter.notifyDataSetChanged();
+
+            }
+        }, new ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("volleyError", error.getMessage().toString());
+                error.printStackTrace();
+            }
+        }) {
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                Map<String, String> params = new HashMap<String, String>();
+
+                params.put("req", "products");
+                params.put("category", category);
+                params.put("subCategory", subCategory);
+
+                return params;
+            }
+        };
+
+        VolleyCore.getInstance(this).addToRequestQueue(registerReq);
+    }
+
+    @Override
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        String subcategorie = tab.getText().toString();
+        products.clear();
+        getProducts(bundleCategory, subcategorie);
+        Log.d("SELECTED", "Selected tab at position " + tab.getPosition() + " name " + tab.getText());
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        Log.d("UNSELECTED", "tab " + tab.getText() + " was unselected at position " + tab.getPosition());
+
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+
+    }
+
+}
+</code></pre>
+
+<p><br>
+I did try and call the <code>notifyDataSetChanged()</code> after i added the elements in the <code>List</code> but to no success. What am i doing wrong?</p>

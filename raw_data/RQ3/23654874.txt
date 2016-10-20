@@ -1,0 +1,348 @@
+<p>I have a sample android app got from this <a href="http://www.coderzheaven.com/tag/faster-loading-images-in-gridviews-or-listviews-in-android-using-menory-caching/" rel="nofollow">web</a>.While running this project it shows 
+NoClassDefFoundError in logcat i cant find what is the problem here some one please help me to fix this</p>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    EditText etResponse;
+    TextView tvIsConnected;
+    JSONObject jObject;
+    JSONArray jCountries = null;
+    String image_first[];
+    String image_second[];
+    ArrayList<String> items;
+    ListAdapter list;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // check if you are connected or not
+        if(isConnected()){
+            // call AsynTask to perform network operation on separate thread
+        }
+        else{
+            Toast.makeText(getApplicationContext(), "No internet connection!", Toast.LENGTH_LONG).show();
+            System.exit(0);
+        }
+
+        new HttpAsyncTask().execute("http://kodspider.com/Android_Test/index.php"/*"http://hmkcode.appspot.com/rest/controller/get.json"*/);
+
+
+    }
+
+    public static String GET(String url){
+        InputStream inputStream = null;
+        String result = "";
+        try {
+
+            // create HttpClient
+            HttpClient httpclient = new DefaultHttpClient();
+
+            // make GET request to the given URL
+            HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
+
+            // receive response as inputStream
+            inputStream = httpResponse.getEntity().getContent();
+
+            // convert inputstream to string
+            if(inputStream != null)
+                result = convertInputStreamToString(inputStream);
+            else
+                result = "Did not work!";
+
+        } catch (Exception e) {
+            Log.d("InputStream", e.getLocalizedMessage());
+        }
+
+        return result;
+    }
+
+    private static String convertInputStreamToString(InputStream inputStream) throws IOException{
+        BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
+        String line = "";
+        String result = "";
+        while((line = bufferedReader.readLine()) != null)
+            result += line;
+
+        inputStream.close();
+        return result;
+
+    }
+
+    public boolean isConnected(){
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Activity.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+            if (networkInfo != null && networkInfo.isConnected()) 
+                return true;
+            else
+                return false;   
+    }
+    public class HttpAsyncTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+
+            return GET(urls[0]);
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            Toast.makeText(getBaseContext(), "Received!", Toast.LENGTH_LONG).show();
+            try {
+                JSONObject json = new JSONObject(result);
+
+                JSONArray articles = json.getJSONArray("images");
+                 image_first =new String[json.getJSONArray("images").length()];  //initializtion
+                  image_second =new String[json.getJSONArray("images").length()];
+
+                     items = new ArrayList<String>();
+
+                for(int i=0;i<json.getJSONArray("images").length();i++){
+
+                items.add(image_first[i] = (articles.getJSONObject(i).optString("image_first")));
+                //image_second[i]= (articles.getJSONObject(i).optString("image_second"));
+                }
+
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+
+                }
+             list = new ListAdapter(MainActivity.this, items);
+
+            GridView grid = new GridView(MainActivity.this);
+
+            grid.setAdapter(list);
+
+            grid.setNumColumns(GridView.AUTO_FIT);
+
+            setContentView(grid);
+       }
+    }
+}
+</code></pre>
+
+<p><strong>ListAdapter.java</strong></p>
+
+<pre><code>public class ListAdapter extends BaseAdapter {
+
+    Context context;
+    ArrayList<String> items;
+    private LruCache<String, Bitmap> mMemoryCache;
+
+    public ListAdapter(Context context, ArrayList<String> items) {
+        this.context = context;
+        this.items = items;
+
+        // Get memory class of this device, exceeding this amount will throw an
+        // OutOfMemory exception.
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in bytes rather than number
+                // of items.
+                return bitmap.getByteCount();
+            }
+
+        };
+    }
+
+    @Override
+    public int getCount() {
+        return items.size();
+    }
+
+    @Override
+    public Object getItem(int arg0) {
+        return items.get(arg0);
+    }
+
+    @Override
+    public long getItemId(int arg0) {
+        return arg0;
+    }
+
+    @Override
+    public View getView(int arg0, View convertView, ViewGroup arg2) {
+        ImageView img = null;
+
+        if (convertView == null) {
+            img = new ImageView(context);
+            img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            img.setLayoutParams(new GridView.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        } else {
+            img = (ImageView) convertView;
+        }
+
+        int resId = context.getResources().getIdentifier(items.get(arg0),
+                "drawable", context.getPackageName());
+
+        loadBitmap(resId, img);
+
+        return img;
+    }
+
+    public void loadBitmap(int resId, ImageView imageView) {
+        if (cancelPotentialWork(resId, imageView)) {
+            final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+            imageView.setBackgroundResource(R.drawable.empty_photo);
+            task.execute(resId);
+        }
+    }
+
+    static class AsyncDrawable extends BitmapDrawable {
+        private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
+
+        public AsyncDrawable(Resources res, Bitmap bitmap,
+                BitmapWorkerTask bitmapWorkerTask) {
+            super(res, bitmap);
+            bitmapWorkerTaskReference = new WeakReference<BitmapWorkerTask>(
+                    bitmapWorkerTask);
+        }
+
+        public BitmapWorkerTask getBitmapWorkerTask() {
+            return bitmapWorkerTaskReference.get();
+        }
+    }
+
+    public static boolean cancelPotentialWork(int data, ImageView imageView) {
+        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+
+        if (bitmapWorkerTask != null) {
+            final int bitmapData = bitmapWorkerTask.data;
+            if (bitmapData != data) {
+                // Cancel previous task
+                bitmapWorkerTask.cancel(true);
+            } else {
+                // The same work is already in progress
+                return false;
+            }
+        }
+        // No task associated with the ImageView, or an existing task was
+        // cancelled
+        return true;
+    }
+
+    private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
+        if (imageView != null) {
+            final Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof AsyncDrawable) {
+                final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
+                return asyncDrawable.getBitmapWorkerTask();
+            }
+        }
+        return null;
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return (Bitmap) mMemoryCache.get(key);
+    }
+
+    class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
+        public int data = 0;
+        private final WeakReference<ImageView> imageViewReference;
+
+        public BitmapWorkerTask(ImageView imageView) {
+            // Use a WeakReference to ensure the ImageView can be garbage
+            // collected
+            imageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        // Decode image in background.
+        @Override
+        protected Bitmap doInBackground(Integer... params) {
+            data = params[0];
+            final Bitmap bitmap = decodeSampledBitmapFromResource(
+                    context.getResources(), data, 100, 100);
+            addBitmapToMemoryCache(String.valueOf(params[0]), bitmap);
+            return bitmap;
+        }
+
+        // Once complete, see if ImageView is still around and set bitmap.
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (imageViewReference != null && bitmap != null) {
+                final ImageView imageView = imageViewReference.get();
+                if (imageView != null) {
+                    imageView.setImageBitmap(bitmap);
+                }
+            }
+        }
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res,
+            int resId, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+}
+</code></pre>
+
+<p><strong>logcat</strong></p>
+
+<pre><code>05-14 17:26:53.791: E/AndroidRuntime(1008): FATAL EXCEPTION: main
+05-14 17:26:53.791: E/AndroidRuntime(1008): java.lang.NoClassDefFoundError: com.coderzheaven.testlistview.ListAdapter$1
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at com.coderzheaven.testlistview.ListAdapter.<init>(ListAdapter.java:38)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at com.coderzheaven.testlistview.MainActivity$HttpAsyncTask.onPostExecute(MainActivity.java:140)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at com.coderzheaven.testlistview.MainActivity$HttpAsyncTask.onPostExecute(MainActivity.java:1)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at android.os.AsyncTask.finish(AsyncTask.java:417)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at android.os.AsyncTask.access$300(AsyncTask.java:127)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at android.os.AsyncTask$InternalHandler.handleMessage(AsyncTask.java:429)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at android.os.Handler.dispatchMessage(Handler.java:99)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at android.os.Looper.loop(Looper.java:123)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at android.app.ActivityThread.main(ActivityThread.java:4627)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at java.lang.reflect.Method.invokeNative(Native Method)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at java.lang.reflect.Method.invoke(Method.java:521)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+05-14 17:26:53.791: E/AndroidRuntime(1008):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

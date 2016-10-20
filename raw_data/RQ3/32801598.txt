@@ -1,0 +1,204 @@
+<p>I have a viewpager in a GridView , but when I cliked on one image , and if I have 8 images in gridview , will be in ViewPager same 8 images like the one I cliked , this is my code :</p>
+
+<pre><code>   public class ImageViewPager extends Activity {
+// Declare Variable
+int position;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Set title for the ViewPager
+    setTitle("ViewPager");
+    // Get the view from view_pager.xml
+    setContentView(R.layout.activity_fullscreen_view);
+    Intent in = getIntent();
+
+
+    // Get the position
+    int position = in.getExtras().getInt("position");
+
+    // Get String arrays FilePathStrings
+    String[] filepath = in.getStringArrayExtra("filepath");
+
+    // Get String arrays FileNameStrings
+
+    // Retrieve data from MainActivity on item click event
+
+
+
+    ImageAdapter imageAdapter = new ImageAdapter(this,this,filepath);
+    List<ImageView> images = new ArrayList<ImageView>();
+
+    // Retrieve all the images
+    for (int i = 0; i < imageAdapter.getCount(); i++) {
+        ImageView imageView = new ImageView(this);
+        File file = new File(filepath[position]);
+        Picasso.with(ImageViewPager.this).load(file).placeholder(R.drawable.rtrt).fit().centerCrop().into(imageView);
+        imageView.setScaleType(ImageView.ScaleType.CENTER);
+        images.add(imageView);
+    }
+
+    // Set the images into ViewPager
+    ImagePagerAdapter pageradapter = new ImagePagerAdapter(images);
+    ViewPager viewpager = (ViewPager) findViewById(R.id.pager);
+    viewpager.setAdapter(pageradapter);
+    // Show images following the position
+    viewpager.setCurrentItem(position);
+}
+ }
+</code></pre>
+
+<p>ImagePagerAdapter class:</p>
+
+<pre><code>  public class ImagePagerAdapter extends PagerAdapter {
+
+private List<ImageView> images;
+
+public ImagePagerAdapter(List<ImageView> images) {
+    this.images = images;
+}
+
+@Override
+public Object instantiateItem(ViewGroup container, int position) {
+    ImageView imageView = images.get(position);
+    container.addView(imageView);
+    return imageView;
+}
+
+@Override
+public void destroyItem(ViewGroup container, int position, Object object) {
+    container.removeView(images.get(position));
+}
+
+@Override
+public int getCount() {
+    return images.size();
+}
+
+@Override
+public boolean isViewFromObject(View view, Object o) {
+    return view == o;
+}
+ }
+</code></pre>
+
+<p>Image Adapter:</p>
+
+<pre><code>  public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+private Activity activity;
+public String[] filepath;
+
+public ImageAdapter(Activity a,Context c,String[] fpath) {
+    mContext = c;
+    activity=a;
+    filepath=fpath;
+}
+
+public int getCount() {
+    return filepath.length;
+}
+
+public Object getItem(int position) {
+    return filepath[position];
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// Create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // If it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+
+    // Set file name to the TextView followed by the position
+    File file = new File(filepath[position]);
+       Picasso.with(activity).load(file).placeholder(R.drawable.rtrt).fit().centerCrop().into(imageView);
+
+    return imageView;
+}
+
+// References to our images in res > drawable
+
+}
+</code></pre>
+
+<p>And my OnCreate from MainActivity</p>
+
+<pre><code>   @Override
+    public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    delegate1 = AppCompatDelegate.create(this, this);
+
+    //call the onCreate() of the AppCompatDelegate
+    delegate1.onCreate(savedInstanceState);
+
+    //use the delegate to inflate the layout
+    delegate1.setContentView(R.layout.album_activity);
+
+
+    Toolbar toolbar = (Toolbar) findViewById(R.id.mytoolbarr);
+    Intent intent = getIntent();
+    String nameAlbum2 = intent.getStringExtra("nameAlbum2");
+    nameAlbum = intent.getStringExtra("nameAlbum");
+    delegate1.setSupportActionBar(toolbar);
+    delegate1.setTitle(nameAlbum2);
+
+    Button btnChoosePicture = (Button) findViewById(R.id.addimage);
+
+
+    // Check for SD Card
+    if (!Environment.getExternalStorageState().equals(
+            Environment.MEDIA_MOUNTED)) {
+        Toast.makeText(this, "Error! No SDCARD Found!", Toast.LENGTH_LONG)
+                .show();
+    } else {
+        // Locate the image folder in your SD Card
+        file = new File(Environment.getExternalStorageDirectory()
+                + File.separator + nameAlbum);
+        if (file.isDirectory()) {
+            listFile = file.listFiles();
+            // Create a String array for FilePathStrings
+            FilePathStrings = new String[listFile.length];
+            // Create a String array for FileNameStrings
+            FileNameStrings = new String[listFile.length];
+
+            for (int i = 0; i < listFile.length; i++) {
+                // Get the path of the image file
+                FilePathStrings[i] = listFile[i].getAbsolutePath();
+                // Get the name image file
+                FileNameStrings[i] = listFile[i].getName();
+            }
+        }
+
+        // Locate the GridView in gridview_main.xml
+        grid = (GridView) findViewById(R.id.gridview);
+        // Pass String arrays to LazyAdapter Class
+        adapter = new GridViewAdapter(this, FilePathStrings, FileNameStrings);
+        // Set the LazyAdapter to the GridView
+        grid.setAdapter(adapter);
+
+        // Capture gridview item click
+        grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+
+                Intent i = new Intent(AlbumActivity.this, ImageViewPager.class);
+                // Pass String arrays FilePathStrings
+                i.putExtra("filepath", FilePathStrings);
+                // Pass String arrays FileNameStrings
+                i.putExtra("filename", FileNameStrings);
+                // Pass click position
+                i.putExtra("position", position);
+                startActivity(i);
+            }
+</code></pre>

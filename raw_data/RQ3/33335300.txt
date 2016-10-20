@@ -1,0 +1,359 @@
+<p>I have a really interesting problem with my Navigator menu.
+I have no idea why... But I can click on any item from my menu, I don't want to say I click and nothing happened. I really want to say I can't click on any item, all my menu it's like a big image.
+I've try to make a new project witch already have Navigation Drawer Activity, of course it works.. but when I've try to copy that code and put on mine.. I have the same problem and vice versa, I've try to put my code into a new project with Navigation Drawer Activity, but again... I can't click on any item.
+Here it's one <a href="http://imgur.com/kymHfgl" rel="nofollow">image</a> with my aplication.</p>
+
+<p>Here it's my Main Activity:</p>
+
+<pre><code>public class MainActivity extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks, AdapterView.OnItemClickListener {
+ArrayList<Trail> arrayTrail;
+ListView listViewTrails;
+ArrayList<Wonder> arrayWonders1;
+ArrayList<Wonder> arrayWonders2;
+ArrayList<Wonder> arrayWonders3;
+ArrayList<Wonder> arrayWonders4;
+private NavigationDrawerFragment mNavigationDrawerFragment;
+private CharSequence mTitle;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
+    mTitle = getTitle();
+
+    mNavigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
+
+    arrayWonders1 = new ArrayList<>();
+    arrayWonders2 = new ArrayList<>();
+    arrayWonders3 = new ArrayList<>();
+    arrayWonders4 = new ArrayList<>();
+    arrayWonders1.add(new Wonder("https://risehighershinebrighter.files.wordpress.com/2014/11/magic-of-blue-universe-images.jpg", "Ceva", "100"));
+    arrayWonders1.add(new Wonder("http://i765.photobucket.com/albums/xx291/just-meller/national%20geografic/Birds-national-geographic-6873734-1600-1200.jpg", "Ceva", "20"));
+    arrayWonders2.add(new Wonder("hhttp://www.freestockphotos.name/wallpaper-original/wallpapers/download-images-of-gentle-dogs-6866.jpg", "Ceva", "400"));
+    arrayWonders2.add(new Wonder("http://www.planwallpaper.com/static/images/desktop-year-of-the-tiger-images-wallpaper.jpg", "Ceva", "200"));
+    arrayWonders3.add(new Wonder("http://hdwallnpics.com/wp-content/gallery/hd-tiger-images/tigers-wallpapers-hd.jpg", "Ceva", "100"));
+    arrayWonders3.add(new Wonder("http://imgscenter.com/images/2014/09/13/6-autumn-nature-sandbox-images_2053316.jpg", "Ceva", "100"));
+    arrayWonders4.add(new Wonder("http://www.tollywooddaily.com/wp-content/uploads/2015/05/HORIZONTAL-BABY-HIGHRES-EMPTY.jpg", "Ceva", "100"));
+    arrayWonders4.add(new Wonder("http://www.hdwallpapersimages.com/wp-content/uploads/2014/01/Winter-Tiger-Wild-Cat-Images.jpg", "Ceva", "100"));
+
+
+    arrayTrail = new ArrayList<>();
+    Trail audi = new Trail("http://www.hdwallpapersimages.com/wp-content/uploads/2014/01/Winter-Tiger-Wild-Cat-Images.jpg", "Paris", "Popular Destination", "htrhetgftrwfrec", "Story", arrayWonders1);
+    Trail opel = new Trail("http://www.gettyimages.com/gi-resources/images/CreativeImages/Hero-527920799.jpg", "Romania", "Popular Destination", "fewfwefwefWgfeg", "Story", arrayWonders2);
+    Trail mercedes = new Trail("http://blog.jimdo.com/wp-content/uploads/2014/01/tree-247122.jpg", "Italia", "Popular Destination", "gtrhrthtrhrw", "Story", arrayWonders3);
+    Trail ferrari = new Trail("http://saturn.jpl.nasa.gov/multimedia/images/moons/images/PIA07759.jpg", "Roma", "Popular Destination", "dajfuisndfisndfs", "Story", arrayWonders4);
+    Trail fiesta = new Trail("http://www.quicksprout.com/images/foggygoldengatebridge.jpg", "Bucuresti", "Popular Destination", "regehgtrhrjhjy", "Story", arrayWonders1);
+    Trail porshe = new Trail("http://3.bp.blogspot.com/-rZmCIp0C-hQ/Tx6aCFeweoI/AAAAAAAAAnQ/WqIEVBTIzRk/s1600/Cool-Tiger-Wallpaper-1920x1080-HD.jpg", "Luxemburg", "Popular Destination", "Ffdsjifsdfmskodmf", "Story", arrayWonders2);
+
+    arrayTrail.add(audi);
+    arrayTrail.add(opel);
+    arrayTrail.add(mercedes);
+    arrayTrail.add(ferrari);
+    arrayTrail.add(fiesta);
+    arrayTrail.add(porshe);
+
+    listViewTrails = (ListView) findViewById(R.id.list_trails);
+    ListTailsAdapter adapter = new ListTailsAdapter(this, arrayTrail);
+    listViewTrails.setAdapter(adapter);
+    listViewTrails.setOnItemClickListener(this);
+}
+
+@Override
+public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    Trail selectedTrail = arrayTrail.get(position);
+    Intent intent = new Intent(this, TrailActivity.class);
+    intent.putExtra("trail", selectedTrail);
+    startActivity(intent);
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+    FragmentManager fragmentManager = getFragmentManager();
+    fragmentManager.beginTransaction().replace(R.id.container, PlaceholderFragment.newInstance(position + 1)).commit();
+}
+
+public void onSectionAttached(int number) {
+    switch (number) {
+        case 1:
+            mTitle = getString(R.string.title_section1);
+            break;
+        case 2:
+            mTitle = getString(R.string.title_section2);
+            break;
+        case 3:
+            mTitle = getString(R.string.title_section3);
+            break;
+    }
+}
+
+public void restoreActionBar() {
+    ActionBar actionBar = getActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    actionBar.setDisplayShowTitleEnabled(false);
+    actionBar.setTitle(mTitle);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    if (!mNavigationDrawerFragment.isDrawerOpen()) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        restoreActionBar();
+        return true;
+    }
+    return super.onCreateOptionsMenu(menu);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+    if (id == R.id.main_menu_search) {
+        ArrayList<Trail> trails = arrayTrail;
+        Intent intent = new Intent(this, SearchActivity.class);
+        intent.putExtra("trailsSearch", trails);
+        startActivity(intent);
+        return true;
+    }
+
+
+    return super.onOptionsItemSelected(item);
+}
+
+public static class PlaceholderFragment extends Fragment {
+    private static final String ARG_SECTION_NUMBER = "section_number";
+
+    public static PlaceholderFragment newInstance(int sectionNumber) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        ((MainActivity) activity).onSectionAttached(getArguments().getInt(ARG_SECTION_NUMBER));
+    }
+}
+</code></pre>
+
+<p>}</p>
+
+<p>And here it Navigation Drawer Fragment class:</p>
+
+<pre><code>    public class NavigationDrawerFragment extends Fragment {
+
+    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+    private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+    private NavigationDrawerCallbacks mCallbacks;
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerListView;
+    private View mFragmentContainerView;
+
+    private int mCurrentSelectedPosition = 0;
+    private boolean mFromSavedInstanceState;
+    private boolean mUserLearnedDrawer;
+
+    public NavigationDrawerFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+        if (savedInstanceState != null) {
+            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+            mFromSavedInstanceState = true;
+        }
+
+        selectItem(mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mDrawerListView = (ListView) inflater.inflate(
+                R.layout.fragment_navigation_drawer, container, false);
+        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItem(position);
+            }
+        });
+        mDrawerListView.setAdapter(new ArrayAdapter<String>(
+                getActionBar().getThemedContext(),
+                android.R.layout.simple_list_item_activated_1,
+                android.R.id.text1,
+                new String[]{
+                        getString(R.string.categori_1),
+                        getString(R.string.categori_2),
+                        getString(R.string.categori_3),
+                }));
+        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+        return mDrawerListView;
+    }
+
+    public boolean isDrawerOpen() {
+        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+    }
+
+    public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        mDrawerToggle = new ActionBarDrawerToggle(
+                getActivity(),
+                mDrawerLayout,
+                R.drawable.ic_drawer,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
+        ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                getActivity().invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (!mUserLearnedDrawer) {
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
+
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(mFragmentContainerView);
+        }
+
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    private void selectItem(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerListView != null) {
+            mDrawerListView.setItemChecked(position, true);
+        }
+        if (mDrawerLayout != null) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+        if (mCallbacks != null) {
+            mCallbacks.onNavigationDrawerItemSelected(position);
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mCallbacks = (NavigationDrawerCallbacks) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        if (mDrawerLayout != null && isDrawerOpen()) {
+            inflater.inflate(R.menu.main, menu);
+            showGlobalContextActionBar();
+        }
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showGlobalContextActionBar() {
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setTitle(R.string.app_name);
+
+    }
+
+    private ActionBar getActionBar() {
+        return getActivity().getActionBar();
+    }
+
+    public static interface NavigationDrawerCallbacks {
+        void onNavigationDrawerItemSelected(int position);
+    }
+}
+</code></pre>
+
+<p>So if anyone of you guys have any idea... Please tell me, I really need to fix it as soon as possible and in this moment I don't have any idea how..</p>
+
+<p>Thx for your help :)</p>

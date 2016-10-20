@@ -1,0 +1,98 @@
+<p>The mission is to fill the spinner with values from a POJO object. Before doing that, I was checking with normal String values and BaseAdapter. </p>
+
+<p>I have an activity in an activity group. </p>
+
+<pre><code>public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_date_filter);
+
+    startMonth = (Spinner) findViewById(R.id.startMonth);
+
+    startMonth.setAdapter(new CustomSpinnerAdapter(getParent(), new ArrayList<String>()));
+}
+</code></pre>
+
+<p>And the layout_spinner_row.xml</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical" >
+<TextView
+    android:id="@+id/spinnerValue"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingLeft="20dp"
+    android:text="Medium Text"
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</LinearLayout>
+</code></pre>
+
+<p>And my adapter class is:</p>
+
+<pre><code>public class CustomSpinnerAdapter extends BaseAdapter{ 
+
+private List<String> alertList;
+private LayoutInflater mInflater;
+
+public CustomSpinnerAdapter(Context context, Object results) {
+    alertList = (List<String>) results;
+    //just check if it works. 
+   //in real, actual object fits in
+   alertList.add("January");
+    alertList.add("Feburary");
+    alertList.add("March");
+    mInflater = LayoutInflater.from(context);
+}
+
+@Override
+public int getCount() {
+    return alertList.size();
+}
+
+@Override
+public Object getItem(int position) {
+    return alertList.get(position);
+}
+
+@Override
+public long getItemId(int position) {
+    return position;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder holder;
+    if (convertView == null) {
+        convertView = mInflater.inflate(R.layout.layout_spinner_row, null);
+        holder = new ViewHolder();
+        holder.spinnerValue = (TextView) convertView.findViewById(R.id.spinnerValue);
+
+        convertView.setTag(holder);
+    } else {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    holder.spinnerValue.setText(alertList.get(position));
+    return convertView;
+}
+
+
+
+
+static class ViewHolder {
+    TextView spinnerValue; //spinner name
+}
+}
+</code></pre>
+
+<p>And when I click on the spinner, I get the following error:</p>
+
+<pre><code>E/AndroidRuntime(1686): android.view.WindowManager$BadTokenException: Unable to add window -- token android.app.LocalActivityManager$LocalActivityRecord@4135fa38 is not valid; is your activity running?
+</code></pre>
+
+<p>I could not find any valid answer for the issue. Any thoughts?</p>
+
+<p>Thanks in advance!</p>

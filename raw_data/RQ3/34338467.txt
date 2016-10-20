@@ -1,0 +1,327 @@
+<p>I have 6 visible items on screen. Here is my 1st item:
+<a href="http://i.stack.imgur.com/T6rCJ.jpg" rel="nofollow"><img src="http://i.stack.imgur.com/T6rCJ.jpg" alt="enter image description here"></a></p>
+
+<p>What I want is when I scroll, the 7th will be like this:</p>
+
+<p><a href="http://i.stack.imgur.com/GvAJu.jpg" rel="nofollow"><img src="http://i.stack.imgur.com/GvAJu.jpg" alt="enter image description here"></a></p>
+
+<p>but it instantly shows 3 books of 1st item before change back to 3 books of 7th item. I think this issue relate to listview's recycle mechnism or cache thing, but I dont know how to fix it. Please teach me! </p>
+
+<p>Here is my code:</p>
+
+<p>Adapter.class:</p>
+
+<pre><code>public class MyAdapter extends BaseAdapter {
+
+    private Context mContext;
+    private int[] mResourceId;
+    private ImageLoader mImageLoader;
+    private int count = 0;
+    private ArrayList<MyImageObject> mImageObjects;
+
+    public MyAdapter(Context context, int[] resourceId,ArrayList<MyImageObject> imageObjects) {
+        // TODO Auto-generated constructor stub
+        mContext = context;
+        mResourceId = resourceId;
+        mImageLoader = new ImageLoader(mContext);
+        mImageObjects = imageObjects;
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+
+        return mImageObjects.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+        ViewHolder viewHolder;
+        if (convertView == null) {
+            LayoutInflater layoutInflater = LayoutInflater.from(mContext);
+            convertView = layoutInflater.inflate(R.layout.item_listview, parent, false);
+            viewHolder = new ViewHolder();
+            viewHolder.img1 = (ImageView) convertView.findViewById(R.id.imageView1);
+            viewHolder.img2 = (ImageView) convertView.findViewById(R.id.imageView2);
+            viewHolder.img3 = (ImageView) convertView.findViewById(R.id.imageView3);
+            viewHolder.pb1 = (ProgressBar) convertView.findViewById(R.id.progressBar1);
+            viewHolder.pb2 = (ProgressBar) convertView.findViewById(R.id.progressBar2);
+            viewHolder.pb3 = (ProgressBar) convertView.findViewById(R.id.progressBar3);
+            convertView.setTag(viewHolder);
+        } else {
+            viewHolder = (ViewHolder) convertView.getTag();
+        }
+
+        Log.e("POSITION", ""+ position);
+        mImageLoader.displayImage(mImageObjects.get(position),viewHolder.img1, viewHolder.img2, viewHolder.img3, viewHolder.pb1, viewHolder.pb2, viewHolder.pb3);
+
+        return convertView;
+    }
+</code></pre>
+
+<p>ImageLoader.class:</p>
+
+<pre><code>public class ImageLoader {
+
+    private Handler mHandler;
+    private Context mContext;
+    private ImageCacher mImageCacher = new ImageCacher();
+    private ExecutorService mExecutorService;
+    final int stub_int = R.drawable.ic_launcher;
+
+    public ImageLoader(Context context) {
+        // TODO Auto-generated constructor stub
+        mContext = context;
+        mImageCacher = new ImageCacher();
+        mHandler = new Handler();
+        mExecutorService = Executors.newFixedThreadPool(3);
+    }
+
+    public void displayImage(MyImageObject imageObject,final ImageView img1,final ImageView img2,
+        final ImageView img3,final ProgressBar pb1,final ProgressBar pb2,final ProgressBar pb3) {
+
+        //Set Imageview invisible if there is no book
+        if(imageObject.getmResourceId2() == 0){
+            pb2.setVisibility(View.INVISIBLE);
+            img2.setVisibility(View.INVISIBLE);
+        }
+        else{
+            img2.setVisibility(View.VISIBLE);
+        }
+
+        //Set Imageview invisible if there is no book
+        if(imageObject.getmResourceId3() == 0){
+            pb3.setVisibility(View.INVISIBLE);
+            img3.setVisibility(View.INVISIBLE);
+        }else{
+            img3.setVisibility(View.VISIBLE);
+        }
+
+        //Check if image is already in cache or not
+        Bitmap bitmap1 = mImageCacher.get(imageObject.getmResourceId1());
+        Bitmap bitmap2 = mImageCacher.get(imageObject.getmResourceId2());
+        Bitmap bitmap3 = mImageCacher.get(imageObject.getmResourceId3());
+        //--------------------------------------------------------//
+        if (bitmap1 != null) {
+            pb1.setVisibility(View.INVISIBLE);
+            img1.setImageBitmap(bitmap1);
+        } else {
+            queuePhoto(imageObject.getmResourceId1(), img1,pb1);
+        }
+        //-------------------------------------------------------//
+        if (bitmap2 != null) {
+            pb2.setVisibility(View.INVISIBLE);
+            img2.setImageBitmap(bitmap2);
+        } else {
+            queuePhoto(imageObject.getmResourceId2(), img2,pb2);
+        }
+        //-------------------------------------------------------//
+        if (bitmap3 != null) {
+            pb3.setVisibility(View.INVISIBLE);
+            img3.setImageBitmap(bitmap3);
+        } else {
+            queuePhoto(imageObject.getmResourceId3(), img3,pb3);
+        }
+    }
+
+
+
+    private void queuePhoto(int resourceId, ImageView imageView,ProgressBar pb) {
+
+        PhotoToLoad photoToLoad = new PhotoToLoad(resourceId, imageView,pb);
+        mExecutorService.submit(new PhotosLoader(photoToLoad));
+
+    }
+
+    private class PhotoToLoad {
+        private int mResourceId;
+        private ImageView mImageView;
+        private ProgressBar mProgressBar;
+
+        private PhotoToLoad(int r, ImageView i,ProgressBar pb) {
+            mResourceId = r;
+            mImageView = i;
+            mProgressBar = pb;
+        }
+    }
+
+    private class PhotosLoader implements Runnable {
+
+        PhotoToLoad photoToLoad;
+
+        public PhotosLoader(PhotoToLoad ptl) {
+            this.photoToLoad = ptl;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Bitmap bmp = scaleImage(photoToLoad.mResourceId);
+                mImageCacher.put(photoToLoad.mResourceId, bmp);
+                BitmapDisplayer bd = new BitmapDisplayer(bmp, photoToLoad);
+                mHandler.post(bd);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+    private class BitmapDisplayer implements Runnable {
+
+        Bitmap bitmap;
+        PhotoToLoad photoToLoad;
+
+        public BitmapDisplayer(Bitmap b, PhotoToLoad p) {
+            bitmap = b;
+            photoToLoad = p;
+        }
+
+        @Override
+        public void run() {
+            if (bitmap != null) {
+                photoToLoad.mProgressBar.setVisibility(View.INVISIBLE);
+                photoToLoad.mImageView.setImageBitmap(bitmap);
+            } else {
+                photoToLoad.mImageView.setImageResource(stub_int);
+            }
+        }
+    }
+
+
+    public Bitmap scaleImage(int resId) {
+
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(mContext.getResources(), resId, options);
+
+
+        options.inSampleSize = calculateInSampleSize(options, 90, 130);
+
+
+        options.inJustDecodeBounds = false;
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), resId, options);
+        bitmap = Bitmap.createScaledBitmap(bitmap, 70, 90, true);
+        return bitmap;
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+
+    public void clearCache() {
+        mImageCacher.clear();
+    }
+}
+</code></pre>
+
+<p>And finally is ImageCacher:</p>
+
+<pre><code>public class ImageCacher {
+    private static final String TAG = "MemoryCache";
+
+    private Map<Integer, Bitmap> cache = Collections
+            .synchronizedMap(new LinkedHashMap<Integer, Bitmap>(10, 1.5f, true));
+
+    private long size = 0;
+
+    private long limit = 1000000;
+
+    public ImageCacher() {
+        setLimit(Runtime.getRuntime().maxMemory() / 4);
+    }
+
+    public void setLimit(long new_limit) {
+        limit = new_limit;
+        Log.i(TAG, "MemoryCache will use up to " + limit / 1024 / 1024 + "MB");
+    }
+
+    public Bitmap get(int id) {
+        try {
+            if (!cache.containsKey(id))
+                return null;
+
+            return cache.get(id);
+
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void put(int id, Bitmap bitmap) {
+
+        try {
+
+            if (cache.containsKey(id)) {
+                size -= getSizeInBytes(cache.get(id));
+            } else {
+                cache.put(id, bitmap);
+                size += getSizeInBytes(bitmap);
+                checkSize();
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void checkSize() {
+
+        //If cache size exceed limit --> remove last item
+        if (size > limit) {
+            Iterator<Entry<Integer, Bitmap>> iter = cache.entrySet().iterator();
+            while (iter.hasNext()) {
+                Entry<Integer, Bitmap> entry = iter.next();
+                size -= getSizeInBytes(entry.getValue());
+                iter.remove();
+                if (size <= limit)
+                    break;
+            }
+            Log.i(TAG, "Clean cache. New size " + cache.size());
+        }
+    }
+
+    public void clear() {
+        try {
+            cache.clear();
+            size = 0;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    long getSizeInBytes(Bitmap bitmap) {
+        if (bitmap == null)
+            return 0;
+        return bitmap.getRowBytes() * bitmap.getHeight();
+    }
+}
+</code></pre>

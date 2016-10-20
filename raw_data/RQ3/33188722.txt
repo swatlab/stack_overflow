@@ -1,0 +1,92 @@
+<p>my problem is this:
+when submit a form using the element <code><input type="submit" name="method" value="Save"></code>, this open a dialoge open-save pdf file. 
+Using HtmlUnit (ver.2.8) i can't download the file because the response returned the content of next html page and not the pdf file.</p>
+
+<p>The configuration of my Web client is this:</p>
+
+<pre><code>private WebClient getWebClient() {
+    WebClient webClient = new WebClient(BrowserVersion.FIREFOX_38);
+    webClient.getOptions().setThrowExceptionOnScriptError(false);
+    webClient.getOptions().setJavaScriptEnabled(true);
+    webClient.getOptions().setRedirectEnabled(true);
+    webClient.getOptions().setCssEnabled(false);
+
+    webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+    webClient.getCookieManager().setCookiesEnabled(true);
+    webClient.waitForBackgroundJavaScript(4000);
+    return webClient;
+}
+</code></pre>
+
+<p>Then, the code used to submit the form is this:</p>
+
+<pre><code>List<HtmlElement> elements = (List<HtmlElement>) page.getByXPath("//input[@type='submit' and @value='Save']");
+HtmlElement buttonDownload = elements.get(0);
+</code></pre>
+
+<p>Finally, the method used to download pdf file is this:</p>
+
+<pre><code>public static void downloadByClickOnButton(HtmlElement buttonDownload) throws Exception {
+    HtmlPage page = buttonDownload.click();
+    WebResponse response = page.getWebResponse();
+
+    InputStream inputStream = null;
+    OutputStream outputStream = null;
+
+    try {
+        inputStream = response.getContentAsStream();
+        outputStream = new FileOutputStream(new File("/path/to/save/file/test_file.pdf"));
+
+        int read = 0;
+        byte[] bytes = new byte[1024];
+
+        while ((read = inputStream.read(bytes)) != -1) {
+            outputStream.write(bytes, 0, read);
+        }
+
+        System.out.println("Done!");
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    } finally {
+        if (inputStream != null) {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (outputStream != null) {
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+}
+</code></pre>
+
+<p>The code works, but the file saved is the html text of page and not the pdf file. </p>
+
+<p>What is wrong? Using htmlunit it is possible interact with open-save dialoge? Help me please!! :-)</p>
+
+<p>This is the form:</p>
+
+<pre><code><form name="ViewDocumentsFB" method="post" action="/Document/ViewDocument.do">
+<input type="hidden" name="idRequestDocument" value="923390829">
+<tr>
+    <td><input type="submit" name="metodo" value="Open"></td>
+    <td><input type="submit" name="metodo" value="Save"></td>
+</tr>
+</code></pre>
+
+<p></p>
+
+<p>If i send this request manually:
+<a href="http://----------/Document/ViewDocument.do" rel="nofollow">http://----------/Document/ViewDocument.do</a>
+It is not opened a open-save dialoge and redirect to other page, why?</p>
+
+<p>Thank advance.</p>

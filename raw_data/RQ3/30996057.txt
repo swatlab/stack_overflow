@@ -1,0 +1,312 @@
+<p>I have join two table .i want retrieve data by adding some detached criteria but it show "could not resolve property" error.</p>
+
+<p>"userMaster" table:</p>
+
+<pre><code>@Entity
+@Table(name="user_master")
+public class UserMasterTbl implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue
+    @Column(name="ID")
+    private Integer id;
+
+    @Column(name="E_MAIL")
+    private String email;
+
+    @Column(name="PASSWORD")
+    private String password;
+
+    @Column(name="CREATE_DTM")
+    private Date createDtm;
+
+    @Column(name="STATUS")
+    private String status;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="ROLE_ID")
+    private UserRoleTbl userRole;
+
+    //private
+    @ManyToOne(cascade={CascadeType.ALL})
+    @JoinColumn(name="created_by", nullable = true)
+    private UserMasterTbl createdBy;
+
+    @OneToMany(mappedBy="createdBy")
+    private Set<UserMasterTbl> createdUserList = new HashSet<UserMasterTbl>();
+
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "createdBy", cascade = CascadeType.ALL)
+    private Set<OrderMasterTbl> orders;
+
+    public UserMasterTbl() {
+    }
+
+    /*** getter and setter *******/
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getId() {
+        return this.id;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setCreateDtm(Date createDtm) {
+        this.createDtm = createDtm;
+    }
+
+    public Date getCreateDtm() {
+        return this.createDtm;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        UserMasterTbl other = (UserMasterTbl) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
+        return true;
+    }
+}
+</code></pre>
+
+<p>"userDetailed" table:</p>
+
+<pre><code>@Entity
+@Table(name="user_detailed")
+public class UserDetailedTbl implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Id @GeneratedValue(generator = "newGenerator") //name of the primary key generator
+    @GenericGenerator(name = "newGenerator", strategy = "foreign",parameters = { @Parameter(value = "userMasterTbl", name = "property") })
+    @Column(name="ID")
+    private Integer id;
+
+    @Column(name="FIRST_NAME")
+    private String firstName;
+
+    @Column(name="LAST_NAME")
+    private String lastName;
+
+    @Column(name="COMPANY_NAME")
+    private String companyName;
+
+    @Column(name="PHONE_NUMBER")
+    private String phoneNumber;
+
+    @Column(name="FAX1_NO")
+    private String faxNumber;
+
+    @Column(name="CELL_NUMBER")
+    private String cell_number;
+
+    //map with user_master_tabel
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name="ID")
+    private UserMasterTbl userMasterTbl; 
+
+    /* getter and setter */
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getFaxNumber() {
+        return faxNumber;
+    }
+
+    public void setFaxNumber(String faxNumber) {
+        this.faxNumber = faxNumber;
+    }
+
+    public String getCell_number() {
+        return cell_number;
+    }
+
+    public void setCell_number(String cell_number) {
+        this.cell_number = cell_number;
+    }
+
+    public UserMasterTbl getUserMasterTbl() {
+        return userMasterTbl;
+    }
+
+    public void setUserMasterTbl(UserMasterTbl userMasterTbl) {
+        this.userMasterTbl = userMasterTbl;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        UserDetailedTbl other = (UserDetailedTbl) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
+        return true;
+    }
+}
+</code></pre>
+
+<p>Data accessing criteria:</p>
+
+<pre><code>DetachedCriteria criteria = DetachedCriteria.forClass(UserDetailedTbl.class);
+criteria.add(Expression.in("userMasterTbl.status", userRoles))
+</code></pre>
+
+<p>Exception:</p>
+
+<pre><code>SEVERE: Servlet.service() for servlet [mvc-dispatcher] in context with path [/AddNector] threw exception [Request processing failed;
+nested exception is org.springframework.orm.hibernate3.HibernateQueryException: could not resolve property: userMasterTbl.status of: com.queenzend.addnector.model.UserDetailedTbl;
+nested exception is org.hibernate.QueryException: could not resolve property: userMasterTbl.status of: com.queenzend.addnector.model.UserDetailedTbl] with root cause org.hibernate.QueryException: could not resolve property: userMasterTbl.status of: com.queenzend.addnector.model.UserDetailedTbl
+    at org.hibernate.persister.entity.AbstractPropertyMapping.throwPropertyException(AbstractPropertyMapping.java:43)
+    at org.hibernate.persister.entity.AbstractPropertyMapping.toColumns(AbstractPropertyMapping.java:63)
+    at org.hibernate.persister.entity.BasicEntityPropertyMapping.toColumns(BasicEntityPropertyMapping.java:31)
+    at org.hibernate.persister.entity.AbstractEntityPersister.toColumns(AbstractEntityPersister.java:1304)
+    at org.hibernate.loader.criteria.CriteriaQueryTranslator.getColumns(CriteriaQueryTranslator.java:434)
+    at org.hibernate.loader.criteria.CriteriaQueryTranslator.getColumnsUsingProjection(CriteriaQueryTranslator.java:394)
+    at org.hibernate.criterion.InExpression.toSqlString(InExpression.java:35)
+    at org.hibernate.loader.criteria.CriteriaQueryTranslator.getWhereCondition(CriteriaQueryTranslator.java:334)
+    at org.hibernate.loader.criteria.CriteriaJoinWalker.<init>(CriteriaJoinWalker.java:82)
+    at org.hibernate.loader.criteria.CriteriaLoader.<init>(CriteriaLoader.java:68)
+    at org.hibernate.impl.SessionImpl.list(SessionImpl.java:1550)
+    at org.hibernate.impl.CriteriaImpl.list(CriteriaImpl.java:283)
+    at org.springframework.orm.hibernate3.HibernateTemplate$36.doInHibernate(HibernateTemplate.java:1056)
+    at org.springframework.orm.hibernate3.HibernateTemplate$36.doInHibernate(HibernateTemplate.java:1)
+    at org.springframework.orm.hibernate3.HibernateTemplate.doExecute(HibernateTemplate.java:406)
+    at org.springframework.orm.hibernate3.HibernateTemplate.executeWithNativeSession(HibernateTemplate.java:374)
+    at org.springframework.orm.hibernate3.HibernateTemplate.findByCriteria(HibernateTemplate.java:1046)
+    at org.springframework.orm.hibernate3.HibernateTemplate.findByCriteria(HibernateTemplate.java:1039)
+    at com.queenzend.addnector.dao.impl.UserDetailedDAOImpl.getUser(UserDetailedDAOImpl.java:92)
+    at com.queenzend.addnector.bo.impl.UserBOImpl.getUserByRoles(UserBOImpl.java:111)
+    at com.queenzend.addnector.controller.AdminTaskController.addUSerTeam(AdminTaskController.java:80)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+    at java.lang.reflect.Method.invoke(Unknown Source)
+    at org.springframework.web.bind.annotation.support.HandlerMethodInvoker.invokeHandlerMethod(HandlerMethodInvoker.java:176)
+    at org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter.invokeHandlerMethod(AnnotationMethodHandlerAdapter.java:426)
+    at org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter.handle(AnnotationMethodHandlerAdapter.java:414)
+    at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:790)
+    at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:719)
+    at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:644)
+    at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:549)
+    at javax.servlet.http.HttpServlet.service(HttpServlet.java:620)
+    at javax.servlet.http.HttpServlet.service(HttpServlet.java:727)
+    at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:303)
+    at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)
+    at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
+    at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:241)
+    at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)
+    at com.queenzend.addnector.servlet.AdNectorSessionFilter.doFilter(AdNectorSessionFilter.java:45)
+    at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:241)
+    at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)
+    at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:220)
+    at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:122)
+    at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:504)
+    at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:170)
+    at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:103)
+    at org.apache.catalina.valves.AccessLogValve.invoke(AccessLogValve.java:950)
+    at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:116)
+    at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:421)
+    at org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1074)
+    at org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:611)
+    at org.apache.tomcat.util.net.JIoEndpoint$SocketProcessor.run(JIoEndpoint.java:316)
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+    at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+    at java.lang.Thread.run(Unknown Source)
+</code></pre>

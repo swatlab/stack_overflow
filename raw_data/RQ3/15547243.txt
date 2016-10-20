@@ -1,0 +1,985 @@
+<p>I need your expertise to get out of this problem.
+I have used the code given bellow to draw apie chart and rotate it when the flag "bisSmart" is set to true.
+   Everything is going fine except one problem.</p>
+
+<p>I want to move the text with it's arc. But the problem is that while moving the text it comes on the chart. I want to move the text from outside of the pie chart.
+Plz help me to get out of this problem. Advance thanks.
+Here is the code.</p>
+
+<pre><code>    public class PieChart extends ViewGroup
+    {
+        private List<Item> mData = new ArrayList<Item>();
+        private float mTotal = 0.0f;
+        private RectF mPieBounds = new RectF();
+        private Paint mPiePaint;
+        private Paint mTextPaint;
+        private Paint mShadowPaint;
+        private boolean mShowText = false;
+        private float mTextX = 0.0f;
+        private float mTextY = 0.0f;
+        private float mTextWidth = 0.0f;
+        private float mTextHeight = 0.0f;
+        private int mTextPos = TEXTPOS_LEFT;
+        private float mHighlightStrength = 1.15f;
+        private float mPointerRadius = 2.0f;
+        private float mPointerX;
+        private float mPointerY;
+        private int mPieRotation;
+        private int margin = 0;
+        private OnCurrentItemChangedListener mCurrentItemChangedListener = null;
+    private int mTextColor;
+        private PieView mPieView;
+        private Scroller mScroller;
+        private ValueAnimator mScrollAnimator;
+        private GestureDetector mDetector;
+        private PointerView mPointerView;
+        private int mCurrentItemAngle;
+    private int mCurrentItem = 0;
+        private boolean mAutoCenterInSlice;
+        private ObjectAnimator mAutoCenterAnimator;
+        private RectF mShadowBounds = new RectF();
+        private Context cntxPie;
+        float rotatedangle = (float) 0.0;
+        public static final int TEXTPOS_LEFT = 0;
+        public static final int TEXTPOS_RIGHT = 1;
+        public static final int FLING_VELOCITY_DOWNSCALE = 4;
+        public static final int AUTOCENTER_ANIM_DURATION = 250;
+        boolean bisSmart;
+
+        public interface OnCurrentItemChangedListener
+            {
+                void OnCurrentItemChanged(PieChart source, int currentItem);
+            }
+        public PieChart(Context context)
+            {
+                super(context);
+                cntxPie = context;
+                init();
+            }
+
+        public void isSmart(boolean bisSmart)
+            {
+                this.bisSmart = bisSmart;
+            }
+
+        public PieChart(Context context, AttributeSet attrs)
+            {
+                super(context, attrs);
+
+                TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PieChart, 0, 0);
+
+                try
+                    {
+                        mShowText = a.getBoolean(R.styleable.PieChart_showText, false);
+                        mTextY = a.getDimension(R.styleable.PieChart_labelY, 0.0f);
+                        mTextWidth = a.getDimension(R.styleable.PieChart_labelWidth, 0.0f);
+                        mTextHeight = a.getDimension(R.styleable.PieChart_labelHeight, 0.0f);
+                        mTextPos = a.getInteger(R.styleable.PieChart_labelPosition, 0);
+                        mTextColor = a.getColor(R.styleable.PieChart_labelColor, 0xff000000);
+                        mHighlightStrength = a.getFloat(R.styleable.PieChart_highlightStrength, 1.0f);
+                        mPieRotation = a.getInt(R.styleable.PieChart_pieRotation, 0);
+                        mPointerRadius = a.getDimension(R.styleable.PieChart_pointerRadius, 2.0f);
+                        mAutoCenterInSlice = a.getBoolean(R.styleable.PieChart_autoCenterPointerInSlice, false);
+                    }
+                finally
+                    {
+                        a.recycle();
+                    }
+
+                init();
+            }
+
+
+        public boolean getShowText()
+            {
+                return mShowText;
+            }
+
+
+        public void setShowText(boolean showText)
+            {
+                mShowText = showText;
+                invalidate();
+            }
+
+        public float getTextY()
+            {
+                return mTextY;
+            }
+
+
+        public void setTextY(float textY)
+            {
+                mTextY = textY;
+                invalidate();
+            }
+
+
+        public float getTextWidth()
+            {
+                return mTextWidth;
+            }
+
+        public void setTextWidth(float textWidth)
+            {
+                mTextWidth = textWidth;
+                invalidate();
+            }
+
+        public float getTextHeight()
+            {
+                return mTextHeight;
+            }
+
+
+        public void setTextHeight(float textHeight)
+            {
+                mTextHeight = textHeight;
+                invalidate();
+            }
+
+        public int getTextPos()
+            {
+                return mTextPos;
+            }
+
+        public void setTextPos(int textPos)
+            {
+                if (textPos != TEXTPOS_LEFT && textPos != TEXTPOS_RIGHT)
+                    {
+                        throw new IllegalArgumentException("TextPos must be one of TEXTPOS_LEFT or TEXTPOS_RIGHT");
+                    }
+                mTextPos = textPos;
+                invalidate();
+            }
+
+        public float getHighlightStrength()
+            {
+                return mHighlightStrength;
+            }
+
+
+        public void setHighlightStrength(float highlightStrength)
+            {
+                if (highlightStrength < 0.0f)
+                    {
+                        throw new IllegalArgumentException("highlight strength cannot be negative");
+                    }
+                mHighlightStrength = highlightStrength;
+                invalidate();
+            }
+
+
+        public float getPointerRadius()
+            {
+                return mPointerRadius;
+            }
+
+
+        public void setPointerRadius(float pointerRadius)
+            {
+                mPointerRadius = pointerRadius;
+                invalidate();
+            }
+
+
+        public int getPieRotation()
+            {
+                return mPieRotation;
+            }
+
+        public void setPieRotation(int rotation)
+            {
+                rotation = (rotation % 360 + 360) % 360;
+                mPieRotation = rotation;
+                mPieView.rotateTo(rotation);
+
+                calcCurrentItem();
+            }
+
+        public int getCurrentItem()
+            {
+                return mCurrentItem;
+            }
+
+        public void setCurrentItem(int currentItem)
+            {
+                setCurrentItem(currentItem, true);
+            }
+
+        private void setCurrentItem(int currentItem, boolean scrollIntoView)
+            {
+                mCurrentItem = currentItem;
+                if (mCurrentItemChangedListener != null)
+                    {
+                        mCurrentItemChangedListener.OnCurrentItemChanged(this, currentItem);
+                    }
+                if (scrollIntoView)
+                    {
+                        centerOnCurrentItem();
+                    }
+                invalidate();
+            }
+
+        public void setOnCurrentItemChangedListener(OnCurrentItemChangedListener listener)
+            {
+                mCurrentItemChangedListener = listener;
+            }
+
+
+        public int addItem(String label, double value, int color)
+            {
+                Item it = new Item();
+                it.mLabel = label;
+                it.mColor = color;
+                it.mValue = value;
+
+
+                it.mHighlight = Color.argb(0xff, Math.min((int) (mHighlightStrength * (float) Color.red(color)), 0xff),
+                        Math.min((int) (mHighlightStrength * (float) Color.green(color)), 0xff),
+                        Math.min((int) (mHighlightStrength * (float) Color.blue(color)), 0xff));
+                mTotal += value;
+
+                mData.add(it);
+
+                onDataChanged();
+
+                return mData.size() - 1;
+            }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event)
+            {
+                if (bisSmart)
+                    {
+
+                        boolean result = mDetector.onTouchEvent(event);
+
+
+                        if (!result)
+                            {
+                                if (event.getAction() == MotionEvent.ACTION_UP)
+                                    {
+
+                                        stopScrolling();
+                                        result = true;
+                                    }
+                            }
+                        return result;
+                    }
+                return false;
+            }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b)
+            {
+
+            }
+
+        @Override
+        protected void onDraw(Canvas canvas)
+            {
+                super.onDraw(canvas);
+                canvas.drawColor(Color.TRANSPARENT);
+                // Draw the shadow
+                canvas.drawOval(mShadowBounds, mShadowPaint);
+
+                // Draw the label text
+                if (getShowText())
+                    {
+                        canvas.drawText(mData.get(mCurrentItem).mLabel, mTextX + (mTextX / 2), getHeight() / 2, mTextPaint);
+                    }
+
+
+                if (Build.VERSION.SDK_INT < 11)
+                    {
+                        tickScrollAnimation();
+                        if (!mScroller.isFinished())
+                            {
+                                postInvalidate();
+                            }
+                    }
+            }
+
+
+        @Override
+        protected int getSuggestedMinimumWidth()
+            {
+                return (int) mTextWidth * 2;
+            }
+
+        @Override
+        protected int getSuggestedMinimumHeight()
+            {
+                return (int) mTextWidth;
+            }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                // Try for a width based on our minimum
+                int minw = getPaddingLeft() + getPaddingRight() + getSuggestedMinimumWidth();
+
+                int w = Math.max(minw, MeasureSpec.getSize(widthMeasureSpec));
+
+                // Whatever the width ends up being, ask for a height that would let the pie
+                // get as big as it can
+                int minh = (w - (int) mTextWidth) + getPaddingBottom() + getPaddingTop();
+                int h = Math.min(MeasureSpec.getSize(heightMeasureSpec), minh);
+
+                setMeasuredDimension(w, h);
+            }
+
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh)
+            {
+                super.onSizeChanged(w, h, oldw, oldh);
+
+
+                float xpad = (float) (getPaddingLeft() + getPaddingRight());
+                float ypad = (float) (getPaddingTop() + getPaddingBottom());
+
+                // Account for the label
+                if (mShowText)
+                    xpad += mTextWidth;
+
+                float ww = (float) w - xpad;
+                float hh = (float) h - ypad;
+
+                float diameter = Math.min(ww, hh);
+                mPieBounds = new RectF(0.0f, 0.0f, diameter, diameter);
+                mPieBounds.offsetTo(getPaddingLeft(), getPaddingTop());
+
+                mPointerY = mTextY - (mTextHeight / 2.0f);
+                float pointerOffset = mPieBounds.centerY() - mPointerY;
+
+                mTextPaint.setTextAlign(Paint.Align.LEFT);
+                mTextX = mPieBounds.right;
+
+                if (pointerOffset < 0)
+                    {
+                        pointerOffset = -pointerOffset;
+                        mCurrentItemAngle = 360;// 360;//315
+                    }
+                else
+                    {
+                        mCurrentItemAngle = 0;// 45
+                    }
+                mPointerX = mPieBounds.centerX() + pointerOffset;
+                // }
+
+                mShadowBounds = new RectF(mPieBounds.left + 10, mPieBounds.bottom + 10, mPieBounds.right - 10, mPieBounds.bottom + 20);
+
+
+                if (bisSmart)
+                    mPieView.layout((int) mPieBounds.left, (int) mPieBounds.top, (int) mPieBounds.right, (int) mPieBounds.bottom);
+                else
+                    mPieView.layout((int) mPieBounds.left - 40, (int) mPieBounds.top, (int) mPieBounds.right + 60, (int) mPieBounds.bottom);
+
+                mPieView.setPivot(mPieBounds.width() / 2, mPieBounds.height() / 2);
+
+                onDataChanged();
+            }
+
+
+        private void calcCurrentItem()
+            {
+
+                // mCurrentItemAngle=-45;
+                int pointerAngle = (mCurrentItemAngle + 360 + mPieRotation) % 360;
+                for (int i = 0; i < mData.size(); ++i)
+                    {
+                        Item it = mData.get(i);
+                        if (it.mStartAngle <= pointerAngle && pointerAngle <= it.mEndAngle)
+                            {
+                                if (i != mCurrentItem)
+                                    {
+                                        setCurrentItem(i, false);
+                                    }
+                                break;
+                            }
+                    }
+            }
+
+
+        private void onDataChanged()
+            {
+                // When the data changes, we have to recalculate
+                // all of the angles.
+                int currentAngle = 0;
+                int count = 0;
+
+                for (Item it : mData)
+                    {
+                        count++;
+                        it.mStartAngle = currentAngle;
+
+                        if (count == mData.size())
+                            it.mEndAngle = 360;
+                        else
+                            it.mEndAngle = (int) ((float) currentAngle + it.mValue * 360.0f / mTotal);
+
+                        currentAngle = it.mEndAngle;
+
+
+                        it.mShader = new SweepGradient(mPieBounds.width() / 2.0f, mPieBounds.height() / 2.0f, new int[]
+                            { it.mHighlight, it.mHighlight, it.mColor, it.mColor, }, new float[]
+                            { 0, (float) (360 - it.mEndAngle) / 360.0f, (float) (360 - it.mStartAngle) / 360.0f, 1.0f });
+                    }
+                calcCurrentItem();
+                onScrollFinished();
+            }
+
+        private void init()
+            {
+
+                setLayerToSW(this);
+
+                // Set up the paint for the label text
+                mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                mTextPaint.setColor(mTextColor);
+                if (mTextHeight == 0)
+                    {
+                        mTextHeight = mTextPaint.getTextSize();
+                    }
+                else
+                    {
+                        mTextPaint.setTextSize(mTextHeight);
+                    }
+
+                // Set up the paint for the pie slices
+                mPiePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                mPiePaint.setStyle(Paint.Style.FILL);
+                mPiePaint.setTextSize(mTextHeight);
+
+                // Set up the paint for the shadow
+                mShadowPaint = new Paint(0);
+                mShadowPaint.setColor(0xff101010);
+                mShadowPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
+
+                mPieView = new PieView(getContext());
+                mPieView.measure(800, 800);
+
+                addView(mPieView);
+                mPieView.rotateTo(mPieRotation);
+
+
+                if (Build.VERSION.SDK_INT >= 11)
+                    {
+                        mAutoCenterAnimator = ObjectAnimator.ofInt(PieChart.this, "PieRotation", 0);
+
+                        // Add a listener to hook the onAnimationEnd event so that we can do
+                        // some cleanup when the pie stops moving.
+                        mAutoCenterAnimator.addListener(new Animator.AnimatorListener()
+                            {
+                                public void onAnimationStart(Animator animator)
+                                    {
+                                    }
+
+                                public void onAnimationEnd(Animator animator)
+                                    {
+                                        mPieView.decelerate();
+                                    }
+
+                                public void onAnimationCancel(Animator animator)
+                                    {
+                                    }
+
+                                public void onAnimationRepeat(Animator animator)
+                                    {
+                                    }
+                            });
+                    }
+
+                // Create a Scroller to handle the fling gesture.
+                if (Build.VERSION.SDK_INT < 11)
+                    {
+                        mScroller = new Scroller(getContext());
+                    }
+                else
+                    {
+                        mScroller = new Scroller(getContext(), null, true);
+                    }
+
+                if (Build.VERSION.SDK_INT >= 11)
+                    {
+                        mScrollAnimator = ValueAnimator.ofFloat(0, 1);
+                        mScrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener()
+                            {
+                                public void onAnimationUpdate(ValueAnimator valueAnimator)
+                                    {
+                                        tickScrollAnimation();
+                                    }
+                            });
+                    }
+
+
+                mDetector = new GestureDetector(PieChart.this.getContext(), new GestureListener());
+
+
+                mDetector.setIsLongpressEnabled(false);
+
+
+                if (this.isInEditMode())
+                    {
+
+                    }
+
+            }
+
+        private void tickScrollAnimation()
+            {
+                if (!mScroller.isFinished())
+                    {
+                        mScroller.computeScrollOffset();
+                        setPieRotation(mScroller.getCurrY());
+                    }
+                else
+                    {
+                        if (Build.VERSION.SDK_INT >= 11)
+                            {
+                                mScrollAnimator.cancel();
+                            }
+                        onScrollFinished();
+                    }
+            }
+
+        private void setLayerToSW(View v)
+            {
+                if (!v.isInEditMode() && Build.VERSION.SDK_INT >= 11)
+                    {
+                        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+                    }
+            }
+
+        private void setLayerToHW(View v)
+            {
+                if (!v.isInEditMode() && Build.VERSION.SDK_INT >= 11)
+                    {
+                        setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                    }
+            }
+
+
+        private void stopScrolling()
+            {
+                mScroller.forceFinished(true);
+                if (Build.VERSION.SDK_INT >= 11)
+                    {
+                        mAutoCenterAnimator.cancel();
+                    }
+
+                onScrollFinished();
+            }
+
+        private void onScrollFinished()
+            {
+                if (mAutoCenterInSlice)
+                    {
+                        centerOnCurrentItem();
+                    }
+                else
+                    {
+                        mPieView.decelerate();
+                    }
+            }
+
+        private void centerOnCurrentItem()
+            {
+                Item current = mData.get(getCurrentItem());
+                int targetAngle = current.mStartAngle + (current.mEndAngle - current.mStartAngle) / 2;
+                targetAngle -= mCurrentItemAngle;
+                if (targetAngle < 90 && mPieRotation > 180)
+                    targetAngle += 360;
+
+                if (Build.VERSION.SDK_INT >= 11)
+                    {
+                        // Fancy animated version
+                        mAutoCenterAnimator.setIntValues(targetAngle);
+                        mAutoCenterAnimator.setDuration(AUTOCENTER_ANIM_DURATION).start();
+                    }
+                else
+                    {
+                        // Dull non-animated version
+                        // mPieView.rotateTo(targetAngle);
+                    }
+            }
+
+
+        private class PieView extends View
+            {
+                private PointF mPivot = new PointF();
+
+                /**
+                 * Construct a PieView
+                 * 
+                 * @param context
+                 */
+                public PieView(Context context)
+                    {
+                        super(context);
+                        // this.setLayoutParams(new LayoutParams(300, 300));
+                    }
+
+                @Override
+                protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+                    {
+                        setMeasuredDimension(measureWidth(widthMeasureSpec), measureHeight(heightMeasureSpec));
+                        // super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                        super.onMeasure(800, 800);
+                    }
+
+                private int measureWidth(int measureSpec)
+                    {
+                        int preferred = 800;
+                        return getMeasurement(measureSpec, preferred);
+                    }
+
+                private int measureHeight(int measureSpec)
+                    {
+                        int preferred = 800;
+                        return getMeasurement(measureSpec, preferred);
+                    }
+
+                private int getMeasurement(int measureSpec, int preferred)
+                    {
+                        int specSize = MeasureSpec.getSize(measureSpec);
+                        int measurement = 0;
+
+                        switch (MeasureSpec.getMode(measureSpec))
+                            {
+                            case MeasureSpec.EXACTLY:
+                                // This means the width of this view has been given.
+                                measurement = specSize;
+                                break;
+                            case MeasureSpec.AT_MOST:
+                                // Take the minimum of the preferred size and what
+                                // we were told to be.
+                                measurement = Math.min(preferred, specSize);
+                                break;
+                            default:
+                                measurement = preferred;
+                                break;
+                            }
+
+                        return 800;
+                    }
+
+
+                public void accelerate()
+                    {
+                        setLayerToHW(this);
+                    }
+
+
+                public void decelerate()
+                    {
+                        setLayerToSW(this);
+                    }
+
+                @Override
+                protected void onDraw(Canvas canvas)
+                    {
+                        super.onDraw(canvas);
+
+                        canvas.drawColor(Color.TRANSPARENT);
+
+                        int left = 0 + margin;
+                        int top = 0 + margin;
+                        int right = 0 + getWidth();
+                        int bottom = 0 + getHeight();
+
+                        int mRadius = Math.min(Math.abs(right - left), Math.abs(bottom - top));
+                        int radius = (int) (mRadius * 0.35 * 1.0);
+                        float shortRadius = radius * 0.9f;
+                        float longRadius = radius * 1.1f;
+
+                        for (int i = 0; i < mData.size(); i++)
+                            {
+                                Item it = mData.get(i);
+                                mPiePaint.setShader(it.mShader);
+
+                                float fStartAngle = 360 - it.mEndAngle;
+                                float fEndAngle = it.mEndAngle - it.mStartAngle;
+
+                                canvas.drawArc(mBounds, fStartAngle, fEndAngle, true, mPiePaint);
+
+                                Paint pntWhite = new Paint();
+                                pntWhite.setAntiAlias(true);
+                                pntWhite.setColor(Color.parseColor("#EFE7E7"));
+                                pntWhite.setStyle(Style.STROKE);
+                                if (bisSmart)
+                                    pntWhite.setStrokeWidth(3);
+                                else
+                                    pntWhite.setStrokeWidth(1.5f);
+
+                                canvas.drawArc(mBounds, fStartAngle, fEndAngle, true, pntWhite);
+
+                                Paint pntBlack = new Paint();
+                                // Center circle that does not rotate
+                                // canvas.save();
+                                pntBlack.setAntiAlias(true);
+                                pntBlack.setStyle(Style.FILL);
+                                pntBlack.setColor(Color.parseColor("#B5B5B5"));
+                                if (bisSmart)
+                                    canvas.drawCircle(getWidth() / 2, getHeight() / 2, 60, pntBlack);
+                                else
+                                    canvas.drawCircle(getWidth() / 2, getHeight() / 2, 30, pntBlack);
+
+                                // Center circle that does not rotate
+                                canvas.save();
+
+                                if (bisSmart)
+                                    {
+                                        pntWhite.setStrokeWidth(2);
+                                        canvas.drawCircle(getWidth() / 2, getHeight() / 2, 60, pntWhite);
+                                    }
+                                else
+                                    {
+                                        pntWhite.setStrokeWidth(1.5f);
+                                        canvas.drawCircle(getWidth() / 2, getHeight() / 2, 30, pntWhite);
+                                    }
+
+                                canvas.rotate(-mPieRotation, getWidth() / 2, getHeight() / 2);
+                                canvas.restore();
+                            }
+                        List<RectF> prevLabelsBounds = new ArrayList<RectF>();
+                        for (int i = 0; i < mData.size(); i++)
+                            {
+                                Item it = mData.get(i);
+
+                                float fStartAngle = 360 - it.mEndAngle;
+                                float fEndAngle = it.mEndAngle - it.mStartAngle;
+
+                                int color = Color.parseColor("#5A595A");
+
+                                drawLabel(it.mLabel, prevLabelsBounds, getWidth() / 2, getHeight() / 2, shortRadius, longRadius, fStartAngle,
+                                        fEndAngle, left, right, false, canvas, color);
+
+                            }
+                        prevLabelsBounds.clear();
+                    }
+
+                @Override
+                protected void onSizeChanged(int w, int h, int oldw, int oldh)
+                    {
+                        if (bisSmart)
+                            mBounds = new RectF(0 + 90, 0 + 90, w - 90, h - 90);
+                        else
+                            mBounds = new RectF(0 + 100, 0 + 50, w - 100, h - 50);
+                    }
+
+                RectF mBounds;
+
+                public void rotateTo(float pieRotation)
+                    {
+                        rotatedangle = pieRotation;
+                        if (Build.VERSION.SDK_INT >= 11)
+                            {
+                                setRotation(pieRotation);
+                                invalidate();
+                            }
+                        else
+                            {
+                                invalidate();
+                            }
+                    }
+
+                public void setPivot(float x, float y)
+                    {
+                        mPivot.x = x;
+                        mPivot.y = y;
+                        if (Build.VERSION.SDK_INT >= 11)
+                            {
+                                setPivotX(x);
+                                setPivotY(y);
+                            }
+                        else
+                            {
+                                invalidate();
+                            }
+                    }
+            }
+
+
+
+
+        private class Item
+            {
+                public String mLabel;
+                public double mValue;
+                public int mColor;
+
+                // computed values
+                public int mStartAngle;
+                public int mEndAngle;
+
+                public int mHighlight;
+                public Shader mShader;
+            }
+
+
+        private class GestureListener extends GestureDetector.SimpleOnGestureListener
+            {
+                @Override
+                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+                    {
+                        // Set the pie rotation directly.
+                        float scrollTheta = vectorToScalarScroll(distanceX, distanceY, e2.getX() - mPieBounds.centerX(),
+                                e2.getY() - mPieBounds.centerY());
+                        setPieRotation(getPieRotation() - (int) scrollTheta / FLING_VELOCITY_DOWNSCALE);
+
+                        return true;
+                    }
+
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
+                    {
+                        // Set up the Scroller for a fling
+                        float scrollTheta = vectorToScalarScroll(velocityX, velocityY, e2.getX() - mPieBounds.centerX(),
+                                e2.getY() - mPieBounds.centerY());
+                        mScroller.fling(0, (int) getPieRotation(), 0, (int) scrollTheta / FLING_VELOCITY_DOWNSCALE, 0, 0, Integer.MIN_VALUE,
+                                Integer.MAX_VALUE);
+
+                        // Start the animator and tell it to animate for the expected duration of the fling.
+                        if (Build.VERSION.SDK_INT >= 11)
+                            {
+                                mScrollAnimator.setDuration(mScroller.getDuration());
+                                mScrollAnimator.start();
+                            }
+                        return true;
+                    }
+
+                @Override
+                public boolean onDown(MotionEvent e)
+                    {
+                        // The user is interacting with the pie, so we want to turn on acceleration
+                        // so that the interaction is smooth.
+                        mPieView.accelerate();
+                        if (isAnimationRunning())
+                            {
+                                stopScrolling();
+                            }
+                        return true;
+                    }
+            }
+
+        private boolean isAnimationRunning()
+            {
+                return !mScroller.isFinished() || (Build.VERSION.SDK_INT >= 11 && mAutoCenterAnimator.isRunning());
+            }
+
+
+        private static float vectorToScalarScroll(float dx, float dy, float x, float y)
+            {
+
+                float l = (float) Math.sqrt(dx * dx + dy * dy);
+                float crossX = -y;
+                float crossY = x;
+
+                float dot = (crossX * dx + crossY * dy);
+                float sign = Math.signum(dot);
+
+                return l * sign;
+            }
+
+        protected void drawLabel(String labelText, List<RectF> prevLabelsBounds, int centerX, int centerY, float shortRadius, float longRadius,
+                float currentAngle, float angle, int left, int right, boolean line, Canvas mcanvas, int txtcolor)
+            {
+                // line=true;
+                Paint pntText = new Paint();
+                pntText.setAntiAlias(true);
+                pntText.setColor(txtcolor);
+                if (bisSmart)
+                    pntText.setTextSize(15);
+                else
+                    pntText.setTextSize(10);
+
+                double rAngle = Math.toRadians(90 - (currentAngle + angle / 2));
+                double sinValue = Math.sin(rAngle);
+                double cosValue = Math.cos(rAngle);
+                int x1 = Math.round(centerX + (float) (shortRadius * sinValue));
+                int y1 = Math.round(centerY + (float) (shortRadius * cosValue));
+                int x2 = Math.round(centerX + (float) (longRadius * sinValue));
+                int y2 = Math.round(centerY + (float) (longRadius * cosValue));
+
+                float size = 20;
+                float extra = Math.max(size / 2, 10);
+                pntText.setTextAlign(Align.CENTER);
+                if (x1 > x2)
+                    {
+                        extra = -extra;
+                    }
+
+                float xLabel = x2 + extra;
+                float yLabel = y2;
+                // labelText = getFitText(labelText, width, paint);
+                float widthLabel = pntText.measureText(labelText);
+                boolean okBounds = false;
+                while (!okBounds && line)
+                    {
+                        boolean intersects = false;
+                        int length = prevLabelsBounds.size();
+                        for (int j = 0; j < length && !intersects; j++)
+                            {
+                                RectF prevLabelBounds = prevLabelsBounds.get(j);
+                                if (prevLabelBounds.intersects(xLabel, yLabel, xLabel + widthLabel, yLabel + size))
+                                    {
+                                        intersects = true;
+                                        yLabel = Math.max(yLabel, prevLabelBounds.bottom);
+                                    }
+                            }
+                        okBounds = !intersects;
+                    }
+
+                if (line)
+                    {
+                        y2 = (int) (yLabel - size / 2);
+                        mcanvas.drawLine(x1, y1, x2, y2, pntText);
+                    }
+                else
+                    {
+                        pntText.setTextAlign(Align.CENTER);
+                    }
+                /**
+                 * my code
+                 */
+                // draw bounding rect before rotating text
+                Rect rect = new Rect();
+                pntText.getTextBounds(labelText, 0, labelText.length(), rect);
+                mcanvas.save();
+
+                // rotate the canvas on center of the text to draw
+
+                mcanvas.rotate(-mPieRotation, xLabel, yLabel);
+
+                if (bisSmart)
+                    {
+                        mcanvas.drawText(labelText, xLabel, yLabel, pntText);
+                        /*
+                         * if (x1 > x2) { //pntText.setTextAlign(Align.RIGHT); mcanvas.drawText(labelText, xLabel-(widthLabel / 3) , yLabel, pntText); } else { //pntText.setTextAlign(Align.LEFT);
+                         * mcanvas.drawText(labelText, xLabel + (widthLabel / 3), yLabel, pntText); }
+                         */
+                    }
+                else
+                    {
+                        if (xLabel < centerX)
+                            {
+
+                                mcanvas.drawText(labelText, xLabel - (widthLabel / 3), yLabel, pntText);
+                            }
+                        else
+                            {
+                                mcanvas.drawText(labelText, xLabel + (widthLabel / 3), yLabel, pntText);
+                            }
+                    }
+
+                mcanvas.restore();
+                if (line)
+                    {
+                        prevLabelsBounds.add(new RectF(xLabel, yLabel, xLabel + widthLabel, yLabel + size));
+                    }
+
+            }
+    }
+</code></pre>

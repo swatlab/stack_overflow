@@ -1,0 +1,295 @@
+<p>I am trying to implement tabs with action bar in an activity. But I am getting an exception. What is the reason?
+ This is my code:<br>
+  MainActivity.java</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+String arr[]=new String[]{"Vegetables","Drinks","Fruits","Chai","Eatables"};
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+       final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+
+    }
+
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+
+            // below) with the page number as its lone argument.
+
+         String str[]=null;
+            for(int i=0;i<10;i++)
+                str[i]=arr[position];
+            Fragment fragment = new HomeFragment();
+           Bundle bundle =new Bundle();
+            bundle.putStringArray("air",str);
+            fragment.setArguments(bundle);
+            return fragment;
+        }
+
+
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return arr.length;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            return arr[position];
+        }
+    }
+
+}
+</code></pre>
+
+<p>This is the exception that I am getting:</p>
+
+<pre><code>08-05 16:12:44.439  10012-10012/com.works.vipul.peppertap3 E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.works.vipul.peppertap3/com.works.vipul.peppertap3.MainActivity}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1970)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1995)
+            at android.app.ActivityThread.access$600(ActivityThread.java:128)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1161)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4517)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at com.works.vipul.peppertap3.MainActivity.onCreate(MainActivity.java:31)
+            at android.app.Activity.performCreate(Activity.java:4470)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1053)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1934)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1995)
+            at android.app.ActivityThread.access$600(ActivityThread.java:128)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1161)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4517)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+            at dalvik.system.NativeStart.main(Native Method)
+08-05 16:12:54.729  10012-10012/com.works.vipul.peppertap3 I/Process﹕ Sending signal. PID: 10012 SIG: 9
+08-05 16:14:16.039  10483-10483/com.works.vipul.peppertap3 D/AndroidRuntime﹕ Shutting down VM
+08-05 16:14:16.039  10483-10483/com.works.vipul.peppertap3 W/dalvikvm﹕ threadid=1: thread exiting with uncaught exception (group=0x40c1aa68)
+08-05 16:14:16.059  10483-10483/com.works.vipul.peppertap3 E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.works.vipul.peppertap3/com.works.vipul.peppertap3.MainActivity}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1970)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1995)
+            at android.app.ActivityThread.access$600(ActivityThread.java:128)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1161)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4517)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at com.works.vipul.peppertap3.MainActivity.onCreate(MainActivity.java:31)
+            at android.app.Activity.performCreate(Activity.java:4470)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1053)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1934)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1995)
+            at android.app.ActivityThread.access$600(ActivityThread.java:128)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1161)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4517)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+            at dalvik.system.NativeStart.main(Native Method)
+08-05 16:14:28.759  10483-10483/com.works.vipul.peppertap3 I/Process﹕ Sending signal. PID: 10483 SIG: 9
+08-05 16:15:31.819  10911-10911/com.works.vipul.peppertap3 D/AndroidRuntime﹕ Shutting down VM
+08-05 16:15:31.819  10911-10911/com.works.vipul.peppertap3 W/dalvikvm﹕ threadid=1: thread exiting with uncaught exception (group=0x40c1aa68)
+08-05 16:15:31.839  10911-10911/com.works.vipul.peppertap3 E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.works.vipul.peppertap3/com.works.vipul.peppertap3.MainActivity}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1970)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1995)
+            at android.app.ActivityThread.access$600(ActivityThread.java:128)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1161)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4517)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at com.works.vipul.peppertap3.MainActivity.onCreate(MainActivity.java:31)
+            at android.app.Activity.performCreate(Activity.java:4470)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1053)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1934)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1995)
+            at android.app.ActivityThread.access$600(ActivityThread.java:128)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1161)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:4517)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:511)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+            at dalvik.system.NativeStart.main(Native Method)
+08-05 16:15:41.659  10911-10911/com.works.vipul.peppertap3 I/Process﹕ Sending signal. PID: 10911 SIG: 9
+</code></pre>
+
+<p>This is the fragment code:</p>
+
+<p>HomeFragment.java</p>
+
+<pre><code>package com.works.vipul.peppertap3;    
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+public class HomeFragment extends Fragment {
+
+    public HomeFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main_dummy,
+                container, false);
+        String arr[]= getArguments().getStringArray("air");
+        ListView l=(ListView)rootView.findViewById(R.id.section_label);
+        ArrayAdapter a=new ArrayAdapter<String>(getActivity(),android.R.layout.simple_dropdown_item_1line,arr);
+        l.setAdapter(a);
+        return rootView;
+    }
+}
+</code></pre>
+
+<p>These are the layouts:<br>
+activity_main.xml</p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" />
+</code></pre>
+
+<p>fragment_main_dummy.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity$DummySectionFragment" >
+
+    <ListView
+        android:id="@+id/section_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:textSize="25sp" />
+
+</RelativeLayout>
+</code></pre>

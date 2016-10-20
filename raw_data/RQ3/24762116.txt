@@ -1,0 +1,107 @@
+<p>i just learning android and CRUD action into  SQLitedatabase. it works fine sofar.</p>
+
+<p>i juste rename the database and table, then i got error;</p>
+
+<p>before:</p>
+
+<pre><code>public static String DBName = "Example";
+public static String tableName = "Resource";
+</code></pre>
+
+<p>after:</p>
+
+<pre><code>public static String DBName = "FAEXPED";
+public static String tableName = "Client";
+</code></pre>
+
+<p>my class:</p>
+
+<pre><code>public class DBHelper extends SQLiteOpenHelper {
+
+    public SQLiteDatabase DB;
+    public String DBPath;
+    public static String DBName = "FAEXPED";
+    public static final int version = '1';
+    public static Context currentContext;
+    public static String tableName = "Client";
+
+    public static final String KEY_CodeClient = "CodeClient";
+    public static final String KEY_RsNom = "RaisonSocial";
+    public static final String KEY_Ville = "Ville";
+    public static final String KEY_Tel = "Tel"; 
+
+    private static final String TAG = "Create_The_DB";
+
+    private static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " +
+            tableName + " ( "+ KEY_CodeClient + " VARCHAR PRIMARY KEY, "+ KEY_RsNom +"  VARCHAR," + KEY_Ville + "  VARCHAR,"+ KEY_Tel +"  VARCHAR)";
+
+    public DBHelper(Context context) {
+        //super(context, name, factory, version);
+        // TODO Auto-generated constructor stub
+
+        super(context, DBName, null, version);
+        currentContext = context;
+        DBPath = "/data/data/" + context.getPackageName() + "/databases";
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+      // TODO Auto-generated method stub
+      Log.w(TAG, TABLE_CREATE);
+      boolean dbExists = checkDbExists();       
+      if (dbExists) {
+        // do nothing
+
+      } else {
+        DB = currentContext.openOrCreateDatabase(DBName, 0, null);
+        DB.execSQL(TABLE_CREATE);
+    }
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+         Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+                 + newVersion + ", which will destroy all old data");
+               db.execSQL("DROP TABLE IF EXISTS " + TABLE_CREATE);
+               onCreate(db);
+
+    }
+
+    private boolean checkDbExists() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DBPath + DBName;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+            // database does't exist yet.
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+}
+</code></pre>
+
+<p>i thougt, when i rename it, it will create for me a new DATABASE and a new TABLE, is that corect ?</p>
+
+<pre><code>07-15 17:26:01.648: W/Create_The_DB(30510): CREATE TABLE IF NOT EXISTS Client ( CodeClient VARCHAR PRIMARY KEY, RaisonSocial  VARCHAR,Ville  VARCHAR,Tel  VARCHAR)
+07-15 17:26:01.648: E/SQLiteLog(30510): (14) cannot open file at line 30247 of [00bb9c9ce4]
+07-15 17:26:01.656: E/SQLiteLog(30510): (14) os_unix.c:30247: (2) open(/data/data/com.soft8.sql_test/databasesFAEXPED) - 
+07-15 17:26:01.679: E/SQLiteDatabase(30510): Failed to open database '/data/data/com.soft8.sql_test/databasesFAEXPED'.
+07-15 17:26:01.679: E/SQLiteDatabase(30510): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+07-15 17:26:01.679: E/SQLiteDatabase(30510):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+07-15 17:26:01.679: E/SQLiteDatabase(30510):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:279)
+07-15 17:26:01.679: E/SQLiteDatabase(30510):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:218)
+07-15 17:26:01.679: E/SQLiteDatabase(30510):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:464)
+07-15 17:26:01.679: E/SQLiteDatabase(30510):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:186)
+</code></pre>

@@ -1,0 +1,52 @@
+<p>I searched so much, but i cant help myself.
+Is there anyone who can say how to fix OutOfMemoryError for my ListView.
+It only occurs after 50+ bitmaps were add to my ListView.
+I understand that the devices memory is just full because of all the bitmaps ,but is there a way to recycle bitmaps that are far away from the viewport?</p>
+
+<p>Here is the Adapter for my ListView:</p>
+
+<pre><code>public class ImageAdapter extends ArrayAdapter<ExtendedBitmap>{
+    private LinkedList<ExtendedBitmap> items;
+    LayoutInflater mInflater = LayoutInflater.from(getContext());
+
+    public ImageAdapter(Context context, int resource, LinkedList<ExtendedBitmap> items) {
+        super(context, resource, items);
+        this.items = items;
+    }
+
+    public void add(ExtendedBitmap bitmap)
+    {
+        items.add(bitmap);
+        notifyDataSetChanged();
+    }
+
+    public void addFirst(ExtendedBitmap bitmap)
+    {
+        items.addFirst(bitmap);
+        notifyDataSetChanged();
+    }
+
+    public ExtendedBitmap getBitmap(int position){
+        return items.get(position);
+    }
+
+    @Override
+    public View  getView(int position, View convertView, ViewGroup parent){
+        ViewHolder holder; 
+
+        if (convertView == null) { 
+            convertView = mInflater.inflate(R.layout.extended_image, parent, false); ;
+             holder = new ViewHolder();  
+             holder.image = (ImageView) convertView.findViewById(R.id.image); 
+             //holder.image.setOnTouchListener(new Touch());  
+             convertView.setTag(holder); 
+        }else { 
+             holder = (ViewHolder) convertView.getTag(); 
+        }
+
+        holder.image.setImageBitmap(items.get(position).getBitmap());
+
+        return convertView; 
+    }
+}
+</code></pre>

@@ -1,0 +1,116 @@
+<p>this is the first time that i use pre-populate database that mean the database must be displayed in the <strong>oncreate method</strong> .
+and i need to use the select query  to perform the SQL queries i read many tutorial that display the steps to get the pre populated database.</p>
+
+<p>if anyone can help me  i will appreciate that.</p>
+
+<p>this is the code that i use it from several tutorial </p>
+
+<pre><code>private static class DatabaseHelper extends SQLiteOpenHelper {
+
+        // ******* to copy database prepopulate the application*************//
+        // ********************************************************************//
+
+        private static String DB_PATH = "/data/data/com.devleb.database/world_cup";
+        public static String DATABASE_NAME = "world_cup";
+        private SQLiteDatabase db;
+        private final Context myContext;
+
+        // ******* to copy database prepopulate the application*************//
+
+        DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            this.myContext = context;
+        }
+
+        public void createDataBase() throws IOException {
+            boolean dbExist = checkDataBase();
+
+            if (dbExist) {
+
+            } else {
+                this.getReadableDatabase();
+                try {
+                    copyDataBase();
+
+                } catch (IOException e) {
+                    throw new Error("Error copying Data");
+                }
+            }
+
+        }
+
+        private void copyDataBase() throws IOException {
+            // TODO Auto-generated method stub
+
+            // Open your local db as the input stream
+            InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DATABASE_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutPut = new FileOutputStream(outFileName);
+
+            // transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutPut.write(buffer, 0, length);
+            }
+
+            myOutPut.flush();
+            myOutPut.close();
+            myInput.close();
+
+        }
+
+
+        public void openDataBase() throws SQLException{
+            String myPath = DB_PATH + DATABASE_NAME;
+            db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }
+
+        public synchronized void  close(){
+            if(db != null){
+                db.close();
+            }
+        }
+        private boolean checkDataBase() {
+            // TODO Auto-generated method stub
+
+            SQLiteDatabase checkDB = null;
+            try {
+                String myPath = DB_PATH + DATABASE_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+            } catch (SQLiteException e) {
+
+            }
+            if (checkDB != null) {
+                checkDB.close();
+            }
+
+            return checkDB != null ? true : false;
+
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase _db) {
+            //_db.execSQL(DATABASE_CREATE_SQL);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase _db, int oldVersion, int newVersion) {
+            Log.w(TAG, "Upgrading application's database from version "
+                    + oldVersion + " to " + newVersion
+                    + ", which will destroy all old data!");
+            // Destroy old database:
+            _db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE);
+            // Recreate new database:
+            onCreate(_db);
+        }
+    }
+</code></pre>
+
+<p>what i need is to add a select query to select what i need because i have more than one table to be prepopulated .</p>

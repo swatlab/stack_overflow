@@ -1,0 +1,222 @@
+<p>Can any one tell me what this logcat is saying.Here i am trying to show a bar-chart in android by consuming a web service using SOAP method.</p>
+
+<p><strong>Logcat</strong></p>
+
+<pre><code>09-18 19:13:52.804: D/AndroidRuntime(367): Shutting down VM
+09-18 19:13:52.804: W/dalvikvm(367): threadid=1: thread exiting with uncaught exception (group=0x4001d800)
+09-18 19:13:52.835: E/AndroidRuntime(367): FATAL EXCEPTION: main
+09-18 19:13:52.835: E/AndroidRuntime(367): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.xmlparsing_test/com.example.xmlparsing_test.BarGraphActivity}: java.lang.NullPointerException
+09-18 19:13:52.835: E/AndroidRuntime(367):  at     android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2663)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2679)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.app.ActivityThread.access$2300(ActivityThread.java:125)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2033)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.os.Handler.dispatchMessage(Handler.java:99)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.os.Looper.loop(Looper.java:123)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.app.ActivityThread.main(ActivityThread.java:4627)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at java.lang.reflect.Method.invokeNative(Native Method)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at java.lang.reflect.Method.invoke(Method.java:521)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at dalvik.system.NativeStart.main(Native Method)
+09-18 19:13:52.835: E/AndroidRuntime(367): Caused by: java.lang.NullPointerException
+09-18 19:13:52.835: E/AndroidRuntime(367):  at com.example.xmlparsing_test.BarGraphActivity.buildBarDataset(BarGraphActivity.java:114)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at com.example.xmlparsing_test.BarGraphActivity.DrawGraph(BarGraphActivity.java:56)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at com.example.xmlparsing_test.BarGraphActivity.onCreate(BarGraphActivity.java:22)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+09-18 19:13:52.835: E/AndroidRuntime(367):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2627)
+09-18 19:13:52.835: E/AndroidRuntime(367):  ... 11 more
+</code></pre>
+
+<p><strong>Chart.java</strong></p>
+
+<pre><code>public class Chart extends Activity 
+{       
+EditText edt1,edt2;
+TextView txtv1;
+Button btn;
+
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+    edt1 = (EditText)findViewById(R.id.editText1);
+    edt2 = (EditText)findViewById(R.id.editText2);
+
+    btn = (Button)findViewById(R.id.button1);
+    btn.setOnClickListener(new View.OnClickListener()
+    {
+
+        public void onClick(View v) 
+        {
+                getTMSChart(edt1.getText().toString(),edt2.getText().toString());
+            Intent intnt = new Intent(v.getContext(), BarGraphActivity.class);
+            startActivity(intnt);
+        }
+    });
+ }
+
+public void getTMSChart(String FromDate, String ToDate) 
+{
+    System.setProperty("http.keepAlive", "false");        
+    SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);        
+
+    envelope.dotNet = true;
+
+    String METHOD = "GetTMSChart";
+    String NAMESPACE = "http://tempuri.org/";
+    String SOAP_ACTION = "http://tempuri.org/GetTMSChart"; 
+    String URL = "http://54.251.60.177/TMSOrdersService/TMSDetails.asmx";
+
+    SoapObject request = new SoapObject(NAMESPACE, METHOD); 
+
+    request.addProperty("FromDate","");               
+    request.addProperty("ToDate","");
+
+    envelope.setOutputSoapObject(request);
+
+
+    HttpTransportSE androidHttpTransport = new HttpTransportSE(URL);
+
+    try 
+    {
+        androidHttpTransport.call(SOAP_ACTION, envelope);
+        SoapObject result = (SoapObject) envelope.bodyIn;
+        SoapObject root =  (SoapObject) ((SoapObject)(result).getProperty(0)).getProperty("NewDataSet");
+        int tablesCount = root.getPropertyCount();
+
+    for (int i = 0; i < tablesCount; i++)
+    {
+        SoapObject table = (SoapObject) root.getProperty(i);
+        int propertyCount = table.getPropertyCount();
+
+     for (int j = 0; j < propertyCount; j++)
+     {           
+        //String ord = table.getPropertyAsString("");
+
+         int orderNo = Integer.parseInt(table.getPropertyAsString("Order_No"));
+         int freightRate =   Integer.parseInt(table.getPropertyAsString("Freight_Rate"));
+         int marginPercent = Integer.parseInt(table.getPropertyAsString("Margin_Percent"));
+        }
+    }
+}
+catch (Exception e) 
+{}
+}   }
+</code></pre>
+
+<p><strong>BarGraphActivity.java</strong></p>
+
+<pre><code>public class BarGraphActivity extends Chart
+{   
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main1);
+    DrawGraph();
+}
+
+public void DrawGraph() 
+{
+Chart ch = new Chart();
+
+String[] titles = new String[] { " Barcharts",""};
+
+int[] x_axis =null;   
+int[] y_axis =null;
+
+List<int[]> values = new ArrayList<int[]>();
+values.add(x_axis);
+values.add(y_axis);
+
+int[] colors = new int[] { Color.WHITE, Color.BLACK};
+
+XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+renderer.setOrientation(Orientation.HORIZONTAL);
+setChartSettings(renderer, "some texts", " ", " ",0,x_axis, 0,y_axis, Color.GRAY, Color.LTGRAY);
+
+renderer.setXLabels(1);
+renderer.addXTextLabel(2, "orderNo");
+renderer.addYTextLabel(2, "freight");
+renderer.setPanEnabled(false, false);
+
+int length = renderer.getSeriesRendererCount();
+for (int i = 0; i < length; i++) 
+{
+  SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+  seriesRenderer.setDisplayChartValues(true);
+  }
+
+ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+}
+
+public XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+{
+    // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+renderer.setAxisTitleTextSize(15);
+renderer.setChartTitleTextSize(20);
+renderer.setLabelsTextSize(15);
+renderer.setLegendTextSize(15);
+
+int length = colors.length;
+for (int i = 0; i < length; i++) 
+{
+   SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+   r.setColor(colors[i]);
+   renderer.addSeriesRenderer(r);
+  }
+  return renderer;
+}
+
+ public void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String  xTitle,
+ String yTitle, int xMin, int[] x_axis, int yMin, int[] y_axis, int axesColor,int labelsColor) 
+{
+    // sets lots of default values for this renderer
+
+renderer.setChartTitle(title);
+
+renderer.setXTitle(xTitle);
+renderer.setYTitle(yTitle);
+
+renderer.setXAxisMin(xMin);
+
+renderer.setYAxisMin(yMin);
+renderer.setAxesColor(axesColor);
+renderer.setLabelsColor(labelsColor);
+
+renderer.setApplyBackgroundColor(true);
+renderer.setBackgroundColor(Color.BLACK);
+}
+
+public XYMultipleSeriesDataset buildBarDataset(String[] titles, List<int[]> values) 
+{
+// adds the axis titles and values into the dataset
+
+XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+
+int length = titles.length;
+
+for (int i = 0; i < length; i++) 
+{
+   CategorySeries series = new CategorySeries(titles[i]);
+
+   int[] v = values.get(i);
+
+   int seriesLength = v.length;
+
+   for (int k = 0; k < seriesLength; k++) 
+   {
+     series.add(v[k]);
+    }
+
+   dataset.addSeries(series.toXYSeries());
+   }
+ return dataset;
+ } }
+</code></pre>
+
+<p>Thanks for your precious time!..</p>

@@ -1,0 +1,84 @@
+<p>I have a Dialog Fragment and when the layout in this fragment is inflated:</p>
+
+<p>When i change the orientation of this screen the dialog gets condensed and looks as if its forced to fit in the landscape mode and doesn't fit to screen in appropriate proportion. How m i supposed to do it.....
+i tried overriding the onConfigurationChange() method and reinflating the layout again, but didnt help me.....
+I need to know how to increase the area of a dialog on orientation change?</p>
+
+<p>This is my Layout: </p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:orientation="vertical"
+android:padding="4dip"
+android:background="@drawable/techdeals_tip_screen" >
+
+
+
+<Button
+    android:id="@+id/show"
+    android:layout_width="50dp"
+    android:layout_height="50dp"
+    android:layout_weight="0"
+    android:background="@android:color/transparent" 
+    android:layout_gravity="right">
+
+    <requestFocus />
+</Button>
+</code></pre>
+
+<p></p>
+
+<p>This is my Dialog Fragment :</p>
+
+<pre><code>public static class MyDialogFragment extends SherlockDialogFragment {
+
+
+    /**
+     * Create a new instance of MyDialogFragment.
+     */
+    static MyDialogFragment newInstance() {
+MyDialogFragment f = new MyDialogFragment();
+        return f;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Pick a style based on the num.
+        int style = DialogFragment.STYLE_NO_TITLE;
+        int theme = 0;
+        setStyle(style, theme);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_tips_dialog, container, false);
+        Button button = (Button)v.findViewById(R.id.show);
+        button.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+        return v;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        final Activity activity = getActivity();
+        launchNextScreen(getActivity());
+        activity.finish();
+    }
+
+    /** Method to launch home screen after tip screen. */
+    private void launchNextScreen(Activity activity) {
+        setViewedWelcomeScreen(activity);
+        activity.startActivity(new Intent(activity, HomeTabActivity.class));
+    }
+}
+</code></pre>
+
+<p>Any help will be of great importance.</p>

@@ -1,0 +1,215 @@
+<p>Please am trying to implement a filter on my listview. But whenever the text change, the list disappears.Please Help 
+Here are my codes. The adapter class.</p>
+
+<pre><code>package com.talagbe.schymn;
+
+import java.util.ArrayList;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
+
+public class HymnsAdapter extends ArrayAdapter<Hymns> {
+ArrayList<Hymns> hymnarray;
+Context context;
+LayoutInflater inflater;
+int Resource;
+
+
+public HymnsAdapter(Context context, int resource, ArrayList<Hymns> objects) {
+    super(context, resource, objects);
+    // TODO Auto-generated constructor stub
+
+    hymnarray=objects;
+    Resource= resource;
+    this.context=context;
+    inflater= (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
+}
+
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    // TODO Auto-generated method stub
+     ViewHolder holder;
+     if(convertView==null){
+
+         convertView= inflater.inflate(Resource,null);
+         holder= new ViewHolder();
+         holder.hymntitle= (TextView) convertView.findViewById(R.id.Hymn_title);
+        // holder.hymntext= (TextView) convertView.findViewById(R.id.Channel_name);
+
+
+         convertView.setTag(holder);
+
+     }else{
+         holder=(ViewHolder)convertView.getTag();
+     }
+
+     holder.hymntitle.setText(hymnarray.get(position).getTitle());
+     //holder.hymntext.setText(hymnarray.get(position).getText());
+
+    return convertView;
+
+
+}
+
+
+   static class ViewHolder{
+
+    public TextView hymntitle;
+    public TextView hymntext;
+
+}
+
+ }
+</code></pre>
+
+<p>Here is the other class where am trying to implement the filter. I have an edittext,where i implement on textChangeListener</p>
+
+<pre><code>package com.talagbe.schymn;
+
+import java.util.ArrayList;
+
+import database.DatabaseHelper;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.widget.AdapterView.OnItemClickListener;
+
+ public class Home extends Fragment {
+
+    private static final String DB_NAME = "schymn.sqlite";
+    private static final String TABLE_NAME = "Hymns";
+    private static final String Hymn_ID = "_id";
+    private static final String Hymn_Title = "Title";
+    private static final String Hymn_Text = "Text";
+    private SQLiteDatabase database;
+
+ListView list;
+EditText search;
+HymnsAdapter vadapter;
+ArrayList<Hymns> HymnsList;
+String url;
+Context context=null;
+
+
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+      return inflater.inflate(R.layout.index, container,false);
+}
+
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    list = (ListView)getActivity().findViewById(R.id.hymn_list);
+    search = (EditText) getActivity().findViewById(R.id.search);
+    HymnsList = new ArrayList<Hymns>();
+
+    DatabaseHelper dbOpenHelper = new DatabaseHelper(getActivity(), DB_NAME);
+    database = dbOpenHelper.openDataBase();
+
+    fillHymns();
+    //setUpList();
+
+}
+
+
+
+private void fillHymns() {
+    Cursor hymnCursor = database.query(TABLE_NAME,
+                                         new String[] 
+                                         {Hymn_ID, Hymn_Title,Hymn_Text},
+                                         null, null, null, null
+                                         , Hymn_Title);
+    hymnCursor.moveToFirst();
+    if(!hymnCursor.isAfterLast()) {
+        do {
+            Hymns hy = new Hymns();
+            hy.setTitle(hymnCursor.getString(1));
+            hy.setText(hymnCursor.getString(2));
+            HymnsList.add(hy);
+
+        } while (hymnCursor.moveToNext());
+    }
+    hymnCursor.close();
+     vadapter = new HymnsAdapter(getActivity().getApplicationContext(),R.layout.hymns,HymnsList);
+    list.setAdapter(vadapter);
+
+    list.setOnItemClickListener(new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view,
+                int position, long id) {
+
+            Intent intent = new Intent(getActivity().getApplicationContext(), Hymn_Text.class);
+            intent.putExtra("Title",HymnsList.get(position).getTitle());
+            intent.putExtra("Text",HymnsList.get(position).getText());
+            startActivity(intent);
+            //Log.i("Text",HymnsList.get(position).getText());
+
+        }
+
+
+
+
+
+
+
+
+    });
+
+
+    search.addTextChangedListener( new TextWatcher() {
+
+        @Override
+        public void onTextChanged(CharSequence cs, int start, int before, int count) {
+            // TODO Auto-generated method stub
+            if(count>0){
+
+
+            }
+
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count,
+                int after) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            // TODO Auto-generated method stub
+             Home.this.vadapter.getFilter().filter(s);
+                Log.i("Changed",s.toString());
+        }
+    });
+}
+
+
+
+
+  }
+</code></pre>
+
+<p>The log,logs whatever input i type in,but doesn't show the listview. Thank you </p>

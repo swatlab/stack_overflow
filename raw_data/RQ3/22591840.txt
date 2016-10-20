@@ -1,0 +1,182 @@
+<p>I am new in Android. I have an app which picks user date of birth Using This <a href="http://www.codeofaninja.com/2013/08/android-date-picker-example.html" rel="nofollow">DatePicker</a> . When i add this feature XML elements like TextView & Button Not showing. How's that possible? May I know what is the correct way to achieve my objective? Maybe this question too basic, but i did't find any suitable solution.Please Help me out  </p>
+
+<p>Here is my code :</p>
+
+<pre><code>public class UserDobActivity extends Activity {
+
+DatePicker datePickerBirthday;
+TextView textViewUserDate;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_user_dob);
+
+
+
+    ActionBar ab = getActionBar(); 
+    ab.setDisplayUseLogoEnabled(false);
+    ab.setDisplayShowHomeEnabled(true);
+    ab.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM); 
+    ab.setCustomView(R.layout.actionbar);
+    ab.setDisplayHomeAsUpEnabled(true);
+    ColorDrawable colorDrawable = new ColorDrawable(Color.parseColor("#33CCFF"));     
+    ab.setBackgroundDrawable(colorDrawable);
+
+ // create the date picker
+    datePickerBirthday = new DatePicker(this);
+
+    // hide the whole calendar view (works in api 11 or greater)
+    int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+    if (currentapiVersion >= 11) {
+        datePickerBirthday.setCalendarViewShown(false);
+    }
+ // create the TextView
+    textViewUserDate = new TextView(this);
+    textViewUserDate.setGravity(Gravity.CENTER);
+
+    // initialize the date to current date
+    SimpleDateFormat sdfDateTime = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    String dateStr = sdfDateTime.format(new Date(System.currentTimeMillis()));
+
+    String[] dateSplit = dateStr.split("-");
+    int currentYear = Integer.parseInt(dateSplit[0]);
+    int currentMonth = Integer.parseInt(dateSplit[1]);
+    int currentDay = Integer.parseInt(dateSplit[2]);
+
+    // to show date and day of week in the TextView
+    setHumanReadableDate(currentYear, currentMonth, currentDay);
+
+    // initialize date picker listener
+    // currentMonth - 1, because on the picker, 0 is January
+    datePickerBirthday.init(currentYear, currentMonth - 1, currentDay, birthdayListener);
+
+    // add to the container
+    LinearLayout linearLayoutCalTvContainer = new LinearLayout(this);
+    linearLayoutCalTvContainer.setOrientation(LinearLayout.VERTICAL);
+    linearLayoutCalTvContainer.addView(datePickerBirthday);
+    linearLayoutCalTvContainer.addView(textViewUserDate);
+
+ // set the views for the activity
+    setContentView(linearLayoutCalTvContainer);
+
+    RelativeLayout layoutCalTvContainer = (RelativeLayout) findViewById(R.id.layout);
+    layoutCalTvContainer.addView(datePickerBirthday);
+}
+
+// the date picker listener
+OnDateChangedListener birthdayListener = new OnDateChangedListener() {
+
+    public void onDateChanged(DatePicker birthDayDatePicker,
+            int newYear, int newMonth, int newDay) {
+
+        try{
+
+            // currentMonth + 1, to retrieve proper month
+            setHumanReadableDate(newYear, newMonth + 1, newDay);
+
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+};
+
+// show the user a better date format
+@SuppressLint("SimpleDateFormat") public void setHumanReadableDate(int newYear, int newMonth, int newDay){
+    try {
+
+        String clickedDate = newYear + "-" + newMonth + "-" + newDay;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date d = null;
+        try {
+            d = sdf.parse(clickedDate);
+        } catch (java.text.ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        SimpleDateFormat sdfDateTime = new SimpleDateFormat("MMMM dd, yyyy 'is' EEEE", Locale.US);
+        String dateStr = sdfDateTime.format(d);
+
+        textViewUserDate.setText(dateStr);
+
+    } catch (ParseException e) {
+        e.printStackTrace();
+    }
+}
+
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.user_dob, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            // app icon in action bar clicked; go home
+            Intent intent = new Intent(this, UserDetailsActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+            default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+
+@Override
+public void onBackPressed() {
+   moveTaskToBack(true); 
+   UserDobActivity.this.finish();
+}}
+</code></pre>
+
+<p>Here is XML :</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:background="@android:color/white">
+
+   <TextView
+        android:id="@+id/text_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/dobdetails"
+        android:textSize="30sp"
+        android:layout_marginTop="50dp" 
+        android:gravity="center_horizontal" />
+
+
+ <RelativeLayout
+    android:id="@+id/layout"
+    android:layout_width="fill_parent"
+    android:layout_height="0dip"
+    android:layout_weight="1" >
+
+
+
+</RelativeLayout>
+
+    <Button
+     android:id="@+id/ButtonUserDOB" 
+     android:layout_width="match_parent"
+     android:layout_height="60dp"
+     android:text="@string/next"
+     android:background="@drawable/customised_button_click"
+     android:textSize="20sp"
+
+      />
+
+
+</LinearLayout>
+</code></pre>

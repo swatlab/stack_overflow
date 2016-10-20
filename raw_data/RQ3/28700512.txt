@@ -1,0 +1,233 @@
+<p>I am attempting to learn Android development. And as a learning project I am creating a 'To Do' application. </p>
+
+<p>I am trying to populate the list with data from my table and this is what I have so far:</p>
+
+<p>ListCursorAdapter.java</p>
+
+<pre><code>    package com.ryansmurphy.listado;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+/**
+ * Created by ryanmurphy on 24/02/15.
+ */
+public class ListCursorAdapter extends CursorAdapter {
+
+    public ListCursorAdapter(Context context, Cursor cursor) {
+        super(context, cursor, 0);
+    }
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        return LayoutInflater.from(context).inflate(R.layout.item_todo, parent, false);
+    }
+
+    public void bindView(View view, Context context, Cursor cursor) {
+        // Find fields to populate in inflated template
+        TextView todo = (TextView) view.findViewById(R.id.todoText);
+        // Extract properties from cursor
+        String todoTextDB = cursor.getString(cursor.getColumnIndexOrThrow("todo"));
+        // Populate fields with extracted properties
+        todo.setText(todoTextDB);
+    }
+}
+</code></pre>
+
+<p>I am getting two error here:</p>
+
+<ol>
+<li>On <code>extends cursor</code>. I get the error <code>Cannot resolve symbol</code>.</li>
+<li>On <code>super(context, cursor, 0);</code>. I get the error <code>Object() in Object cannot be applied to</code>.</li>
+</ol>
+
+<p>DatabaseHelper.java</p>
+
+<pre><code>package com.ryansmurphy.listado;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+/**
+ * Created by ryanmurphy on 23/02/15.
+ */
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+    // Database Version
+    private static final int DATABASE_VERSION = 1;
+
+    // Database Name
+    private static final String DATABASE_NAME = "listado";
+
+    // Table Name
+    private static final String TABLE_TODO = "todos";
+
+
+    // Column names
+    private static final String KEY_ID = "id";
+    private static final String KEY_TODO = "todo";
+    private static final String KEY_STATUS = "status";
+    private static final String KEY_CREATED_AT = "created_at";
+
+
+    // Table Create Statements
+    // Todo table create statement
+    private static final String CREATE_TABLE_TODO = "CREATE TABLE "
+            + TABLE_TODO + "(" + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TODO
+            + " TEXT," + KEY_STATUS + " INTEGER," + KEY_CREATED_AT
+            + " DATETIME" + ")";
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+        // creating required table
+        db.execSQL(CREATE_TABLE_TODO);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // on upgrade drop older tables
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_TODO);
+
+        // create new tables
+        onCreate(db);
+    }
+
+    public void addRecord()
+    {
+        SQLiteDatabase database = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("todo", "todo example");
+        values.put("status", "not completed");
+        database.insert("todos", null, values);
+        database.close();
+    }
+
+    public Cursor getAll()
+    {
+        SQLiteDatabase database = getReadableDatabase();
+        Cursor cursor = database.rawQuery("select * from todos",null);
+        return cursor;
+    }
+}
+</code></pre>
+
+<p>Now my listview individual row xml:
+list_item.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/todoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24dp"
+        android:padding="6dp" />
+</LinearLayout>
+</code></pre>
+
+<p>ActivityMain.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
+    <TextView android:text="To Do List" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/title" />
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listview"
+        android:layout_below="@id/title"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="42dp" />
+</RelativeLayout>
+</code></pre>
+
+<p>MainActivity.Java</p>
+
+<pre><code>package com.ryansmurphy.listado;
+
+import android.content.Intent;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.ListView;
+
+
+public class MainActivity extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ListView lvItems = (ListView) findViewById(R.id.listview);
+        // Setup cursor adapter using cursor from last step
+        DatabaseHelper db = new DatabaseHelper();
+        Cursor allRows = db.getAll();
+        ListCursorAdapter todoAdapter = new ListCursorAdapter(this, allRows);
+        //Attach cursor adapter to the ListView
+        lvItems.setAdapter(todoAdapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if(id == R.id.addItem)
+        {
+            addItem();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void addItem()
+    {
+        Intent addItemIntent= new Intent(MainActivity.this, AddItem.class);
+        startActivity(addItemIntent);
+    }
+}
+</code></pre>
+
+<p>I am getting two errors here:</p>
+
+<ol>
+<li>On <code>DatabaseHelper db = new DatabaseHelper();</code>. I get the error <code>DatabaseHelper(Context) in DatabaseHelper cannot be applied</code>.</li>
+<li>On <code>lvItems.setAdapter(todoAdapter);</code>. I get the error <code>setAdapter(android.widget.ListAdapter) in ListView cannot be applied</code>.</li>
+</ol>
+
+<p>The above I have got from just googling and trying and trying. I have never really known what I have been doing from the start but I am slowly picking this up and am wondering if you guys can help me out after getting this far. Thanks</p>

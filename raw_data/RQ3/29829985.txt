@@ -1,0 +1,425 @@
+<p>I have 2 Fragments and an Activity. 
+Fragment 1 has a relative layout with a listview and some buttons etc, 
+Fragment 2 has a ListView and a button at the bottom. fragment 2's listview is a listview where you can select multiple items, when an item is selected, it is added to an arraylist (we will call this selected) or removed if deselected, I want to send this arrayList over to Fragment 1, where it can add it to its own listview (as well as its other items if they exist). I have the selected ArrayList stored in Activity.</p>
+
+<p>Activity has the following code </p>
+
+<pre><code>public class AddExerciseActivity extends AppCompatActivity implements ActionBar.TabListener {
+
+/**
+ * The {@link android.support.v4.view.PagerAdapter} that will provide
+ * fragments for each of the sections. We use a
+ * {@link FragmentPagerAdapter} derivative, which will keep every
+ * loaded fragment in memory. If this becomes too memory intensive, it
+ * may be best to switch to a
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+ */
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+/**
+ * The {@link ViewPager} that will host the section contents.
+ */
+ViewPager mViewPager;
+static ArrayList<Set> sets = new ArrayList<>();
+
+String name, date;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_fragment);
+    Bundle extras = getIntent().getExtras();
+    if (extras != null) {
+        name = extras.getString("ExerciseName");
+        date = extras.getString("date");
+    }
+
+    // Set up the action bar.
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    actionBar.setTitle(name);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    // When swiping between different sections, select the corresponding
+    // tab. We can also use ActionBar.Tab#select() to do this if we have
+    // a reference to the Tab.
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        // Create a tab with text corresponding to the page title defined by
+        // the adapter. Also specify this Activity object, which implements
+        // the TabListener interface, as the callback (listener) for when
+        // this tab is selected.
+        actionBar.addTab(
+                actionBar.newTab()
+                        .setText(mSectionsPagerAdapter.getPageTitle(i))
+                        .setTabListener(this));
+    }
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    // When the given tab is selected, switch to the corresponding page in
+    // the ViewPager.
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+
+
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class below).
+        switch (position) {
+            case 0:
+                Bundle bundle = new Bundle();
+                bundle.putString("date", date);
+                bundle.putInt("position", position);
+                return new FirstFragment();
+            case 1:
+                return new SecondFragment();
+        }
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages.
+        return 2;
+    }
+
+
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        switch (position) {
+            case 0:
+                return "Track";
+            case 1:
+                return "History";
+        }
+        return null;
+    }
+}
+
+public ArrayList<Set> getSets() {
+    return sets;
+}
+
+public void setSets(ArrayList<Set> sets) {
+    this.sets = sets;
+}
+}
+</code></pre>
+
+<p>Here is Fragment 1</p>
+
+<pre><code>public class FirstFragment  extends android.support.v4.app.Fragment {
+
+CardDatabaseAdapter2 mCardDatabaseAdapter2;
+
+TextView workoutName;
+EditText weight, reps;
+double weightCount;
+int repsCount;
+ListView list;
+Button plus, plus2, minus, minus2, update;
+String name, date;
+int type, category, count;
+Exercise ex;
+Card card;
+View rootView;
+ArrayList<Set> array = new ArrayList<>();
+private AddExerciseAdapter mAddExerciseAdapter;
+
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    rootView = inflater.inflate(R.layout.add_exercise_view, container, false);
+    setHasOptionsMenu(true);
+    Bundle extras = getActivity().getIntent().getExtras();
+    if (extras != null) {
+        name = extras.getString("ExerciseName");
+        type = extras.getInt("ExerciseType");
+        category = extras.getInt("ExerciseCategory");
+        date = extras.getString("date");
+        Log.v("date", date);
+    }
+    mCardDatabaseAdapter2 = new CardDatabaseAdapter2(getActivity());
+
+    Log.v("created", "item created");
+
+    //mCardDatabaseAdapter2.insert(name, date);
+    card = new Card(0, name, date);
+    Log.v("name & date", name + "  " + date);
+
+    ex = new Exercise(name, type, category);
+    Log.v("Exercise Recieved", ex.toString());
+    workoutName = (TextView) rootView.findViewById(R.id.name);
+    weight = (EditText) rootView.findViewById(R.id.textWeight);
+    reps = (EditText) rootView.findViewById(R.id.textRep);
+    list = (ListView) rootView.findViewById(R.id.rowReps);
+    plus = (Button) rootView.findViewById(R.id.plus);
+    minus = (Button) rootView.findViewById(R.id.minus);
+    plus2 = (Button) rootView.findViewById(R.id.plus2);
+    minus2 = (Button) rootView.findViewById(R.id.minus2);
+    update = (Button) rootView.findViewById(R.id.update);
+
+    weightCount = 0;
+    repsCount = 0;
+    count = 1;
+
+    array = new ArrayList<>();
+    plus.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (!weight.getText().toString().equals("")) {
+                weightCount = Double.parseDouble(weight.getText().toString());
+                weightCount = weightCount + 2.5;
+                weight.setText(String.valueOf(weightCount));
+            } else {
+                weight.setText(String.valueOf(2.5));
+            }
+        }
+    });
+
+    minus.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if(weightCount <= 0.0 || weight.getText().toString().equals("")) {
+                weight.setText(String.valueOf(0.0));
+            } else {
+                weightCount = Double.parseDouble(weight.getText().toString());
+                weightCount = weightCount - 2.5;
+                weight.setText(String.valueOf(weightCount));
+            }
+        }
+    });
+
+    plus2.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (!reps.getText().toString().equals("")) {
+                repsCount = Integer.parseInt(reps.getText().toString());
+                repsCount = repsCount + 1;
+                reps.setText(String.valueOf(repsCount));
+            } else {
+                reps.setText(String.valueOf(0));
+            }
+        }
+    });
+
+    minus2.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if(repsCount <= 0 || reps.getText().toString().equals("")){
+                reps.setText(String.valueOf(0));
+            } else {
+                repsCount = Integer.parseInt(reps.getText().toString());
+                repsCount = repsCount - 1;
+                reps.setText(String.valueOf(repsCount));
+            }
+        }
+    });
+
+    update.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            if(weight.getText().toString().equals("") || weight.getText().toString().equals(String.valueOf(0.0))) {
+                weight.setText(String.valueOf(0.0));
+                Toast.makeText(getActivity(), "You need to enter a weight!", Toast.LENGTH_SHORT).show();
+            }
+            else if(reps.getText().toString().equals("")|| reps.getText().toString().equals(String.valueOf(0))) {
+                reps.setText(String.valueOf(0));
+                Toast.makeText(getActivity(), "You need to have at least 1 rep!", Toast.LENGTH_SHORT).show();
+            } else {
+                double temp2 = Double.parseDouble(weight.getText().toString());
+                int temp3 = Integer.parseInt(reps.getText().toString());
+                Set s = new Set(name, temp2, temp3, date);
+                array.add(s);
+                //mCardDatabaseAdapter2.insert2(mCardDatabaseAdapter2.highestID(), name, s.getWeight(), s.getReps(), date);
+                //Log.v("inserted data", "id " + mCardDatabaseAdapter2.highestID() + " name " + name + " weight " + s.getWeight() + " reps " + s.getReps() + " date " + date);
+                //Log.v("id", mCardDatabaseAdapter2.highestID() + "");
+                mAddExerciseAdapter.notifyDataSetChanged();
+                count++;
+            }
+        }
+    });
+    mAddExerciseAdapter = new AddExerciseAdapter(getActivity(), R.layout.row2, array);
+    list.setAdapter(mAddExerciseAdapter);
+
+    mAddExerciseAdapter.notifyDataSetChanged();
+
+    return rootView;
+
+}
+
+@Override
+public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    inflater.inflate(R.menu.menu_add_exercise, menu);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    if (id == R.id.action_done) {
+        Intent intent = new Intent(getActivity(), MainMenuActivity.class);
+        if(!array.isEmpty()) {
+            mCardDatabaseAdapter2.insert(name, date);
+            for (Set s : array) {
+                mCardDatabaseAdapter2.insert2(mCardDatabaseAdapter2.highestID(), name, s.getWeight(), s.getReps(), date);
+            }
+            mCardDatabaseAdapter2.resetID();
+        }
+        startActivity(intent);
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+
+@Override
+public void onPause() {
+    super.onPause();
+}
+
+@Override
+public void onStop() {
+    super.onStop();
+}
+
+@Override
+public void onResume() {
+    super.onResume();
+    ArrayList<Set> s = ((AddExerciseActivity)getActivity()).getSets();
+    if(!s.isEmpty()) {
+        for(Set t : s) {
+            array.add(t);
+            mAddExerciseAdapter.notifyDataSetChanged();
+        }
+    }
+}
+}
+</code></pre>
+
+<p>and here is Fragment 2</p>
+
+<pre><code>public class SecondFragment extends Fragment {
+
+CardDatabaseAdapter2 mCardDatabaseAdapter;
+ExerciseHistoryAdapter mExerciseHistoryAdapter;
+AddExerciseActivity mAddExerciseActivity;
+ArrayList<Set> sets = new ArrayList<>();
+ArrayList<Set> selected = new ArrayList<>();
+String name;
+ListView lv;
+Card c;
+int x;
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.exercise_history, container, false);
+    Bundle extras = getActivity().getIntent().getExtras();
+    if (extras != null) {
+        name = extras.getString("ExerciseName");
+    }
+    mAddExerciseActivity = new AddExerciseActivity();
+    mCardDatabaseAdapter = new CardDatabaseAdapter2(getActivity());
+    sets = mCardDatabaseAdapter.getAllSetsWithName(name);
+    Log.v("array", sets.toString());
+
+    lv = (ListView) rootView.findViewById(R.id.history_list);
+    lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            if (!selected.contains(sets.get(position))) {
+                lv.setItemChecked(position, true);
+                view.setBackgroundColor(Color.rgb(255, 152, 0));
+                Toast.makeText(getActivity(), "Item Selected", Toast.LENGTH_SHORT).show();
+                selected.add(sets.get(position));
+            } else {
+                lv.setItemChecked(position, false);
+                view.setBackgroundColor(Color.rgb(221, 221, 221));
+                selected.remove(sets.get(position));
+                Toast.makeText(getActivity(), "Item Unselected", Toast.LENGTH_SHORT).show();
+            }
+        }
+    });
+
+
+
+    Button add = (Button) rootView.findViewById(R.id.add_button);
+    add.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+                    ((AddExerciseActivity)getActivity()).setSets(selected);
+
+                    Toast.makeText(getActivity(), "items have been added successfully", Toast.LENGTH_SHORT).show();
+        }
+    });
+
+    mExerciseHistoryAdapter= new ExerciseHistoryAdapter(getActivity(), R.layout.history_listview_item, sets, lv);
+    lv.setAdapter(mExerciseHistoryAdapter);
+
+    return rootView;
+}
+}
+</code></pre>
+
+<p>EDIT: my attempt is in there, where I get/set the arrayList. but it doesnt work as the fragment is already created.</p>
+
+<p>EDIT 2: </p>
+
+<pre><code>04-23 20:18:48.034      598-598/com.company.joeliomason.projectmeE/InputEventReceiver﹕ Exceptiondispatching input event.
+04-23 20:18:48.034      598-598/com.company.joeliomason.projectme
+E/MessageQueue-JNI﹕ Exception in MessageQueue callback: 
+handleReceiveCallback
+04-23 20:18:48.034      598-598/com.company.joeliomason.projectme 
+E/MessageQueue-JNI﹕ java.lang.IllegalStateException: Fragment already 
+active
+        at android.support.v4.app.Fragment.setArguments(Fragment.java:549)
+        at com.company.joeliomason.projectme.Views.FirstFragment.setArguments(FirstFragment.java:200)
+        at com.company.joeliomason.projectme.Views.AddExerciseActivity.onTabSelected(AddExerciseActivity.java:94)
+        at android.support.v7.internal.app.WindowDecorActionBar.selectTab(WindowDecorActionBar.java:640)
+        at android.support.v7.internal.app.WindowDecorActionBar.setSelectedNavigationItem(WindowDecorActionBar.java:414)
+        at com.company.joeliomason.projectme.Views.AddExerciseActivity$1.onPageSelected(AddExerciseActivity.java:68)
+</code></pre>

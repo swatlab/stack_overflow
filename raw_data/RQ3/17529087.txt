@@ -1,0 +1,528 @@
+<p>fellow programmers. </p>
+
+<p>I am developing an app displaying information about fishes in Norway. I have a SQLite database  up and running with the following structure:</p>
+
+<pre><code>CREATE TABLE fisk(image TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, navn TEXT, familie TEXT, latin TEXT, engelsk TEXT, habitat TEXT, notat TEXT);
+</code></pre>
+
+<p>I have successfully read the data I need, but I want to set ImageView on the spesific row equal to R.drawable.STRING_FROM_IMAGE_COLUMN if you understand me.</p>
+
+<p>Any tips on how to to this? I don't know exactly where in the code I should refer to the images. All the images are stored in res/drawable folder with a filename equal to the names in the images-column in the database. Everyting is working fine except images and I've tried many solutions without succseed</p>
+
+<p>Image of my prototype and current work progress: </p>
+
+<p>Code:</p>
+
+<p>MainActivity.java
+    package com.dbtes.lol;</p>
+
+<pre><code>import android.app.Activity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.io.IOException;
+
+public class MainActivity extends Activity
+{
+private TextView tvTest;
+private DataBaseHelper myDbHelper;
+private SimpleCursorAdapter dataAdapter;
+private ImageView ivFisk;
+
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+
+   tvTest = (TextView) findViewById(R.id.tvTest);
+   myDbHelper = new DataBaseHelper(this);
+
+   try {
+       myDbHelper.createDataBase();
+       tvTest.setText("DB created");
+   }
+   catch(IOException ioe) {
+       throw new Error("Unable to create database");
+
+
+   }
+
+   try {
+       myDbHelper.openDataBase();
+       tvTest.setText("DB opened");
+       displayListView();
+
+
+   }
+   catch(SQLiteException sqle) {
+       throw sqle;
+   }
+}
+
+public void displayListView() {
+     Cursor cursor = myDbHelper.fetchAllFishes();
+
+     // Bind columns to array
+     String[] columns = new String[] {
+         DataBaseHelper.KEY_IMAGE,
+         DataBaseHelper.KEY_NAME,
+         DataBaseHelper.KEY_FAMILY,
+         DataBaseHelper.KEY_LATIN,
+         DataBaseHelper.KEY_ENGLISH,
+         DataBaseHelper.KEY_HABITAT,
+         DataBaseHelper.KEY_NOTE
+     };
+
+     // Reference to XML layout binds
+     int[] to = new int[] {
+       R.id.ivFish,
+       R.id.tvName,
+       R.id.tvFamily,
+       R.id.tvLatin,
+       R.id.tvEnglish,
+       R.id.tvHabitat,
+       R.id.tvNote
+
+     };
+
+     dataAdapter = new SimpleCursorAdapter(this, R.layout.fish_info, cursor, columns, to, 0);
+
+     ListView listView = (ListView) findViewById(R.id.listView1);
+     listView.setAdapter(dataAdapter); 
+
+     ivFisk = (ImageView) findViewById(R.id.ivFish);
+
+
+     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+         ListView listView1 = (ListView) findViewById(R.id.listView1);
+         @Override
+         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Cursor cursor = (Cursor) listView1.getItemAtPosition(position);
+
+          //  String name = cursor.getString(cursor.getColumnIndexOrThrow("navn"));
+           // Toast.makeText(getApplicationContext(), name.toLowerCase(), Toast.LENGTH_LONG).show();
+
+         }
+     });
+
+}
+}
+</code></pre>
+
+<p>DataBaseHelper.java</p>
+
+<pre><code>package com.dbtes.lol;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+private static String DB_PATH = "/data/data/com.dbtes.lol/databases/";
+private static String DB_NAME = "fiskDBv1.db";
+
+// Lagd i ettertid
+private static String TABLE_NAME = "fisk";
+private static final String TAG = "CountriesDbAdapter";
+
+// Table tags - lagd i ettertid
+public static String KEY_ID = "_id";
+public static String KEY_NAME = "navn";
+public static String KEY_FAMILY = "familie";
+public static String KEY_LATIN = "latin";
+public static String KEY_ENGLISH = "engelsk";
+public static String KEY_HABITAT = "habitat";
+public static String KEY_NOTE = "notat";
+public static String KEY_IMAGE = "image";
+
+
+
+private SQLiteDatabase myDataBase;
+
+private final Context myContext;
+
+// Constructor
+public DataBaseHelper(Context context) {
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}
+
+public void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();
+
+    if(dbExist) {
+        // Do nothing, DB exist
+    }
+    else {
+        // Lager en tom database som vi overskriver med min egen DB
+        this.getReadableDatabase();
+
+        try {
+            copyDatabase();
+        }
+        catch(IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+    catch(SQLiteException e) {
+        // Database dosen't exist
+    }
+
+    if(checkDB != null) {
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+
+private void copyDatabase() throws IOException {
+    //Open DB as InputStream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to empty DB created by JVM
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Åpne tom DB som utstrøm
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // Overføre data fra eksisterende til tom DB
+    byte[] buffer = new byte[1024];
+    int length;
+
+    while((length = myInput.read(buffer))>0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();  
+}
+
+public void openDataBase() throws SQLiteException {
+    //Open db
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+}
+
+@Override
+public synchronized void close() {
+    if(myDataBase != null) {
+        myDataBase.close();
+    }
+    super.close();
+}
+
+// Lagd i ettertid
+public Cursor fetchAllFishes() {
+    Cursor myCursor = myDataBase.query(TABLE_NAME, new String[] 
+    {KEY_IMAGE, KEY_ID, KEY_NAME, KEY_FAMILY, KEY_LATIN, KEY_ENGLISH, KEY_HABITAT, KEY_NOTE}, 
+     null, null, null, null, "navn");
+
+    if(myCursor !=  null) {
+        myCursor.moveToFirst();
+    }
+    return myCursor;
+}
+
+// Fetch names
+public Cursor fetchFishName() {
+    Log.w(TAG, "Feil her");
+
+    Cursor myCursor =
+          myCursor = myDataBase.query(TABLE_NAME, new String[]{KEY_NAME},null,null,null,null, "navn");
+
+    if(myCursor != null) {
+        myCursor.moveToFirst();
+    }
+    return myCursor;
+}
+
+// Standard implemented methods
+@Override
+public void onCreate(SQLiteDatabase db) {  
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+}
+}
+</code></pre>
+
+<p>main.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            >
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvTest"
+            />
+
+        <TextView 
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="@string/some_text"
+            android:textSize="20sp" />
+
+        <ListView 
+            android:id="@+id/listView1"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" />
+
+        </LinearLayout>
+</code></pre>
+
+<p>fish_info.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="6dip" >
+
+
+<!-- Data labels --> 
+<TextView 
+    android:id="@+id/tvNameInfo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:text="Navn: "
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+<TextView 
+    android:id="@+id/tvFamilyInfo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/tvNameInfo"
+    android:layout_below="@+id/tvNameInfo"
+    android:text="Famile: "
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+<TextView 
+    android:id="@+id/tvLatinInfo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/tvFamilyInfo"
+    android:layout_below="@+id/tvFamilyInfo"
+    android:text="Latin: "
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+
+<TextView 
+    android:id="@+id/tvEnglishInfo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/tvLatinInfo" 
+    android:layout_below="@+id/tvLatinInfo"
+    android:text="Engelsk: "
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+
+<TextView 
+    android:id="@+id/tvHabitatInfo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/tvEnglishInfo"
+    android:layout_below="@+id/tvEnglishInfo"
+    android:text="Habitat: "
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+
+
+
+<!-- Actual data bindings -->
+<TextView 
+    android:id="@+id/tvName"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/tvFamilyInfo"
+    android:layout_alignLeft="@+id/tvFamily"
+     />
+
+
+
+<TextView 
+    android:id="@+id/tvFamily"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/tvLatinInfo"
+    android:layout_toRightOf="@+id/tvFamilyInfo"
+     />
+
+<TextView 
+    android:id="@+id/tvLatin"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBaseline="@+id/tvLatinInfo"
+    android:layout_alignBottom="@+id/tvLatinInfo"
+    android:layout_toRightOf="@+id/tvLatinInfo"
+     />
+
+
+<TextView 
+    android:id="@+id/tvEnglish"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBaseline="@+id/tvEnglishInfo"
+   android:layout_alignBottom="@+id/tvEnglishInfo"
+    android:layout_toRightOf="@+id/tvEnglishInfo"
+     />
+
+
+<TextView 
+    android:id="@+id/tvHabitat"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBaseline="@+id/tvHabitatInfo"
+    android:layout_alignBottom="@+id/tvHabitatInfo"
+    android:layout_toRightOf="@+id/tvHabitatInfo"
+     />
+
+<TextView
+    android:id="@+id/tvNote"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/tvHabitat"
+    android:layout_marginTop="10dp"
+    />
+
+
+<ImageView
+  android:id="@+id/ivFish"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content" 
+     android:layout_alignParentBottom="true"
+  android:layout_below="@+id/tvNote"
+  android:layout_marginTop="15dp"
+  android:layout_gravity="center"
+/>
+
+</RelativeLayout>
+</code></pre>
+
+<h3>EDIT</h3>
+
+<p>I added this method to the class DataBaseHelper.java to return a ArrayList with the image names from the database ( I tried to print it to console and it was fine, all names in):</p>
+
+<pre><code>public ArrayList<String> getNames() {
+       ArrayList<String> nameList = null;
+
+       Cursor cursor = null;
+       try {
+           String query = "SELECT image FROM fisk ORDER BY navn";
+
+           cursor = myDataBase.rawQuery(query, null);
+           if(cursor != null && cursor.moveToFirst()) {
+               nameList = new ArrayList<String>();
+               do {
+                   nameList.add(cursor.getString(0));
+               } while(cursor.moveToNext());
+           }
+           else{
+               nameList.add("testimage");
+           }
+       }catch(Exception e) {
+           e.printStackTrace();
+           nameList = null;
+       }
+       finally{
+           if(cursor != null && !cursor.isClosed()) {
+               cursor.close();
+               cursor = null;
+           }
+           close();
+       }
+       return nameList; 
+   }
+</code></pre>
+
+<p>I have added this to the method displayListView() in MainActivity.java, with the tips from the answer. </p>
+
+<pre><code>try { 
+        ArrayList<String> testNames = new ArrayList<String>();
+        testNames = myDbHelper.getNames();
+
+        ivFisk = (ImageView) findViewById(R.id.ivFish);
+        context = this;
+
+              if(!testNames.isEmpty()) {
+
+                        for(String s : testNames) {
+               int id = context.getResources().getIdentifier(s, "drawable", context.getPackageName());
+
+               if(id != 0) {
+                   System.out.println("MyTAG: Adding: " + id); // if name and image exist, just print for debug
+
+                            /* #####Everything is matching fine, but when I try to run the next two lines, I get NPE ####*/
+
+                             //Drawable drawable = getResources().getDrawable(id);
+               //ivFisk.setImageDrawable(drawable);
+
+               }
+               else if(id == 0) { //just running with a few images in drawable-folder just for testing. Takes long to load if I have all, there for a dummy test image.
+                   System.out.println("MyTag: Setting test image");
+
+                 //  ivFisk.setImageResource(R.drawable.testimage);
+               }
+
+            }
+        }
+       } 
+       catch(Exception ex)
+       {
+           System.out.println("MyTag: " + ex);
+       }
+</code></pre>
+
+<p>If you see in the comment, I get a NPE when I try to add existing images to the view with:</p>
+
+<pre><code>Drawable drawable = getResources().getDrawable(id);
+ivFisk.setImageDrawable(drawable);
+</code></pre>
+
+<p>The log says:</p>
+
+<pre><code>MyTag: Adding: 2130837504
+MyTag: java.lang.NullPointerException
+</code></pre>
+
+<p>It clearly reads and matching the first item, and stops. I feel that I am so close and can't understand why this is happening. I have tried pleny of solutions and "fixes" for the last 7 hours now. Please point me in a direction or give some help. Thank you so much in advance.</p>

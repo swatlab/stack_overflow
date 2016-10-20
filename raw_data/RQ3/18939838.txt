@@ -1,0 +1,117 @@
+<p>I have a custom adapter which extends from <strong>BaseAdapter</strong>..</p>
+
+<blockquote>
+  <p><strong>Custom adapter code :</strong></p>
+</blockquote>
+
+<pre><code>public class SearchListViewAdapter extends BaseAdapter {
+
+    private LayoutInflater layoutInflater;
+    private JsonArray searchResults;
+
+    public SearchListViewAdapter(Context context, JsonArray searchResults) {
+        this.searchResults = searchResults;
+        layoutInflater = LayoutInflater.from(context);
+    }
+
+    @Override
+    public int getCount() {
+        return searchResults.count();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return searchResults.get(position);
+    }
+
+    /*public ListAdapter updateResults(JsonArray results) {
+        searchResults = results;
+        notifyDataSetChanged();
+        return null;
+    }*/
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        JsonObject searchResult = (JsonObject)getItem (position);
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = layoutInflater.inflate(R.layout.custom_search_result, null);
+            holder = new ViewHolder();
+            holder.txtFullName = (TextView) convertView.findViewById(R.id.FullName);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txtFullName.setText(searchResult.getString ("FirstName") + searchResult.getString ("LastName"));
+
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView txtFullName;
+    }
+}
+</code></pre>
+
+<blockquote>
+  <p><strong>Activity code :</strong> </p>
+</blockquote>
+
+<pre><code>// After displaying the list in an onPostExecute Method of an AsyncTask class 
+// I call another async task : BarcodeAction by giving the param : records
+new BarcodeAction(records).execute("");
+
+private class BarcodeAction extends AsyncTask<String, Void, JsonArray> {
+
+    private JsonArray records;
+
+    public BarcodeAction(JsonArray result)
+    {
+        this.records = result;
+    }
+
+    @Override
+    protected JsonArray doInBackground(String... params) {
+
+        // Processing... if it's success the onPostExecute method receive : records
+        if (resultType.equals("success"))
+            return records;
+
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(final JsonArray records) {
+        final ListView lv1 = (ListView) findViewById(R.id.ListViewSearchResults);
+
+        // EDIT : notifyDataSetChange doesn't work
+        SearchListViewAdapter svla1 = new SearchListViewAdapter(SearchActivity.this, records);
+        lv1.setAdapter(svla1);
+        svla1.notifyDataSetChanged();   
+
+
+        lv1.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> a, View v, int position, long id) {
+                Object o = lv1.getItemAtPosition(position);
+                JsonObject response = (JsonObject)o;
+
+                SearchActivity.VISITOR_BARCODE = response.getString("Barcode");
+
+                new BarcodeAction(records).execute("");
+            }
+        });
+    }
+}
+</code></pre>
+
+<p>But my list is not getting refreshed..</p>
+
+<p>Do you have any idea about this ? Thnak you.</p>

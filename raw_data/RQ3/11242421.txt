@@ -1,0 +1,67 @@
+<p>I've encountered another issue with ViewPager and I can't solve it with my current knowledge right now.</p>
+
+<p>I have TabPageIndicator with ViewPager and on every tab, I'm showing text. It's simple textView:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<view xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    class="viewpagerindicator.TabPageIndicator$TabView" >
+
+    <TextView
+        android:id="@+id/vpi_tab_text"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:gravity="center"
+        android:paddingBottom="10dip"
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip"
+        android:paddingTop="10dip"
+        android:textColor="@drawable/vpi_tab_text_color"
+        android:typeface="serif" />
+
+</view>
+</code></pre>
+
+<p>I want the text in the tab to be always a single line and to be always whole text, not ellipsize, no wrapping, no more than 1 line. It's required for the user to be able to read it whole...</p>
+
+<p>But I can't do that, I've tried different options and I still encounter some problems - either the text has more than just one line, but only the first one is displayed, or only a part of the text is displayed.</p>
+
+<p>Have you experienced something similar?</p>
+
+<p>Any help is appreciated</p>
+
+<p>EDIT ONE:</p>
+
+<p>I believe that the problem is here:</p>
+
+<pre><code>@Override
+public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+final boolean lockedExpanded = widthMode == MeasureSpec.EXACTLY;
+setFillViewport(lockedExpanded);
+    final int childCount = mTabLayout.getChildCount();
+    if (childCount > 1 && (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST)) {
+        if (childCount > 2) {
+            mMaxTabWidth = (int) (MeasureSpec.getSize(widthMeasureSpec) * 0.4f);
+        } else {
+            mMaxTabWidth = MeasureSpec.getSize(widthMeasureSpec) / 2;
+        }
+    } else {
+        mMaxTabWidth = -1;
+    }
+
+    final int oldWidth = getMeasuredWidth();
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    final int newWidth = getMeasuredWidth();
+
+    if (lockedExpanded && oldWidth != newWidth) {
+        // Recenter the tab display if we're at a new (scrollable) size.
+        setCurrentItem(mSelectedTabIndex);
+    }
+ }
+</code></pre>
+
+<p>mMaxTabWidth...</p>

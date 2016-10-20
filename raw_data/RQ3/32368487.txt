@@ -1,0 +1,276 @@
+<p>I'm trying to develop an app where user has to sign up. </p>
+
+<p>I'm showing the walkthrough/tutorial screens only the first time user install & launch the app. </p>
+
+<p>I want that once the user has signed up, the walkthroughs/tutorials should be stopped being displayed, but they are stopped getting displayed after the very first time whether the user has signed up or not. </p>
+
+<p>How to write the code so that the walkthroughs/tutorials should stop being displayed only after the user has signed up.</p>
+
+<p>Here's my Walkthroughs.java file's code:</p>
+
+<pre><code>public class Walkthroughs extends AppCompatActivity {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    Button buttonSignUp;
+    View view;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_walkthroughs);
+
+        SharedPreferences pref = getSharedPreferences("ActivityPREF", Context.MODE_PRIVATE);
+        if(pref.getBoolean("activity_executed", false)){
+            Intent intent = new Intent(this, Main.class);
+            startActivity(intent);
+            finish();
+        } else {
+            SharedPreferences.Editor ed = pref.edit();
+            ed.putBoolean("activity_executed", true);
+            ed.apply();
+        }
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        CirclePageIndicator circleIndicator = (CirclePageIndicator)findViewById(R.id.titles);
+        circleIndicator.setViewPager(mViewPager);
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_walkthrough_screen_no1, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+
+            switch (position){
+                case 0:
+                    return new Walkthroughs_screen_no1();
+                case 1:
+                    return new Walkthrough_screen_no2();
+                case 2:
+                    return new Walkthrough_screen_no3();
+                case 3:
+                    return new Walkthrough_screen_no4();
+                case 4:
+                    return new Walkthrough_screen_no5();
+                default:
+                    return new Walkthrough_screen_no5();
+            }
+        }
+
+        @Override
+        public int getCount() {
+            // Show 5 total pages.
+            return 5;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_walkthrough_screen_no1, container, false);
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<p>Here's my Walkthrough_screen_no5.java file's code:</p>
+
+<pre><code>public class Walkthrough_screen_no5 extends Fragment {
+
+    View view;
+    Button buttonSignUp;
+    EditText et;
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_walkthrough_screen_no5, container, false);
+        et = (EditText) rootView.findViewById(R.id.signUp_phoneNumber);
+        buttonSignUp = (Button) rootView.findViewById(R.id.buttonSignUp);
+        buttonSignUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String editText = et.getText().toString();
+                if(editText.isEmpty()) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle("Oops!");
+                    builder.setMessage("You forgot to enter your phone number.");
+                    builder.setPositiveButton(android.R.string.ok, null);
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                } else {
+                    Intent intent = new Intent(getActivity(), Main.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                }
+            }
+        });
+        return rootView;
+    }
+}
+</code></pre>
+
+<p>Here's my AndroidManifest.xml file's code:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.abc.xxx" >
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:uiOptions="splitActionBarWhenNarrow" >
+        <activity
+            android:name=".Main"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name=".MyCredits"
+            android:label="@string/title_activity_my_credits"
+            android:parentActivityName=".Main" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.abc.xxx.Main" />
+        </activity>
+        <activity
+            android:name=".AddMoreFriends"
+            android:label="@string/title_activity_add_friends"
+            android:parentActivityName=".Main" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.abc.xxx.Main" />
+        </activity>
+        <activity
+            android:name=".Settings"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".Main" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.abc.xxx.Main" />
+        </activity>
+        <activity
+            android:name=".Help"
+            android:label="@string/title_activity_help"
+            android:parentActivityName=".Settings" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.abc.xxx.Settings" />
+        </activity>
+        <activity
+            android:name=".Walkthroughs"
+            android:label="@string/app_name"
+            android:theme="@style/WalkthroughThemes"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p><strong>I'm new to StackOverflow, so please cooperate.</strong></p>
+
+<p>Thanks in advance.</p>

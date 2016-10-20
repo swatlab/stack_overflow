@@ -1,0 +1,467 @@
+<p>This is my code for a simple JTable with multiple searches and sorts. This may be a relatively simple problem but when I run the code I get an error when referncing "aData" and "aHeaders" in my "private DefaultTableModel model". Also after this small problem has been sorted will I encounter any other errors or exceptions? ie. NullPointerException</p>
+
+<pre><code>import javax.swing.*;
+import java.awt.*;
+import java.io.*;
+import java.lang.*;
+import java.awt.event.*;
+///////////
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.*;
+import javax.swing.text.Document;
+import javax.swing.table.TableRowSorter;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
+///////////
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import static javax.swing.JFrame.EXIT_ON_CLOSE;
+import javax.swing.table.*;
+
+public class JtableIe
+{
+    JFrame myMainWindow = new JFrame("Compare Tables");
+
+    JPanel  firstPanel = new JPanel();
+
+    JScrollPane myScrollTable;
+    JTable myTable;
+    JTextField srchFld1;
+    JTextField srchFld2;
+    TableRowSorter sorter;
+    JLabel srchLbl1 = new JLabel();
+    JLabel srchLbl2 = new JLabel();
+
+    public void runGUI()
+    {
+        myMainWindow.setBounds(10, 10, 1296, 756);
+
+        myMainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        myMainWindow.setLayout(new GridLayout(1,1));
+
+        createFirstPanel();
+
+        myMainWindow.getContentPane().add(firstPanel);
+
+        myMainWindow.setVisible(true);
+    }
+
+    public void createFirstPanel()
+    {
+        firstPanel.setLayout(null);
+
+        srchLbl1.setLocation(0,0);
+        srchLbl1.setSize(150,26);
+        srchLbl1.setText("Name Search:");
+        firstPanel.add(srchLbl1);
+
+        srchLbl2.setLocation(660,0);
+        srchLbl2.setSize(150,26);
+        srchLbl2.setText("ID Search:");
+        firstPanel.add(srchLbl2);
+
+        String[] aHeaders = {"Name","ID","Number 1","Number 2","Time","Date"};
+        Object[][] aData = new Object[15][6];
+        myTable = new JTable(model);
+        ///////Data////////
+        aData[0][0] = "John";
+        aData[0][1] = "JS96";
+        aData[0][2] = "1";
+        aData[0][3] = "186";
+        aData[0][4] = "1h 23m";
+        aData[0][5] = getJavaDate("12-11-2015");
+
+        aData[1][0] = "David";
+        aData[1][1] = "DB36";
+        aData[1][2] = "2";
+        aData[1][3] = "111852";
+        aData[1][4] = "2h 55m";
+        aData[1][5] = getJavaDate("12-11-2020");
+
+        aData[2][0] = "Daniel";
+        aData[2][1] = "DK73";
+        aData[2][2] = "3";
+        aData[2][3] = "2921";
+        aData[2][4] = "1h 55m";
+        aData[2][5] = getJavaDate("12-11-2014");
+
+        aData[3][0] = "Janis";
+        aData[3][1] = "JW84";
+        aData[3][2] = "4";
+        aData[3][3] = "6512";
+        aData[3][4] = "12h 26m";
+        aData[3][5] = getJavaDate("13-11-2015");
+
+        aData[4][0] = "Adam";
+        aData[4][1] = "AF98";
+        aData[4][2] = "5";
+        aData[4][3] = "7524";
+        aData[4][4] = "5h 47m";
+        aData[4][5] = getJavaDate("11-11-2015");
+
+        aData[5][0] = "Matthew";
+        aData[5][1] = "MB55";
+        aData[5][2] = "6";
+        aData[5][3] = "4989";
+        aData[5][4] = "80h 30m";
+        aData[5][5] = getJavaDate("11-11-2015");
+
+        aData[6][0] = "Lewis";
+        aData[6][1] = "LS23";
+        aData[6][2] = "7";
+        aData[6][3] = "56321";
+        aData[6][4] = "880h 20m";
+        aData[6][5] = getJavaDate("11-11-2015");
+
+        aData[7][0] = "Mark";
+        aData[7][1] = "ML49";
+        aData[7][2] = "8";
+        aData[7][3] = "97456";
+        aData[7][4] = "8h 42m";
+        aData[7][5] = getJavaDate("11-11-2015");
+
+        aData[8][0] = "Josh";
+        aData[8][1] = "JT67";
+        aData[8][2] = "9";
+        aData[8][3] = "82135";
+        aData[8][4] = "56h 13m";
+        aData[8][5] = getJavaDate("11-11-2015");
+
+        aData[9][0] = "Oliver";
+        aData[9][1] = "OC98";
+        aData[9][2] = "10";
+        aData[9][3] = "152";
+        aData[9][4] = "9h 9m";
+        aData[9][5] = getJavaDate("11-11-2015");
+
+        aData[10][0] = "Tom";
+        aData[10][1] = "TS97";
+        aData[10][2] = "11";
+        aData[10][3] = "100";
+        aData[10][4] = "0h 0m";
+        aData[10][5] = getJavaDate("11-11-2015");
+
+        aData[11][0] = "Emma";
+        aData[11][1] = "EBS74";
+        aData[11][2] = "12";
+        aData[11][3] = "200";
+        aData[11][4] = "0h 30m";
+        aData[11][5] = getJavaDate("11-11-2015");
+
+        aData[12][0] = "Lucy";
+        aData[12][1] = "LK02";
+        aData[12][2] = "13";
+        aData[12][3] = "256";
+        aData[12][4] = "7h 00m";
+        aData[12][5] = getJavaDate("11-11-2015");
+
+        aData[13][0] = "Patrick";
+        aData[13][1] = "PM38";
+        aData[13][2] = "14";
+        aData[13][3] = "258";
+        aData[13][4] = "2h 00m";
+        aData[13][5] = getJavaDate("11-11-2015");
+
+        aData[14][0] = "Nicola";
+        aData[14][1] = "NB70";
+        aData[14][2] = "15";
+        aData[14][3] = "987";
+        aData[14][4] = "100h 56m";
+        aData[14][5] = getJavaDate("11-11-2015");
+        //////////////
+
+        myTable.setAutoCreateRowSorter(true);
+
+        sorter = new TableRowSorter(myTable.getModel());
+        List sortKeys = new ArrayList();
+        sortKeys.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+        sorter.setComparator(2, new AlphanumComparator());
+        sorter.setComparator(3, new AlphanumComparator());
+        sorter.setComparator(4, new AlphanumComparator());
+        setRenderers();
+        myTable.setRowSorter(sorter);
+
+
+
+        DefaultRowSorter sorter = (DefaultRowSorter) myTable.getRowSorter();
+
+
+        myScrollTable = new JScrollPane(myTable); 
+        myScrollTable.setSize(1296,756); 
+        myScrollTable.setLocation(0,25); 
+        System.out.println("Creating compare table");
+
+        srchFld1 = new JTextField(10);
+        srchFld1.setSize(550,26); 
+        srchFld1.setLocation(100,0);
+        srchFld1.setToolTipText("Enter Name");
+        firstPanel.add(srchFld1);
+
+        srchFld2 = new JTextField(10);
+        srchFld2.setSize(550,26); 
+        srchFld2.setLocation(740,0);
+        srchFld2.setToolTipText("Enter ID");
+        firstPanel.add(srchFld2);
+
+        //////////////////////
+        Document doc = srchFld1.getDocument();
+        DocumentListener listener = new DocumentListener() {
+
+            @Override
+            public void insertUpdate(DocumentEvent e) 
+            {
+                newFilter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) 
+            {
+                newFilter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) 
+            {
+                newFilter();
+            }
+        };
+        doc.addDocumentListener(listener);
+
+        ///////////////
+        Document docb = srchFld2.getDocument();
+        DocumentListener listenerb = new DocumentListener() {
+
+            @Override
+            public void insertUpdate(DocumentEvent e) 
+            {
+                newFilter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) 
+            {
+                newFilter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) 
+            {
+                newFilter();
+            }
+        };
+        docb.addDocumentListener(listenerb);
+        ///////////////
+
+        firstPanel.add(myScrollTable);
+    }
+
+    private DefaultTableModel model = new DefaultTableModel(aData, aHeaders) {
+        @Override
+        public Class<?> getColumnClass(int column) 
+        {
+                return getValueAt(5, column).getClass();
+        }
+    };
+
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy");
+
+    private void setRenderers() {
+        myTable.setDefaultRenderer(Date.class, new DateRenderer());
+    }
+
+    private Date getJavaDate(String s) {
+        try 
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date d = sdf.parse(s);
+            return d;
+        } 
+
+        catch (ParseException ex) 
+        {
+            Logger.getLogger(TableBasic.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+    private void newFilter()
+    {
+        RowFilter rf = null;
+        try 
+        {
+            List<RowFilter<Object,Object>> filters = new ArrayList<RowFilter<Object,Object>>(2);
+            filters.add(RowFilter.regexFilter(srchFld1.getText(), 0));
+            filters.add(RowFilter.regexFilter(srchFld2.getText(), 1));
+            rf = RowFilter.andFilter(filters);
+        } 
+        catch (java.util.regex.PatternSyntaxException e) 
+        {
+            return;
+        }
+        sorter.setRowFilter(rf);
+    }
+
+    public static void main(String[] args)
+    {
+        JtableIe ji = new JtableIe();
+        ji.runGUI();
+    }
+
+    private class DateRenderer extends DefaultTableCellRenderer 
+    {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable myTable, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(myTable, value, isSelected, hasFocus, row, column);
+            if (!(value instanceof Date)) {
+                return this;
+            }
+            setText(DATE_FORMAT.format((Date) value));
+            return this;
+        }
+    }
+}
+</code></pre>
+
+<p>AlphanumComparator code</p>
+
+<pre><code> /*
+ * The Alphanum Algorithm is an improved sorting algorithm for strings
+ * containing numbers.  Instead of sorting numbers in ASCII order like
+ * a standard sort, this algorithm sorts numbers in numeric order.
+ *
+ * The Alphanum Algorithm is discussed at http://www.DaveKoelle.com
+ *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+import java.util.Comparator;
+
+/**
+ * This is an updated version with enhancements made by Daniel Migowski,
+ * Andre Bogus, and David Koelle
+ *
+ * To convert to use Templates (Java 1.5+):
+ *   - Change "implements Comparator" to "implements Comparator<String>"
+ *   - Change "compare(Object o1, Object o2)" to "compare(String s1, String s2)"
+ *   - Remove the type checking and casting in compare().
+ *
+ * To use this class:
+ *   Use the static "sort" method from the java.util.Collections class:
+ *   Collections.sort(your list, new AlphanumComparator());
+ */
+public class AlphanumComparator implements Comparator
+{
+    private final boolean isDigit(char ch)
+    {
+        return ch >= 48 && ch <= 57;
+    }
+
+    /** Length of string is passed in for improved efficiency (only need to calculate it once) **/
+    private final String getChunk(String s, int slength, int marker)
+    {
+        StringBuilder chunk = new StringBuilder();
+        char c = s.charAt(marker);
+        chunk.append(c);
+        marker++;
+        if (isDigit(c))
+        {
+            while (marker < slength)
+            {
+                c = s.charAt(marker);
+                if (!isDigit(c))
+                    break;
+                chunk.append(c);
+                marker++;
+            }
+        } else
+        {
+            while (marker < slength)
+            {
+                c = s.charAt(marker);
+                if (isDigit(c))
+                    break;
+                chunk.append(c);
+                marker++;
+            }
+        }
+        return chunk.toString();
+    }
+
+    public int compare(Object o1, Object o2)
+    {
+        if (!(o1 instanceof String) || !(o2 instanceof String))
+        {
+            return 0;
+        }
+        String s1 = (String)o1;
+        String s2 = (String)o2;
+
+        int thisMarker = 0;
+        int thatMarker = 0;
+        int s1Length = s1.length();
+        int s2Length = s2.length();
+
+        while (thisMarker < s1Length && thatMarker < s2Length)
+        {
+            String thisChunk = getChunk(s1, s1Length, thisMarker);
+            thisMarker += thisChunk.length();
+
+            String thatChunk = getChunk(s2, s2Length, thatMarker);
+            thatMarker += thatChunk.length();
+
+            // If both chunks contain numeric characters, sort them numerically
+            int result = 0;
+            if (isDigit(thisChunk.charAt(0)) && isDigit(thatChunk.charAt(0)))
+            {
+                // Simple chunk comparison by length.
+                int thisChunkLength = thisChunk.length();
+                result = thisChunkLength - thatChunk.length();
+                // If equal, the first different number counts
+                if (result == 0)
+                {
+                    for (int i = 0; i < thisChunkLength; i++)
+                    {
+                        result = thisChunk.charAt(i) - thatChunk.charAt(i);
+                        if (result != 0)
+                        {
+                            return result;
+                        }
+                    }
+                }
+            } else
+            {
+                result = thisChunk.compareTo(thatChunk);
+            }
+
+            if (result != 0)
+                return result;
+        }
+
+        return s1Length - s2Length;
+    }
+}
+</code></pre>

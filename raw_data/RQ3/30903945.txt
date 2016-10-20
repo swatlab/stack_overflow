@@ -1,0 +1,89 @@
+<p>Hi I'm trying to make a <code>ListView</code> that implements <code>StickyListHeadersListView</code> library and gets the data from Cursor. I'm having difficulties in my <code>StickyListHeaderAdapter</code> where i'm trying to used cursor instead of <code>string[]</code>. I'm looking for some guideline codes but all examples i see are all using string[].</p>
+
+<p>my problem are </p>
+
+<ol>
+<li>in the <code>getCount()</code> where it says i need an integer rather that <code>android.database.Cursor</code> is there any other way to get through this? </li>
+<li>Cannot resolve method <code>setText(android.database.Cursor)</code> , i know that i must use <code>String[]</code> in here but what are the other way to do this? </li>
+</ol>
+
+<p>here is my code </p>
+
+<pre><code>public class StickyHeaderAdapter extends BaseAdapter implements StickyListHeadersAdapter {
+
+private Cursor information, header;
+private LayoutInflater inflater;
+DBHelper dbHelper;
+
+public StickyHeaderAdapter(Context context, Cursor countries, Cursor header) {
+    inflater = LayoutInflater.from(context);
+    countries = dbHelper.getInformationItems();
+    header = dbHelper.getInformationHeader();
+}
+
+@Override
+public int getCount() {
+    return information;
+}
+
+@Override
+public Object getItem(int position) {
+    return information;
+}
+
+@Override
+public long getItemId(int position) {
+    return position;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder holder;
+
+    if (convertView == null) {
+        holder = new ViewHolder();
+        convertView = inflater.inflate(R.layout.text_list_item_layout, parent, false);
+        holder.text = (TextView) convertView.findViewById(R.id.list_title);
+        convertView.setTag(holder);
+    } else {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    holder.text.setText(information );
+    return convertView;
+}
+
+@Override
+public View getHeaderView(int position, View convertView, ViewGroup parent) {
+    HeaderViewHolder holder;
+    if (convertView == null) {
+        holder = new HeaderViewHolder();
+        convertView = inflater.inflate(R.layout.header, parent, false);
+        holder.text = (TextView) convertView.findViewById(R.id.header);
+        convertView.setTag(holder);
+    } else {
+        holder = (HeaderViewHolder) convertView.getTag();
+    }
+
+
+    holder.text.setText(header);
+    return convertView;
+}
+
+@Override
+public long getHeaderId(int position) {
+    return position;
+}
+
+class HeaderViewHolder {
+    TextView text;
+}
+
+class ViewHolder {
+    TextView text;
+ }
+
+}
+</code></pre>
+
+<p>Thank you so much for the help!</p>

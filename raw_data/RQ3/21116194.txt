@@ -1,0 +1,52 @@
+<p>I'm adding images to a gridview, everything works perfectly until I turn the phone sideways, all the images in the GridView disapper and this error appears on the log</p>
+
+<pre><code>SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+</code></pre>
+
+<p>The images I'm using for my GridView are taken with the phone camera like this</p>
+
+<pre><code>Intent camera_intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+startActivityForResult(camera_intent, CAMERA_PIC_REQUEST);
+</code></pre>
+
+<p>After that I call the image Adapter</p>
+
+<pre><code>protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    switch(requestCode){
+    case 0:
+        if(resultCode==RESULT_OK){
+           Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+           Bitmap.createScaledBitmap(thumbnail, 100, 100, true);
+           Drawable drawable = new BitmapDrawable(getResources(), thumbnail);
+           list.add(drawable);
+
+           GridView gv = (GridView)findViewById(R.id.GridV1);
+           gv.setAdapter(new ImageAdapter(this, list));
+
+         }
+    }
+}
+</code></pre>
+
+<p>And finally this is where I add my images in the ImageAdapter</p>
+
+<pre><code>@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) { 
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(130, 130));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(10, 10, 10, 10);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageDrawable(mThumbIds.get(position));
+    return imageView;
+}
+</code></pre>
+
+<p>I think it has something to do with the scale, but I'm not sure, can't find a solution to this problem.</p>

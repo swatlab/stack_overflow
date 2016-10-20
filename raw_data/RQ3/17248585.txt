@@ -1,0 +1,131 @@
+<p>I have tried to show lots of images in gridview.There are two activities.They both have gridviews which have images in them.When I start only one of them.There are no questions,but when I start the other one,there are "outifmemory" problem.
+PS:this is my first to use stackoverflow and my english is poor.forgive me~.~</p>
+
+<pre><code>public class HeroGridAdapter extends BaseAdapter {
+
+    private Context mContext;
+    private int[] mImages;
+    private String[] mNames;
+    private String[] mShorts;
+    private LayoutInflater mInflater;
+    private LinearLayout.LayoutParams params;
+
+    private static Map<Integer,SoftReference<Bitmap>> imageCache = new HashMap<Integer,SoftReference<Bitmap>>();
+
+    public HeroGridAdapter(Context c, int[] images, String[] names,String[] shorts) {
+        this.mContext = c;
+        this.mImages = images;
+        this.mNames = names;
+        this.mShorts = shorts;
+        this.mInflater = LayoutInflater.from(c);
+        this.params = new LinearLayout.LayoutParams(45,45);
+        this.params.gravity = Gravity.CENTER;
+    }
+
+    @Override
+    public int getCount() {
+        return mImages.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return position;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ItemViewTag viewTag;
+        if (convertView == null) {
+            convertView = mInflater.inflate(R.layout.hero_portrait_grid, null);
+            viewTag = new ItemViewTag(
+                    (ImageView) convertView.findViewById(R.id.ivHeroPor),
+                    (TextView) convertView.findViewById(R.id.tvHeroPor),
+                    (TextView) convertView.findViewById(R.id.tvHeroShort));
+            convertView.setTag(viewTag);
+        } else {
+            viewTag = (ItemViewTag)convertView.getTag();
+        }
+        addBitmapToCache(mImages[position]);
+        viewTag.name.setText(mNames[position]);
+        viewTag.shortName.setText(mShorts[position]);
+        viewTag.icon.setImageBitmap(getBitmap(mImages[position]));
+        return convertView;
+    }
+
+    class ItemViewTag {
+        private ImageView icon;
+        private TextView name;
+        private TextView shortName;
+
+        public ItemViewTag(ImageView icon, TextView name,TextView shortName) {
+            this.icon = icon;
+            this.name = name;
+            this.shortName = shortName;
+        }
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res,
+            int resId, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        Bitmap bitmap = BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    } 
+
+    public void addBitmapToCache(int resId){
+        Bitmap bitmap = decodeSampledBitmapFromResource(mContext.getResources(),
+                resId, 45, 45);
+        SoftReference<Bitmap> softBitmap = new SoftReference<Bitmap>(bitmap);
+        imageCache.put(resId, softBitmap);
+    }
+
+    public static Bitmap getBitmap(int imageKey){
+        SoftReference<Bitmap> softBitmap = imageCache.get(imageKey);
+        if(softBitmap == null){
+            return null;
+        }
+        Bitmap bitmap = softBitmap.get();
+        return bitmap;
+    }
+
+}
+</code></pre>

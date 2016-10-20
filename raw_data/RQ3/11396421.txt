@@ -1,0 +1,152 @@
+<p>Looking for anyone who can use select args[] in sqlite query builder by giving an example.the code below could not work,any help would be welcomed</p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper{
+
+    public static String DB_PATH = "/data/data/yourpath/databases/";
+    public static String DB_NAME ="your_sqlite";
+    private static final int DATABASE_VERSION = 1;
+
+
+    private final Context myContext;
+    private SQLiteDatabase mydb;
+    //private Cursor aliases;
+    private Cursor m;
+
+    public DatabaseHelper(Context ctx){ 
+        super(ctx,DB_NAME,null,DATABASE_VERSION);
+        this.myContext = ctx;
+
+    }
+
+
+    /**
+     * creates an empty database and rewrites it with you own
+     * */
+    public void createDatabase() throws IOException{
+        boolean dbExists = checkDatabase();
+
+        if(dbExists){
+            //do nothing 
+        }else{
+            // by calling this method an empty database will be created into default system path
+            this.getReadableDatabase();
+
+            try{
+                copyDatabase();
+            }
+            catch(IOException e){
+                throw new Error("Error copying database");
+            }
+        }
+
+    }
+
+/*
+ * check if database exists to prevent re-copying the file each time you open the application
+ * return true if exists otherwise false
+ */
+ private boolean checkDatabase(){
+     SQLiteDatabase checkDB = null;
+
+     try{
+         String myPath = DB_PATH + DB_NAME;
+         checkDB = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+
+     }catch(SQLiteException e){
+
+     }
+
+     if (checkDB != null){
+         checkDB.close();
+     }
+     return checkDB != null ? true : false;
+ }
+
+ /**
+  * copies your database  from local assets folder to just created empty database
+  * in the system folder from where it can be accessed and handled
+  * */
+ private void copyDatabase() throws IOException{
+     //open your local db as the input stream
+     InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+     //path to the just created empty db
+     String outFileName = DB_PATH + DB_NAME;
+
+     //open the empty db  as the outputStream
+     OutputStream myOutput = new FileOutputStream(outFileName);
+
+     //transfers bytes from the input file to output file
+     byte[] buffer = new byte[1024];
+
+     int length;
+
+     while((length = myInput.read(buffer))>0){
+         myOutput.write(buffer, 0, length);
+     }
+     //close the streams
+     myOutput.flush();
+     myOutput.close();
+     myInput.close(); 
+ }
+ public void openDatabase() throws SQLException{
+     //open the db
+     String myPath = DB_PATH + DB_NAME;
+     mydb = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+ }
+ public synchronized  void close(){
+     if(mydb != null){
+         mydb.close();
+     }
+     super.close();
+ }
+
+
+
+
+    @Override
+public void onOpen(SQLiteDatabase db) {
+    super.onOpen(db);
+}
+
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+
+
+public Cursor getAllCharacters(){
+
+    return mydb.query("char",new String[]{"_id","gender_id","race_id","name"},
+            null, null, null,null,null);
+}
+public void setCharacter(long id){
+     m  = mydb.query("char",new String[]{"gender_id","race_id"},"_id =" + id,null,null,null,null,null);
+     if (m == null){
+         System.out.print("Cursor is empty");
+     }
+}
+
+
+public Cursor getAliases(){
+    String gender_id = m.getString(0);
+    String race_id   = m.getString(1);
+    String where = "_id=? AND _id=?";
+    String[] args ={gender_id,race_id};
+
+    Cursor alias = mydb.query("alias",new String[]{"_id","gender_id","race_id","alias"},
+            where,args,null,null,null);
+    return alias;
+}
+
+}
+</code></pre>
+
+<p>i am trying to get the cursor from getAliases()</p>

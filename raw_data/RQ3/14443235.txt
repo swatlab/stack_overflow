@@ -1,0 +1,113 @@
+<p><code>ListView</code> is not called on an <code>onClick</code> event.</p>
+
+<p>I guess someone must have a fair idea on what I'm doing wrong. and the right way to make a <code>listView</code>.</p>
+
+<pre><code>public class CardapioCategoriaSection extends BaseSection implements ListAdapter {  
+
+
+    public int getCount() {
+        return result.size();
+    }
+
+    public Object getItem(int position) {
+        return result.get(position);
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public int getItemViewType(int position) {
+        return 1;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        ViewHolder holder;
+        if (convertView == null) 
+        {
+            convertView = l_Inflater.inflate(R.layout.cardapio_categorias_cell_section, null);
+            holder = new ViewHolder();
+            holder.txt_itemName = (TextView) convertView.findViewById(R.id.title);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txt_itemName.setText(result.get(position).get("title"));
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView txt_itemName;
+        TextView txt_itemDescription;
+        TextView txt_itemPrice;
+        ImageView itemImage;
+    }
+
+    public int getViewTypeCount() {
+        return 1;
+    }
+
+    public boolean hasStableIds() {return false;}
+
+    public boolean isEmpty() {return false; }
+
+    public void registerDataSetObserver(DataSetObserver observer) { }
+
+    public void unregisterDataSetObserver(DataSetObserver observer) {}
+
+    public boolean areAllItemsEnabled() {return false;}
+
+    public boolean isEnabled(int position) {return false;}
+
+    //METHOD CONSTRUCTOR
+    public CardapioCategoriaSection( Context context, AttributeSet attrs, int defStyle )
+    {
+        super( context, attrs, defStyle );
+    }
+
+    public CardapioCategoriaSection( Context context, AttributeSet attrs )
+    {
+        super( context, attrs );
+    }
+
+    public CardapioCategoriaSection( Context context )
+    {
+        super( context );
+    }
+
+    private static EasyDBLines result;
+
+    private LayoutInflater l_Inflater;
+
+    @Override
+    protected void onFinishInflate() {
+        // TODO Auto-generated method stub
+        super.onFinishInflate();
+
+        /*
+        Typeface tf = Typeface.createFromAsset(getAssets(),
+                                "fonts/BPreplay.otf");
+                        TextView tv = (TextView) findViewById(R.id.CustomFontText);
+                        tv.setTypeface(tf);
+        */
+        result = AppContent.getInstance().selectCardapioCategorias();
+
+        l_Inflater = LayoutInflater.from(MainPhone.getContext());   
+
+        final ListView listViewCategoria = (ListView) findViewById(R.id.listV_main);     
+
+        listViewCategoria.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> a , View v, int position, long id) {
+            System.out.print("Now it works");
+            }
+        });
+
+
+        listViewCategoria.setAdapter( this);
+    }
+
+}  
+</code></pre>

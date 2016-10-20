@@ -1,0 +1,150 @@
+<p>Has any one met this issue.Right now i am trying to show a bar-chart in android,but i am getting the x and y axis values from the web service by consuming it.I am consuming it by the method SOAP.Here i am getting this issues,can anyone tell me how to overcome this issue?</p>
+
+<p><strong>LOGCAT</strong></p>
+
+<pre><code>09-17 10:18:09.651: W/KeyCharacterMap(339): No keyboard for id 0
+09-17 10:18:09.651: W/KeyCharacterMap(339): Using default keymap: /system/usr/keychars/qwerty.kcm.bin
+09-17 10:18:20.450: D/AndroidRuntime(339): Shutting down VM
+09-17 10:18:20.450: W/dalvikvm(339): threadid=1: thread exiting with uncaught exception (group=0x4001d800)
+09-17 10:18:20.460: E/AndroidRuntime(339): FATAL EXCEPTION: main
+09-17 10:18:20.460: E/AndroidRuntime(339): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.xmlparsing_test/com.example.xmlparsing_test.BarGraphActivity}: java.lang.NullPointerException
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2663)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2679)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.ActivityThread.access$2300(ActivityThread.java:125)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2033)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.os.Handler.dispatchMessage(Handler.java:99)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.os.Looper.loop(Looper.java:123)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.ActivityThread.main(ActivityThread.java:4627)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at java.lang.reflect.Method.invokeNative(Native Method)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at java.lang.reflect.Method.invoke(Method.java:521)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at dalvik.system.NativeStart.main(Native Method)
+09-17 10:18:20.460: E/AndroidRuntime(339): Caused by: java.lang.NullPointerException
+09-17 10:18:20.460: E/AndroidRuntime(339):  at com.example.xmlparsing_test.BarGraphActivity.buildBarDataset(BarGraphActivity.java:120)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at com.example.xmlparsing_test.BarGraphActivity.DrawGraph(BarGraphActivity.java:61)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at com.example.xmlparsing_test.BarGraphActivity.onCreate(BarGraphActivity.java:26)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+09-17 10:18:20.460: E/AndroidRuntime(339):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2627)
+09-17 10:18:20.460: E/AndroidRuntime(339):  ... 11 more
+</code></pre>
+
+<p>BarGraphActivity.java</p>
+
+<pre><code> public class BarGraphActivity extends Chart
+ {
+
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main1);
+
+    Chart ch = new Chart();
+    DrawGraph();
+}
+
+public void DrawGraph() 
+{
+String[] titles = new String[] { " Barcharts",""};
+
+double[] x_axis = null;   
+double[] y_axis = null;
+
+List<double[]> values = new ArrayList<double[]>();
+
+values.add(x_axis);
+values.add(y_axis);
+
+int[] colors = new int[] { Color.WHITE, Color.BLACK};
+
+XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+renderer.setOrientation(Orientation.HORIZONTAL);
+
+setChartSettings(renderer, "some texts", " ", " ",0,x_axis, 0,y_axis, Color.GRAY, Color.LTGRAY);
+renderer.setXLabels(1);
+
+renderer.addXTextLabel(1, "x_axis");
+renderer.addYTextLabel(1, "y_axis");
+
+renderer.setPanEnabled(true, false);
+
+int length = renderer.getSeriesRendererCount();
+for (int i = 0; i < length; i++) 
+{
+  SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+  seriesRenderer.setDisplayChartValues(true);
+  }
+
+ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+}
+
+protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+{
+
+        // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+    XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+    renderer.setAxisTitleTextSize(15);
+    renderer.setChartTitleTextSize(20);
+    renderer.setLabelsTextSize(15);
+    renderer.setLegendTextSize(15);
+
+    int length = colors.length;
+    for (int i = 0; i < length; i++) 
+    {
+      SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+      r.setColor(colors[i]);
+      renderer.addSeriesRenderer(r);
+    }
+    return renderer;
+  }
+
+protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+String yTitle, double xMin, double[] x_axis, double yMin, double[] y_axis, int axesColor,int labelsColor) 
+ {
+    // sets lots of default values for this renderer
+
+renderer.setChartTitle(title);
+
+renderer.setXTitle(xTitle);
+renderer.setYTitle(yTitle);
+
+renderer.setXAxisMin(xMin);
+
+renderer.setYAxisMin(yMin);
+renderer.setAxesColor(axesColor);
+renderer.setLabelsColor(labelsColor);
+
+renderer.setApplyBackgroundColor(true);
+renderer.setBackgroundColor(Color.BLACK);
+}
+
+protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) 
+{
+        // adds the axis titles and values into the dataset
+
+XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+
+int length = titles.length;
+
+for (int i = 0; i < length; i++) 
+{
+   CategorySeries series = new CategorySeries(titles[i]);
+
+   double[] v = values.get(i);
+
+   int seriesLength = v.length;
+
+   for (int k = 0; k < seriesLength; k++) 
+   {
+     series.add(v[k]);
+    }
+
+   dataset.addSeries(series.toXYSeries());
+   }
+return dataset;
+ }    }
+</code></pre>
+
+<p>Thanks for your precious time!..</p>

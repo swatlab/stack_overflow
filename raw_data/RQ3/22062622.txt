@@ -1,0 +1,166 @@
+<p>There are so many questions related to this problems but none of them helped to me. If I see the logic of my code it should work but still not working at all. I did this in my previous project at that time it was working fine but not now. </p>
+
+<p>When the application is installed the database file is in /data/data//databases/ path. But says error that: (1) no such table:table name. Then I opened the database file using SQLite Browser and I can see that there is only one table android_metadata. Other tables are missing. It clears explains that the database has not been copying from assets folder. Instead, it is creating new database in the given path. If the given path is in the SDCard then, I do not have SD card on my phone and my phone is rooted. I need to change the permission of data/data//databases/ directories each time when the application is installed for the first time to see the data of databases. </p>
+
+<p>But my application does not crash when I pull dynamically the database file from assets folder to /data/data//databases/. For sure, I do not want this to do. Please could you look at my code and figure out what could be changed. Thanks!!</p>
+
+<pre><code>public DatabaseHelper() throws IOException {
+    super(Attendance.getContext(), DB_NAME, null, DB_VERSION);
+    /*try {
+        createDataBase();
+        openDataBase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }*/
+    boolean dbexist = checkDataBase();
+    if(dbexist){
+        openDataBase();
+    }else{
+        createDataBase();
+    }
+}
+
+/**
+ * Database maintains global state in application
+ * 
+ * @return singleton instance
+ */
+public static DatabaseHelper getInstance() {
+
+    if (mInstance == null) {
+        try {
+            mInstance = new DatabaseHelper();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    return mInstance;
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own
+ * database.
+ * 
+ * @throws IOException
+ */
+public void createDataBase() throws IOException {
+
+    boolean dbexist = checkDataBase();
+    if (dbexist) {
+
+    }else{
+        this.getReadableDatabase();
+        try{
+            copyDataBase();
+        }catch(IOException e){
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each
+ * time you open the application.
+ * 
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase() {
+    // SQLiteDatabase checkDataBase = null;
+    boolean checkDataBase =true;
+    try {
+        String Path = DB_PATH + DB_NAME;
+        File dbFile = new File(Path);
+        /*
+         * checkDataBase = SQLiteDatabase.openDatabase(Path, null,
+         * SQLiteDatabase.OPEN_READONLY);
+         */
+        checkDataBase = dbFile.exists();
+    } catch (SQLiteException e) {
+        Log.e("CheckDb", "DB not found");
+        // database does't exist yet.
+    }
+    return checkDataBase;
+}
+
+/**
+ * Copies your database from local assets-folder to the just created empty
+ * database in the system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * 
+ * @throws IOException
+ */
+
+private void copyDataBase() throws IOException {
+
+    // Open your local database as the input stream
+    InputStream myInput = context.getAssets().open(DB_NAME);
+
+    // Open the empty db as the output stream.
+    OutputStream myOutput = new FileOutputStream(DB_PATH + DB_NAME);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+    // Close the stream.
+    myOutput.close();
+    myOutput.flush();
+    myInput.close();
+    Log.i("Database", "New database has been copied to device!");
+
+}
+
+/**
+ * Open the database
+ * 
+ * @throws SQLException
+ */
+public boolean openDataBase() throws SQLException {
+    String path = DB_PATH + DB_NAME;
+    db = SQLiteDatabase.openDatabase(path, null,
+            SQLiteDatabase.OPEN_READWRITE);
+    Log.i("DB....", "database opened....");
+    return db != null;
+}
+
+public synchronized void close() {
+    if (mInstance != null)
+        db.close();
+    super.close();
+}
+</code></pre>
+
+<p>Logcat:</p>
+
+<pre><code>02-27 13:30:26.509: D/AndroidRuntime(20480): Shutting down VM
+02-27 13:30:26.509: W/dalvikvm(20480): threadid=1: thread exiting with uncaught  exception (group=0x4188eba8)
+02-27 13:30:26.509: E/AndroidRuntime(20480): FATAL EXCEPTION: main
+02-27 13:30:26.509: E/AndroidRuntime(20480): Process: <package-name>, PID: 20480
+02-27 13:30:26.509: E/AndroidRuntime(20480): java.lang.RuntimeException: Unable to start activity ComponentInfo{<package-name>/<package-name>.MainActivity}: java.lang.NullPointerException
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.ActivityThread.access$800(ActivityThread.java:135)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.os.Handler.dispatchMessage(Handler.java:102)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.os.Looper.loop(Looper.java:136)
+ 02-27 13:30:26.509: E/AndroidRuntime(20480):   at android.app.ActivityThread.main(ActivityThread.java:5017)
+ 02-27 13:30:26.509: E/AndroidRuntime(20480):   at java.lang.reflect.Method.invokeNative(Native Method)
+ 02-27 13:30:26.509: E/AndroidRuntime(20480):   at java.lang.reflect.Method.invoke(Method.java:515)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at dalvik.system.NativeStart.main(Native Method)
+02-27 13:30:26.509: E/AndroidRuntime(20480): Caused by: java.lang.NullPointerException
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.Areva.areva_attendance.helper.DatabaseHelper.copyDataBase(DatabaseHelper.java:172)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.Areva.areva_attendance.helper.DatabaseHelper.createDataBase(DatabaseHelper.java:130)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.Areva.areva_attendance.helper.DatabaseHelper.<init>(DatabaseHelper.java:94)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.Areva.areva_attendance.helper.DatabaseHelper.getInstance(DatabaseHelper.java:107)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com.Areva.areva_attendance.model.Portfolio.<init>(Portfolio.java:25)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at com .Areva.areva_attendance.MainActivity.onCreate(MainActivity.java:43)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.Activity.performCreate(Activity.java:5231)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+02-27 13:30:26.509: E/AndroidRuntime(20480):    ... 11 more
+</code></pre>

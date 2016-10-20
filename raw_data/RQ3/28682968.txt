@@ -1,0 +1,107 @@
+<p>Googling for three days. Can't help myself. I have navigation drawer and fragment and everything works perfect except tabs in fragment. This is part of MainActiviti Class...</p>
+
+<pre><code>case R.id.linearLayoutHome:
+        fragment = new HomeFragment();
+        break; //this one works well
+
+case R.id.linearLayoutHome:
+        fragment = new CategoryFragment(); //error showing here
+        break; //this one doesn't work
+</code></pre>
+
+<p>Calling fragment...</p>
+
+<pre><code>FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.container, fragment).commit();
+</code></pre>
+
+<p>Home fragment which works perfect:</p>
+
+<pre><code>public class HomeFragment extends Fragment {
+public HomeFragment() {
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.fragment_home, container, false);
+    return rootView;
+     }
+
+}
+</code></pre>
+
+<p>CategoryFragment which doesn't work. I think this is because of fragment in fragment:</p>
+
+<pre><code>public class CategoriesActivity extends Fragment {
+
+SectionsPagerAdapter mSectionsPagerAdapter;
+ViewPager mViewPager;
+
+public CategoriesActivity(){
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.fragment_home, container, false);
+
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getChildFragmentManager());
+
+    mViewPager = (ViewPager) rootView.findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    return rootView;
+}
+
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        Fragment fragment = new DummySectionFragment();
+        Bundle args = new Bundle();
+        args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.title1).toUpperCase(l);
+        case 1:
+            return getString(R.string.title2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+
+public static class DummySectionFragment extends Fragment {
+
+    public static final String ARG_SECTION_NUMBER = "section_number";
+
+    public DummySectionFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_tabbed_dummy, container, false);
+        TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
+        dummyTextView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+        return rootView;
+    }
+}
+
+}
+</code></pre>
+
+<p>I need some solution. No more ideas.</p>

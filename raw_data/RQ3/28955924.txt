@@ -1,0 +1,275 @@
+<p>It took me a long time just to get my <code>ActionBar</code> tab icons in the split <code>ActionBar</code>, as well as get the tab indicator color to white. So now all I need to do is to swap the icon with a different color, when it is unselected. The selected icon (and indicator) should remain white. But how? I used the <code>Android Action Bar Style Generator</code> to make much of my tabs, so I'm a little nervous about touching my <code>styles.xml</code> (there's a ton of stuff in there already). I did an older app once where you could use a drawable state selector <code>xml</code>, but I was using <code>TabHost</code>, which is very depreciated now, so I can't use that anymore. But if you know of a simple way to use either a drawables file or something in my <code>styles.xml</code>, or maybe a click listener? I don't know, but I would love to learn. Basically the unselected icons should be light blue.</p>
+
+<p>I'm also using swipe tabs with <code>ViewPager</code>, so when I swipe, the icons unselected and selected should be their right colors.</p>
+
+<p><strong>UPDATE:</strong> Turns out I had to add code to my <code>onTabSelected()</code> and <code>onTabUnselected()</code>, then it worked like magic:</p>
+
+<pre><code> @Override
+    public void onTabSelected(ActionBar.Tab tab,
+                           android.support.v4.app.FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in the ViewPager.
+        pager.setCurrentItem(tab.getPosition());
+
+        if (tab.getPosition() ==  PHOTO_TAB)
+            photo.setIcon(R.drawable.ab_camera);
+        else if (tab.getPosition() == VIDEO_TAB)
+            video.setIcon(R.drawable.ab_video);
+        else if (tab.getPosition() == AUDIO_TAB)
+            audio.setIcon(R.drawable.ab_microphone);
+        else if (tab.getPosition() == TEXT_TAB)
+                text.setIcon(R.drawable.ab_write);
+
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab,
+                           android.support.v4.app.FragmentTransaction fragmentTransaction) {
+
+        photo.setIcon(R.drawable.ab_camera_unselected);
+        video.setIcon(R.drawable.ab_video_unselected);
+        audio.setIcon(R.drawable.ab_sounds_unselected);
+        text.setIcon(R.drawable.ab_write_unselected);
+
+    }
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/UPntd.png" alt="enter image description here"></p>
+
+<p><strong>CuteCollection.java</strong></p>
+
+<pre><code>package org.azurespot.cutecollection;
+
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBar.Tab;
+import android.support.v7.app.ActionBar.TabListener;
+import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
+
+import org.azurespot.R;
+
+/**
+ * Created by mizu on 1/26/15.
+ */
+public class CuteCollection extends ActionBarActivity implements TabListener{
+
+    private static final int PHOTO_TAB = 0;
+    private static final int VIDEO_TAB = 1;
+    private static final int AUDIO_TAB = 2;
+    private static final int TEXT_TAB = 3;
+
+    PhotoTab photoTab;
+    TextTab textTab;
+    VideoTab videoTab;
+    AudioTab audioTab;
+
+    ViewPager pager;
+
+    TabsAdapter tabsAdapter = new TabsAdapter(getSupportFragmentManager());
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_cute_collection);
+
+        // Instantiate tabs
+        photoTab = new PhotoTab();
+        textTab = new TextTab();
+        videoTab = new VideoTab();
+        audioTab = new AudioTab();
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        getSupportActionBar().setStackedBackgroundDrawable
+                (new ColorDrawable(Color.parseColor("#7e8287")));
+
+        // Specify that we will be displaying tabs in the action bar.
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Shows the up carat near app icon in ActionBar
+        getSupportActionBar().setDisplayUseLogoEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Initialize the ViewPager and set an adapter
+        pager = (ViewPager) findViewById(R.id.viewpager);
+        pager.setAdapter(tabsAdapter);
+        pager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                // When swiping between different app sections, select the corresponding tab.
+                // We can also use ActionBar.Tab#select() to do this if we have a reference to the
+                // Tab.
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        Tab photo = getSupportActionBar().newTab().setIcon(R.drawable.ab_camera).setTabListener(this);
+        Tab video = getSupportActionBar().newTab().setIcon(R.drawable.ab_video).setTabListener(this);
+        Tab audio = getSupportActionBar().newTab().setIcon(R.drawable.ab_microphone).setTabListener(this);
+        Tab text = getSupportActionBar().newTab().setIcon(R.drawable.ab_write).setTabListener(this);
+
+        getSupportActionBar().addTab(photo);
+        getSupportActionBar().addTab(video);
+        getSupportActionBar().addTab(audio);
+        getSupportActionBar().addTab(text);
+    }
+
+    // Next 3 methods are mandatory for interface
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in the ViewPager.
+        pager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction fragmentTransaction) {
+
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction fragmentTransaction) {
+
+    }
+
+    private class TabsAdapter extends FragmentPagerAdapter {
+
+        public TabsAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        /**
+         * @return the number of pages (tabs) to display
+         */
+        @Override
+        public int getCount() {
+            return 4;
+        }
+
+//        @Override
+//        public CharSequence getPageTitle(int position) {
+//            switch (position) {
+//                case 0:
+//                    return "Photos";
+//                case 1:
+//                    return "Videos";
+//                case 2:
+//                    return "Sounds";
+//                case 3:
+//                    return "Poems";
+//            }
+//
+//            return null;
+//        }
+
+        @Override
+        public Fragment getItem(int position) {
+
+            switch(position){
+                case PHOTO_TAB:
+                    return photoTab;
+                case VIDEO_TAB :
+                    return videoTab;
+                case AUDIO_TAB:
+                    return audioTab;
+                case TEXT_TAB:
+                    return textTab;
+                default:
+                    return null;
+            }
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Makes the UP caret go back to the previous fragment MakeCuteHome
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                android.app.FragmentManager fm= getFragmentManager();
+                fm.popBackStack();
+                finish();
+
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>
+
+<p><strong>styles.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Tabs" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="actionBarItemBackground">@drawable/selectable_background_tabs</item>
+        <item name="popupMenuStyle">@style/PopupMenu.Tabs</item>
+        <item name="dropDownListViewStyle">@style/DropDownListView.Tabs</item>
+        <item name="actionBarTabStyle">@style/ActionBarTabStyle.Tabs</item>
+        <item name="actionDropDownStyle">@style/DropDownNav.Tabs</item>
+        <item name="actionBarStyle">@style/ActionBar.Solid.Tabs</item>
+        <item name="actionModeBackground">@drawable/cab_background_top_tabs</item>
+        <item name="actionModeSplitBackground">@drawable/cab_background_bottom_tabs</item>
+        <item name="actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Tabs</item>
+
+        <!-- Light.DarkActionBar specific -->
+        <item name="actionBarWidgetTheme">@style/Theme.Tabs.Widget</item>
+
+    </style>
+
+    <style name="ActionBar.Solid.Tabs" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="background">@drawable/ab_solid_tabs</item>
+        <item name="backgroundStacked">@drawable/ab_stacked_solid_tabs</item>
+        <item name="backgroundSplit">@drawable/ab_bottom_solid_tabs</item>
+        <item name="progressBarStyle">@style/ProgressBar.Tabs</item>
+
+    </style>
+
+    <style name="ActionBar.Transparent.Tabs" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="background">@drawable/ab_transparent_tabs</item>
+        <item name="progressBarStyle">@style/ProgressBar.Tabs</item>
+
+    </style>
+
+    <style name="PopupMenu.Tabs" parent="@style/Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/menu_dropdown_panel_tabs</item>
+    </style>
+
+    <style name="DropDownListView.Tabs" parent="@style/Widget.AppCompat.ListView.DropDown">
+        <item name="android:listSelector">@drawable/selectable_background_tabs</item>
+    </style>
+
+    <style name="ActionBarTabStyle.Tabs" parent="@style/Widget.AppCompat.ActionBar.TabView">
+        <item name="android:background">@drawable/tab_indicator_ab_tabs</item>
+    </style>
+
+    <style name="DropDownNav.Tabs" parent="@style/Widget.AppCompat.Spinner.DropDown.ActionBar">
+        <item name="android:background">@drawable/spinner_background_ab_tabs</item>
+        <item name="android:popupBackground">@drawable/menu_dropdown_panel_tabs</item>
+        <item name="android:dropDownSelector">@drawable/selectable_background_tabs</item>
+    </style>
+
+    <style name="ProgressBar.Tabs" parent="@style/Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:progressDrawable">@drawable/progress_horizontal_tabs</item>
+    </style>
+
+    <style name="ActionButton.CloseMode.Tabs" parent="@style/Widget.AppCompat.ActionButton.CloseMode">
+        <item name="android:background">@drawable/btn_cab_done_tabs</item>
+    </style>
+
+    <!-- this style is only referenced in a Light.DarkActionBar based theme -->
+    <style name="Theme.Tabs.Widget" parent="@style/Theme.AppCompat">
+        <item name="popupMenuStyle">@style/PopupMenu.Tabs</item>
+        <item name="dropDownListViewStyle">@style/DropDownListView.Tabs</item>
+    </style>
+
+</resources>
+</code></pre>

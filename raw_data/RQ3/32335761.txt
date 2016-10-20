@@ -1,0 +1,156 @@
+<p>I'm trying to extend a <code>MultiAutoCompleteTextView</code> self including all the logic for <code>tokenizer</code> and a <strong>CustomAdapter</strong>, here called <code>MentionsArrayAdapter</code>.</p>
+
+<p>This is all my java code:</p>
+
+<pre><code>class SocialEditText extends MultiAutoCompleteTextView {
+
+    // private String[] mentions = {"@taffy"};
+
+    private boolean hashtagsEnabled;
+    static MentionsArrayAdapter adapter;
+    static List<ItemMentionsList> list;
+
+    public SocialEditText(Context context) {
+        super(context);
+    }
+
+    public SocialEditText(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    private void init() {
+
+        list = new LinkedList<>();
+        ItemMentionsList listItem = new ItemMentionsList("@taffy");
+        list.add(listItem);
+
+        setTokenizer(new SocialTokenizer());
+
+        this.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() - 1 >= 0 && s.charAt(s.length() - 1) == '@') {
+                    adapter = new MentionsArrayAdapter(getContext(), R.layout.item_mentions_list, list);
+                    setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+
+                    Log.e(null, adapter.getItem(0).getName());
+                }
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        setThreshold(1);
+    }
+
+}
+
+class SocialTokenizer implements MultiAutoCompleteTextView.Tokenizer {
+
+    @Override
+    public int findTokenStart(CharSequence text, int cursor) {
+
+        int i = cursor;
+        while (i > 0 && text.charAt(i - 1) != '@') {
+            i--;
+        }
+        if (i > 0) {
+            return i - 1;
+        } else {
+            return i;
+        }
+    }
+
+    @Override
+    public int findTokenEnd(CharSequence text, int cursor) {
+
+        int i = cursor;
+        int len = text.length();
+        while (i < len) {
+            if (text.charAt(i) == '@') {
+                return i;
+            } else {
+                i++;
+            }
+        }
+        return len;
+    }
+
+    @Override
+    public CharSequence terminateToken(CharSequence text) {
+        return text.toString();
+    }
+}
+
+
+class MentionsArrayAdapter extends ArrayAdapter<ItemMentionsList> {
+
+    MentionsArrayAdapter(Context context, int textViewResourceId, List<ItemMentionsList> objects) {
+        super(context, textViewResourceId, objects);
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        if (convertView == null) {
+            LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.item_mentions_list, parent, false);
+        }
+        TextView textViewItem = (TextView) convertView.findViewById(R.id.name);
+        final ItemMentionsList itemMentionsList = getItem(position);
+        textViewItem.setText(itemMentionsList.getName());
+
+        return convertView;
+    }
+}
+
+class ItemMentionsList {
+
+    private String name;
+
+    ItemMentionsList(String name) {
+    this.name = name;
+    }
+
+    String getName() {
+        return name;
+    }
+
+}
+</code></pre>
+
+<p>and this is the <code>item_mentions_list.xml</code> for the single item:</p>
+
+<pre><code><TextView
+    android:id="@+id/name"
+    style="?android:attr/dropDownItemStyle"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:ellipsize="marquee"
+    android:singleLine="true"
+    android:textAppearance="?android:attr/textAppearanceLargePopupMenu"/>
+</code></pre>
+
+<p>so, the <code>list</code> is correctly populated, when I type <em>@</em> I can see the word <em>@taffy</em> in the Log, but nothing is show on video and no errors are throws.</p>
+
+<p>If I remove the CustomAdapter and use the standard adapter:</p>
+
+<pre><code>ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
+             android.R.layout.simple_dropdown_item_1line, mentions);
+</code></pre>
+
+<p>where <code>mentions</code> is the commented <code>String[]</code> in the main code, all works well.</p>
+
+<p>Where's my error? Thanks.</p>

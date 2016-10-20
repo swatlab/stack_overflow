@@ -1,0 +1,432 @@
+<p>I want to make use of a tabbed activity to scroll between a accelerometer data tab and a log tab. I have a java fragment that inflates the accelerometer layout and also calls the accelerometer class to display info on the layout. </p>
+
+<p>Both activities seem to start at the same time because the app starts with the accelerometer activity and when the back button is pressed it goes to the tabbed activity. Is the problem in my manifest? (Most of project files included)</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="nrtj.sleeptracker" >
+
+<application
+    android:allowBackup="true"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+
+    <activity android:name=".AccelerometerActivity"
+        android:label="@string/app_name">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW"/>
+        </intent-filter>
+    </activity>
+</application>
+
+</manifest>
+</code></pre>
+
+<p>Here is the Fragment that calls for the accelerometer layout and activity:</p>
+
+<pre><code>public class AccelerometerFragment extends Fragment {
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.activity_accelerometer, container, false);
+    return rootView;
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    Intent intent = new Intent(getActivity(), AccelerometerActivity.class);
+    startActivity(intent);
+}
+}
+</code></pre>
+
+<p>Here is the accelerometer layout:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical" >
+
+<TextView
+    android:id="@+id/x_axis_Text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ems="10"
+    android:inputType="none"
+    android:paddingLeft="50dp"
+    android:textColor="#0000FF"
+    android:background="#FFFFFF"
+    android:text="@string/x_axis_title"
+    android:textSize="@android:dimen/notification_large_icon_height" />
+
+<TextView
+    android:id="@+id/y_axis_Text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ems="10"
+    android:inputType="none"
+    android:paddingLeft="50dp"
+    android:textColor="#008800"
+    android:background="#FFFFFF"
+    android:text="@string/y_axis_title"
+    android:textSize="@android:dimen/notification_large_icon_height" />
+
+<TextView
+    android:id="@+id/z_axis_Text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ems="10"
+    android:inputType="none"
+    android:paddingLeft="50dp"
+    android:textColor="#FF0000"
+    android:background="#FFFFFF"
+    android:text="@string/z_axis_title"
+    android:textSize="@android:dimen/notification_large_icon_height" />
+
+<com.androidplot.xy.XYPlot
+    android:id="@+id/dynamicPlot"
+    android:layout_width="fill_parent"
+    android:layout_height="0dp"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp"
+    android:background="#FFFFFF"
+    android:layout_weight="0.62"
+    title="@string/dynamic_plot" />
+
+</LinearLayout>
+</code></pre>
+
+<p>Here is the accelerometer activity (It gets data from Pebble Watch):</p>
+
+<pre><code>public class AccelerometerActivity extends Activity {
+
+private static final String TAG = "SleepTracker";
+
+// The tuple key corresponding to a vector received from the watch
+private static final int PP_KEY_CMD = 128;
+private static final int PP_KEY_X   = 1;
+private static final int PP_KEY_Y   = 2;
+private static final int PP_KEY_Z   = 3;
+
+@SuppressWarnings("unused")
+private static final int PP_CMD_INVALID = 0;
+private static final int PP_CMD_VECTOR  = 1;
+
+public static final int VECTOR_INDEX_X  = 0;
+public static final int VECTOR_INDEX_Y  = 1;
+public static final int VECTOR_INDEX_Z  = 2;
+
+private static int vector[] = new int[3];
+
+private PebbleKit.PebbleDataReceiver dataReceiver;
+
+// This UUID identifies the SleepTracker app.
+private static final UUID SLEEPTRACKER_UUID = UUID.fromString("273761eb-97dc-4f08-b353-3384a2170902");
+
+private static final int SAMPLE_SIZE = 30;
+
+private XYPlot xyPlot = null;
+
+SimpleXYSeries xSeries = null;
+SimpleXYSeries ySeries = null;
+SimpleXYSeries zSeries = null;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    Log.i(TAG, "onCreate: ");
+
+    setContentView(R.layout.activity_accelerometer);
+
+    vector[VECTOR_INDEX_X] = 0;
+    vector[VECTOR_INDEX_Y] = 0;
+    vector[VECTOR_INDEX_Z] = 0;
+
+    PebbleKit.startAppOnPebble(getApplicationContext(), SLEEPTRACKER_UUID);
+
+
+    xyPlot = (XYPlot) findViewById(R.id.dynamicPlot);
+
+
+    xyPlot.getGraphWidget().getBackgroundPaint().setColor(Color.WHITE);
+    xyPlot.getGraphWidget().getGridBackgroundPaint().setColor(Color.WHITE);
+
+    xyPlot.getGraphWidget().setDomainValueFormat(new DecimalFormat("0.0"));
+    xyPlot.getGraphWidget().setRangeValueFormat(new DecimalFormat("0"));
+
+    xyPlot.getGraphWidget().getDomainLabelPaint().setColor(Color.BLACK);
+    xyPlot.getGraphWidget().getRangeLabelPaint().setColor(Color.BLACK);
+
+    xyPlot.getGraphWidget().getDomainOriginLabelPaint().setColor(Color.BLACK);
+    xyPlot.getGraphWidget().getDomainOriginLinePaint().setColor(Color.BLACK);
+    xyPlot.getGraphWidget().getRangeOriginLinePaint().setColor(Color.BLACK);
+
+    xyPlot.setTicksPerDomainLabel(1);
+    xyPlot.setTicksPerRangeLabel(1);
+
+    xyPlot.getGraphWidget().getDomainLabelPaint().setTextSize(30);
+    xyPlot.getGraphWidget().getRangeLabelPaint().setTextSize(30);
+
+    xyPlot.getGraphWidget().setDomainLabelWidth(40);
+    xyPlot.getGraphWidget().setRangeLabelWidth(80);
+
+    xyPlot.setDomainLabel("time");
+    xyPlot.getDomainLabelWidget().pack();
+
+    xyPlot.setRangeLabel("G-force");
+    xyPlot.getRangeLabelWidget().pack();
+
+    xyPlot.setRangeBoundaries(-1024, 1024, BoundaryMode.FIXED);
+    xyPlot.setDomainBoundaries(0, SAMPLE_SIZE, BoundaryMode.FIXED);
+
+
+    xSeries = new SimpleXYSeries("X-axis");
+    xSeries.useImplicitXVals();
+
+    ySeries = new SimpleXYSeries("Y-axis");
+    ySeries.useImplicitXVals();
+
+    zSeries = new SimpleXYSeries("Z-axis");
+    zSeries.useImplicitXVals();
+
+    // Blue line for X axis.
+    LineAndPointFormatter fmtX = new LineAndPointFormatter(Color.BLUE, null, null, null);
+    xyPlot.addSeries(xSeries, fmtX);
+
+    // Green line for Y axis.
+    LineAndPointFormatter fmtY = new LineAndPointFormatter(Color.GREEN, null, null, null);
+    xyPlot.addSeries(ySeries, fmtY);
+
+    // Red line for Z axis.
+    LineAndPointFormatter fmtZ = new LineAndPointFormatter(Color.RED, null, null, null);
+    xyPlot.addSeries(zSeries, fmtZ);
+}
+
+@Override
+public void onPause() {
+    super.onPause();
+
+    Log.i(TAG, "onPause: ");
+
+    setContentView(R.layout.activity_accelerometer);
+
+    if (dataReceiver != null) {
+        unregisterReceiver(dataReceiver);
+        dataReceiver = null;
+    }
+    PebbleKit.closeAppOnPebble(getApplicationContext(), SLEEPTRACKER_UUID);
+}
+
+@Override
+public void onResume() {
+    super.onResume();
+
+    Log.i(TAG, "onResume: ");
+
+    final Handler handler = new Handler();
+
+    dataReceiver = new PebbleKit.PebbleDataReceiver(SLEEPTRACKER_UUID) {
+
+        @Override
+        public void receiveData(final Context context, final int transactionId, final PebbleDictionary dict) {
+
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+
+                    PebbleKit.sendAckToPebble(context, transactionId);
+
+                    final Long cmdValue = dict.getInteger(PP_KEY_CMD);
+                    if (cmdValue == null) {
+                        return;
+                    }
+
+                    if (cmdValue.intValue() == PP_CMD_VECTOR) {
+
+                        // Capture the received vector.
+                        final Long xValue = dict.getInteger(PP_KEY_X);
+                        if (xValue != null) {
+                            vector[VECTOR_INDEX_X] = xValue.intValue();
+                        }
+
+                        final Long yValue = dict.getInteger(PP_KEY_Y);
+                        if (yValue != null) {
+                            vector[VECTOR_INDEX_Y] = yValue.intValue();
+                        }
+
+                        final Long zValue = dict.getInteger(PP_KEY_Z);
+                        if (zValue != null) {
+                            vector[VECTOR_INDEX_Z] = zValue.intValue();
+                        }
+
+                        // Update the user interface.
+                        updateUI();
+                    }
+                }
+            });
+        }
+    };
+
+    PebbleKit.registerReceivedDataHandler(this, dataReceiver);
+}
+
+public void updateUI() {
+
+    final String x = String.format(Locale.getDefault(), "X: %d", vector[VECTOR_INDEX_X]);
+    final String y = String.format(Locale.getDefault(), "Y: %d", vector[VECTOR_INDEX_Y]);
+    final String z = String.format(Locale.getDefault(), "Z: %d", vector[VECTOR_INDEX_Z]);
+
+    // Update the numerical fields
+
+    TextView x_axis_tv = (TextView) findViewById(R.id.x_axis_Text);
+    x_axis_tv.setText(x);
+
+    TextView y_axis_tv = (TextView) findViewById(R.id.y_axis_Text);
+    y_axis_tv.setText(y);
+
+    TextView z_axis_tv = (TextView) findViewById(R.id.z_axis_Text);
+    z_axis_tv.setText(z);
+
+    // Update the Plot
+
+    // Remove oldest vector data.
+    if (xSeries.size() > SAMPLE_SIZE) {
+        xSeries.removeFirst();
+        ySeries.removeFirst();
+        zSeries.removeFirst();
+    }
+
+    // Add the latest vector data.
+    xSeries.addLast(null, vector[VECTOR_INDEX_X]);
+    ySeries.addLast(null, vector[VECTOR_INDEX_Y]);
+    zSeries.addLast(null, vector[VECTOR_INDEX_Z]);
+
+    // Redraw the Plots.
+    xyPlot.redraw();
+}
+
+}
+</code></pre>
+
+<p>And here is the MainActivity:</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+/**
+ * The {@link android.support.v4.view.PagerAdapter} that will provide
+ * fragments for each of the sections. We use a
+ * {@link FragmentPagerAdapter} derivative, which will keep every
+ * loaded fragment in memory. If this becomes too memory intensive, it
+ * may be best to switch to a
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+ */
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+/**
+ * The {@link ViewPager} that will host the section contents.
+ */
+ViewPager mViewPager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+
+        Fragment fragment =  null;
+
+        if(position == 0){
+            fragment = new LogFragment();
+        }
+        if(position == 1){
+            fragment = new AccelerometerFragment();
+        }
+
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 2 total pages.
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+}
+</code></pre>
+
+<p>Any assistance will be appreciated!</p>

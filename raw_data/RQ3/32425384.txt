@@ -1,0 +1,338 @@
+<p>I am using this lib: <a href="https://github.com/florent37/MaterialViewPager" rel="nofollow">https://github.com/florent37/MaterialViewPager</a></p>
+
+<p>I have a Navigation Drawer , and if I click on one of the items in list in navdrawer the  Material View Pager loads up. ( replaces the fragment ).</p>
+
+<p>But I get this error there: (</p>
+
+<pre><code>        Recursive entry to executePendingTransactions
+        at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1534)
+        at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:535)
+        at android.support.v4.app.FragmentStatePagerAdapter.finishUpdate(FragmentStatePagerAdapter.java:163)
+        at android.support.v4.view.ViewPager.populate(ViewPager.java:1106)
+        at android.support.v4.view.ViewPager.populate(ViewPager.java:952)
+        at android.support.v4.view.ViewPager.setOffscreenPageLimit(ViewPager.java:733)
+        at razor.nikhil.mvp.MaterialVPFrag.onViewCreated(MaterialVPFrag.java:130)
+        at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1035)
+        at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1197)
+        at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:738)
+        at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1562)
+        at android.support.v4.app.FragmentManagerImpl$1.run(FragmentManager.java:483)
+        at android.os.Handler.handleCallback(Handler.java:739)
+        at android.os.Handler.dispatchMessage(Handler.java:95)
+        at android.os.Looper.loop(Looper.java:135)
+        at android.app.ActivityThread.main(ActivityThread.java:5254)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:372)
+        at  com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:903)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:698)
+
+
+)
+</code></pre>
+
+<p>on this line : </p>
+
+<pre><code>  mViewPager.getViewPager().setOffscreenPageLimit(mViewPager.getViewPager().getAdapter().getCount());
+</code></pre>
+
+<p>If I remove that line it works (but can that give me a error in future ?)
+I got this error some times when I navigate through tabs.
+(</p>
+
+<pre><code>   java.lang.IndexOutOfBoundsException: Inconsistency detected. Invalid view holder adapter positionViewHolder{26fe4ecd position=6 id=-1, oldPos=-1, pLpos:-1 no parent}
+    at android.support.v7.widget.RecyclerView$Recycler.validateViewHolderForOffsetPosition(RecyclerView.java:4349)
+    at android.support.v7.widget.RecyclerView$Recycler.getViewForPosition(RecyclerView.java:4480)
+    at android.support.v7.widget.RecyclerView$Recycler.getViewForPosition(RecyclerView.java:4461)
+    at android.support.v7.widget.LinearLayoutManager$LayoutState.next(LinearLayoutManager.java:1962)
+    at android.support.v7.widget.LinearLayoutManager.layoutChunk(LinearLayoutManager.java:1371)
+    at android.support.v7.widget.LinearLayoutManager.fill(LinearLayoutManager.java:1334)
+    at android.support.v7.widget.LinearLayoutManager.scrollBy(LinearLayoutManager.java:1162)
+    at android.support.v7.widget.LinearLayoutManager.scrollVerticallyBy(LinearLayoutManager.java:1019)
+    at android.support.v7.widget.RecyclerView$ViewFlinger.run(RecyclerView.java:3912)
+    at android.view.Choreographer$CallbackRecord.run(Choreographer.java:767)
+    at android.view.Choreographer.doCallbacks(Choreographer.java:580)
+    at android.view.Choreographer.doFrame(Choreographer.java:549)
+    at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:753)
+    at android.os.Handler.handleCallback(Handler.java:739)
+    at android.os.Handler.dispatchMessage(Handler.java:95)
+    at android.os.Looper.loop(Looper.java:135)
+    at android.app.ActivityThread.main(ActivityThread.java:5254)
+    at java.lang.reflect.Method.invoke(Native Method)
+    at java.lang.reflect.Method.invoke(Method.java:372)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:903)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:698)   )
+</code></pre>
+
+<p>Is this error because of that line?</p>
+
+<p>MaterialVPFrag.java (fragment with materialviewpager )</p>
+
+<pre><code>public class MaterialVPFrag extends Fragment {
+private MaterialViewPager mViewPager;
+List<Model_Daywise> todayslist_m;
+List<Model_Daywise> todayslist_t;
+List<Model_Daywise> todayslist_w;
+List<Model_Daywise> todayslist_th;
+List<Model_Daywise> todayslist_fr;
+
+public static MaterialVPFrag newInstance() {
+    return new MaterialVPFrag();
+}
+
+@Nullable
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    return inflater.inflate(R.layout.mvp_layout, container, false);
+}
+
+@Override
+public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+    todayslist_m = new MTWTHgetset(getActivity(), "monday").getAllCredentials();//getting data from SQL
+    todayslist_t = new MTWTHgetset(getActivity(), "tuesday").getAllCredentials();
+    todayslist_w = new MTWTHgetset(getActivity(), "wednesday").getAllCredentials();
+    todayslist_th = new MTWTHgetset(getActivity(), "thursday").getAllCredentials();
+    todayslist_fr = new MTWTHgetset(getActivity(), "friday").getAllCredentials();
+    mViewPager = (MaterialViewPager) view.findViewById(R.id.materialViewPager);
+    mViewPager.getViewPager().setAdapter(new FragmentStatePagerAdapter(getActivity().getSupportFragmentManager()) {
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    return RecyclerViewFragment.newInstance(todayslist_m);
+                case 1:
+                    return RecyclerViewFragment.newInstance(todayslist_t);
+                case 2:
+                    return RecyclerViewFragment.newInstance(todayslist_w);
+                case 3:
+                    return RecyclerViewFragment.newInstance(todayslist_th);
+                case 4:
+                    return RecyclerViewFragment.newInstance(todayslist_fr);
+                // return WebViewFragment.newInstance();
+                default:
+                    return RecyclerViewFragment.newInstance(todayslist_m);
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return 5;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return "Monday";
+                case 1:
+                    return "Tuesday";
+                case 2:
+                    return "Wednesday";
+                case 3:
+                    return "Thursday";
+                case 4:
+                    return "Friday";
+            }
+            return "";
+        }
+    });
+    mViewPager.setMaterialViewPagerListener(new MaterialViewPager.Listener() {
+        @Override
+        public HeaderDesign getHeaderDesign(int page) {
+            switch (page) {
+                case 0:
+                    return HeaderDesign.fromColorResAndUrl(
+                            R.color.green,
+                            "https://fs01.androidpit.info/a/63/0e/android-l-wallpapers-630ea6-h900.jpg");
+                case 1:
+                    return HeaderDesign.fromColorResAndUrl(
+                            R.color.blue,
+                            "http://cdn1.tnwcdn.com/wp-content/blogs.dir/1/files/2014/06/wallpaper_51.jpg");
+                case 2:
+                    return HeaderDesign.fromColorResAndUrl(
+                            R.color.cyan,
+                            "http://www.droid-life.com/wp-content/uploads/2014/10/lollipop-wallpapers10.jpg");
+                case 3:
+                    return HeaderDesign.fromColorResAndUrl(
+                            R.color.red,
+                            "http://www.tothemobile.com/wp-content/uploads/2014/07/original.jpg");
+            }
+
+            //execute others actions if needed (ex : modify your header logo)
+
+            return null;
+        }
+    });
+
+      mViewPager.getViewPager().setOffscreenPageLimit(mViewPager.getViewPager().getAdapter().getCount());
+    mViewPager.getPagerTitleStrip().setViewPager(mViewPager.getViewPager());
+
+    View logo = view.findViewById(R.id.logo_white);
+    if (logo != null)
+        logo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mViewPager.notifyHeaderChanged();
+                Toast.makeText(getActivity(), "Yes, the title is clickable", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+}
+}
+</code></pre>
+
+<p>DrawerActivity.java (Class with NavDrawer)</p>
+
+<pre><code>  public class DrawerActivity extends ActionBarActivity {
+
+Toolbar t;
+private DrawerLayout mDrawerLayout;
+private ListView mDrawerList;
+private RelativeLayout mRelativeLayout;
+private ActionBarDrawerToggle mDrawerToggle;
+static List<Model_Slots> list;
+private CharSequence mDrawerTitle, mTitle;
+private String[] navMenuItems;
+private SpannableString[] navmenuItems;
+private ArrayAdapter<SpannableString> adapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_drawer);
+
+    try {
+        list = new Slots_GetSet(this).getAllCredentials();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    initStuffs();
+    if (savedInstanceState == null) {
+        new SliderMenuClickListener().displayView(0);
+    }
+
+}
+
+
+private void initStuffs() {
+    mTitle = mDrawerTitle = getTitle();
+    navMenuItems = getResources().getStringArray(R.array.Titles);
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
+    mRelativeLayout = (RelativeLayout) findViewById(R.id.rel_drawer);
+
+    navmenuItems = new SpannableString[navMenuItems.length];
+    for (int i = 0; i < navMenuItems.length; i++) {
+        navmenuItems[i] = new SpannableString(Html.fromHtml("<font color='#000000'>" + navMenuItems[i] + "</font>"));
+    }
+    adapter = new ArrayAdapter<SpannableString>(DrawerActivity.this, android.R.layout.simple_list_item_1, navmenuItems);
+    mDrawerList.setAdapter(adapter);
+
+    mDrawerToggle = new ActionBarDrawerToggle(DrawerActivity.this, mDrawerLayout, t, R.string.app_name, R.string.app_name) {
+        public void onDrawerClosed(View view) {
+            invalidateOptionsMenu();
+        }
+
+        public void onDrawerOpened(View view) {
+            invalidateOptionsMenu();
+        }
+    };
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+    mDrawerList.setOnItemClickListener(new SliderMenuClickListener());
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.drawer, menu);
+    return true;
+}
+
+@Override
+public boolean onPrepareOptionsMenu(Menu menu) {
+    boolean drawerOpen = mDrawerLayout.isDrawerOpen(mRelativeLayout);
+    menu.findItem(R.id.action_settings).setVisible(!drawerOpen);
+    return super.onPrepareOptionsMenu(menu);
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    mDrawerToggle.syncState();
+}
+
+@Override
+public void setTitle(CharSequence title) {
+    super.setTitle(title);
+    mTitle = title;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+
+private class SliderMenuClickListener implements ListView.OnItemClickListener {
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        displayView(position);
+    }
+
+    private void displayView(int position) {
+        Fragment fragment = null;
+        switch (position) {
+            case 0:
+                String s = getSharedPreferences("Apple", Context.MODE_PRIVATE).getString("slots_down", "no");
+                if (s.equals("already")) {
+                    fragment = new Fragment_slots(list);
+                } else if (s.equals("yes")) {
+                    list = new Slots_GetSet(getApplicationContext()).getAllCredentials();
+                    fragment = new Fragment_slots(list);
+                } else if (s.equals("no")) {
+                    fragment = new HomeFragment();
+                }
+                break;
+            case 1:
+                fragment = new Photo_StudentLogin();
+                break;
+            case 2:
+                fragment = new HomeFragment();
+                break;
+            case 3:
+                fragment = MaterialVPFrag.newInstance();
+                break;
+            default:
+                fragment = new HomeFragment();
+                break;
+        }
+        if (fragment != null) {
+            FragmentManager fm = getSupportFragmentManager();
+            fm.beginTransaction().replace(R.id.frame_container, fragment).commit();
+            mDrawerList.setItemChecked(position, true);
+            mDrawerList.setSelection(position);
+            mDrawerLayout.closeDrawer(mRelativeLayout);
+        } else {
+            Log.e("DrawerActivity", "Error creating fragment");
+        }
+    }
+
+}
+ }
+</code></pre>
+
+<p>Thanks!</p>

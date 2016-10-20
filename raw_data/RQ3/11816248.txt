@@ -1,0 +1,147 @@
+<p>Hello i have the problem.</p>
+
+<p>LogCat giving me some errors.</p>
+
+<p>LogCat:</p>
+
+<pre><code>08-05 11:42:30.222: E/AndroidRuntime(623): FATAL EXCEPTION: main
+08-05 11:42:30.222: E/AndroidRuntime(623): java.lang.NullPointerException
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.text.format.DateFormat.is24HourFormat(DateFormat.java:204)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.Alarms.get24HourMode(Alarms.java:536)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.DigitalClock.setDateFormat(DigitalClock.java:192)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.DigitalClock.onFinishInflate(DigitalClock.java:121)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.LayoutInflater.rInflate(LayoutInflater.java:631)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.LayoutInflater.rInflate(LayoutInflater.java:626)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.LayoutInflater.inflate(LayoutInflater.java:408)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.LayoutInflater.inflate(LayoutInflater.java:320)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.AlarmClock$AlarmTimeAdapter.newView(AlarmClock.java:96)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.CursorAdapter.getView(CursorAdapter.java:182)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.AbsListView.obtainView(AbsListView.java:1430)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.ListView.measureHeightOfChildren(ListView.java:1216)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.ListView.onMeasure(ListView.java:1127)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.View.measure(View.java:8313)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:3138)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1017)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.LinearLayout.measureVertical(LinearLayout.java:386)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.LinearLayout.onMeasure(LinearLayout.java:309)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.View.measure(View.java:8313)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:3138)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.FrameLayout.onMeasure(FrameLayout.java:250)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.View.measure(View.java:8313)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.LinearLayout.measureVertical(LinearLayout.java:531)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.LinearLayout.onMeasure(LinearLayout.java:309)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.View.measure(View.java:8313)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:3138)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.widget.FrameLayout.onMeasure(FrameLayout.java:250)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.View.measure(View.java:8313)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.ViewRoot.performTraversals(ViewRoot.java:839)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.view.ViewRoot.handleMessage(ViewRoot.java:1859)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.os.Handler.dispatchMessage(Handler.java:99)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.os.Looper.loop(Looper.java:123)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at android.app.ActivityThread.main(ActivityThread.java:3683)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at java.lang.reflect.Method.invokeNative(Native Method)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at java.lang.reflect.Method.invoke(Method.java:507)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>A bit of code ( where there are errors )</p>
+
+<p>LogCat:</p>
+
+<pre><code>08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.Alarms.get24HourMode(Alarms.java:536)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.DigitalClock.setDateFormat(DigitalClock.java:192)
+08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.DigitalClock.onFinishInflate(DigitalClock.java:121)
+</code></pre>
+
+<p>Code:</p>
+
+<pre><code>static Calendar calculateAlarm(int hour, int minute, Alarm.DaysOfWeek daysOfWeek) {
+
+    // start with now
+Calendar c = Calendar.getInstance();
+c.setTimeInMillis(System.currentTimeMillis());
+
+int nowHour = c.get(Calendar.HOUR_OF_DAY);
+int nowMinute = c.get(Calendar.MINUTE);
+
+// if alarm is behind current time, advance one day
+if (hour < nowHour  ||
+    hour == nowHour && minute <= nowMinute) {
+    c.add(Calendar.DAY_OF_YEAR, 1);
+}
+c.set(Calendar.HOUR_OF_DAY, hour);
+c.set(Calendar.MINUTE, minute);
+c.set(Calendar.SECOND, 0);
+c.set(Calendar.MILLISECOND, 0);
+
+int addDays = daysOfWeek.getNextAlarm(c);
+/* Log.v("** TIMES * " + c.getTimeInMillis() + " hour " + hour +
+   " minute " + minute + " dow " + c.get(Calendar.DAY_OF_WEEK) + " from now " +
+   addDays); */
+if (addDays > 0) c.add(Calendar.DAY_OF_WEEK, addDays);
+    return c;
+}
+
+static String formatTime(final Context context, int hour, int minute,
+                         Alarm.DaysOfWeek daysOfWeek) {
+    Calendar c = calculateAlarm(hour, minute, daysOfWeek);
+    return formatTime(context, c);
+}
+
+/* used by AlarmAlert */
+static String formatTime(final Context context, Calendar c) {
+    String format = get24HourMode(context) ? M24 : M12;
+    return (c == null) ? "" : (String)DateFormat.format(format, c);
+}
+
+/**
+ * Shows day and time -- used for lock screen
+ */
+private static String formatDayAndTime(final Context context, Calendar c) {
+    String format = get24HourMode(context) ? DM24 : DM12;
+    return (c == null) ? "" : (String)DateFormat.format(format, c);
+}
+
+/**
+ * Save time of the next alarm, as a formatted string, into the system
+ * settings so those who care can make use of it.
+ */
+static void saveNextAlarm(final Context context, String timeString) {
+    Settings.System.putString(context.getContentResolver(),
+                              Settings.System.NEXT_ALARM_FORMATTED,
+                              timeString);
+}
+
+/**
+ * @return true if clock is set to 24-hour mode
+ */
+static boolean get24HourMode(final Context context) {
+    return android.text.format.DateFormat.is24HourFormat(context);
+}
+</code></pre>
+
+<p>Next:</p>
+
+<p>LogCat:</p>
+
+<pre><code>08-05 11:42:30.222: E/AndroidRuntime(623):  at com.android.alarmclock.AlarmClock$AlarmTimeAdapter.newView(AlarmClock.java:96)
+</code></pre>
+
+<p>Code:</p>
+
+<pre><code>public View newView(Context context, Cursor cursor, ViewGroup parent) {
+    View ret = mFactory.inflate(R.layout.alarm_time, parent, false);
+
+    ((TextView) ret.findViewById(R.id.am)).setText(mAm);
+    ((TextView) ret.findViewById(R.id.pm)).setText(mPm);
+
+    DigitalClock digitalClock =
+            (DigitalClock) ret.findViewById(R.id.digitalClock);
+    digitalClock.setLive(false);
+    return ret;
+}
+</code></pre>
+
+<p>Project: <a href="https://github.com/android/platform_packages_apps_alarmclock" rel="nofollow">https://github.com/android/platform_packages_apps_alarmclock</a> Apache 2.0</p>

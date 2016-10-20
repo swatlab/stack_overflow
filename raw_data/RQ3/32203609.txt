@@ -1,0 +1,292 @@
+<p>I made an InfoscreenActivity which brings up an "Settings/About" page in my app (with app version info, licenses, contact, setup and back-up options). The items on that page are generated in a ListView using a custom ArrayAdapter called InfoscreenAdapter.</p>
+
+<p>Here are the relevant classes and xml layout files.</p>
+
+<p>The Activity InfoscreenActivity:</p>
+
+<pre><code>public class InfoscreenActivity extends ActionBarActivity {
+    private static final String TAG = "InfoscreenActivity";
+    private InfoscreenItem appVersion;
+    private InfoscreenItem iiLicenses;
+    private InfoscreenItem contactUs = new InfoscreenItem("Contact us");
+    private InfoscreenItem iiSetup = new InfoscreenItem("Launch Setup");
+    private InfoscreenItem iiBackup = new InfoscreenItem("Perform Backup");
+
+    ListView lv;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        if(AppConfig.DEBUG) Log.i(TAG, "launching onCreate() ...");
+
+        String appVersionString;
+
+        if(AppConfig.DEBUG) Log.i(TAG, "trying to fetch the version name ...");
+        try {
+            appVersionString = SetupActivity.getVersionName(this);
+            appVersion = new InfoscreenItem("App version", appVersionString);
+        } catch (Exception e) {
+            if(AppConfig.DEBUG) Log.e(TAG, e.getMessage());
+        }
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_infoscreen);
+
+        iiLicenses = new InfoscreenItem(getResources().getString(R.string.title_activity_licenses));
+
+        // Get ListView object from xml
+        lv = (ListView) findViewById(R.id.infoscreenListViewID);
+        // Defined Array values to show in ListView
+        InfoscreenItem[] items = new InfoscreenItem[] {appVersion, contactUs, iiLicenses, iiSetup, iiBackup};
+        // Define a new InfoscreenAdapter
+        InfoscreenAdapter adapter = new InfoscreenAdapter(this, items);
+        // Assign adapter to ListView
+        if(AppConfig.DEBUG) Log.i(TAG, "setting adapter");
+        lv.setAdapter(adapter);
+
+        // React to user clicks on item
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            public void onItemClick(AdapterView<?> parentAdapter, View view, int position,
+                                    long id) {
+                if(AppConfig.DEBUG) Log.i(TAG, "item " + Integer.toString(position) + " clicked.");
+
+                // for the "Contact us" item
+                if(position == 1) {
+                    TextView clickedView = (TextView) view.findViewById(R.id.textView);
+                    onContactClick(clickedView);
+                }
+
+                // for the "Licenses" item
+                if(position == 2) {
+                    TextView clickedView = (TextView) view.findViewById(R.id.textView);
+                    onLicensesClick(clickedView);
+                }
+
+                // for the "Setup" item
+                if (position == 3) {
+                    if (AppConfig.DEBUG) Log.d(TAG, "launching Setup Activity...");
+                    startActivity(new Intent(getApplication(), SetupActivity.class));
+                }
+
+                // for the "Backup" item
+                if (position == 4) {
+                    Intent iBackup = new Intent(getApplication(), BackupAndRestoreActivity.class);
+                    iBackup.putExtra("MODE", 1);
+                    startActivity(iBackup);
+                }
+
+            }
+        });
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if(AppConfig.DEBUG) Log.i(TAG, "exiting onCreate() ...");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if(AppConfig.DEBUG) Log.i(TAG, "onCreateOptionsMenu() ...");
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_infoscreen, menu);
+        if(AppConfig.DEBUG) Log.i(TAG, "exiting onCreateOptionsMenu() ...");
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        else if (id == android.R.id.home) {
+            finish();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void onContactClick(View v) {
+        Intent email = new Intent(Intent.ACTION_SEND);
+        email.putExtra(Intent.EXTRA_EMAIL, new String[]{"contact@gmail.com"});
+        email.putExtra(Intent.EXTRA_SUBJECT, "(subject)");
+        email.putExtra(Intent.EXTRA_TEXT, "(message)");
+        email.setType("message/rfc822");
+        startActivity(Intent.createChooser(email, "Choose an Email client :"));
+    }
+
+    public void onLicensesClick(View v) {
+        if(AppConfig.DEBUG) Log.i(TAG, "onLicensesClick() ...");
+
+        startActivity(new Intent(InfoscreenActivity.this, LicensesActivity.class));
+    }
+}
+</code></pre>
+
+<p>The Adapter InfoscreenAdapter:</p>
+
+<pre><code>public class InfoscreenAdapter extends ArrayAdapter<InfoscreenItem> {
+    private static final String TAG = "InfoscreenAdapter";
+    private Context context;
+    private InfoscreenItem[] infoscreenItems;
+
+    // constructor
+    public InfoscreenAdapter(Context context, InfoscreenItem[] infoscreenItems) {
+        super(context, -1, infoscreenItems);
+        if(AppConfig.DEBUG) Log.i(TAG, "entering InfoscreenAdapter constructor");
+        this.context = context;
+        this.infoscreenItems = infoscreenItems;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        if(AppConfig.DEBUG) Log.i(TAG, "fetching View " + Integer.toString(position) +
+                ". Title: " + infoscreenItems[position].getItemTitle() + ", name: " +  infoscreenItems[position].getItemName());
+
+        // the infoscreenItem has only 1 line (title)
+        if(infoscreenItems[position].getItemName().equals("")) {
+            // inflate the Layout from the infoscreen_single_line.xml
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.item_infoscreen_single_line, parent, false);
+            // get the TextView from the layout
+            TextView tv = (TextView) convertView.findViewById(R.id.textView);
+            //set its text
+            tv.setText(infoscreenItems[position].getItemTitle());
+
+            return convertView;
+        }
+
+        // the infoscreenItem has 2 lines (title & name)
+        else {
+            // inflate the Layout from the infoscreen_dual_line xml
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.item_infoscreen_dual_line, parent, false);
+
+            // get the TextView for the title
+            TextView appVersionTextView = (TextView) convertView.findViewById(R.id.textView_title);
+            //set its text
+            appVersionTextView.setText(infoscreenItems[position].getItemTitle());
+            // get the TextView for the version name
+            TextView appVersionNameTextView = (TextView) convertView.findViewById(R.id.textView_versionName);
+            //set its text
+            appVersionNameTextView.setText(infoscreenItems[position].getItemName());
+
+            return convertView;
+        }
+    }
+}
+</code></pre>
+
+<p>The class InfoscreenItem:</p>
+
+<pre><code>public class InfoscreenItem {
+    private String itemTitle;
+    private String itemName;
+
+    // constructors
+    public InfoscreenItem () {
+        itemTitle = "";
+        itemName = "";
+    }
+
+    public InfoscreenItem (String iTitle){
+        itemTitle = iTitle;
+        itemName = "";
+    }
+
+    public InfoscreenItem (String iTitle, String iName){
+        itemTitle = iTitle;
+        itemName = iName;
+    }
+
+    public String getItemTitle() {
+        return itemTitle;
+    }
+
+    public String getItemName() {
+        return itemName;
+    }
+}
+</code></pre>
+
+<p>The xml files used for the formatting.</p>
+
+<p>activity_infoscreen.xml:</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="at.dimi3.crew2go.InfoscreenActivity"
+    tools:ignore="MergeRootFrame"
+    android:orientation="vertical">
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/infoscreenListViewID"
+        android:clickable="true" />
+
+</LinearLayout>
+</code></pre>
+
+<p>item_infoscreen_single_line.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/textView"
+        android:paddingLeft="20dp"
+        android:paddingTop="10dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="10dp"
+        android:clickable="true" />
+</LinearLayout>
+</code></pre>
+
+<p>item_infoscreen_dual_line.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/textView_title"
+        android:paddingLeft="20dp"
+        android:paddingTop="10dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="5dp"
+        android:clickable="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Small Text"
+        android:id="@+id/textView_versionName"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="10dp"
+        android:clickable="true" />
+</LinearLayout>
+</code></pre>
+
+<p>Now all is working as intended, except for the fact that in the ListView of the "Infoscreen", the items are only clickable NEXT to the text. Is there any way to make the entire ListView item reacting to the click, regardless where you click on the item? Am I missing something in the xml layout templates? I've tried setting android:clickable="true", removing it, played around changing the android:layout_width="wrap_content" to match_parent or fill_parent (as suggested in other similar threads - those were not clickable at all though, so not entirely the same problem as I'm having).</p>

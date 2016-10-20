@@ -1,0 +1,339 @@
+<p>I'm working on app that uses SQLite for data base. I have database helper that creates Oncreate of my Activity and then use my query like this:</p>
+
+<pre><code>@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    requestWindowFeature(Window.FEATURE_NO_TITLE);
+    //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    setContentView(R.layout.list_activity_form);
+    this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
+
+
+
+G.myEvents = new DataBaseHelper(ListviewActivity.this);
+
+try {
+    G.myEvents.createDataBase();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+
+get_extra_and_generate_form();
+load_settings();
+intilizeUi();
+}
+
+public Cursor searchQueryEvents( String str) {
+
+
+
+        SQLiteDatabase db = G.myEvents.getWritableDatabase();
+        Cursor cursor;
+
+        String query="";
+
+
+
+        query= query+ "  game_group = '"+str+"'  "; 
+
+        Log.i("AA", "inquery events p3 query="+query);
+
+        cursor= db.query(G.myEvents.G_TABLE, null, query , null, null, null, null);
+
+
+        startManagingCursor(cursor);
+
+
+        return cursor;
+
+    }
+</code></pre>
+
+<p>every things fine but when you minimize and then return to app, it's crashes with this error:</p>
+
+<pre><code>07-01 13:01:29.795: E/AndroidRuntime(10822): FATAL EXCEPTION: main
+07-01 13:01:29.795: E/AndroidRuntime(10822): java.lang.RuntimeException: Unable to resume activity {com.mjs.football/com.mjs.football.ContentActivity}: java.lang.IllegalStateException: trying to requery an already closed cursor  android.database.sqlite.SQLiteCursor@44abeb40
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.ActivityThread.performResumeActivity(ActivityThread.java:2929)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:2958)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1368)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.os.Handler.dispatchMessage(Handler.java:99)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.os.Looper.loop(Looper.java:137)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.ActivityThread.main(ActivityThread.java:5455)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at java.lang.reflect.Method.invokeNative(Native Method)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at java.lang.reflect.Method.invoke(Method.java:525)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1187)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1003)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at dalvik.system.NativeStart.main(Native Method)
+07-01 13:01:29.795: E/AndroidRuntime(10822): Caused by: java.lang.IllegalStateException: trying to requery an already closed cursor  android.database.sqlite.SQLiteCursor@44abeb40
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.Activity.performRestart(Activity.java:5419)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.Activity.performResume(Activity.java:5442)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    at android.app.ActivityThread.performResumeActivity(ActivityThread.java:2919)
+07-01 13:01:29.795: E/AndroidRuntime(10822):    ... 10 more
+</code></pre>
+
+<p>OK let's see what is the best solution for this problem. I Google many times but couldn't find any good solution.</p>
+
+<p>if you wanna test app you can see here: <a href="http://www.mahditajik.ir/?p=1069" rel="nofollow">app page</a></p>
+
+<p>and my database helper is:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+
+
+    private static String  DB_PATH = "/data/data/com.mjs.football/databases/";
+
+
+
+    private static String  DB_NAME = "football.s3db";
+   // private static String  DB_NAME = "adictDBteachers.s3db";
+
+    private SQLiteDatabase myDataBase;
+
+    private final Context  myContext;
+
+    // Table name
+    public static final String  G_TABLE            = "game_table";
+    public static final String  U_TABLE            = "user_table";
+    public static final String  F_TABLE            = "foreseen_table";
+
+
+
+
+    // Columns
+
+    public static final String  _ID             = "_ID";
+    public static final String  _TITLE              = "_TITLE";
+    public static final String  _PART               = "_PART";
+    public static final String  _TEXT               = "_TEXT";
+
+
+    public SQLiteDatabase myDB =null;
+
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+
+
+
+    public void createDataBase() throws IOException {
+
+
+
+            boolean dbExist = checkDataBase();
+
+            if(dbExist){
+                Log.i("DB", " DB exist");           }else{
+
+
+            this.getReadableDatabase();
+
+            try {
+            Log.i("DB", "to copy DB");
+            copyDataBase();
+
+            } catch (IOException e) {
+
+            Log.i("DB", "cannot copy DB");
+            throw new Error("Error copying database");
+
+            }
+            }
+
+            }
+
+
+
+
+    public void saveForeseenToDB(String game_id, String user_id, String home_foreseen, String away_foreseen, String game_score){
+
+
+        Log.i("DB", "p2");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Log.i("DB", "p3");
+
+        ContentValues values = new ContentValues();
+        values.put("game_id", game_id); 
+        values.put("user_id", user_id); 
+        values.put("home_foreseen", home_foreseen); 
+        values.put("away_foreseen", away_foreseen); 
+        values.put("game_score", game_score); 
+
+        // Inserting Row
+        Log.i("DB", "p5");
+        db.insert(F_TABLE, null, values);
+        db.close(); // Closing database connection
+        //db = null;  // bedone in error  midahad
+
+
+    }
+
+    public void updateDetailToDBString (String game_id, String group_name, String game_date, String home_team
+            ,String away_team ,String result_home, String result_away, String result_home_pk , String result_away_pk 
+            ,String game_comments){
+
+        Log.i("DB", "update p2");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Log.i("DB", "update p3");
+
+        ContentValues values = new ContentValues();
+        values.put("game_id", game_id); 
+        values.put("game_group", group_name); 
+        values.put("game_date", game_date); 
+        values.put("home_team", home_team); 
+        values.put("away_team", away_team); 
+        values.put("result_home", result_home); 
+        values.put("result_away", result_away); 
+        values.put("result_home_pk", result_home_pk); 
+        values.put("result_away_pk", result_away_pk); 
+        values.put("game_comments", game_comments); 
+
+
+        Log.i("DB", "update p5");
+
+        db.update(G_TABLE, values, " game_id ='"+game_id+"'", null);
+        db.close(); // Closing database connection
+        //db = null;  // i also put this but error still remains
+
+
+
+    }
+
+    public void saveGameDetailToDBString (String game_id, String group_name, String game_date, String home_team
+    ,String away_team ,String result_home, String result_away, String result_home_pk , String result_away_pk 
+    ,String game_comments){
+
+          Log.i("DB", "save p2");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+          Log.i("DB", "save p3");
+
+        ContentValues values = new ContentValues();
+        values.put("game_id", game_id); 
+        values.put("game_group", group_name); 
+        values.put("game_date", game_date); 
+        values.put("home_team", home_team); 
+        values.put("away_team", away_team); 
+        values.put("result_home", result_home); 
+        values.put("result_away", result_away); 
+        values.put("result_home_pk", result_home_pk); 
+        values.put("result_away_pk", result_away_pk); 
+        values.put("game_comments", game_comments); 
+
+
+          Log.i("DB", "save p5");
+        db.insert(G_TABLE, null, values);
+        db.close(); // Closing database connection
+
+
+
+    }
+
+
+
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }
+        catch (SQLiteException e) {
+
+
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+    private void copyDataBase() throws IOException {
+
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        Log.i("DB", " copy input database path:"+myInput);
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+
+
+        Log.i("DB", " copy output database path:"+outFileName);
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+
+    }
+
+
+
+    public void openDataBase() throws SQLException {
+
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        // myDataBase.execSQL("select * from android_metadata");
+
+    }
+
+
+
+    @Override
+    public synchronized void close() {
+
+        if (myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+    }
+
+
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        Log.i("DB", DB_PATH);
+    }
+
+
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+
+}
+</code></pre>

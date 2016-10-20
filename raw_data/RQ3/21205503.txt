@@ -1,0 +1,227 @@
+<p>I am very new to Android development and have been following the Big Nerd Ranch book on Android Programming.</p>
+
+<p>I keep getting this error of Null Pointer Exception and I don't understand what the error is referring to. </p>
+
+<p>The app crashes when I press on any thing in the app.</p>
+
+<p>Here is the error.</p>
+
+<pre><code>01-17 17:10:54.794      811-811/com.bignerdranch.android.criminalintent E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.NullPointerException
+            at com.bignerdranch.android.criminalintent.CrimeFragment.onCreateView(CrimeFragment.java:81)
+            at android.support.v4.app.Fragment.performCreateView(Fragment.java:1500)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:927)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1104)
+            at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+            at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1467)
+            at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:472)
+            at android.support.v4.app.FragmentStatePagerAdapter.finishUpdate(FragmentStatePagerAdapter.java:163)
+            at android.support.v4.view.ViewPager.populate(ViewPager.java:1068)
+            at android.support.v4.view.ViewPager.populate(ViewPager.java:914)
+            at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1436)
+            at android.view.View.measure(View.java:15848)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5012)
+            at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+            at android.view.View.measure(View.java:15848)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5012)
+            at com.android.internal.widget.ActionBarOverlayLayout.onMeasure(ActionBarOverlayLayout.java:302)
+            at android.view.View.measure(View.java:15848)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5012)
+            at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+            at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2189)
+            at android.view.View.measure(View.java:15848)
+            at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1905)
+            at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1104)
+            at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1284)
+            at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1004)
+            at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5481)
+            at android.view.Choreographer$CallbackRecord.run(Choreographer.java:749)
+            at android.view.Choreographer.doCallbacks(Choreographer.java:562)
+            at android.view.Choreographer.doFrame(Choreographer.java:532)
+            at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:735)
+            at android.os.Handler.handleCallback(Handler.java:730)
+            at android.os.Handler.dispatchMessage(Handler.java:92)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:5103)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:525)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:737)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p><strong>Here is my code where I am getting the error</strong></p>
+
+<pre><code>    package com.bignerdranch.android.criminalintent;
+
+   import android.annotation.TargetApi;
+   import android.app.Activity;
+   import android.content.Intent;
+   import android.content.pm.PackageManager;
+   import android.os.Build;
+   import android.os.Bundle;
+   import android.support.v4.app.Fragment;
+   import android.support.v4.app.FragmentManager;
+   import android.support.v4.app.NavUtils;
+   import android.text.Editable;
+   import android.text.TextWatcher;
+   import android.view.LayoutInflater;
+   import android.view.MenuItem;
+   import android.view.View;
+   import android.view.ViewGroup;
+   import android.widget.Button;
+   import android.widget.CheckBox;
+   import android.widget.CompoundButton;
+   import android.widget.CompoundButton.OnCheckedChangeListener;
+   import android.widget.EditText;
+   import android.widget.ImageButton;
+
+   import java.text.DateFormat;
+   import java.util.Date;
+   import java.util.UUID;
+
+   public class CrimeFragment extends Fragment {
+
+public static final String EXTRA_CRIME_ID = "com.bignerdranch.android.criminalintent.crime_id";
+private static final String DIALOG_DATE = "date";
+private static final int REQUEST_DATE = 0;
+
+private Crime mCrime;
+private EditText mTitleField;
+private Button mDateButton;
+private CheckBox mSolvedCheckBox;
+private  DateFormat dateFormat;
+private DateFormat timeFormat;
+private ImageButton mPhotoButton;
+
+
+public static CrimeFragment newInstance(UUID crimeId) {
+    Bundle args = new Bundle();
+    args.putSerializable(EXTRA_CRIME_ID,crimeId);
+
+    CrimeFragment fragment = new CrimeFragment();
+    fragment.setArguments(args);
+
+    return fragment;
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    UUID crimeId = (UUID)getArguments().getSerializable(EXTRA_CRIME_ID);
+    mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+    setHasOptionsMenu(true);
+}
+
+public  void updateDate() {
+    mDateButton.setText(mCrime.getDate().toString());
+}
+
+
+@TargetApi(11)
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+    View v = inflater.inflate(R.layout.fragment_crime, parent, false);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        if (NavUtils.getParentActivityName(getActivity()) != null) {
+            getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    mTitleField = (EditText)v.findViewById(R.id.crime_title);
+    mTitleField.setText(mCrime.getTitle());
+    mTitleField.addTextChangedListener(new TextWatcher() {
+        public void onTextChanged(CharSequence c, int start, int before, int count) {
+            mCrime.setTitle(c.toString());
+        }
+
+        public void beforeTextChanged(CharSequence c, int start, int count, int after) {
+            // this space intentionally left blank
+        }
+
+        public void afterTextChanged(Editable c) {
+            // this one too
+        }
+
+    });
+    dateFormat = android.text.format.DateFormat.getLongDateFormat(this.getActivity());
+    timeFormat = android.text.format.DateFormat.getTimeFormat(this.getActivity());
+
+
+    mDateButton = (Button)v.findViewById(R.id.crime_date);
+
+    updateDate();
+    mDateButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            FragmentManager fm = getActivity().getSupportFragmentManager();
+            DatePickerFragment dialog = DatePickerFragment.newInstance(mCrime.getDate());
+            dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+            dialog.show(fm, DIALOG_DATE);
+        }
+    });
+
+    mSolvedCheckBox = (CheckBox)v.findViewById(R.id.crime_solved);
+    mSolvedCheckBox.setChecked(mCrime.isSolved());
+    mSolvedCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            //set the crime's solved property
+            mCrime.setSolved(isChecked);
+        }
+    });
+
+    mPhotoButton = (ImageButton)v.findViewById(R.id.crime_imageButton);
+    mPhotoButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent i = new Intent(getActivity(), CrimeCameraActivity.class);
+            startActivity(i);
+        }
+    });
+
+    //if camera is not available, disable camera functionality
+    PackageManager pm = getActivity().getPackageManager();
+    if (!pm.hasSystemFeature(PackageManager.FEATURE_CAMERA) && !pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)) {
+        mPhotoButton.setEnabled(false);
+    }
+
+    return v;
+}
+
+@Override
+public  void  onActivityResult(int requestCode, int resultCode, Intent data) {
+    if(resultCode != Activity.RESULT_OK) return;
+    if(requestCode == REQUEST_DATE) {
+        Date date = (Date)data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+        mCrime.setDate(date);
+        updateDate();
+    }
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            if (NavUtils.getParentActivityName(getActivity()) != null) {
+                NavUtils.navigateUpFromSameTask(getActivity());
+            }
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+    }
+}
+
+@Override
+public void onPause() {
+    super.onPause();
+    CrimeLab.get(getActivity()).saveCrimes();
+}
+
+
+ }
+</code></pre>
+
+<p>Any help where I am going wrong would be great.  Thanks.</p>

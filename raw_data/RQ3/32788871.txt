@@ -1,0 +1,678 @@
+<p>I'm trying to upload an Image from my API to show it as profile picture, the problem is from the first time that the user opens the navdrawer the image doesn't load and it makes the entire layout disappear, but from the second time it all works, and I notice that it happens when the width of the image is less than the height. This is the class that I'm using: </p>
+
+<pre><code>public class CircledNetworkImageView extends ImageView {
+
+    public boolean mCircled;
+
+    /**
+     * The URL of the network image to load
+     */
+    private String mUrl;
+
+    /**
+     * Resource ID of the image to be used as a placeholder until the network image is loaded.
+     */
+    private int mDefaultImageId;
+
+    /**
+     * Resource ID of the image to be used if the network response fails.
+     */
+    private int mErrorImageId;
+
+    /**
+     * Local copy of the ImageLoader.
+     */
+    private ImageLoader mImageLoader;
+
+    /**
+     * Current ImageContainer. (either in-flight or finished)
+     */
+    private ImageLoader.ImageContainer mImageContainer;
+
+    public CircledNetworkImageView(Context context) {
+        this(context, null);
+    }
+
+    public CircledNetworkImageView(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public CircledNetworkImageView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+    }
+
+    /**
+     * Sets URL of the image that should be loaded into this view. Note that calling this will
+     * immediately either set the cached image (if available) or the default image specified by
+     * {@link CircledNetworkImageView#setDefaultImageResId(int)} on the view.
+     * <p/>
+     * NOTE: If applicable, {@link CircledNetworkImageView#setDefaultImageResId(int)} and
+     * {@link CircledNetworkImageView#setErrorImageResId(int)} should be called prior to calling
+     * this function.
+     *
+     * @param url         The URL that should be loaded into this ImageView.
+     * @param imageLoader ImageLoader that will be used to make the request.
+     */
+    public void setImageUrl(String url, ImageLoader imageLoader) {
+        mUrl = url;
+        mImageLoader = imageLoader;
+        // The URL has potentially changed. See if we need to load it.
+        loadImageIfNecessary(false);
+    }
+
+    /**
+     * Sets the default image resource ID to be used for this view until the attempt to load it
+     * completes.
+     */
+    public void setDefaultImageResId(int defaultImage) {
+        mDefaultImageId = defaultImage;
+    }
+
+    /**
+     * Sets the error image resource ID to be used for this view in the event that the image
+     * requested fails to load.
+     */
+    public void setErrorImageResId(int errorImage) {
+        mErrorImageId = errorImage;
+    }
+
+    /**
+     * Loads the image for the view if it isn't already loaded.
+     *
+     * @param isInLayoutPass True if this was invoked from a layout pass, false otherwise.
+     */
+    void loadImageIfNecessary(final boolean isInLayoutPass) {
+        int width = getWidth();
+        int height = getHeight();
+        ScaleType scaleType = getScaleType();
+
+        boolean wrapWidth = false, wrapHeight = false;
+        if (getLayoutParams() != null) {
+            wrapWidth = getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT;
+            wrapHeight = getLayoutParams().height == ViewGroup.LayoutParams.WRAP_CONTENT;
+        }
+
+        // if the view's bounds aren't known yet, and this is not a wrap-content/wrap-content
+        // view, hold off on loading the image.
+        boolean isFullyWrapContent = wrapWidth && wrapHeight;
+        if (width == 0 && height == 0 && !isFullyWrapContent) {
+            return;
+        }
+
+        // if the URL to be loaded in this view is empty, cancel any old requests and clear the
+        // currently loaded image.
+        if (TextUtils.isEmpty(mUrl)) {
+            if (mImageContainer != null) {
+                mImageContainer.cancelRequest();
+                mImageContainer = null;
+            }
+            setDefaultImageOrNull();
+            return;
+        }
+
+        // if there was an old request in this view, check if it needs to be canceled.
+        if (mImageContainer != null && mImageContainer.getRequestUrl() != null) {
+            if (mImageContainer.getRequestUrl().equals(mUrl)) {
+                // if the request is from the same URL, return.
+                return;
+            } else {
+                // if there is a pre-existing request, cancel it if it's fetching a different URL.
+                mImageContainer.cancelRequest();
+                setDefaultImageOrNull();
+            }
+        }
+
+        // Calculate the max image width / height to use while ignoring WRAP_CONTENT dimens.
+        int maxWidth = wrapWidth ? 0 : width;
+        int maxHeight = wrapHeight ? 0 : height;
+
+        // The pre-existing content of this view didn't match the current URL. Load the new image
+        // from the network.
+        ImageLoader.ImageContainer newContainer = mImageLoader.get(mUrl,
+                new ImageLoader.ImageListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        if (mErrorImageId != 0) {
+                            setImageResource(mErrorImageId);
+                        }
+                    }
+
+                    @Override
+                    public void onResponse(final ImageLoader.ImageContainer response, boolean isImmediate) {
+                        // If this was an immediate response that was delivered inside of a layout
+                        // pass do not set the image immediately as it will trigger a requestLayout
+                        // inside of a layout. Instead, defer setting the image by posting back to
+                        // the main thread.
+                        if (isImmediate && isInLayoutPass) {
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    onResponse(response, false);
+                                }
+                            });
+                            return;
+                        }
+
+                        if (response.getBitmap() != null) {
+                            setImageBitmap(response.getBitmap());
+                        } else if (mDefaultImageId != 0) {
+                            setImageResource(mDefaultImageId);
+                        }
+                    }
+                }, maxWidth, maxHeight, scaleType);
+
+        // update the ImageContainer to be the new bitmap container.
+        mImageContainer = newContainer;
+    }
+
+    private void setDefaultImageOrNull() {
+        if (mDefaultImageId != 0) {
+            setImageResource(mDefaultImageId);
+        } else {
+            setImageBitmap(null);
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        loadImageIfNecessary(true);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (mImageContainer != null) {
+            // If the view was bound to an image request, cancel it and clear
+            // out the image from the view.
+            mImageContainer.cancelRequest();
+            setImageBitmap(null);
+            // also clear out the container so we can reload the image if necessary.
+            mImageContainer = null;
+        }
+        super.onDetachedFromWindow();
+    }
+
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+        invalidate();
+    }
+
+    /**
+     * In case the bitmap is manually changed, we make sure to
+     * circle it on the next onDraw
+     */
+    @Override
+    public void setImageBitmap(Bitmap bm) {
+        mCircled = false;
+        super.setImageBitmap(bm);
+    }
+
+    /**
+     * In case the bitmap is manually changed, we make sure to
+     * circle it on the next onDraw
+     */
+    @Override
+    public void setImageResource(int resId) {
+        mCircled = false;
+        super.setImageResource(resId);
+    }
+
+    /**
+     * In case the bitmap is manually changed, we make sure to
+     * circle it on the next onDraw
+     */
+    @Override
+    public void setImageDrawable(Drawable drawable) {
+        mCircled = false;
+        super.setImageDrawable(drawable);
+    }
+
+    /**
+     * We want to make sure that the ImageView has the same height and width
+     */
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        Drawable drawable = getDrawable();
+        if (drawable != null) {
+            int width = MeasureSpec.getSize(widthMeasureSpec);
+            int diw = drawable.getIntrinsicWidth();
+            if (diw > 0) {
+                int height = width * drawable.getIntrinsicHeight() / diw;
+                setMeasuredDimension(width, height);
+            } else
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        } else
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        //Let's circle the image
+        if (!mCircled && getDrawable() != null) {
+            Drawable d = getDrawable();
+            try {
+                //We use reflection here in case that the drawable isn't a
+                //BitmapDrawable but it contains a public getBitmap method.
+                Bitmap bitmap = (Bitmap) d.getClass().getMethod("getBitmap").invoke(d);
+                if (bitmap != null) {
+                    Bitmap circleBitmap = getCircleBitmap(bitmap);
+                    setImageBitmap(circleBitmap);
+                }
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                //Seems like the current drawable is not a BitmapDrawable or
+                //that is doesn't have a public getBitmap() method.
+            }
+
+            //Mark as circled even if it failed, because if it fails once,
+            //It will fail again.
+            mCircled = true;
+        }
+        super.onDraw(canvas);
+    }
+
+    /**
+     * Method used to circle a bitmap.
+     *
+     * @param bitmap The bitmap to circle
+     * @return The circled bitmap
+     */
+    public static Bitmap getCircleBitmap(Bitmap bitmap) {
+        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+
+        Bitmap output = Bitmap.createBitmap(size,
+                size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        BitmapShader shader;
+        shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP,
+                Shader.TileMode.CLAMP);
+
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setShader(shader);
+        paint.setAlpha(254);
+
+        RectF rect = new RectF(0, 0, size, size);
+        int radius = size / 2;
+        canvas.drawRoundRect(rect, radius, radius, paint);
+        return output;
+    }
+}
+</code></pre>
+
+<p>I came up with that solution, but I didn't like it, because the image loses its quality:</p>
+
+<pre><code>public class UserActivity extends AppCompatActivity {
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.profile_main);
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar_user);
+        camera = (ImageView) findViewById(R.id.camera);
+        fechar = (TextView) findViewById(R.id.fechar);
+        editar = (TextView) findViewById(R.id.editar);
+        membro = (TextView) findViewById(R.id.membro);
+        nome = (TextView) findViewById(R.id.nome_usuario);
+        email = (TextView) findViewById(R.id.email_usuario);
+        email = (TextView) findViewById(R.id.email_usuario);
+        profilePic = (NetworkImageView) findViewById(R.id.foto);
+        mImageView = (ImageView) findViewById(R.id.cropped);
+        progress_wheel = (ProgressWheel) findViewById(R.id.progress_wheel);
+
+
+        camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder getImageFrom = new AlertDialog.Builder(UserActivity.this);
+                getImageFrom.setTitle("Abrir com:");
+                final CharSequence[] opsChars = {getResources().getString(R.string.takepic), getResources().getString(R.string.opengallery)};
+                getImageFrom.setItems(opsChars, new android.content.DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                            mImageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(),
+                                    "tmp_avatar_" + String.valueOf(System.currentTimeMillis()) + ".jpg"));
+
+                            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+
+                            try {
+                                intent.putExtra("return-data", true);
+
+                                startActivityForResult(intent, PICK_FROM_CAMERA);
+                            } catch (ActivityNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                        } else if (which == 1) {
+
+                            Intent intent = new Intent();
+
+                            intent.setType("image/*");
+                            intent.setAction(Intent.ACTION_GET_CONTENT);
+
+                            startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_FILE);
+                        }
+                        dialog.dismiss();
+                    }
+                });
+                getImageFrom.show();
+
+            }
+        });
+
+
+        profilePic.setImageUrl(GlobalModel.getPerfil().getIdDaImagem(), imageLoader);
+        profilePic.setDefaultImageResId(R.drawable.avatar_);
+
+    }
+
+
+    @Override
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        try {
+
+            if (resultCode != RESULT_OK) return;
+
+            switch (requestCode) {
+                case PICK_FROM_CAMERA:
+                    profilePic.setVisibility(View.GONE);
+                    progress_wheel.setVisibility(View.VISIBLE);
+
+                    selectedImagePath = ImageFilePath.getPath(getApplicationContext(), mImageCaptureUri);
+                    Log.i("Image File Path", "" + selectedImagePath);
+                    mImageCaptureUri = Uri.parse(selectedImagePath);
+
+                    final BitmapFactory.Options option = new BitmapFactory.Options();
+                    option.inSampleSize = 8;
+
+                    Bitmap photo = BitmapFactory.decodeFile(mImageCaptureUri.getPath(), option);
+
+
+                    photo = Bitmap.createScaledBitmap(photo, 200, 200, false);
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+
+
+                    File f = new File(Environment.getExternalStorageDirectory()
+                            + File.separator + "Imagename.jpg");
+                    f.createNewFile();
+                    FileOutputStream fo = new FileOutputStream(f);
+                    fo.write(bytes.toByteArray());
+                    fo.close();
+
+                    previewCapturedImage(f.getAbsolutePath());
+                    profilePic.setVisibility(View.VISIBLE);
+                    progress_wheel.setVisibility(View.GONE);
+                    profilePic.setImageBitmap(BitmapFactory.decodeFile(mImageCaptureUri.getPath()));
+
+                    break;
+
+                case PICK_FROM_FILE:
+
+                    profilePic.setVisibility(View.GONE);
+                    progress_wheel.setVisibility(View.VISIBLE);
+                    mImageCaptureUri = data.getData();
+                    selectedImagePath = ImageFilePath.getPath(getApplicationContext(), mImageCaptureUri);
+                    Log.i("Image File Path", "" + selectedImagePath);
+                    mImageCaptureUri = Uri.parse(selectedImagePath);
+
+                    final BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inSampleSize = 8;
+
+                    Bitmap photoGaleria = BitmapFactory.decodeFile(mImageCaptureUri.getPath(), options);
+
+
+                    photoGaleria = Bitmap.createScaledBitmap(photoGaleria, 200, 200, false);
+                    ByteArrayOutputStream bytesG = new ByteArrayOutputStream();
+                    photoGaleria.compress(Bitmap.CompressFormat.JPEG, 100, bytesG);
+
+
+                    File fG = new File(Environment.getExternalStorageDirectory()
+                            + File.separator + "Imagename.jpg");
+                    fG.createNewFile();
+                    FileOutputStream foG = new FileOutputStream(fG);
+                    foG.write(bytesG.toByteArray());
+                    foG.close();
+
+                    previewCapturedImage(fG.getAbsolutePath());
+
+                    profilePic.setVisibility(View.VISIBLE);
+                    progress_wheel.setVisibility(View.GONE);
+                    profilePic.setImageBitmap(BitmapFactory.decodeFile(mImageCaptureUri.getPath()));
+
+                    break;
+
+
+
+            }
+
+
+        } catch (Exception e)
+
+        {
+            e.printStackTrace();
+        }
+
+    }
+
+
+
+
+    private void previewCapturedImage(String path) {
+        try {
+
+            UploadFoto mUpload = new UploadFoto(path);
+            mUpload.setEventoListener(new IExecutarTarefa<UploadFoto>() {
+                @Override
+                public void AntesDeExecutar(UploadFoto tarefa) {
+
+                }
+
+                @Override
+                public void DepoisDeExecutar(UploadFoto tarefa) {
+
+                    if (tarefa.getResposta()[0].equals("200")) {
+                        GlobalModel.getPerfil().setIdDaImagem(WebService.imgURL + tarefa.getResposta()[1].replace("\"", ""));
+                        profilePic.setImageUrl(GlobalModel.getPerfil().getIdDaImagem(), imageLoader);
+                    }
+                }
+            });
+            mUpload.execute();
+
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+        overridePendingTransition(R.anim.animation_back, R.anim.animation_back_leave);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        CarregarPerfil mCarrega = new CarregarPerfil();
+        mCarrega.execute();
+    }
+}
+</code></pre>
+
+<p>XML:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:wheel="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/toolbar_user"
+        layout="@layout/toolbaruser" />
+
+    <RelativeLayout
+        android:id="@+id/campoImagem"
+        android:layout_width="fill_parent"
+        android:layout_height="200dp"
+        android:layout_below="@+id/toolbar_user"
+        android:background="@color/armadillo">
+
+
+        <com.android.volley.toolbox.NetworkImageView
+            android:id="@+id/foto"
+            android:layout_width="200dp"
+            android:layout_height="fill_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:src="@drawable/user"
+            android:visibility="visible" />
+
+        <com.pnikosis.materialishprogress.ProgressWheel
+            android:id="@+id/progress_wheel"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            wheel:matProg_barColor="@color/white"
+            wheel:matProg_progressIndeterminate="true"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
+
+        <ImageView
+            android:id="@+id/cropped"
+            android:layout_width="200dp"
+            android:layout_height="fill_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center"
+            android:visibility="visible"/>
+
+        <ImageView
+            android:id="@+id/camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:padding="15dp"
+            android:src="@drawable/ic_camera" />
+
+        <TextView
+            android:id="@+id/Button_crop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:gravity="center"
+            android:padding="15dp"
+            android:text="Salvar"
+            android:textColor="@color/white"
+            android:visibility="gone" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <TextView
+            android:id="@+id/membro"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:gravity="center"
+            android:paddingBottom="10dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:text="Membro Retornar desde Julho de 2015"
+            android:textColor="@color/star_dust" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/campoImagem"
+        android:layout_marginBottom="30dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="15dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:paddingBottom="0dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="0dp"
+            android:paddingTop="10dp"
+            android:text="Nome"
+            android:textColor="@color/star_dust"
+            android:textSize="@dimen/text1" />
+
+        <TextView
+            android:id="@+id/nome_usuario"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:paddingBottom="0dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:textColor="@color/armadillo"
+            android:textSize="@dimen/text1" />
+
+        <TextView
+            android:id="@+id/entrar"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:paddingLeft="10dp"
+            android:paddingTop="10dp"
+            android:text="E-mail"
+            android:textColor="@color/star_dust"
+            android:textSize="@dimen/text1" />
+
+        <TextView
+            android:id="@+id/email_usuario"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:paddingBottom="0dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:text="jgvidotto@gmail.com"
+            android:textColor="@color/armadillo"
+            android:textSize="@dimen/text1" />
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>
+</code></pre>

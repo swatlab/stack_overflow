@@ -1,0 +1,139 @@
+<p>I am trying to fix an error which isn't allowing me to open the database. Possibly through all the merges, something went wrong but I can't seem to find it. Here is my <code>Log Cat</code> report.</p>
+
+<pre><code>    E/SQLiteLog(894): (14) cannot open file at line 30191 of [00bb9c9ce4]
+ E/SQLiteLog(894): (14) os_unix.c:30191: (2) open(/data/data/com.packagename/databases/MainDB) - 
+ Failed to open database '/data/data/com.packagename/databases/MainDB'.
+ android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+    at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+    at com.packagename.database.DBAdapter$DatabaseHelper.checkDataBase(DBAdapter.java:757)
+    at com.packagename.database.DBAdapter$DatabaseHelper.createDataBase(DBAdapter.java:734)
+    at com.packagename.database.DBAdapter.resetAllData(DBAdapter.java:490)
+    at com.packagename.OptionActivity$4.onClick(OptionActivity.java:157)
+    at com.android.internal.app.AlertController$ButtonHandler.handleMessage(AlertController.java:166)
+    at android.os.Handler.dispatchMessage(Handler.java:102)
+    at android.os.Looper.loop(Looper.java:136)
+    at android.app.ActivityThread.main(ActivityThread.java:5017)
+    at java.lang.reflect.Method.invokeNative(Native Method)
+    at java.lang.reflect.Method.invoke(Method.java:515)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>And here are snippets of the code which is visible (or related) back to the log.</p>
+
+<p><strong>Option Activity</strong></p>
+
+<pre><code>public void onClick_ResetAll(final View v) {
+    ....
+    ....
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+        TrackUtils.sendClickTrack(OptionActivity.this, "ui_action", "button_press", "Resetall_yes");
+        final DBAdapter dba = new DBAdapter(v.getContext());
+        dba.open();
+        dba.resetAllData(v.getContext());
+        dba.close();
+
+    }
+    ....
+    ....    
+}
+</code></pre>
+
+<p><strong>DBAdapter Class</strong></p>
+
+<pre><code>private DatabaseHelper mDbHelper;
+private static SQLiteDatabase mDb;
+@SuppressLint("SdCardPath")
+private static String DB_PATH;
+private static final String DATABASE_NAME = "MainDB";
+private static final int DATABASE_VERSION = 3;
+private final Context adapterContext;
+
+public DBAdapter(Context context) {
+    this.adapterContext = context;
+    DB_PATH = adapterContext.getFilesDir().getAbsolutePath().replace("files", "databases") 
+            + File.separator;
+}
+
+public DBAdapter open() throws SQLException {
+    mDbHelper = new DatabaseHelper(adapterContext);
+
+    try {
+        mDbHelper.createDataBase();
+    } catch (IOException ioe) {
+        throw new Error("Unable to create database");
+    }
+
+    try {
+        mDbHelper.openDataBase();
+    } catch (SQLException sqle) {
+        throw sqle;
+    }
+    return this;
+}
+
+public void resetAllData(Context context) {
+    context.deleteDatabase("MainDB");
+    mDbHelper = new DatabaseHelper(adapterContext);
+
+    try {
+        mDbHelper.createDataBase();
+    } catch (IOException ioe) {
+        throw new Error("Unable to create database");
+    }
+
+    try {
+        mDbHelper.openDataBase();
+    } catch (SQLException sqle) {
+        throw sqle;
+    }
+}
+</code></pre>
+
+<p><strong>DatabaseHelper (extends SQLiteOpenHelper)</strong></p>
+
+<pre><code>    DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        helperContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+        } else {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        try {
+            String myPath = DB_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY); // This is where the error apparently occurs
+        } catch (SQLiteException e) {
+        }
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+</code></pre>
+
+<p>I have searched for solutions on this website but to no avail.</p>

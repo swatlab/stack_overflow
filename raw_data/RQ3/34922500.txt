@@ -1,0 +1,178 @@
+<p>I'm working on an app and I've been working on a "post" service where you can write a post and display it on a feed screen made of listview.
+Now everything seem to be fine but I don't know why it's crashing before even starting.
+Here is the code:</p>
+
+<p>Post class:</p>
+
+<pre><code>package com.example.ali.test1;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.text.Editable;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+
+public class Post extends ActionBarActivity {
+        EditText input;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_post);
+
+        // android:id="@+id/input"
+        input = (EditText) findViewById(R.id.input);
+        // android:id="@+id/list"
+
+
+        startActivityForResult(new Intent(Post.this , MainActivity.class), 1);
+    }
+
+
+    public void addToList(View v) {
+        Editable text = input.getText();
+        Intent intent = new Intent();
+        intent.putExtra("result", text);
+        setResult(Activity.RESULT_OK, intent);
+        finish();
+    }
+
+    }
+</code></pre>
+
+<p>in this class I have an edit text and abutton once the button is pressed I'm supposed to get the text in edit text and post in the listView of the other class</p>
+
+<p>Main:</p>
+
+<pre><code>package com.example.ali.test1;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+
+public class MainActivity extends ActionBarActivity   {
+
+
+    ListView list;
+    ArrayAdapter<String> adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        list.setAdapter(adapter);
+
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+
+            if (requestCode == 1) if (resultCode == Activity.RESULT_OK) {
+                String result = data.getStringExtra("result");
+                adapter.add(result);
+                adapter.notifyDataSetChanged();
+
+
+
+            }
+        }
+
+
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        int id2 = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        else if (id2 == R.id.action_cart) {
+            startActivity(new Intent(MainActivity.this, Post.class));
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>And the xml files are:</p>
+
+<p>Post:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.example.ali.test1.Post">
+
+
+    <EditText
+        android:id="@+id/input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+       />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add to list"
+        android:onClick="addToList"
+        android:layout_below="@id/input"/>
+
+
+</RelativeLayout>
+</code></pre>
+
+<p>Main:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.example.ali.test1.MainActivity">
+
+
+
+    <ListView
+    android:id="@+id/list1"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:layout_weight="1" />
+
+
+</RelativeLayout>
+</code></pre>
+
+<p>any help would be appreciated I've been stuck here for too long.
+Thank You.</p>

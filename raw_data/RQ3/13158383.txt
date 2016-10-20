@@ -1,0 +1,211 @@
+<p>I am creating an application in which I have to open a previously created SQLite Database. I am using a DBHelper class. Everything is fine when I am emulating the app, but the logcat is showing the following error:</p>
+
+<pre><code>10-31 17:59:56.345: I/Database(391): sqlite returned: error code = 14, msg = cannot open file at source line 25467
+10-31 17:59:56.345: E/Database(391): sqlite3_open_v2("/data/data/com.proj.neuroq/databases/quiz.db", &handle, 1, NULL) failed
+</code></pre>
+
+<p><strong>My Activity class:</strong></p>
+
+<pre><code>public class QuestionActivity extends Activity {
+
+    String db_name="quiz";
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_question);
+
+        DatabaseHelper myDbHelper = new DatabaseHelper(getBaseContext());
+        myDbHelper = new DatabaseHelper(this);
+
+        try {
+
+            myDbHelper.createDatabase();
+
+    } catch (IOException ioe) {
+
+        throw new Error("Unable to create database");
+
+    }
+
+    try {
+
+        myDbHelper.openDataBase();
+
+    }catch(SQLException sqle){
+
+        throw sqle;
+
+    }
+
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_question, menu);
+        return true;
+    }
+
+
+}
+</code></pre>
+
+<p><strong>My DatabaseHelper class:</strong></p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "/data/data/com.proj.neuroq/databases/";
+    private static String DB_NAME = "quiz.db";
+    private SQLiteDatabase db;
+    private final Context myContext;
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     */
+    public void createDatabase() throws IOException {
+        boolean dbExist = checkDataBase();
+
+        if(dbExist) {
+            //do nothing - database already exist
+        } else {
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+            } catch(IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it dosen't
+     */
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+
+        }
+
+        if(checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     */
+    private void copyDataBase() throws IOException {
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while((length = myInput.read(buffer))>0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if(db != null)
+            db.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p><strong>My manifest file:</strong></p>
+
+<pre><code><manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.proj.neuroq"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="15" />
+
+    <application
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".QuestionActivity"
+            android:label="@string/title_activity_question" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p><strong>This is my project structure:</strong></p>
+
+<p><img src="http://i.stack.imgur.com/WngWG.png" alt="Project Structure **quiz.db** in **assets**"></p>
+
+<p>This is my <strong>logcat output:</strong></p>
+
+<p><img src="http://i.stack.imgur.com/5XYsP.png" alt="**Logcat** error"></p>
+
+<p>The links I had referred: </p>
+
+<p><a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<p><a href="http://snipplr.com/view.php?codeview&id=58589" rel="nofollow">http://snipplr.com/view.php?codeview&id=58589</a></p>
+
+<p>Where lies the tricky issue?</p>

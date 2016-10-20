@@ -1,0 +1,105 @@
+<p>I have an issue with my GridView. It is not scrolling to the bottom of the GridView proberly. I have used the GridView from the <a href="http://developer.android.com/guide/topics/ui/layout/gridview.html" rel="nofollow">Android developer</a> site. Here is how the bottom of my screen looks like when I scroll all the way down: <a href="http://i.stack.imgur.com/xSTNW.jpg" rel="nofollow"><img src="http://i.stack.imgur.com/xSTNW.jpg" alt=""></a>
+So it is cutting off the bottom of the last two grids. However I have solved this by adding padding to the bottom of my GridView that looks like this:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<GridView
+    android:id="@+id/gridview"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnWidth="90dp"
+    android:gravity="center"
+    android:horizontalSpacing="2dp"
+    android:numColumns="2"
+    android:stretchMode="columnWidth"
+    android:verticalSpacing="1dp"
+    android:paddingBottom="55dp"
+    />
+</code></pre>
+
+<p>The problem is that the padding of 55dp fits perfectly to my Samsung Galaxy S5. But i suspect this is not the case for other devices? And if I add more padding I will get a permanent white line at the bottom of the screen even though the GridView is not scrolled all the way down. </p>
+
+<p>Here is my class for implementing the GridView:</p>
+
+<pre><code>public class HomeFragment extends Fragment implements AdapterView.OnItemClickListener {
+
+    public HomeFragment() {
+        // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.grid_layout, container, false);
+        GridView gridview = (GridView) view.findViewById(R.id.gridview);
+        gridview.setAdapter(new GridViewAdapter(getActivity()));
+        gridview.setOnItemClickListener(this);
+        // Inflate the layout for this fragment
+        return view;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Toast.makeText(getContext(), "" + position,
+                Toast.LENGTH_SHORT).show();
+    }
+}
+</code></pre>
+
+<p>And this is my GridViewAdapter class:</p>
+
+<pre><code>public class GridViewAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public GridViewAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
+        int screenWidth = metrics.widthPixels;
+        if (convertView == null) {
+            // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(screenWidth/2, screenWidth/2));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            //imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+            R.drawable.dog, R.drawable.cat,
+            R.drawable.horse, R.drawable.bunny,
+            R.drawable.fish, R.drawable.hamster,
+            R.drawable.hedgehog, R.drawable.bird
+    };
+}
+</code></pre>
+
+<p>So my question in short is: Is there a way to ensure the GridView will fit the screen perfectly without having to add the padding to the bottom of the GridView, which I suppose won't be the same padding for all devices?</p>

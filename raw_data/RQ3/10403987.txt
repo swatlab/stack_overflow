@@ -1,0 +1,144 @@
+<p>I'm writing a recipe book, and I've encountered a problem - I want to send text from my recipe list to recipe display screen, and I must be doing something wrong because I keep getting force closes:</p>
+
+<p>This is code for my Recipe_Button_List</p>
+
+<p>public class Recipe_Button_List extends Activity {</p>
+
+<p>EditText inputMethod;</p>
+
+<p>EditText inputIngredients;</p>
+
+<pre><code>@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.recipe_button_list);
+
+    inputMethod = (EditText) findViewById(R.id.textView2);
+    inputIngredients = (EditText) findViewById(R.id.textView1);
+
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+
+
+
+    Button mainNext = (Button) findViewById(R.id.Recipe1);
+    mainNext.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+            final TextView mTextView = (TextView) findViewById(R.id.textView1);
+            mTextView.setText(R.string.Test);
+            Intent i= new Intent(getBaseContext(),recipedisplayscreen.class);
+            //Sending data to the next screen
+            i.putExtra("textView1", inputIngredients.getText().toString());
+            i.putExtra("textView2", inputMethod.getText().toString());
+
+            Log.e("n", inputMethod.getText()+"."+ inputIngredients.getText());
+
+            startActivity(i);
+        }
+    });
+}
+ @Override
+ public boolean onCreateOptionsMenu(Menu menu) {
+     MenuInflater inflater = getMenuInflater();
+     inflater.inflate(R.menu.recipe_menu1, menu);
+     return true;
+
+}
+</code></pre>
+
+<p>}</p>
+
+<p>And this is my recipe_display_screen:</p>
+
+<p>public class recipedisplayscreen extends Activity {</p>
+
+<pre><code>@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.recipedisplayscreen);
+
+    TextView MethodDisplay = (TextView) findViewById(R.id.textView2);
+    TextView IngredientsDisplay = (TextView) findViewById(R.id.textView4);
+
+    Intent i = getIntent();
+    String Ingredients = i.getStringExtra("TextView1");
+    String Method = i.getStringExtra("TextView2");
+    Log.e("recipedisplayscreen", Ingredients + "." + Method);
+
+    MethodDisplay.setText(Method);
+    IngredientsDisplay.setText(Ingredients);
+
+
+    ActionBar actionBar = getActionBar();
+    setTitle(R.string.title);
+    actionBar.setDisplayHomeAsUpEnabled(true);}
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // App icon in action bar clicked; go home
+                Intent intent = new Intent(this, MainScreen.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+
+
+ @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.recipe_menu1, menu);
+        return true;
+
+}
+</code></pre>
+
+<p>}</p>
+
+<p>Here are records from logCat:</p>
+
+<p>05-01 21:54:54.638: D/AndroidRuntime(10717): Shutting down VM
+05-01 21:54:54.638: W/dalvikvm(10717): threadid=1: thread exiting with uncaught exception (group=0x40a301f8)
+05-01 21:54:54.638: E/AndroidRuntime(10717): FATAL EXCEPTION: main
+05-01 21:54:54.638: E/AndroidRuntime(10717): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.bluStudios.Recipes4U.ics/com.bluStudios.Recipes4U.ics.Recipe_Button_List}: java.lang.ClassCastException: android.widget.TextView cannot be cast to android.widget.EditText
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1956)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.ActivityThread.access$600(ActivityThread.java:123)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.os.Handler.dispatchMessage(Handler.java:99)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.os.Looper.loop(Looper.java:137)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.ActivityThread.main(ActivityThread.java:4424)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at java.lang.reflect.Method.invokeNative(Native Method)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at java.lang.reflect.Method.invoke(Method.java:511)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at dalvik.system.NativeStart.main(Native Method)
+05-01 21:54:54.638: E/AndroidRuntime(10717): Caused by: java.lang.ClassCastException: android.widget.TextView cannot be cast to android.widget.EditText
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at com.bluStudios.Recipes4U.ics.Recipe_Button_List.onCreate(Recipe_Button_List.java:25)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.Activity.performCreate(Activity.java:4465)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1920)
+05-01 21:54:54.638: E/AndroidRuntime(10717):    ... 11 more</p>
+
+<p>PS Force close happens when I press the button that takes you to the recipe_button_list</p>
+
+<p><strong>EDIT:</strong>
+Hi again :)
+I've got another small problem - my recipe_display_screen recieves null.null form my previous screen any idea why?</p>
+
+<p>LogCat:</p>
+
+<p>05-02 11:28:29.764: D/dalvikvm(28455): GC_CONCURRENT freed 113K, 2% free 14526K/14727K, paused 2ms+14ms
+05-02 11:28:30.022: E/n(28455): FromStringMethod.if this is displaying then Intent activity is working correctly
+05-02 11:28:30.163: D/dalvikvm(28455): GC_FOR_ALLOC freed 1769K, 13% free 12813K/14727K, paused 23ms
+05-02 11:28:30.163: I/dalvikvm-heap(28455): Grow heap (frag case) to 13.883MB for 1401676-byte allocation
+05-02 11:28:30.202: D/dalvikvm(28455): GC_CONCURRENT freed 3K, 4% free 14179K/14727K, paused 2ms+2ms
+05-02 11:28:30.218: E/recipedisplayscreen(28455): null.null</p>
+
+<p><strong>EDIT END</strong></p>

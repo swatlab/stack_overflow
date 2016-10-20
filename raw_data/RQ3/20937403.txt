@@ -1,0 +1,301 @@
+<p>This error is causing my application to stop every time I run it and cant figure out why. Think it may be an issue in the XML file but can't see it.  </p>
+
+<p>It says <code>Unfortunately login app has stopped working</code></p>
+
+<p>Here is the code: </p>
+
+<p><strong>login.java</strong> </p>
+
+<pre><code>public class login extends Activity {
+
+public static final String MY_PREFS = "SharedPreferences";
+private DatabaseAdapter dbHelper;
+private EditText theUsername;
+private EditText thePassword;
+private Button loginButton;
+private Button registerButton;
+private Button clearButton;
+private Button exitButton;
+private CheckBox rememberDetails;
+
+
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    SharedPreferences mySharedPreferences = getSharedPreferences(MY_PREFS, 0);
+    Editor editor = mySharedPreferences.edit();
+    editor.putLong("uid", 0);
+    editor.commit();
+
+    dbHelper = new DatabaseAdapter(this);
+    dbHelper.open();
+
+    setContentView(R.layout.main);
+    initControls();
+}
+
+private void initControls() {
+    //Set the activity layout.
+    theUsername = (EditText) findViewById(R.id.Username);
+    thePassword = (EditText) findViewById(R.id.Password);
+    loginButton = (Button) findViewById(R.id.Login);
+    registerButton = (Button) findViewById(R.id.Register);
+    //clearButton = (Button) findViewById(R.id.Clear);
+    //exitButton = (Button) findViewById(R.id.Exit);
+    rememberDetails = (CheckBox) findViewById(R.id.RememberMe);
+
+    //Create touch listeners for all buttons.
+    loginButton.setOnClickListener(new Button.OnClickListener(){
+        public void onClick (View v){
+            LogMeIn(v);
+        }
+    });
+
+    registerButton.setOnClickListener(new Button.OnClickListener(){
+        public void onClick (View v){
+            Register(v);
+        }
+    });
+
+    clearButton.setOnClickListener(new Button.OnClickListener(){
+        public void onClick (View v){
+            ClearForm();
+        }
+    });
+
+    exitButton.setOnClickListener(new Button.OnClickListener(){
+        public void onClick (View v){
+            Exit();
+        }
+    });
+    //Create remember password check box listener.
+    rememberDetails.setOnClickListener(new CheckBox.OnClickListener(){
+        public void onClick (View v){
+            RememberMe();
+        }
+    });
+
+    //Handle remember password preferences.
+    SharedPreferences prefs = getSharedPreferences(MY_PREFS, 0);
+    String thisUsername = prefs.getString("username", "");
+    String thisPassword = prefs.getString("password", "");
+    boolean thisRemember = prefs.getBoolean("remember", false);
+    if(thisRemember) {
+        theUsername.setText(thisUsername);
+        thePassword.setText(thisPassword);
+        rememberDetails.setChecked(thisRemember);
+    }
+
+}
+
+/**
+ * Deals with Exit option - exits the application.
+ */
+private void Exit()
+{
+    finish();
+}
+
+/**
+ * Clears the login form.
+ */
+private void ClearForm() {
+    saveLoggedInUId(0,"","");
+    theUsername.setText("");
+    thePassword.setText("");
+}
+
+/**
+ * Handles the remember password option.
+ */
+private void RememberMe() {
+    boolean thisRemember = rememberDetails.isChecked();
+    SharedPreferences prefs = getSharedPreferences(MY_PREFS, 0);
+    Editor editor = prefs.edit();
+    editor.putBoolean("remember", thisRemember);
+    editor.commit();
+}
+
+/**
+ * This method handles the user login process.  
+ * @param v
+ */
+private void LogMeIn(View v) {
+    //Get the username and password
+    String thisUsername = theUsername.getText().toString();
+    String thisPassword = thePassword.getText().toString();
+
+    //Assign the hash to the password
+    thisPassword = md5(thisPassword);
+
+    // Check the existing user name and password database
+    Cursor theUser = dbHelper.fetchUser(thisUsername, thisPassword);
+    if (theUser != null) {
+        startManagingCursor(theUser);
+        if (theUser.getCount() > 0) {
+            saveLoggedInUId(theUser.getLong(theUser.getColumnIndex(DatabaseAdapter.COL_ID)), thisUsername, thePassword.getText().toString());
+            stopManagingCursor(theUser);
+            theUser.close();
+            Intent i = new Intent(v.getContext(), Helloworld.class);
+            startActivity(i);
+        }
+
+        //Returns appropriate message if no match is made
+        else {
+            Toast.makeText(getApplicationContext(), 
+                    "You have entered an incorrect username or password.", 
+                    Toast.LENGTH_SHORT).show();
+            saveLoggedInUId(0, "", "");
+        }
+        stopManagingCursor(theUser);
+        theUser.close();
+    }
+
+    else {
+        Toast.makeText(getApplicationContext(), 
+                "Database query error", 
+                Toast.LENGTH_SHORT).show();
+    }
+}
+
+/**
+ * Open the Registration activity.
+ * @param v
+ */
+private void Register(View v)
+{
+    Intent i = new Intent(v.getContext(), Register.class);
+    startActivity(i);
+}
+
+private void saveLoggedInUId(long id, String username, String password) {
+    SharedPreferences settings = getSharedPreferences(MY_PREFS, 0);
+    Editor myEditor = settings.edit();
+    myEditor.putLong("uid", id);
+    myEditor.putString("username", username);
+    myEditor.putString("password", password);
+    boolean rememberThis = rememberDetails.isChecked();
+    myEditor.putBoolean("rememberThis", rememberThis);
+    myEditor.commit();
+}
+
+/**
+ * Deals with the password encryption. 
+ * @param s The password.
+ * @return
+ */
+private String md5(String s) {
+    try {
+        MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+        digest.update(s.getBytes());
+        byte messageDigest[] = digest.digest();
+
+        StringBuffer hexString = new StringBuffer();
+        for (int i=0; i<messageDigest.length; i++)
+            hexString.append(Integer.toHexString(0xFF & messageDigest[i]));
+
+        return hexString.toString();
+    } 
+
+    catch (NoSuchAlgorithmException e) {
+        return s;
+    }
+}
+}
+</code></pre>
+
+<p><strong>main.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:background="#E6E6E6" >
+
+<TextView
+    android:id="@+id/Title"
+    android:layout_width="fill_parent"
+    android:layout_height="45dp"
+    android:background="#46C1EF"
+    android:gravity="center|fill_vertical"
+    android:text="MemRar"
+    android:textAppearance="?android:attr/textAppearanceLarge"
+    android:textColor="#ffffff" />
+
+<TextView
+    android:id="@+id/lblLogin"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="51dp"
+    android:layout_marginTop="71dp"
+    android:text="Login:"
+    android:textAppearance="?android:attr/textAppearanceLarge"
+    android:textColor="#223355" />
+
+<EditText
+    android:id="@+id/Username"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/lblLogin"
+    android:layout_below="@+id/lblLogin"
+    android:layout_marginTop="23dp"
+    android:ems="10"
+    android:gravity="fill_horizontal"
+    android:hint="Username"
+    android:inputType="textPersonName"
+    android:lines="1"
+    android:selectAllOnFocus="true" />
+
+<EditText
+    android:id="@+id/Password"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/Username"
+    android:layout_alignRight="@+id/Username"
+    android:layout_below="@+id/Username"
+    android:layout_marginTop="28dp"
+    android:ems="10"
+    android:hint="Password"
+    android:inputType="textPassword"
+    android:lines="1"
+    android:selectAllOnFocus="true" />
+
+<Button
+    android:id="@+id/Login"
+    android:layout_width="150dp"
+    android:layout_height="40dp"
+    android:layout_below="@+id/RememberMe"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="15dp"
+    android:background="#46C1EF"
+    android:textColor="#ffffff"
+    android:clickable="true"
+    android:gravity="center_vertical|center_horizontal"
+    android:text="@string/Login" />
+
+<Button
+    android:id="@+id/Register"
+    android:layout_width="150dp"
+    android:layout_height="40dp"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="20dp"
+    android:layout_below="@+id/Login"
+    android:background="#46C1EF"
+    android:textColor="#ffffff"
+    android:clickable="true"
+    android:gravity="center_vertical|center_horizontal"
+    android:text="@string/Register" />
+
+<CheckBox
+    android:id="@+id/RememberMe"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/Password"
+    android:layout_below="@+id/Password"
+    android:textColor="#223355"
+    android:text="Remember Me" />
+
+</RelativeLayout>
+</code></pre>

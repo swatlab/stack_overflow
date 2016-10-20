@@ -1,0 +1,80 @@
+<p><strong>The Problem</strong></p>
+
+<p>Before I describe my current setup I will describe my problem. I need to have hierarchal navigation between fragments inside separate tabs. Say I drill down on level in a tab, I then switch tabs and then go back to the first, original tab, I need it to be on the drilled down level and then have the ability to go back up to the top level of that tab.</p>
+
+<p><strong>Now onto my setup.</strong></p>
+
+<p>I have an application with one activity called <code>MainActivity</code>. This activity is what controls my tabbed action bar. I have followed many different tutorials to handle the switching of Fragments when a tab is selected and here is the code below that works drawing your attention to the <code>onTabSelected</code> and <code>onTabUnselected</code> methods.</p>
+
+<p><strong>MainActivity -- Tab Listener</strong></p>
+
+<pre><code>public static class MyTabListener<T extends Fragment> implements ActionBar.TabListener {
+    private final Activity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+    private final Bundle mArgs;
+    private Fragment mFragment;
+
+    public MyTabListener(Activity activity, String tag, Class<T> clz) {
+        this(activity, tag, clz, null);
+    }
+
+    public MyTabListener(Activity activity, String tag, Class<T> clz, Bundle args) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+        mArgs = args;
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
+        if (mFragment != null && !mFragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
+            ft.detach(mFragment);
+            ft.commit();
+        }
+    }
+
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        Log.e("FRAGMENT","Selected Fragment With Tag " + mTag);
+        if (mFragment == null) {
+            mFragment = Fragment.instantiate(mActivity, mClass.getName(), mArgs);
+            ft.add(android.R.id.content, mFragment, mTag);
+        } else {
+            ft.attach(mFragment);
+        }
+    }
+
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        if (mFragment != null) {
+            ft.detach(mFragment);
+        }
+    }
+
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
+    }
+
+
+}
+</code></pre>
+
+<p>When I am on <code>Tab1</code> viewing <code>Fragment1', when a button is pressed I then show another</code>Fragment<code>called</code>Fragment2` which I need the ability to go back from. The code below works if I just stay on that tab however when navigating away from the tab and back to it, everything messes up.</p>
+
+<p><strong>MainActivity -- Showing second fragment</strong></p>
+
+<pre><code>Fragment tdFrag = Fragment.instantiate(this, SecondFragment.class.getName());
+    FragmentTransaction ft = getFragmentManager().beginTransaction();
+    ft.replace(android.R.id.content, tdFrag, "secondfrag");
+    ft.addToBackStack(null);
+    ft.commit();
+</code></pre>
+
+<p><strong>My Thoughts</strong></p>
+
+<p>I think it must be the way I detach the fragments and handle the switching over when a new tab is pressed. Maybe I need to implement some way of storing each individual backstack for each tab and loading the fragments from that instead of the system back stack?</p>
+
+<p>Any help would be great. I have tried to explain it as thoroughly and simply as possible.</p>
+
+<p>Thanks in advance.</p>

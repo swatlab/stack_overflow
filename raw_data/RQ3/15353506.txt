@@ -1,0 +1,67 @@
+<p>In Java I am copying an image file from one location to another . The program is executing properly, but I want the destination file size to be different from the source file size. Is there any other way to resize the file at the new location? I am using the following code:</p>
+
+<pre><code>public class NewJFrame extends javax.swing.JFrame {
+
+    public NewJFrame() {
+        initComponents();
+    }
+
+    public static void copyFile(File sourceFile, File destFile)
+            throws IOException {
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+
+            // previous code: destination.transferFrom(source, 0, source.size());
+            // to avoid infinite loops, should be:
+            long count = 0;
+            long size = source.size();
+            while ((count += destination.transferFrom(source, count, size
+                    - count)) < size)
+                ;
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
+    }
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            File sourceFile = new File(
+                    "d:/adesh/golden_temple_amritsar_india-normal.jpg");
+
+            File destFile = new File(
+                    "d:/adesh2/golden_temple_amritsar_india-normal.jpg");
+
+            copyFile(sourceFile, destFile);
+        } catch (Exception ex) {
+        }
+
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new NewJFrame().setVisible(true);
+            }
+        });
+    }
+
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+}
+</code></pre>

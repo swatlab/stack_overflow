@@ -1,0 +1,123 @@
+<p>I am developing the second version of my application. In which I am facing a problem.</p>
+
+<p>In my application the database is in the assets folder. Now I want to update my database from the assets folder in the second version.</p>
+
+<p>I tried the code to upgrade as :</p>
+
+<pre><code>// Data Base Version.
+private static final int DATABASE_VERSION = 2;
+</code></pre>
+
+<p>I changed the version from 1 to 2.</p>
+
+<p>//Constructor</p>
+
+<pre><code>public DataBaseHelperClass(Context myContext) {     
+    super(myContext, DATABASE_NAME, null ,DATABASE_VERSION);
+    this.context = myContext;
+    //The Android's default system path of your application database.
+    DB_PATH = "/data/data/com.example.myapp/databases/";
+}
+</code></pre>
+
+<p>// Create data base</p>
+
+<pre><code>public void createDataBase() throws IOException{
+    //check if the database exists
+    boolean databaseExist = checkDataBase();
+
+    if(databaseExist){
+        this.getWritableDatabase();
+    }else{
+        this.getReadableDatabase();
+        try{
+            copyDataBase();
+        } catch (IOException e){
+            throw new Error("Error copying database");
+        }
+    }// end if else dbExist
+} // end createDataBase().
+</code></pre>
+
+<p>// Check database</p>
+
+<pre><code>public boolean checkDataBase(){
+    File databaseFile = new File(DB_PATH + DATABASE_NAME);
+    return databaseFile.exists();        
+}
+</code></pre>
+
+<p>// Copy database from assets</p>
+
+<pre><code>private void copyDataBase() throws IOException{ 
+    //Open your local db as the input stream
+    InputStream myInput = context.getAssets().open(DATABASE_NAME); 
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DATABASE_NAME; 
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName); 
+    //transfer bytes from the input file to the output file
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close(); 
+}
+</code></pre>
+
+<p>// Open database</p>
+
+<pre><code>public void openDataBase() throws SQLException{      
+    //Open the database
+    String myPath = DB_PATH + DATABASE_NAME;
+    sqliteDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);  
+}
+</code></pre>
+
+<p>// Close database</p>
+
+<pre><code>@Override
+public synchronized void close() { 
+    if(sqliteDataBase != null)
+        sqliteDataBase.close(); 
+    super.close(); 
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // No need to write the create table query.
+    // As we are using Pre built data base.
+    // Which is ReadOnly.
+}
+</code></pre>
+
+<p>// On Update database.</p>
+
+<pre><code>@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    if(newVersion>oldVersion){
+        context.deleteDatabase(DATABASE_NAME);
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    } else {
+
+    }
+}
+</code></pre>
+
+<p>But the issue is that, the database is not updated after executing the apk in the device.
+Now what should I do.</p>
+
+<p>My applications first version is on the market. Don't know how to update database in the second version.</p>
+
+<p>Please guide me with your valuable suggestions, I am in middle of my application and I am not able to move. </p>
+
+<p><strong>EDIT :</strong> onUpgrade not calling. As i tried to print log in 1st line in onUpgrade but it is not printed. So the issue is that, onUpgrade is not calling.</p>

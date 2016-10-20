@@ -1,0 +1,434 @@
+<p>I'm writing a fluid simulator to be able to simulate gasses. I'm following <a href="http://cowboyprogramming.com/2008/04/01/practical-fluid-mechanics/" rel="nofollow">this tutorial (the first section),</a> but my simulation doesn't seem to be working. </p>
+
+<p>Whenever I run it, the average density seems to decrease. When I get the sum of all the densities, it slowly gets smaller and smaller. It theoretically should stay the same, because this is a closed system.</p>
+
+<p>This is the main logic of the app:</p>
+
+<pre><code>public class Grid {
+    private Cell[][] grid;
+    private int width;
+    private int height;
+
+    public Grid(int width, int height) {
+        grid = new Cell[width][height];
+        this.width = width;
+        this.height = height;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                grid[x][y] = new Cell(new Vec2D(-1,0), 1 - (float) x / width);
+            }
+        }
+    }
+
+    public Cell getCell(int x, int y) {
+        return grid[x][y];
+    }
+
+    public void tick(float dt) {
+        advect(dt);
+    }
+
+    private void advect(float dt) {
+        Cell[][] source = Utils.copy(grid);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                // project velocity
+                Vec2D newPos = new Vec2D(x, y).plus(source[x][y].getVelocity().multiply(dt));
+                Corners corners = new Corners(newPos);
+
+                advectPos(source, x, y, corners);
+            }
+        }
+        //System.out.println(densitySum());
+    }
+
+    private void advectPos(Cell[][] source, int x, int y, Corners corners) {
+        advectDirection(source, x, y, corners, corners.topLeft, corners.topLeftRatio);
+        advectDirection(source, x, y, corners, corners.topRight, corners.topRightRatio);
+        advectDirection(source, x, y, corners, corners.bottomLeft, corners.bottomLeftRatio);
+        advectDirection(source, x, y, corners, corners.bottomRight, corners.bottomRightRatio);
+    }
+
+    private void advectDirection(Cell[][] source, int x, int y, Corners corners, Vec2D newPos, float ratio) {
+        // wrap around the grid
+        int newX = (int) newPos.x;
+        int newY = (int) newPos.y;
+        if(newX >= source.length) newX = newX - source.length;
+        if(newX < 0) newX = source.length + newX;
+        if(newY >= source[x].length) newY = newY - source[x].length;
+        if(newY < 0) newY = source[x].length + newY;
+
+        Cell sourceCell = source[newX][newY];
+        float densityChange = (source[x][y].getDensity() - sourceCell.getDensity()) * ratio;
+        Vec2D velChange = (source[x][y].getVelocity().minus(sourceCell.getVelocity()).multiply(ratio));
+
+        grid[newX][newY] = new Cell(sourceCell.getVelocity().plus(velChange), sourceCell.getDensity() + densityChange);
+        grid[x][y] = new Cell(source[x][y].getVelocity().minus(velChange), source[x][y].getDensity() - densityChange);
+    }
+    public float densitySum(){
+        float sum = 0;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                sum += getCell(x, y).getDensity();
+            }
+        }
+        return sum;
+    }
+
+    private static class Corners {
+        public final Vec2D topLeft;
+        public final float topLeftRatio;
+
+        public final Vec2D topRight;
+        public final float topRightRatio;
+
+        public final Vec2D bottomLeft;
+        public final float bottomLeftRatio;
+
+        public final Vec2D bottomRight;
+        public final float bottomRightRatio;
+
+        public Corners(float x, float y) {
+            topLeft = new Vec2D(floor(x), floor(y));
+            topRight = new Vec2D(ceil(x), floor(y));
+            bottomLeft = new Vec2D(floor(x), ceil(y));
+            bottomRight = new Vec2D(ceil(x), ceil(y));
+
+            float topLeftDist = topLeft.minus(new Vec2D(x, y)).length();
+            float topRightDist = topRight.minus(new Vec2D(x, y)).length();
+            float bottomLeftDist = bottomLeft.minus(new Vec2D(x, y)).length();
+            float bottomRightDist = bottomRight.minus(new Vec2D(x, y)).length();
+
+            float distSum = topLeftDist + topRightDist + bottomLeftDist + bottomRightDist;
+            topLeftRatio = topLeftDist / distSum;
+            topRightRatio = topRightDist / distSum;
+            bottomLeftRatio = bottomLeftDist / distSum;
+            bottomRightRatio = bottomRightDist / distSum;
+        }
+
+        public Corners(Vec2D v) {
+            this(v.x, v.y);
+        }
+
+        private static float floor(float x) {
+            return (float) Math.floor(x);
+        }
+
+        private static float ceil(float x) {
+            return (float) Math.ceil(x);
+        }
+    }
+}
+</code></pre>
+
+<p>This is Cell:</p>
+
+<pre><code>public class Cell {
+    private final Vec2D velocity;
+    private final float density;
+
+    public Cell(Vec2D velocity, float density){
+        this.velocity = velocity;
+        this.density = density;
+    }
+
+    public float getDensity() {
+        return density;
+    }
+
+    public Vec2D getVelocity() {
+        return velocity;
+    }
+
+    @Override
+    public String toString() {
+        return "Cell [velocity=" + velocity + ", density=" + density + "]";
+    }
+
+
+}
+</code></pre>
+
+<p>Vec2D (tested and working, only included for a runable example)</p>
+
+<pre><code>public class Vec2D {
+
+    public static final Vec2D ZERO = new Vec2D(0, 0);
+    public final float x;
+    public final float y;
+    // NaN means the length is uncached
+    private float length = Float.NaN;
+
+    /**
+     * Creates a 2-dimensional vector with components x and y
+     * @param x cannot be NaN or infinite
+     * @param y cannot be NaN or infinite
+     */
+    public Vec2D(final float x, final float y) {
+        if (Float.isNaN(x) || Float.isNaN(y)) {
+            throw new IllegalArgumentException("Neither x nor y can be NaN, was: (" + x + ", " + y + ")");
+        }
+        if (Float.isInfinite(x) || Float.isInfinite(y)) {
+            throw new IllegalArgumentException("Neither x nor y can be infinite, was: (" + x + ", " + y + ")");
+        }
+
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Creates a vector with components 0 and 0
+     */
+    public Vec2D() {
+        this(0, 0);
+    }
+
+    /**
+     * Copy constructor
+     */
+    public Vec2D(final Vec2D v) {
+        this(v.x, v.y);
+    }
+
+    /**
+     * Creates a unit length vector in the given direction.
+     *
+     * @param direction
+     *            the direction in radians
+     */
+    public Vec2D(final float direction) {
+        x = (float) Math.cos(direction);
+        y = (float) Math.sin(direction);
+    }
+
+    /**
+     * Creates a vector with components point.getX() and point.getY()
+     * @param point
+     */
+    public Vec2D(final Point point) {
+        x = (float) point.getX();
+        y = (float) point.getY();
+    }
+
+    /**
+     * @return the angle (argument) of the vector in polar coordinates in the range [-pi, pi]
+     */
+    public float getTheta() {
+        return (float) Math.atan2(y, x);
+    }
+
+    /** The sum of the vector and rhs */
+    public Vec2D plus(final Vec2D rhs) {
+        return new Vec2D(x + rhs.x, y + rhs.y);
+    }
+
+    /** The difference of the vector and rhs: this - rhs */
+    public Vec2D minus(final Vec2D rhs) {
+        return new Vec2D(x - rhs.x, y - rhs.y);
+    }
+
+    /** Product of the vector and scalar */
+    public Vec2D multiply(final float scalar) {
+        return new Vec2D(scalar * x, scalar * y);
+    }
+
+    /** Product of the vector and scalar */
+    public Vec2D divide(final float scalar) {
+        return new Vec2D(x / scalar, y / scalar);
+    }
+
+    /** Dot product of the vector and rhs */
+    public float dotProduct(final Vec2D rhs) {
+        return x * rhs.x + y * rhs.y;
+    }
+
+    /**
+     * Since Vector2D works only in the x-y plane, (u x v) points directly along the z axis. This function returns the
+     * value on the z axis that (u x v) reaches.
+     *
+     * @return signed magnitude of (this x rhs)
+     */
+    public float crossProduct(final Vec2D rhs) {
+        return x * rhs.y - y * rhs.x;
+    }
+
+    /** Product of components of the vector: compenentProduct( <x y>) = x*y. */
+    public float componentProduct() {
+        return x * y;
+    }
+
+    /** Componentwise product: <this.x*rhs.x, this.y*rhs.y> */
+    public Vec2D componentwiseProduct(final Vec2D rhs) {
+        return new Vec2D(x * rhs.x, y * rhs.y);
+    }
+
+    /**
+     * Returns the length of this vector. Uses the fast inverse sqrt function. Caches the length call so all calls after
+     * this are fast.
+     *
+     * @return the length of this vector
+     */
+    public float length() {
+        // if length == null, it has not been cached yet
+        if (Float.isNaN(length)) {
+            length = 1f / invSqrt(x * x + y * y);
+        }
+        return length;
+    }
+
+    private static float invSqrt(float x) {
+        final float xhalf = 0.5f * x;
+        int i = java.lang.Float.floatToIntBits(x);
+        i = 0x5f3759df - (i >> 1);
+        x = java.lang.Float.intBitsToFloat(i);
+        x = x * (1.5f - xhalf * x * x);
+        // can remove this next line, it just improves precision
+        x = x * (1.5f - xhalf * x * x);
+        return x;
+    }
+
+    /**
+     * Returns a new vector with the same direction as the vector but with length 1, except in the case of zero vectors,
+     * which return a copy of themselves.
+     */
+    public Vec2D unitVector() {
+        if (length() != 0) {
+            return new Vec2D(x / length(), y / length());
+        }
+        return new Vec2D(0, 0);
+    }
+
+    /**
+     * @return Standard string representation of a vector: "<x, y>"
+     */
+    @Override
+    public String toString() {
+        return "<" + x + ", " + y + ">";
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Float.floatToIntBits(x);
+        result = prime * result + Float.floatToIntBits(y);
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Vec2D other = (Vec2D) obj;
+        if (Float.floatToIntBits(x) != Float.floatToIntBits(other.x)) {
+            return false;
+        }
+        if (Float.floatToIntBits(y) != Float.floatToIntBits(other.y)) {
+            return false;
+        }
+        return true;
+    }
+
+    public Point2D toPoint() {
+        return new Point2D.Float(x, y);
+    }
+
+    /**
+     * Gives one of the perpendiculars of this vector
+     * @return (-y, x)
+     */
+    public Vec2D perpendicular() {
+        return new Vec2D(-y, x);
+    }
+}
+</code></pre>
+
+<p>Utils</p>
+
+<pre><code>public class Utils {
+
+    public static Cell[][] copy(Cell[][] grid) {
+        Cell [][] copy = new Cell[grid.length][];
+        for(int i = 0; i < grid.length; i++)
+        {
+          Cell[] aMatrix = grid[i];
+          int   aLength = aMatrix.length;
+          copy[i] = new Cell[aLength];
+          System.arraycopy(aMatrix, 0, copy[i], 0, aLength);
+        }
+        return copy;
+    }
+
+}
+</code></pre>
+
+<p>And how the simulation is run:</p>
+
+<pre><code>public class Main {
+    static int cellSize = 10;
+    static int size = 50;
+    static BufferedImage image;
+    private static Grid grid;
+    private static Component panel;
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame();
+        panel = new JPanel(){
+            @Override
+            public void paintComponent(Graphics g){
+                g.drawImage(image, 0, 0, null);
+            }
+        };
+        image = new BufferedImage(size * cellSize, size * cellSize, BufferedImage.TYPE_INT_RGB);
+        panel.setPreferredSize(new Dimension(size * cellSize, size * cellSize));
+        frame.add(panel);
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+
+        grid = new Grid(size, size);
+
+        run();
+    }
+
+    private static void run() {
+        long lastTime = System.currentTimeMillis();
+        while(true){
+            long currentTime = System.currentTimeMillis();
+            lastTime = currentTime;
+            grid.tick(0.1f);
+            draw();
+            panel.repaint();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void draw() {
+        Graphics g = image.getGraphics();
+        for(int x = 0; x < size; x++){
+            for(int y = 0; y < size; y++){
+                float density = grid.getCell(x, y).getDensity();
+                g.setColor(new Color(density, density, density));
+                g.fillRect(x * cellSize, y* cellSize, cellSize, cellSize);
+
+                g.setColor(Color.RED);
+                g.drawLine(x * cellSize, y * cellSize, x * cellSize + (int)grid.getCell(x, y).getVelocity().x, y * cellSize + (int)grid.getCell(x, y).getVelocity().y);
+            }
+        }
+        g.dispose();
+    }
+}
+</code></pre>
+
+<p>I suspect there is something wrong in my <code>advect</code> method, but as the article says to do, I always subtract the same amount of density from a cell that I add to another. </p>

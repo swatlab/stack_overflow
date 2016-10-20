@@ -1,0 +1,62 @@
+<p>I've seen all the posts of TabHost + FragmentActivity on Google Groups and on StackOverflow and I'm still getting problems.</p>
+
+<p>And I don't understand anything. </p>
+
+<p>I'm following this tutorial for TabHost and FragmentActivity: <a href="http://thepseudocoder.wordpress.com/2011/10/04/android-tabs-the-fragment-way/" rel="nofollow">http://thepseudocoder.wordpress.com/2011/10/04/android-tabs-the-fragment-way/</a></p>
+
+<p>I have the following thing:
+in a tab I load a <code>CategoriaFragment.class</code>, where I load a <code>ListView</code> and I set a <code>ListView.OnItemClickListener</code> for it. When I click, I call this code:</p>
+
+<pre><code>CategoriaFragment fragmentnuevo = new CategoriaFragment();
+FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+Bundle b = new Bundle();
+b.putBoolean("flagSottoCategorie", true);
+b.putSerializable("sottocategorielista", (Serializable)sottocategorielista);
+fragmentnuevo.setArguments(b);
+transaction.addToBackStack(null);
+transaction.add(R.id.realtabcontent, fragmentnuevo, FragmentTAG); // FragmentTAG is the same tag that the current Fragment
+transaction.commit();
+</code></pre>
+
+<p>and yes, I call the same type of Fragment because I need the same recurses but with another <code>List</code>(sottocategorielista). This is not the error because I've tried to use another .class and it's the same error.</p>
+
+<p>When I press back button, I get again my first <code>ListView</code> but listeners are not available. So I click and nothing happens. I've used <code>add</code> and <code>replace</code> as well.</p>
+
+<p>Moreover, when I try to change Tab, if <code>add</code> is typed, I get several fragments in the same layout, if <code>remove</code> is typed, I get only one fragment on onTabChanged, but when I get back to my Fragment, nothing is available. Moreover if I press back button, I get the <code>java.IllegalStateException</code> saying </p>
+
+<blockquote>
+  <p>Fragment is already added: CategoriaFragment</p>
+</blockquote>
+
+<p>What should I do?
+Everything is easier with TabActivity, which is deprecated now and I would like to do everything with Fragments.</p>
+
+<p>This is how my <code>onTabChanged</code> works (also available on the resource on the web)</p>
+
+<pre><code>public void onTabChanged(String tag) {
+    TabInfo newTab = this.mapTabInfo.get(tag);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this,
+                        newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+            }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+</code></pre>
+
+<p>Thanks in advanced.</p>

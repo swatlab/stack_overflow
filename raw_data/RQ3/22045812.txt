@@ -1,0 +1,87 @@
+<p>I have a grid view that loads all the images from a specific folder into itself. I'm trying to get it so that when a user click an individual image within the grid view it sets an enlarged version of itself within an image view. I think what I need to try and do is when the grid view is created and the images loaded into it, I need to attach an array to both the imageview created holding the image within the gridview and the location of it within the SD card. So when an image is loaded; save location of image and attach it to the imageview within gridview. What I have so far loads the last picture loaded from the SD card into the enlarged image view.</p>
+
+<p>Main.java</p>
+
+<pre><code>public class Main extends Activity{
+
+ImageView photoHolder;
+
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.gallery);
+
+
+    photoHolder = (ImageView) findViewById(R.id.photoHolderView);
+    photoHolder.setVisibility(View.GONE);
+    GridView gridView = (GridView) findViewById(R.id.grid_view);
+    gridView.setVisibility(View.VISIBLE);
+    gridView.setAdapter(new ImageAdapter(this));
+    gridView.setOnItemClickListener(new OnItemClickListener() 
+    {
+        @Override
+        public void onItemClick(AdapterView<?> a, View view, int position, long id) {
+
+            photoHolder.setVisibility(View.VISIBLE);
+            photoHolder.setImageURI(ImageAdapter.uri);
+
+
+    }
+});
+}
+</code></pre>
+
+<p>}</p>
+
+<p>ImageAdapter.java</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+
+public static Uri uri;
+
+private Context mContext;
+File root = new File(Environment.getExternalStorageDirectory()
+        + File.separator + "Custom" + File.separator);
+private File[] fileName = root.listFiles();
+int count = fileName.length;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return fileName.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+
+    uri = Uri.fromFile(fileName[position]);
+
+    ImageView imageView;
+    if (convertView == null) { // if it's not recycled, initialize some
+                                // attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageURI(uri);
+    return imageView;
+}
+}
+</code></pre>
+
+<p>On a side note it crashes quite a lot due to memory leaks, any idea how I would create a "sample/thumbnail" size image whilst loading it from the SD card?</p>

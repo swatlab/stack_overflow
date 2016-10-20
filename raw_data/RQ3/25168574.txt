@@ -1,0 +1,127 @@
+<p>How would I change the content of a spinner array in a <code>Fragment</code> when a selection is made from <code>ListPreferences</code> in my Preferences?</p>
+
+<p>In my app I am trying to add preferences that include <code>ListPreferences</code>.  I have the settings <code>Activity</code> written and it shows my array list but when I select an option nothing changes in my app.  My app runs <code>Fragments</code> from a main <code>Activity</code>.  I try to manipulate data that is shown from my initial <code>Fragment</code> with the settings that are chosen by the user.  Here is my code:</p>
+
+<p>SettingsActivity:</p>
+
+<pre><code>@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+@Override
+public void onCreate (Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    addPreferencesFromResource(R.xml.settings);
+    PreferenceManager.setDefaultValues(SettingsActivity.this, R.xml.settings, false);
+    //ListPreference lp = (ListPreference)findPreference("prefSections");
+    //lp.setEntries(new String [] {"prefSections", "PrefSectionsValues"});
+    getActionBar().setDisplayHomeAsUpEnabled(true);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item){
+    switch (item.getItemId()){
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+
+@Override
+public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+}
+</code></pre>
+
+<p>Initially shown fragment:</p>
+
+<pre><code>    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+
+    container.removeAllViews();
+
+    //Use View "v" containing the layout and container - use v.findViewById in others
+    View v = inflater.inflate(R.layout.mylayout, container, false);
+
+    SharedPreferences settingPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity().getBaseContext());
+    String settingSection = settingPrefs.getString("prefSectionsValues", "1");
+        if (settingSection == "1"){
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, displayName);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
+        spLoadFrom.setAdapter(spinnerArrayAdapter);
+    } else if (settingSection == "2"){
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, displayName2);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
+        spLoadFrom.setAdapter(spinnerArrayAdapter);
+    } else if (settingSection == "3"){
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, displayName3);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
+        spLoadFrom.setAdapter(spinnerArrayAdapter);
+    }else if (settingSection == "4"){
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, displayName4);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
+        spLoadFrom.setAdapter(spinnerArrayAdapter);
+    }else if (settingSection == "5"){
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, displayName5);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
+        spLoadFrom.setAdapter(spinnerArrayAdapter);
+    }
+    //ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, displayName);
+    //spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
+    //spLoadFrom.setAdapter(spinnerArrayAdapter);
+
+    SpinnerListener spListener = new SpinnerListener();
+
+    spLoadFrom.setOnItemSelectedListener(spListener);
+    // Inflate the layout for this fragment
+return v;
+}
+</code></pre>
+
+<p>arrays.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<string-array name="prefSections">
+    <item name="sec">Split by Section</item>
+    <item name="secchap">Split by Section with Chapters</item>
+    <item name="secchapwhole">Split by Section with Chapters and the entire doc</item>
+    <item name="chap">Split by Chapters</item>
+    <item name="chapwhole">Split by Chapters and the entire doc</item>
+</string-array>
+<string-array name="prefSectionsValues">
+    <item>1</item>
+    <item>2</item>
+    <item>3</item>
+    <item>4</item>
+    <item>5</item>
+</string-array>
+
+</resources>
+</code></pre>
+
+<p>settings.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+<PreferenceCategory android:title="@string/prefUpdateCat">
+    <CheckBoxPreference
+        android:key="prefUpdate"
+        android:summary="On/Off"
+        android:title="Check for updates" />
+</PreferenceCategory>
+
+<PreferenceCategory android:title="@string/prefSectionsCat">
+    <ListPreference
+        android:key="pref_Sections"
+        android:entries="@array/prefSections"
+        android:entryValues="@array/prefSectionsValues"
+        android:summary="How it should be displayed"
+        android:title="it's displayed..." />
+</PreferenceCategory>
+
+</PreferenceScreen>
+</code></pre>

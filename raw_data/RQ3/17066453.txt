@@ -1,0 +1,69 @@
+<p>Hi i am making tab using fragment. Here is my code to generate the tabing:</p>
+
+<pre><code>   private static void addTab(QatarAuctionHomeTabActivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+    // Attach a Tab view factory to the spec
+    tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+
+
+    tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+    if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.detach(tabInfo.fragment);
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+    }
+
+    tabHost.addTab(tabSpec);
+}
+</code></pre>
+
+<p>Here is my onTabChanged() listener</p>
+
+<pre><code> public void onTabChanged(String tag) {
+    // TODO Auto-generated method stub
+    TabInfo newTab = this.mapTabInfo.get(tag);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this,
+                        newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+
+            }
+        }
+
+        mLastTab = newTab;
+       // ft.addToBackStack(null);
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+</code></pre>
+
+<p>I am adding a fragment with Gridview in it(fetching data from web to load the grid). But my problem is when i navigate between the tabs and go to the grid tab again every time data is loaded. The onCreateview() is called and data loads every time. Here is the code of grid view:</p>
+
+<pre><code>@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    view = inflater.inflate(R.layout.product_list_layout, container,
+            false);
+    Log.e("oncreateview", "Aise");
+    initiateServerParameters();
+    getUserDataFromPreference();
+    initialize();
+    setUpGrid();
+    requestDataFromWeb();
+    return view;
+} 
+</code></pre>
+
+<p>I know ft.attach(newTab.fragment) method recreate the view of the fragment again and that causes the call of oncreateview() method. But i dont want to load the data every time. How can that be achieved?</p>

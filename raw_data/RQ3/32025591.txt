@@ -1,0 +1,79 @@
+<p>I want to have a list of images as <code>GridView</code> in my app. I am using my <code>ImageAdapter</code> class for initializing <code>GridView</code>.</p>
+
+<p>Here is my <code>ImageAdapter</code> class:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+   private Context mContext;
+
+   // Constructor
+   public ImageAdapter(Context c) {
+      mContext = c;
+   }
+
+   public int getCount() {
+      return mThumbIds.length;
+   }
+
+   public Object getItem(int position) {
+      return null;
+   }
+
+   public long getItemId(int position) {
+      return 0;
+   }
+
+   // create a new ImageView for each item referenced by the Adapter
+   public View getView(int position, View convertView, ViewGroup parent) {
+      ImageView imageView;
+
+      if (convertView == null) {
+         imageView = new ImageView(mContext);
+         imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+         imageView.setPadding(8, 8, 8, 8);
+      } 
+      else 
+      {
+         imageView = (ImageView) convertView;
+      }
+      imageView.setImageResource(mThumbIds[position]);
+      return imageView;
+   }
+
+   // Keep all Images in array
+   public Integer[] mThumbIds = {
+      R.drawable.sample_2, R.drawable.sample_3,
+      R.drawable.sample_4, R.drawable.sample_5,
+      R.drawable.sample_6, R.drawable.sample_7,
+      R.drawable.sample_0, R.drawable.sample_1,
+      R.drawable.sample_2, R.drawable.sample_3,
+      R.drawable.sample_4, R.drawable.sample_5,
+      R.drawable.sample_6, R.drawable.sample_7,
+      R.drawable.sample_0, R.drawable.sample_1,
+      R.drawable.sample_2, R.drawable.sample_3,
+      R.drawable.sample_4, R.drawable.sample_5,
+      R.drawable.sample_6, R.drawable.sample_7
+   };
+}
+</code></pre>
+
+<p>But I want to use my <code>ArrayList<Bitmap></code> instead of <code>Integer[] mThumbIds</code>.</p>
+
+<p>My <code>Bitmap</code> arraylist is like this:</p>
+
+<pre><code>ArrayList<Bitmap> bitmaps = new ArrayList<Bitmap>();
+
+byte[] data = null;
+
+for (int i = 0; i<image.size(); i++) {
+    try {
+        data = Base64.decodeBase64(image.get(i).getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+    }
+
+    bitmaps.add(BitmapFactory.decodeByteArray(data, 0, data.length));
+}
+</code></pre>
+
+<p>What should I do for that?</p>

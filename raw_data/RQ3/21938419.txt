@@ -1,0 +1,81 @@
+<p>I can successfully intercept the <code>ActionBar</code> home button from my <code>NavigationDrawerFragment</code>, which is added to my <code>MainActivity</code>, like so:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    if (!loggedIn() && item.getItemId() == android.R.id.home) {
+        login();
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>However, in my <code>ComposeActivity</code> with <code>ComposeFragment</code> this does not work. <code>onOptionsItemSelected</code> is not called on the fragment.</p>
+
+<p>I have debugged the code and the issue seems to come down to the design of the Android support library. It appears that both <code>FragmentActivity</code> and <code>Activity</code> have their own references to a <code>FragmentManager</code>.</p>
+
+<p><code>FragmentActivity</code> first checks if <code>Activity</code> can handle the event before checking any of its fragments, which is consistent with the <a href="http://developer.android.com/guide/topics/ui/actionbar.html#ActionEvents" rel="nofollow">docs</a>:</p>
+
+<pre><code>/**
+ * Dispatch context and options menu to fragments.
+ */
+@Override
+public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    if (super.onMenuItemSelected(featureId, item)) {
+        return true;
+    }
+
+    switch (featureId) {
+        case Window.FEATURE_OPTIONS_PANEL:
+            return mFragments.dispatchOptionsItemSelected(item);
+
+        case Window.FEATURE_CONTEXT_MENU:
+            return mFragments.dispatchContextItemSelected(item);
+
+        default:
+            return false;
+    }
+}
+</code></pre>
+
+<p>As seen in the snippet below, <code>Activity</code> handles the home button as a last resort, after checking if either it or any of its fragments can handle the event. But this reference to <code>FragmentManager</code> does not contain any fragments, the fragments are in the <code>FragmentActivity</code>'s manager. Therefore the event will get swallowed by the <code>Activity</code> class if <code>ActionBar.DISPLAY_HOME_AS_UP</code> is set.</p>
+
+<pre><code>public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    /* ... */
+    if (onOptionsItemSelected(item)) {
+        return true;
+    }
+    if (mFragments.dispatchOptionsItemSelected(item)) {
+        return true;
+    }
+    if (item.getItemId() == android.R.id.home && mActionBar != null &&
+            (mActionBar.getDisplayOptions() & ActionBar.DISPLAY_HOME_AS_UP) != 0) {
+        if (mParent == null) {
+            return onNavigateUp();
+        } else {
+            return mParent.onNavigateUpFromChild(this);
+        }
+    }
+    return false;
+    /* ... */
+}
+</code></pre>
+
+<p>It turns out that my <code>MainActivity</code>, being the root of my application and using a navigation drawer, did not have this flag set and so did not swallow the event. But my <code>ComposeActivity</code> has a parent activity and I need this flag to be set so it is not possible to intercept the action bar home button.</p>
+
+<blockquote>
+  <p><strong>To sum up the issue:</strong> It is not possible to intercept a click on the
+  Action Bar home button from a fragment in an activity with with
+  DISPLAY_HOME_AS_UP set.</p>
+</blockquote>
+
+<p><strong>So is this a bug in the support library?</strong> It doesn't look like it would occur if I targeted a later Android version and dropped the support library.</p>
+
+<p>Regarding workarounds for this, I guess I could:</p>
+
+<ul>
+<li>In my <code>ComposeActivity</code>'s <code>onOptionsItemSelected</code> I can manually pass the event to each of my fragments, seeing if they can handle it before calling super.</li>
+<li>Override onMenuItemSelected in <code>ComposeActivity</code> and do the same thing.</li>
+</ul>
+
+<p>Anybody encountered this before? Should I log a bug somewhere? Any other ideas of ways around this issue?</p>

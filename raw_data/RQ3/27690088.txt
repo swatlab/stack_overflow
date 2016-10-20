@@ -1,0 +1,159 @@
+<p>hi i have gridview which shows keyboard characters </p>
+
+<p>how can i declear a  method that  change clicked item image </p>
+
+<p>for example when user clicked on  "D"  the img of "D" be disappear and replace with  a gray img ?</p>
+
+<p>if its possible show me an example </p>
+
+<p>thank u </p>
+
+<pre><code>    public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+//        return mThumbIds.length;
+  return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        ImageView imageView;
+        TextView textview;
+
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+//textview = new TextView(mContext);
+//textview.setLayoutParams(new  GridView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+//textview.setPadding(0, 0, 0, 0);
+//
+//          
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(1, 1, 1, 1);
+        } else {
+     imageView = (ImageView) convertView;
+//          textview = (TextView) convertView;
+        }
+
+
+    imageView.setImageResource(mThumbIds[position]);
+        //textview.setText(alphabet[position]);
+      return imageView;
+  //  return textview;
+    }
+
+    // references to our images
+
+    private Integer[] mThumbIds = {
+            R.drawable.al0, R.drawable.al1,
+            R.drawable.al2, R.drawable.al3,
+            R.drawable.al4, R.drawable.al5,
+            R.drawable.al6, R.drawable.al7,
+            R.drawable.al8, R.drawable.al9,
+            R.drawable.al10, R.drawable.al11,
+            R.drawable.al12, R.drawable.al13,
+            R.drawable.al14, R.drawable.al15,
+            R.drawable.al16, R.drawable.al17,
+            R.drawable.al18, R.drawable.al19,
+            R.drawable.al20, R.drawable.al21,
+            R.drawable.al22, R.drawable.al23,
+            R.drawable.al24, R.drawable.al25,
+            R.drawable.al26, R.drawable.al27,
+            R.drawable.al28, R.drawable.al29,
+            R.drawable.al30, R.drawable.al31,
+            R.drawable.al32
+    };
+
+
+}
+</code></pre>
+
+<p>main activity</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main_game_layout);
+
+        GridView gridview= (GridView)  findViewById(R.id.gridView2);
+
+
+        gridview.setAdapter(new ImageAdapter(this));
+
+
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+
+
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View v, int position,
+                    long id) {
+
+
+                Toast.makeText(MainActivity.this, "" + position, Toast.LENGTH_SHORT).show(); 
+                ImageView imageshow = (ImageView) findViewById(R.id.imageView1);
+                imageshow.setImageResource(mThumbIds[position]);
+
+
+
+            }
+            });
+
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+
+
+
+    private Integer[] mThumbIds = {
+            R.drawable.al0, R.drawable.al1,
+            R.drawable.al2, R.drawable.al3,
+            R.drawable.al4, R.drawable.al5,
+            R.drawable.al6, R.drawable.al7,
+            R.drawable.al8, R.drawable.al9,
+            R.drawable.al10, R.drawable.al11,
+            R.drawable.al12, R.drawable.al13,
+            R.drawable.al14, R.drawable.al15,
+            R.drawable.al16, R.drawable.al17,
+            R.drawable.al18, R.drawable.al19,
+            R.drawable.al20, R.drawable.al21,
+            R.drawable.al22, R.drawable.al23,
+            R.drawable.al24, R.drawable.al25,
+            R.drawable.al26, R.drawable.al27,
+            R.drawable.al28, R.drawable.al29,
+            R.drawable.al30, R.drawable.al31,
+            R.drawable.al32
+    };
+
+    private Integer[] mThumbIds1 = {
+            R.drawable.al32,R.drawable.al32,
+            R.drawable.al32,R.drawable.al32,
+            R.drawable.al32,R.drawable.al32
+    };
+}
+</code></pre>

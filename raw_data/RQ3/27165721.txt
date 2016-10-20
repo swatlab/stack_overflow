@@ -1,0 +1,370 @@
+<p>How to get data from assets folder db? I have a .db file in my assets folder. Here is what I am doing.</p>
+
+<p><strong>DBHelper2.class</strong></p>
+
+<pre><code>package com.example.testapp;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+      public class DataBaseHelper2 extends SQLiteOpenHelper{
+      private static String DB_PATH = "/data/data/com.example.testapp/databases/";
+
+      private static String DB_NAME = "birthdate_details.db";
+
+      private SQLiteDatabase myDataBase;
+
+      private final Context myContext;
+
+      public DataBaseHelper2(Context context) 
+      {
+          super(context, DB_NAME, null, 1);
+          this.myContext = context;
+      }
+
+      public void createDataBase() throws IOException{
+
+
+    boolean dbExist = checkDataBase();
+
+      if(dbExist)
+      {
+          Log.i("DB....", "database available...."+DB_NAME);
+      }
+      else
+      {
+          this.getWritableDatabase();
+
+          try {
+
+          copyDataBase();
+
+          } catch (IOException e) {
+
+          throw new Error("Error copying database");
+
+          }
+
+         Log.i("DB..", "database created.....");
+       }   
+
+      }
+
+
+      public boolean checkDataBase(){
+
+      SQLiteDatabase checkDB = null;
+
+      try{
+
+      String myPath = DB_PATH + DB_NAME;
+
+      checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+      }catch(SQLiteException e){
+
+          Log.e("CheckDb","DB not found");
+      //database does't exist yet.
+
+      if(checkDB != null){
+
+      checkDB.close();
+
+      }
+      }
+      finally
+      {
+          if(checkDB != null){
+
+              checkDB.close();
+
+              } 
+          this.close();
+      }
+      return checkDB != null ? true : false;
+
+      }
+
+
+
+
+      private void copyDataBase() throws IOException{
+
+      InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+      String outFileName = DB_PATH + DB_NAME;
+
+      OutputStream myOutput = new FileOutputStream(outFileName);
+          byte[] buffer = new byte[1024];
+
+      int length;
+
+      while ((length = myInput.read(buffer))>0){
+
+      myOutput.write(buffer, 0, length);
+
+      }
+
+      myOutput.flush();
+
+      myOutput.close();
+
+      myInput.close();
+
+      }
+
+      public SQLiteDatabase openDataBase() throws SQLException{
+
+      String myPath = DB_PATH + DB_NAME;
+
+      return myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+      }
+
+
+      @Override
+
+      public synchronized void close() {
+
+      if(myDataBase != null)
+
+      myDataBase.close();
+
+      super.close();
+
+      }
+
+      @Override
+
+      public void onCreate(SQLiteDatabase db) {
+
+      }
+
+      @Override
+
+      public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+
+      }  
+
+
+      public Cursor getData()
+      {
+          SQLiteDatabase myDB ;
+          Cursor cursor ;
+
+                myDB=this.openDataBase();                   
+
+                    cursor=myDB.rawQuery("SELECT * FROM bdatedetails",null);
+
+                    return cursor;
+
+      }
+
+}
+</code></pre>
+
+<p><strong>MainActivity.class</strong></p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    ArrayList<String> AllAssociatedData;
+    ListView list;
+    DataBaseHelper2 myDbHelper;
+    int pos;
+    Cursor c;
+    ArrayAdapter<String> ad;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    list = (ListView) findViewById(R.id.listView1);
+
+    AllAssociatedData = new ArrayList<String>();
+    ad = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, AllAssociatedData);
+    list.setAdapter(ad);
+
+    myDbHelper = new DataBaseHelper2(this); 
+    try 
+    {
+        myDbHelper.createDataBase();
+        c = myDbHelper.getData();
+
+        c.moveToPosition(0);
+        AllAssociatedData.add(c.getString(3));
+        System.out.println(c.getString(3));
+        Toast.makeText(getApplicationContext(), c.getString(3), 0).show();
+        //ad.notifyDataSetChanged();
+
+    }catch (IOException e) {
+           // TODO Auto-generated catch block
+           e.printStackTrace();
+           }
+
+    finally
+    {
+        myDbHelper.close();
+    }
+
+}   
+}
+</code></pre>
+
+<p>But the data is not coming.</p>
+
+<p>Also, another problem in internal db table.</p>
+
+<p><strong>Login.java</strong></p>
+
+<pre><code>public class Login extends Activity {
+EditText et1,et2;
+Button b;
+TextView tv1,tv2,tv3;
+MyDatabase mdb;
+int count=1;
+
+
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        et1=(EditText) findViewById(R.id.editText1);
+        et2=(EditText) findViewById(R.id.editText2);
+        tv1=(TextView) findViewById(R.id.textView1);
+        tv2=(TextView) findViewById(R.id.textView2);
+        tv3=(TextView) findViewById(R.id.textView3);
+        b=(Button) findViewById(R.id.button1);
+        mdb = new MyDatabase(this);
+        mdb.open();
+
+
+        b.setOnClickListener(new OnClickListener() {
+
+            public void onClick(View v) {
+
+                String username=et1.getText().toString();
+                String password=et2.getText().toString();
+                Cursor c = mdb.getAllUser();
+                if(c != null){
+                    while(c.moveToNext()==true)
+                    {   int id=c.getInt(0);
+                        String uname = c.getString(1);
+                        String pwd = c.getString(2);
+                        long mob=c.getLong(3);
+                        String email = c.getString(4);
+                        Toast.makeText(getApplicationContext(),""+id+","+uname+","+pwd+","+mob+","+email,0).show();
+                        if(count<=3)
+                        {
+                        if(username.equals(uname)&&password.equals(pwd))
+                        {
+                        Intent in=new Intent(getApplicationContext(),Welcome.class);
+                        in.putExtra("key",uname);
+                        mdb.close();
+                        c.close();
+                        startActivity(in);
+
+                        return;
+                        }
+                        else
+                        {
+
+                        }
+                        }
+                        else
+                        {
+                            Toast.makeText(getApplicationContext(), "Account Blocked",0).show();    
+                        }
+
+                    }
+                    tv3.setText("No of tries "+count);
+                    count++;
+                    c.close();
+                    Toast.makeText(getApplicationContext(), "Username/password is incorrect",0).show();
+                }
+
+            }
+        });
+</code></pre>
+
+<p><strong>mydatabase.java</strong></p>
+
+<pre><code>public class MyDatabase 
+{
+private MyHelper mh;
+private SQLiteDatabase sdb;
+
+public MyDatabase(Context con)
+{
+    mh=new MyHelper(con,"UserDetails",null,1);
+}
+public void open()
+{   try{
+    sdb=mh.getWritableDatabase();
+}
+catch(Exception e)
+{
+
+}
+}
+public void insertRegiserUser(String Username,String password,long mobile,String e_mail) 
+{
+    ContentValues cv=new ContentValues();
+    cv.put("uname",Username);
+    cv.put("pwd",password);
+    cv.put("mob", mobile);
+    cv.put("email",e_mail);
+    sdb.insert("login", null,cv);
+}
+
+public void updatePwd(String old_pwd,String username,String new_pwd)
+{
+    ContentValues cv=new ContentValues();
+    cv.put("pwd",new_pwd);
+    sdb.update("login", cv,"pwd=? AND uname=?",new String[]{old_pwd,username});
+}
+
+public Cursor getAllUser()
+{   Cursor c=sdb.query("login",null,null,null,null,null,null);
+    return c;
+
+}
+class MyHelper extends SQLiteOpenHelper
+{ 
+
+
+    public MyHelper(Context context, String name, CursorFactory factory,
+            int version) {
+        super(context, name, factory, version);
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+        db.execSQL("Create table login(_id integer primary key, uname text unique, pwd text, mob long, email text);");
+
+    }
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+public void close(){
+    sdb.close();
+}
+}
+</code></pre>

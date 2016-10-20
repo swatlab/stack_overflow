@@ -1,0 +1,374 @@
+<p>I created an Admob AD, it can display correctly in my other layout, now I create a Tabbed Activity, and place the AD in Fragment, but the AD can't be displayed, why?</p>
+
+<p>Thanks!</p>
+
+<p><strong>PlaceholderFragmentOld.java</strong></p>
+
+<pre><code>package ui.tab;
+
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import android.support.v4.app.Fragment;
+import android.widget.Toast;
+
+
+import com.google.android.gms.ads.AdView;
+
+import bll.PublicParFun;
+import info.dodata.messagecleanup.R;
+
+public class PlaceholderFragmentOld extends Fragment {
+
+    private AdView adView;
+
+    public PlaceholderFragmentOld() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,  Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.cleanup_delete_fragment_old, container, false);
+
+        adView=(AdView)(rootView.findViewById(R.id.adView));
+        SetAD(adView);
+
+         return rootView;
+    }
+
+     public  void SetAD(AdView adView) {
+        if (PublicParFun.IsRegistered == false) {
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .build();
+            adView.loadAd(adRequest);
+        }else{
+            adView.setVisibility(View.GONE);
+        }
+    }
+
+}
+</code></pre>
+
+<p><strong>CleanupDelete.java</strong></p>
+
+<pre><code>package ui;
+
+import java.util.Locale;
+
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import info.dodata.messagecleanup.R;
+import ui.tab.PlaceholderFragmentOld;
+import ui.tab.PlaceholderFragmentPerson;
+import ui.tab.PlaceholderFragmentReduce;
+import ui.tab.PlaceholderFragmentTrim;
+
+public class CleanupDelete extends ActionBarActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.cleanup_delete);
+
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+
+    //--------------------------------------------------------------------------------------------
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            Fragment fragment;
+            switch(position){
+                case 0:
+                    fragment = new PlaceholderFragmentOld();
+                    break;
+                case 1:
+                    fragment = new PlaceholderFragmentReduce();
+                    break;
+                case 2:
+                    fragment = new PlaceholderFragmentTrim();
+                    break;
+                case 3:
+                    fragment = new PlaceholderFragmentPerson();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid section number");
+            }
+
+            return fragment;
+        }
+
+
+
+        @Override
+        public int getCount() {
+            return 4;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {           
+            return null;
+        }
+    }
+
+
+}
+</code></pre>
+
+<p><strong>cleanup_delete.xml</strong></p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/pager"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+/>
+</code></pre>
+
+<p><strong>cleanup_delete_fragment_old.xml</strong></p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/border_ui" >
+
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true"
+        android:paddingTop="20dip"
+        android:paddingLeft="10dip"
+        android:paddingRight="10dip"
+        android:orientation="vertical" >
+
+
+        <com.google.android.gms.ads.AdView
+            xmlns:ads="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/adView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            ads:adSize="SMART_BANNER"
+            ads:adUnitId="@string/ad_unit_id" />
+
+        <TextView
+            android:id="@+id/tVDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dip"
+            style="@style/myTextDesciption"
+            android:text="This is a descript"/>
+
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/linearLayoutToolBar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:weightSum="4" >
+
+
+        <Button
+            android:id="@+id/btnClose"
+            style="@style/myTextMedium"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="@string/BtnClose" />
+
+    </LinearLayout>
+
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>Logs</strong></p>
+
+<pre><code>06-17 05:41:46.257    1098-1098/? I/Ads﹕ Scheduling ad refresh 60000 milliseconds from now.
+06-17 05:41:46.287        37-90/? E/SurfaceFlinger﹕ ro.sf.lcd_density must be defined as a build property
+06-17 05:41:46.297    1098-1098/? W/EGL_emulation﹕ eglSurfaceAttrib not implemented
+06-17 05:41:50.757      280-660/? I/ActivityManager﹕ START u0 {cmp=info.dodata.messagecleanup/ui.CleanupDelete} from pid 1098
+06-17 05:41:50.857      280-660/? D/dalvikvm﹕ GC_FOR_ALLOC freed 594K, 23% free 7250K/9408K, paused 59ms, total 62ms
+06-17 05:41:51.087    1098-1098/? W/GooglePlayServicesUtil﹕ Google Play services is missing.
+06-17 05:41:51.097    1098-1098/? I/Ads﹕ Starting ad request.
+06-17 05:41:51.107    1098-1098/? I/Ads﹕ Please set theme of AdActivity to @android:style/Theme.Translucent to enable transparent background interstitial ad.
+06-17 05:41:51.127    1098-1158/? I/Ads﹕ CsiReporterFactory: CSI is not enabled. No CSI reporter created.
+06-17 05:41:51.227        37-37/? E/SurfaceFlinger﹕ ro.sf.lcd_density must be defined as a build property
+06-17 05:41:51.237    1098-1098/? W/EGL_emulation﹕ eglSurfaceAttrib not implemented
+06-17 05:41:51.457      280-296/? I/ActivityManager﹕ Displayed info.dodata.messagecleanup/ui.CleanupDelete: +583ms
+06-17 05:41:52.147    1098-1098/? W/Ads﹕ JS: The page at about:blank displayed insecure content from gmsg://mobileads.google.com/loadAdURL?drt_include=1&request_id=61e3264c-f1ab-4489-9c5e-d763d24c6644&request_scenario=online_request&type=admob&url=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma%3Fsession_id%3D12627135929191627212%26seq_num%3D5%26rm%3D2%26fdz%3D-1%26adtest%3Don%26js%3Dafma-sdk-a-v7327000.7327000.0%26hl%3Den%26smart_w%3Dfull%26submodel%3Dsdk%26gnt%3D3%26ma%3D0%26carrier%3D310260%26platform%3Dunknown%26u_sd%3D1.5%26sp%3D0%26cnt%3D0%26muv%3D11%26riv%3D5%26ms%3DyofcUh5kzK8yMrXnioUeFWtyWysBoIEvca6BjhVTC3YftHYI-sUYHHFAzrB4YMjahBQWhHCE8cYlTO9UsYiB0fmKUzlBD2w5RhzwdUa9nxO2uInhwWgLcUexanJtcmGuHI1cfsuqoWNUHIVmQizMEFKdR4UiKl9WaHsf_3BEEbFsPfrJDO9ie9fXI7pCYgJ5zASx_DB_qFaOmjKUbiT2drQWD-KHGrreX67IHb2l5owfcJz2esVF55MwjqYgI5sSgvp8AWtBNC2qB7EVexlvD6bmmnMp9f0IhD8fyBahMCu5FWDcIjYt43B8MFOQjCWnIaD9qwUNVm4oJ6Vx6PWigg%26format%3D320x50_as%26smart_h%3Dauto%26coh%3D1%26gl%3DUS%26request_id%3D61e3264c-f1ab-4489-9c5e-d763d24c6644%26am%3D0%26cap%3Dm%26u_w%3D320%26u_h%3D533%26msid%3Dinfo.dodata.messagecleanup%26app_name%3D3.android.info.dodata.messagecleanup%26an%3D3.android.info.dodata.messagecleanup%26net%3Ded%26u_audio%3D4%26u_so%3Dp%26preqs%3D4%26support_transparent_background%3Dfalse%26pimp%3D4%26currts%3D656976%26basets%3D458533%26pclick%3D0%26bisch%3Dtrue%26blev%3D0.5%26cans%3D5%26canm%3Dtrue%26output%3Dhtml%26region%3Dmobile_app%26u_tz%3D0%26client_sdk%3D1%26ex%3D1%26client%3Dca-app-pub-3940256099942544%26slotname%3D6300978111%26askip%3D4%26gsb%3D3g%26caps%3DinlineVideo_interactiveVideo_mraid1_mraid2_th_autoplay_mediation_av_sdkAdmobApiForAds_di%26_efs%3Dtrue%26blockAutoClicks%3D0%26forceGmsDoritos%3D1%26eid%3D46621099%26tcar%3D36%26jsv%3D171%26urll%3D1276&base_uri=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma&use_webview_loadurl=0&enable_auto_click_protection=0&google.afma.Notify_dt=1434519712134.
+    (null:1)
+06-17 05:41:52.147    1098-1098/? W/Web Console﹕ The page at about:blank displayed insecure content from gmsg://mobileads.google.com/loadAdURL?drt_include=1&request_id=61e3264c-f1ab-4489-9c5e-d763d24c6644&request_scenario=online_request&type=admob&url=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma%3Fsession_id%3D12627135929191627212%26seq_num%3D5%26rm%3D2%26fdz%3D-1%26adtest%3Don%26js%3Dafma-sdk-a-v7327000.7327000.0%26hl%3Den%26smart_w%3Dfull%26submodel%3Dsdk%26gnt%3D3%26ma%3D0%26carrier%3D310260%26platform%3Dunknown%26u_sd%3D1.5%26sp%3D0%26cnt%3D0%26muv%3D11%26riv%3D5%26ms%3DyofcUh5kzK8yMrXnioUeFWtyWysBoIEvca6BjhVTC3YftHYI-sUYHHFAzrB4YMjahBQWhHCE8cYlTO9UsYiB0fmKUzlBD2w5RhzwdUa9nxO2uInhwWgLcUexanJtcmGuHI1cfsuqoWNUHIVmQizMEFKdR4UiKl9WaHsf_3BEEbFsPfrJDO9ie9fXI7pCYgJ5zASx_DB_qFaOmjKUbiT2drQWD-KHGrreX67IHb2l5owfcJz2esVF55MwjqYgI5sSgvp8AWtBNC2qB7EVexlvD6bmmnMp9f0IhD8fyBahMCu5FWDcIjYt43B8MFOQjCWnIaD9qwUNVm4oJ6Vx6PWigg%26format%3D320x50_as%26smart_h%3Dauto%26coh%3D1%26gl%3DUS%26request_id%3D61e3264c-f1ab-4489-9c5e-d763d24c6644%26am%3D0%26cap%3Dm%26u_w%3D320%26u_h%3D533%26msid%3Dinfo.dodata.messagecleanup%26app_name%3D3.android.info.dodata.messagecleanup%26an%3D3.android.info.dodata.messagecleanup%26net%3Ded%26u_audio%3D4%26u_so%3Dp%26preqs%3D4%26support_transparent_background%3Dfalse%26pimp%3D4%26currts%3D656976%26basets%3D458533%26pclick%3D0%26bisch%3Dtrue%26blev%3D0.5%26cans%3D5%26canm%3Dtrue%26output%3Dhtml%26region%3Dmobile_app%26u_tz%3D0%26client_sdk%3D1%26ex%3D1%26client%3Dca-app-pub-3940256099942544%26slotname%3D6300978111%26askip%3D4%26gsb%3D3g%26caps%3DinlineVideo_interactiveVideo_mraid1_mraid2_th_autoplay_mediation_av_sdkAdmobApiForAds_di%26_efs%3Dtrue%26blockAutoClicks%3D0%26forceGmsDoritos%3D1%26eid%3D46621099%26tcar%3D36%26jsv%3D171%26urll%3D1276&base_uri=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma&use_webview_loadurl=0&enable_auto_click_protection=0&google.afma.Notify_dt=1434519712134.
+            at null:1
+06-17 05:41:52.207    1098-1098/? W/Ads﹕ JS: The page at about:blank displayed insecure content from gmsg://mobileads.google.com/loadAdURL?drt_include=1&request_id=61e3264c-f1ab-4489-9c5e-d763d24c6644&request_scenario=online_request&type=admob&url=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma%3Fsession_id%3D12627135929191627212%26seq_num%3D5%26rm%3D2%26fdz%3D-1%26adtest%3Don%26js%3Dafma-sdk-a-v7327000.7327000.0%26hl%3Den%26smart_w%3Dfull%26submodel%3Dsdk%26gnt%3D3%26ma%3D0%26carrier%3D310260%26platform%3Dunknown%26u_sd%3D1.5%26sp%3D0%26cnt%3D0%26muv%3D11%26riv%3D5%26ms%3DyofcUh5kzK8yMrXnioUeFWtyWysBoIEvca6BjhVTC3YftHYI-sUYHHFAzrB4YMjahBQWhHCE8cYlTO9UsYiB0fmKUzlBD2w5RhzwdUa9nxO2uInhwWgLcUexanJtcmGuHI1cfsuqoWNUHIVmQizMEFKdR4UiKl9WaHsf_3BEEbFsPfrJDO9ie9fXI7pCYgJ5zASx_DB_qFaOmjKUbiT2drQWD-KHGrreX67IHb2l5owfcJz2esVF55MwjqYgI5sSgvp8AWtBNC2qB7EVexlvD6bmmnMp9f0IhD8fyBahMCu5FWDcIjYt43B8MFOQjCWnIaD9qwUNVm4oJ6Vx6PWigg%26format%3D320x50_as%26smart_h%3Dauto%26coh%3D1%26gl%3DUS%26request_id%3D61e3264c-f1ab-4489-9c5e-d763d24c6644%26am%3D0%26cap%3Dm%26u_w%3D320%26u_h%3D533%26msid%3Dinfo.dodata.messagecleanup%26app_name%3D3.android.info.dodata.messagecleanup%26an%3D3.android.info.dodata.messagecleanup%26net%3Ded%26u_audio%3D4%26u_so%3Dp%26preqs%3D4%26support_transparent_background%3Dfalse%26pimp%3D4%26currts%3D656976%26basets%3D458533%26pclick%3D0%26bisch%3Dtrue%26blev%3D0.5%26cans%3D5%26canm%3Dtrue%26output%3Dhtml%26region%3Dmobile_app%26u_tz%3D0%26client_sdk%3D1%26ex%3D1%26client%3Dca-app-pub-3940256099942544%26slotname%3D6300978111%26askip%3D4%26gsb%3D3g%26caps%3DinlineVideo_interactiveVideo_mraid1_mraid2_th_autoplay_mediation_av_sdkAdmobApiForAds_di%26_efs%3Dtrue%26blockAutoClicks%3D0%26forceGmsDoritos%3D1%26eid%3D46621099%26tcar%3D36%26jsv%3D171%26urll%3D1276&base_uri=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma&use_webview_loadurl=0&enable_auto_click_protection=0&google.afma.Notify_dt=1434519712134.
+    (null:1)
+06-17 05:41:52.207    1098-1098/? W/Web Console﹕ The page at about:blank displayed insecure content from gmsg://mobileads.google.com/loadAdURL?drt_include=1&request_id=61e3264c-f1ab-4489-9c5e-d763d24c6644&request_scenario=online_request&type=admob&url=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma%3Fsession_id%3D12627135929191627212%26seq_num%3D5%26rm%3D2%26fdz%3D-1%26adtest%3Don%26js%3Dafma-sdk-a-v7327000.7327000.0%26hl%3Den%26smart_w%3Dfull%26submodel%3Dsdk%26gnt%3D3%26ma%3D0%26carrier%3D310260%26platform%3Dunknown%26u_sd%3D1.5%26sp%3D0%26cnt%3D0%26muv%3D11%26riv%3D5%26ms%3DyofcUh5kzK8yMrXnioUeFWtyWysBoIEvca6BjhVTC3YftHYI-sUYHHFAzrB4YMjahBQWhHCE8cYlTO9UsYiB0fmKUzlBD2w5RhzwdUa9nxO2uInhwWgLcUexanJtcmGuHI1cfsuqoWNUHIVmQizMEFKdR4UiKl9WaHsf_3BEEbFsPfrJDO9ie9fXI7pCYgJ5zASx_DB_qFaOmjKUbiT2drQWD-KHGrreX67IHb2l5owfcJz2esVF55MwjqYgI5sSgvp8AWtBNC2qB7EVexlvD6bmmnMp9f0IhD8fyBahMCu5FWDcIjYt43B8MFOQjCWnIaD9qwUNVm4oJ6Vx6PWigg%26format%3D320x50_as%26smart_h%3Dauto%26coh%3D1%26gl%3DUS%26request_id%3D61e3264c-f1ab-4489-9c5e-d763d24c6644%26am%3D0%26cap%3Dm%26u_w%3D320%26u_h%3D533%26msid%3Dinfo.dodata.messagecleanup%26app_name%3D3.android.info.dodata.messagecleanup%26an%3D3.android.info.dodata.messagecleanup%26net%3Ded%26u_audio%3D4%26u_so%3Dp%26preqs%3D4%26support_transparent_background%3Dfalse%26pimp%3D4%26currts%3D656976%26basets%3D458533%26pclick%3D0%26bisch%3Dtrue%26blev%3D0.5%26cans%3D5%26canm%3Dtrue%26output%3Dhtml%26region%3Dmobile_app%26u_tz%3D0%26client_sdk%3D1%26ex%3D1%26client%3Dca-app-pub-3940256099942544%26slotname%3D6300978111%26askip%3D4%26gsb%3D3g%26caps%3DinlineVideo_interactiveVideo_mraid1_mraid2_th_autoplay_mediation_av_sdkAdmobApiForAds_di%26_efs%3Dtrue%26blockAutoClicks%3D0%26forceGmsDoritos%3D1%26eid%3D46621099%26tcar%3D36%26jsv%3D171%26urll%3D1276&base_uri=http%3A%2F%2Fgoogleads.g.doubleclick.net%3A80%2Fmads%2Fgma&use_webview_loadurl=0&enable_auto_click_protection=0&google.afma.Notify_dt=1434519712134.
+            at null:1
+06-17 05:41:52.247    1098-1102/? D/dalvikvm﹕ GC_CONCURRENT freed 403K, 11% free 4509K/5032K, paused 5ms+5ms, total 81ms
+06-17 05:41:52.287    1098-1098/? W/Ads﹕ JS: The page at https://googleads.g.doubleclick.net/mads/static/mad/sdk/native/sdk-core-v40.html displayed insecure content from file:///android_asset/webkit/android-weberror.png.
+    (null:1)
+06-17 05:41:52.287    1098-1098/? W/Web Console﹕ The page at https://googleads.g.doubleclick.net/mads/static/mad/sdk/native/sdk-core-v40.html displayed insecure content from file:///android_asset/webkit/android-weberror.png.
+            at null:1
+06-17 05:41:52.737    1098-1098/? W/Ads﹕ Not enough space to show ad. Needs 320x50 dp, but only has 300x276 dp.
+06-17 05:41:52.737    1098-1098/? W/Ads﹕ Not enough space to show ad. Needs 320x50 dp, but only has 300x276 dp.
+06-17 05:41:52.747    1098-1098/? D/webviewglue﹕ nativeDestroy view: 0x2a54fa50
+06-17 05:41:53.077    1098-1098/? I/Ads﹕ Scheduling ad refresh 60000 milliseconds from now.
+06-17 05:41:53.107    1098-1098/? I/Ads﹕ Ad finished loading.
+06-17 05:42:01.367    1098-1098/? I/Ads﹕ Ad is not visible. Not refreshing ad.
+06-17 05:42:01.367    1098-1098/? I/Ads﹕ Scheduling ad refresh 60000 milliseconds from now.
+06-17 05:42:05.997    1098-1102/? D/dalvikvm﹕ GC_CONCURRENT freed 631K, 15% free 4480K/5232K, paused 13ms+7ms, total 51ms
+06-17 05:42:22.720      605-724/? D/ExchangeService﹕ Received deviceId from Email app: null
+06-17 05:42:22.720      605-724/? D/ExchangeService﹕ !!! deviceId unknown; stopping self and retrying
+06-17 05:42:27.737      605-641/? D/ExchangeService﹕ !!! EAS ExchangeService, onCreate
+06-17 05:42:27.737      605-605/? D/ExchangeService﹕ !!! EAS ExchangeService, onStartCommand, startingUp = false, running = false
+06-17 05:42:27.737      280-280/? W/ActivityManager﹕ Unable to start service Intent { act=com.android.email.ACCOUNT_INTENT } U=0: not found
+06-17 05:42:27.747      605-620/? D/ExchangeService﹕ !!! Email application not found; stopping self
+06-17 05:42:27.747      280-419/? W/ActivityManager﹕ Unable to start service Intent { act=com.android.email.ACCOUNT_INTENT } U=0: not found
+06-17 05:42:27.757      605-605/? D/ExchangeService﹕ !!! EAS ExchangeService, onStartCommand, startingUp = true, running = false
+06-17 05:42:27.767      605-605/? E/ActivityThread﹕ Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cfefa8 that was originally bound here
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cfefa8 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.ServiceProxy.test(ServiceProxy.java:191)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1850)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+06-17 05:42:27.767      605-605/? E/StrictMode﹕ null
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cfefa8 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.ServiceProxy.test(ServiceProxy.java:191)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1850)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+06-17 05:42:27.777      280-491/? W/ActivityManager﹕ Unbind failed: could not find connection for android.os.BinderProxy@4103dd90
+06-17 05:42:27.797      605-605/? E/ActivityThread﹕ Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cff350 that was originally bound here
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cff350 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.AccountServiceProxy.getDeviceId(AccountServiceProxy.java:116)
+            at com.android.exchange.ExchangeService.getDeviceId(ExchangeService.java:1249)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1856)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+06-17 05:42:27.817      605-605/? E/StrictMode﹕ null
+    android.app.ServiceConnectionLeaked: Service com.android.exchange.ExchangeService has leaked ServiceConnection com.android.emailcommon.service.ServiceProxy$ProxyConnection@40cff350 that was originally bound here
+            at android.app.LoadedApk$ServiceDispatcher.<init>(LoadedApk.java:969)
+            at android.app.LoadedApk.getServiceDispatcher(LoadedApk.java:863)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1418)
+            at android.app.ContextImpl.bindService(ContextImpl.java:1407)
+            at android.content.ContextWrapper.bindService(ContextWrapper.java:473)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:157)
+            at com.android.emailcommon.service.ServiceProxy.setTask(ServiceProxy.java:145)
+            at com.android.emailcommon.service.AccountServiceProxy.getDeviceId(AccountServiceProxy.java:116)
+            at com.android.exchange.ExchangeService.getDeviceId(ExchangeService.java:1249)
+            at com.android.exchange.ExchangeService$7.run(ExchangeService.java:1856)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:551)
+            at com.android.emailcommon.utility.Utility$2.doInBackground(Utility.java:549)
+            at android.os.AsyncTask$2.call(AsyncTask.java:287)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:234)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1080)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:573)
+            at java.lang.Thread.run(Thread.java:856)
+06-17 05:42:27.817      605-607/? D/dalvikvm﹕ GC_CONCURRENT freed 433K, 20% free 2460K/3044K, paused 4ms+5ms, total 42ms
+06-17 05:42:27.827      280-280/? W/ActivityManager﹕ Unbind failed: could not find connection for android.os.BinderProxy@40f89e08
+06-17 05:42:28.807    1098-1102/? D/dalvikvm﹕ GC_CONCURRENT freed 612K, 15% free 4465K/5220K, paused 4ms+8ms, total 52ms
+06-17 05:42:40.848      280-376/? E/ThrottleService﹕ problem during onPollAlarm: java.lang.IllegalStateException: problem parsing stats: java.io.FileNotFoundException: /proc/net/xt_qtaguid/iface_stat_all: open failed: ENOENT (No such file or directory)
+06-17 05:42:49.697    1098-1102/? D/dalvikvm﹕ GC_CONCURRENT freed 561K, 15% free 4479K/5220K, paused 7ms+8ms, total 52ms
+</code></pre>

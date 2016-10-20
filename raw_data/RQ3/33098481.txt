@@ -1,0 +1,155 @@
+<p>I am new to android development.I have made an app where the <code>MainActivity</code> consists of a <code>Gridview</code> with images and <code>ActivityTwo</code> is the <code>fullscreen</code> view of the selected image.I am trying to add a back button on the actionbar.The icon is visible but it is not clickable.Also i tried to add other menu items which are also visible but nothing happens on touching them.I have also tried adding onClickListener to the menu items as suggested in some posts but it didn't seem to work.</p>
+
+<p>Below is the ActivityTwo code.</p>
+
+<pre><code>public class ActivityTwo extends ActionBarActivity implements OnClickListener {
+
+    protected int currentPosition;
+    Button share,back;
+    ImageView imageView;
+    ViewPager viewPager;
+    private Toolbar toolbar;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_two);
+        toolbar= (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);      
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        share = (Button)findViewById(R.id.button1);
+        share.setOnClickListener(this);
+        back=(Button)findViewById(R.id.button2);
+        back.setOnClickListener(this);
+
+
+
+
+        // get intent data
+        Intent i = getIntent();
+
+        // Selected image id
+        final int position = i.getExtras().getInt("position");
+
+        viewPager = (ViewPager) findViewById(R.id.view_pager);
+        ImagePagerAdapter adapter = new ImagePagerAdapter();
+        viewPager.setAdapter(adapter);
+        viewPager.setCurrentItem(position);
+        viewPager.setOnPageChangeListener(new OnPageChangeListener() {
+
+            @Override
+            public void onPageSelected(int arg0) {
+                // TODO Auto-generated method stub
+
+                currentPosition = arg0;
+
+            }
+
+            @Override
+            public void onPageScrolled(int arg0, float arg1, int arg2) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int arg0) {
+                // TODO Auto-generated method stub
+
+            }
+
+        });
+
+
+
+
+
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if
+        (id==R.id.home)
+        {
+            NavUtils.navigateUpFromSameTask(this);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    public class ImagePagerAdapter extends PagerAdapter {
+        Integer[] icons = MainActivity.mThumbIds;
+
+        @Override
+        public int getCount() {
+            return icons.length;
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view == ((ImageView) object);
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Context context = ActivityTwo.this;
+            imageView = new ImageView(context);
+            //ImageView imageView = (ImageView)findViewById(R.id.imageView);
+            // int padding = context.getResources().getDimensionPixelSize(
+            // R.dimen.padding_large);
+            imageView.setPadding(5, 5, 5, 5);
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            imageView.setImageResource(icons[position]);
+            imageView.setTag(position);
+            ((ViewPager) container).addView(imageView, 0);
+            return imageView;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            ((ViewPager) container).removeView((ImageView) object);
+        }
+    }
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+        if(v==share){
+        ImageView Imgv = (ImageView)viewPager.findViewWithTag(viewPager.getCurrentItem());
+        Drawable mDrawable = Imgv.getDrawable();
+        Bitmap mBitmap = ((BitmapDrawable)mDrawable).getBitmap();
+
+        String path = Images.Media.insertImage(getContentResolver(), 
+            mBitmap, "Image Description", null);
+
+        Uri uri = Uri.parse(path);
+
+
+
+
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            shareIntent.setType("image/*");
+
+            startActivity(Intent.createChooser(shareIntent, "Share Image"));    }
+        if(v==back)
+        {
+            finish();
+        }
+
+    } 
+}
+</code></pre>

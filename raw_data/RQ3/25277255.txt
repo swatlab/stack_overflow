@@ -1,0 +1,113 @@
+<p>I am trying make a composite-key at JPA, which one of this keys is a class and the another is an Enumeration.</p>
+
+<p>But it is giving the following error:</p>
+
+<pre><code>Caused by: org.hibernate.MappingException: Could not determine type for: br.com.model.Restaurante, at table: ImagemRestaurante, for columns: [org.hibernate.mapping.Column(restaurante)]
+</code></pre>
+
+<p>ImagemRestaurante.java</p>
+
+<pre><code>@Entity
+@IdClass(ImagemRestauranteId.class)
+public class ImagemRestaurante implements Serializable {
+
+    private static final long serialVersionUID = -4650712996667906167L;
+
+    @Id
+    @JoinColumn(name="idRestaurante")
+    private Restaurante restaurante;
+
+    @Id
+    @Enumerated(EnumType.ORDINAL)
+    private TipoImagemRestaurante tipoImagemRestaurante;
+
+    private String nome;
+
+    private String formato;
+
+    private Long tamanho;
+
+    private Integer altura;
+
+    private Integer largura;
+
+    @Transient
+    private String caminho;
+
+    @Transient
+    private String caminhoHTML;
+
+    public ImagemRestaurante() {
+    }
+
+    // Get Sets
+
+}
+</code></pre>
+
+<p>ImagemRestauranteId.java</p>
+
+<pre><code>    public class ImagemRestauranteId implements Serializable {
+
+    private static final long serialVersionUID = -6216145537667024048L;
+
+    private Restaurante restaurante;
+
+    private TipoImagemRestaurante tipoImagemRestaurante;
+
+    public ImagemRestauranteId() {
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if ( ! (obj instanceof ImagemRestauranteId ) ) {
+            return false;
+        }
+        ImagemRestauranteId imaId = (ImagemRestauranteId) obj;
+        return (imaId.restaurante == restaurante) &&
+                (imaId.tipoImagemRestaurante == tipoImagemRestaurante);
+    }
+
+    @Override
+    public int hashCode() {
+        return restaurante.hashCode() + tipoImagemRestaurante.hashCode();
+    }
+    // Get Sets
+
+}
+</code></pre>
+
+<p>Restaurante.java</p>
+
+<pre><code>    @Entity
+    public class Restaurante {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long idRestaurante;
+
+    private String nmRestaurante;
+
+    private String dsRestaurante;
+
+    @OneToOne
+    private Telefone telefone;
+
+    @OneToOne
+    private Endereco endereco;
+
+    private Boolean permitirComentario;
+
+    private Boolean permitirNota;
+
+    @ManyToOne
+    private Usuario usuario;
+
+    public Restaurante() {
+    }
+    // Get Sets
+}
+</code></pre>

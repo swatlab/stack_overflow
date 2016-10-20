@@ -1,0 +1,266 @@
+<p>I try to connect with the IPMI remote connection(KVM) without the use op the webbrowser or IPMIview tool. But so far no luck.</p>
+
+<p>The first think that I did is launching the "jviewer.jnlp" with javaws. This file will be created by the IPMI website if you push the "Remote Connection" button. This solution works until the web session is closed. I try to replace the encrypted argument with the username and password. But somehow there is session id embedded.</p>
+
+<p>jviewer.jnpl file:</p>
+
+<pre><code><?xml version="1.0" encoding="UTF-8"?>
+
+<jnlp spec="1.0+" codebase="https://192.168.99.201/Java">
+ <information>
+    <title>JViewer</title>
+    <vendor>American Megatrends, Inc.</vendor>
+    <description kind="one-line">JViewer Console Redirection Application</description>
+    <description kind="tooltip">JViewer Console Redirection Application</description>
+    <description kind="short">
+        JViewer enables a user to view the video display of managed server via KVM.  
+        It also enables the user to redirect his local keyboard, mouse for managing the server remotely.
+    </description>
+</information>
+<security>
+    <all-permissions/>
+</security>
+<resources>
+    <j2se version="1.5+"/>
+    <jar href="release/JViewer.jar"/>
+</resources>
+<resources os="Windows" arch="x86">
+    <j2se version="1.5+"/>
+    <nativelib href="release/Win32.jar"/>
+</resources>    
+<resources os="Windows" arch="amd64">
+       <j2se version="1.5+"/>
+       <nativelib href="release/Win64.jar"/>
+</resources>
+<resources os="Linux"  arch="x86">
+    <j2se version="1.5+"/>
+        <nativelib href="release/Linux_x86_32.jar"/>
+</resources>
+<resources os="Linux"  arch="i386">
+    <j2se version="1.5+"/>
+        <nativelib href="release/Linux_x86_32.jar"/>
+</resources>
+<resources os="Linux" arch="x86_64">
+    <j2se version="1.5+"/>
+        <nativelib href="release/Linux_x86_64.jar"/>
+</resources>    
+<resources os="Linux" arch="amd64">
+    <j2se version="1.5+"/>
+        <nativelib href="release/Linux_x86_64.jar"/>
+</resources>
+<resources os="Mac OS X" arch="i386">
+    <j2se version="1.5+"/>
+        <nativelib href="release/Mac32.jar"/>
+</resources>
+<application-desc>
+    <argument>192.168.99.201</argument>
+    <argument>5901</argument>
+    <argument>Hnda9A159AwMjwnF</argument>
+    <argument>0</argument>
+    <argument>0</argument>
+    <argument>5120</argument>
+    <argument>5123</argument>
+    <argument>511</argument>
+    <argument>5900</argument>
+    <argument>1</argument>
+    <argument>EN</argument>
+    <argument>HEWKovXQO2Fp7FEMho6LrM4kzTPFHPyB000</argument>
+
+</application-desc>
+</jnlp>
+</code></pre>
+
+<p>The argument username and password replacement will work if the jnlp is named as "launch.jnlp" Some Supermicro IPMI version will use a different structure.</p>
+
+<p>Second I try to connect with the IPMIview tool version 2.9.32. That work so the connection is ok. Know I try the connect by using the jars of the IPMIview. Replace the host with the IPMI IP</p>
+
+<pre><code>java -Djava.library.path=. -jar iKVM.jar host ADMIN ADMIN null 5900 2623 2 0
+</code></pre>
+
+<p>This will open the remote connection but gives a "Connection failed" error. </p>
+
+<pre><code>java -Djava.library.path=. -jar JViewerX9.jar host ADMIN ADMIN
+</code></pre>
+
+<p>Also the same result: Connection failed
+The connection failed comes with a warning box. On OK is closed the application</p>
+
+<p>Some IPMI info:</p>
+
+<pre><code># ipmitool mc info
+Device ID                 : 32
+Device Revision           : 1
+Firmware Revision         : 2.4
+IPMI Version              : 2.0
+Manufacturer ID           : 47488
+Manufacturer Name         : Unknown (0xB980)
+Product ID                : 43707 (0xaabb)
+Product Name              : Unknown (0xAABB)
+Device Available          : yes
+Provides Device SDRs      : no
+Additional Device Support :
+    Sensor Device
+    SDR Repository Device
+    SEL Device
+    FRU Inventory Device
+    IPMB Event Receiver
+    IPMB Event Generator
+    Chassis Device
+Aux Firmware Rev Info     : 
+    0x01
+    0x00
+    0x00
+    0x00
+</code></pre>
+
+<p>A cold reset "ipmitool mc reset cold" also does not work.</p>
+
+<p>I hope that someone knows what the argument mean for the jnlp file or the someone has a working solution for this problem</p>
+
+<p>Edit:
+I try the answer of Maxim Akristiniy and came up with the following code:</p>
+
+<pre><code>package com.thalesgroup.nl.perftools;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.util.List;
+
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.ScriptResult;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebResponse;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
+import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
+import com.gargoylesoftware.htmlunit.util.Cookie;
+
+public class IpmiRemoteViewer {
+
+    public static void main(String[] args)
+            throws FailingHttpStatusCodeException, MalformedURLException,
+            IOException {
+
+        String username = "ADMIN";
+    String password = "ADMIN";
+    String ip = "192.168.99.150";
+
+    final WebClient webClient = new WebClient(BrowserVersion.FIREFOX_17);
+
+    webClient.getOptions().setThrowExceptionOnScriptError(false);
+    webClient.getCookieManager().setCookiesEnabled(true);
+
+    webClient.getOptions().setUseInsecureSSL(true);
+    webClient.getOptions().setJavaScriptEnabled(true);
+
+    webClient.getCookieManager().addCookie(
+            new Cookie(ip, "WEBVAR_USERNAME", username));
+    webClient.getCookieManager().addCookie(
+            new Cookie(ip, "WEBVAR_PASSWORD", password));
+
+    HtmlPage page1 = webClient.getPage("http://" + ip);
+
+    List<HtmlForm> forms = page1.getForms();
+
+    if (!forms.isEmpty()) {
+
+        HtmlForm form = forms.get(0);
+        HtmlSubmitInput button = (HtmlSubmitInput) form.getInputsByValue(
+                "Login").get(0);
+
+        // username
+        HtmlTextInput textField = form.getInputByName("T1");
+        textField.setValueAttribute(username);
+
+        // password
+        HtmlPasswordInput textField2 = form.getInputByName("T2");
+        textField2.setValueAttribute(password);
+
+        HtmlPage page2 = button.click();
+        webClient.waitForBackgroundJavaScript(500);
+
+        // Do it again
+        form = page2.getForms().get(0);
+
+        // username
+        textField = form.getInputByName("T1");
+        textField.setValueAttribute(username);
+
+        // password
+        textField2 = form.getInputByName("T2");
+        textField2.setValueAttribute(password);
+
+        ScriptResult scriptResult = page2.executeJavaScript("DoLogin();");
+
+        // Print the index.html page
+        System.out.println(scriptResult.getNewPage().toString());
+
+        // Print the session id
+        for (Cookie cookie : webClient.getCookieManager().getCookies()) {
+            if (cookie.getName().equals("SessionCookie")) {
+                String sessionId = cookie.getValue();
+                System.out.println("Session id = " + sessionId);
+            }
+        }
+
+        // Download the jviewer.jnlp file
+        Page page5 = webClient.getPage("http://" + ip
+                + "/Java/jviewer.jnlp?EXTRNIP=" + ip + "&JNLPSTR=JViewer");
+        WebResponse response = page5.getWebResponse();
+        InputStream inputStream = response.getContentAsStream();
+
+        writeToFile("viewer.jnlp", inputStream);
+    }
+
+}
+
+protected static void writeToFile(String filename, InputStream inputStream) {
+    OutputStream outputStream = null;
+
+    try {
+
+        File file = new File(filename);
+
+        // write the inputStream to a FileOutputStream
+            outputStream = new FileOutputStream(file);
+
+            int read = 0;
+            byte[] bytes = new byte[1024];
+
+            while ((read = inputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, read);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+    }
+
+}
+</code></pre>
+
+<p>Only now it will write the login page in the viewer.jnlp file. Still no luck. I managed to read the index.html page that is behind the login page. But the session is closing very fast.</p>

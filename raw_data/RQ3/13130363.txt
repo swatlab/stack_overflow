@@ -1,0 +1,31 @@
+<p>I'm trying to move an app file in OS X using the FileInputStream's transferTo method, but keep getting FileNotFoundException (No such file or directory). I know this isn't the case because the .exists() method returns true when I run it on the app file. I thought it had to do with File permissions but after a few tests that doesn't seem to be the case. Here is the code I'm using to move the file:</p>
+
+<pre><code>public static void moveFile(File sourceFile, File destFile) throws IOException {
+    FileChannel source = null;
+    FileChannel destination = null;
+
+    try {
+        source = new FileInputStream(sourceFile).getChannel();
+        destination = new FileOutputStream(destFile).getChannel();
+
+        long count = 0;
+        long size = source.size();
+        source.transferTo(count, size, destination);
+    }
+    finally {
+        if(source!=null) {
+            source.close();
+        }
+
+        if(destination!=null) {
+            destination.close();
+        }
+    }
+}
+</code></pre>
+
+<p><strong>EDIT 1:</strong> The title has been changed from "Move an .app file in os x" to "Copy an .app file in os x". I need to keep the original file intact.</p>
+
+<p><strong>EDIT 2:</strong> I was able to copy the file by means of the <a href="http://commons.apache.org/io/api-1.4/org/apache/commons/io/FileUtils.html" rel="nofollow">Apache Commons FileUtils</a> as suggested by Joel Westberg (specifically the copyDirectory method). The problem I'm facing now is when I go to run the copied app bundle the app bounces in the dock perpetually and never runs. Any ideas on why this is?</p>
+
+<p><strong>EDIT 3:</strong> I have figured out how to fix the perpetually bouncing problem. It turns out when I copied the app bundle that it didn't set 2 unix scripts to executable that needed to be. I simply used the setExecutable method in the File class to fix this. </p>

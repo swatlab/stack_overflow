@@ -1,0 +1,494 @@
+<p>I've set up a whole database on sqlite3 and copied the file(copy-paste) into the assets folder of my project. Physically, the database folder is present. However when i try to access the database through my code, the logcat say "table-name" doesn't exist.</p>
+
+<p>I've checked my database over and over again in sqlite3 and the mentioned table exists with some data as well.</p>
+
+<p>this is the main Activity:</p>
+
+<pre><code>package com.noura.luba;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.InputType;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends Activity {
+
+
+    TextView forgotPass, createAcc;
+    Button loginButton;
+    EditText userID, pass;
+    LoginDataBaseAdapter loginDataBaseAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) 
+    {
+             super.onCreate(savedInstanceState);
+             setContentView(R.layout.activity_main);
+
+             loginDataBaseAdapter=new LoginDataBaseAdapter(this);
+             loginDataBaseAdapter=loginDataBaseAdapter.open();
+
+             forgotPass= (TextView)findViewById(R.id.forgotPasswordTextView);
+             createAcc= (TextView)findViewById(R.id.createAccountTextView);
+             loginButton= (Button)findViewById(R.id.loginButton);
+             userID=(EditText)findViewById(R.id.userIDEditText);
+             userID.setHint("UserID");
+            // pass=(EditText)findViewById(R.id.passwordEditText);
+             pass = ((EditText) findViewById(R.id.passwordEditText)); 
+             pass.setHint("Password");
+             pass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+
+             createAcc.setOnClickListener(new View.OnClickListener() {
+
+                 public void onClick(View v) {
+
+                     Intent intentCreateAcc = new Intent(getApplicationContext(), CreateAccActivity.class);
+                     startActivity(intentCreateAcc);
+
+                 }
+             });
+
+           forgotPass.setOnClickListener(new View.OnClickListener() {
+             public void onClick(View v) {
+             Intent intentForgotPass = new Intent(getApplicationContext(), ForgotPassActivity.class);
+                 startActivity(intentForgotPass);
+            }
+             }); 
+
+       //      loginButton.setOnClickListener(new View.OnClickListener() {
+         //      public void onClick(View v) {
+
+           //        String id=userID.getText().toString();
+
+            //       Intent intentLogin = new Intent(getApplicationContext(), Home.class);
+
+                //   intentLogin.putExtra("User_ID", id);
+                //   startActivity(intentLogin);
+
+           //    }
+
+          //   }); 
+
+            loginButton.setOnClickListener(new View.OnClickListener() {
+
+                public void onClick(View v) {
+
+                    String userName = userID.getText().toString();
+                    String password = pass.getText().toString();
+
+                    String storedPassword = loginDataBaseAdapter
+                            .getSingleEntry(userName);
+
+                    if (password.equals(storedPassword)) {
+                        Toast.makeText(MainActivity.this, "Login Successful",
+                                Toast.LENGTH_LONG).show();
+                        Intent intentLogin = new Intent(
+                                getApplicationContext(), Home.class);
+
+                        intentLogin.putExtra("User_ID", userName);
+                        startActivity(intentLogin);
+
+                    } else {
+
+                        Toast.makeText(MainActivity.this,
+                                "User Name and Password do not match",
+                                Toast.LENGTH_LONG).show();
+
+                    }
+                }
+            });
+
+
+    }
+
+
+
+   /* public void LogIn(View V)
+    {
+
+        final Dialog dialog =  new Dialog(MainActivity.this);
+
+        dialog.setContentView(R.layout.activity_main);
+        dialog.setTitle("LUBA LogIn");
+
+        final EditText userID=(EditText)dialog.findViewById(R.id.userIDEditText);
+        final EditText pass=(EditText)dialog.findViewById(R.id.passwordEditText); 
+
+        Button login = (Button)dialog.findViewById(R.id.loginButton);
+
+        final TextView forgotPass=(TextView)dialog.findViewById(R.id.forgotPasswordTextView);
+        final TextView createAcc= (TextView)dialog.findViewById(R.id.createAccountTextView);
+
+
+        //Set On ClickListener
+        login.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+
+                String userName= userID.getText().toString();
+                String password=pass.getText().toString();
+
+                String storedPassword = loginDataBaseAdapter.getSingleEntry(userName);
+
+                if(password.equals(storedPassword))
+                {
+                    Toast.makeText(MainActivity.this, "Login Successful", Toast.LENGTH_LONG).show();
+                    Intent intentLogin = new Intent(getApplicationContext(), Home.class);
+
+                 intentLogin.putExtra("User_ID", userName);
+                 startActivity(intentLogin);
+
+                }
+                else
+                {
+
+                    Toast.makeText(MainActivity.this, "User Name and Password do not match", Toast.LENGTH_LONG).show();
+
+                }
+            }
+        });
+
+        dialog.show();
+    }
+*/
+
+
+    protected void onDestroy() {
+
+        super.onDestroy();
+
+        loginDataBaseAdapter.close();
+
+    }
+
+
+}
+</code></pre>
+
+<p>this is the activity that tries to access the database:</p>
+
+<pre><code>package com.noura.luba;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.widget.Toast;
+
+public class LoginDataBaseAdapter {
+
+    static final String DATABASE_NAME = "seniorLUBA";
+       static final int DATABASE_VERSION = 1;
+
+       public static final int NAME_COLUMN = 1;
+
+       public SQLiteDatabase db;
+       private final Context context;
+
+       private DataBaseHelper dbHelper;
+
+       public LoginDataBaseAdapter(Context _context)
+       {
+
+           context = _context;
+           dbHelper = new DataBaseHelper(context);
+
+       }
+
+       public LoginDataBaseAdapter open() throws SQLException
+       {
+           db=dbHelper.getWritableDatabase();
+           return this;
+       }
+
+       public void close()
+       {
+           db.close();
+       }
+
+       public SQLiteDatabase getDatabaseInstance()
+       {
+           return db;
+       }
+
+       public void insertEntry(String password)
+       {
+
+           ContentValues newValues = new ContentValues();
+           newValues.put("StdPass", password);
+
+           db.insert("student", null, newValues);
+           Toast.makeText(context,  "User Info Saved", Toast.LENGTH_LONG).show();
+
+       }
+
+       public int deleteEntry(String UserName)
+       {
+
+           String where="StdId="+UserName;
+           int numberOFEntriesDeleted = db.delete("student", where, new String[]{UserName});
+           Toast.makeText(context, "Number of Entry Deleted Successfully : " +numberOFEntriesDeleted, Toast.LENGTH_LONG).show();
+           return numberOFEntriesDeleted;
+       }
+
+       public String getSingleEntry(String userName)
+       {
+
+
+          Cursor cursor=db.query("student", null, "StdID="+userName, new String[]{userName}, null, null, null);
+           if(cursor.getCount()<1)
+               return "DOES NOT EXIST";
+           cursor.moveToFirst();
+           String password= cursor.getString(cursor.getColumnIndex("StdPass"));
+           return password;
+       }
+
+       public String getSecretInfo(String SecretInfo){
+
+           Cursor cursor=db.query("student", null, "StdID="+SecretInfo, new String[]{SecretInfo}, null, null, null);
+           if(cursor.getCount()<1)
+               return "Does Not Exist";
+           else return SecretInfo;
+
+
+       }
+
+
+
+public void updateEntry(String userName, String password)
+{
+    ContentValues updatedValues = new ContentValues();
+
+    updatedValues.put("StdID", userName);
+    updatedValues.put("StdPass", password);
+
+    String where="StdID="+userName;
+    db.update("student", updatedValues, where, new String[]{userName});
+}
+}
+</code></pre>
+
+<p>this is the databaseHelper</p>
+
+<pre><code>package com.noura.luba;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+public class DataBaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "/data/data/noura/databases/";
+
+    private static String DB_NAME = "seniorLUBA";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+
+    public DataBaseHelper(Context context)
+    {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException{
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to
+            this.getReadableDatabase();
+
+            copyDataBase();
+
+        }
+    }
+
+    /**
+     * Check if the database already exists to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB= null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+        } catch(SQLiteException e) {
+            //database doesn't exist yet
+        }
+
+        if (checkDB !=null){
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies my database from my local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * @throws IOException 
+     * */
+
+    private void copyDataBase() throws IOException {
+        //Open my local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        //Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+
+        while ((length = myInput.read(buffer))>0) {
+            myOutput.write(buffer, 0, length);
+
+        }
+
+        //close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+    }
+
+    @Override
+     public void onCreate(SQLiteDatabase _db) 
+        {
+         // _db.execSQL(LoginDataBaseAdapter.DATABASE_NAME);
+
+        }
+
+    public void onUpgrade(SQLiteDatabase _db, int _oldVersion, int _newVersion)
+    {
+
+        Log.w("TaskDBAdapter","Upgrading from version" +_oldVersion + "to" +_newVersion + ", which will destroy all old data");
+
+        _db.execSQL("DROP TABLE IF EXISTS " + "TEMPLATE");
+
+        onCreate(_db);
+
+    }
+
+
+
+}
+</code></pre>
+
+<p>this is the logcat:</p>
+
+<pre><code>    11-16 22:36:29.076: W/ApplicationPackageManager(28412): getCSCPackageItemText()
+11-16 22:36:29.116: E/MoreInfoHPW_ViewGroup(28412): Parent view is not a TextView
+11-16 22:36:29.246: I/Adreno-EGL(28412): <qeglDrvAPI_eglInitialize:410>: EGL 1.4 QUALCOMM build:  ()
+11-16 22:36:29.246: I/Adreno-EGL(28412): OpenGL ES Shader Compiler Version: E031.24.00.07
+11-16 22:36:29.246: I/Adreno-EGL(28412): Build Date: 01/22/14 Wed
+11-16 22:36:29.246: I/Adreno-EGL(28412): Local Branch: base_au149_adreno_au169_patches
+11-16 22:36:29.246: I/Adreno-EGL(28412): Remote Branch: 
+11-16 22:36:29.246: I/Adreno-EGL(28412): Local Patches: 
+11-16 22:36:29.246: I/Adreno-EGL(28412): Reconstruct Branch: 
+11-16 22:36:29.296: D/OpenGLRenderer(28412): Enabling debug mode 0
+11-16 22:36:42.636: E/SQLiteLog(28412): (1) no such table: student
+11-16 22:36:42.636: D/AndroidRuntime(28412): Shutting down VM
+11-16 22:36:42.636: W/dalvikvm(28412): threadid=1: thread exiting with uncaught exception (group=0x41e66da0)
+11-16 22:36:42.646: E/AndroidRuntime(28412): FATAL EXCEPTION: main
+11-16 22:36:42.646: E/AndroidRuntime(28412): Process: com.noura.luba, PID: 28412
+11-16 22:36:42.646: E/AndroidRuntime(28412): android.database.sqlite.SQLiteException: no such table: student (code 1): , while compiling: SELECT * FROM student WHERE StdID=20121400
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1121)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:694)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1436)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1283)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1154)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1322)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at com.noura.luba.LoginDataBaseAdapter.getSingleEntry(LoginDataBaseAdapter.java:70)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at com.noura.luba.MainActivity$3.onClick(MainActivity.java:80)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.view.View.performClick(View.java:4626)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.view.View$PerformClick.run(View.java:19293)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.os.Handler.handleCallback(Handler.java:733)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.os.Handler.dispatchMessage(Handler.java:95)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.os.Looper.loop(Looper.java:157)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at android.app.ActivityThread.main(ActivityThread.java:5293)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at java.lang.reflect.Method.invokeNative(Native Method)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at java.lang.reflect.Method.invoke(Method.java:515)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1265)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1081)
+11-16 22:36:42.646: E/AndroidRuntime(28412):    at dalvik.system.NativeStart.main(Native Method)
+11-16 22:36:43.866: I/Process(28412): Sending signal. PID: 28412 SIG: 9
+</code></pre>
+
+<p>Could anyone point out what the problem might be? and how can i make sure that the copied database in my project is full ?</p>
+
+<p><strong>Edit</strong></p>
+
+<p>logcat:</p>
+
+<pre><code>11-18 01:27:04.235: W/KeyCharacterMap(427): No keyboard for id 0
+11-18 01:27:04.235: W/KeyCharacterMap(427): Using default keymap: /system/usr/keychars/qwerty.kcm.bin
+11-18 01:27:15.595: D/AndroidRuntime(427): Shutting down VM
+11-18 01:27:15.595: W/dalvikvm(427): threadid=1: thread exiting with uncaught exception (group=0x40015560)
+11-18 01:27:15.615: E/AndroidRuntime(427): FATAL EXCEPTION: main
+11-18 01:27:15.615: E/AndroidRuntime(427): android.database.sqlite.SQLiteException: bind or column index out of range: handle 0x2ff2a0
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteProgram.native_bind_string(Native Method)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteProgram.bindString(SQLiteProgram.java:244)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteQuery.bindString(SQLiteQuery.java:185)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:48)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1356)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1235)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1189)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1271)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at com.noura.luba.LoginDataBaseAdapter.getSingleEntry(LoginDataBaseAdapter.java:70)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at com.noura.luba.MainActivity$3.onClick(MainActivity.java:80)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.view.View.performClick(View.java:2485)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.view.View$PerformClick.run(View.java:9080)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.os.Handler.handleCallback(Handler.java:587)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.os.Handler.dispatchMessage(Handler.java:92)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.os.Looper.loop(Looper.java:123)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at android.app.ActivityThread.main(ActivityThread.java:3683)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at java.lang.reflect.Method.invokeNative(Native Method)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at java.lang.reflect.Method.invoke(Method.java:507)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+11-18 01:27:15.615: E/AndroidRuntime(427):  at dalvik.system.NativeStart.main(Native Method)
+11-18 01:27:19.587: I/Process(427): Sending signal. PID: 427 SIG: 9
+</code></pre>

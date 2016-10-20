@@ -1,0 +1,407 @@
+<p>I am getting a cannot instantiate Fragment error because of a class not found exception. Previously this code use to work fine, I don't know what changed and I have been stuck trying to solve this issue for a couple of hours now.</p>
+
+<h2>Code</h2>
+
+<h3>AddEvents Class</h3>
+
+<pre><code>package com.whatshappening;
+// A bunch of imports
+
+public class AddEvents extends Fragment implements
+        GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener, AsyncResponse, locationChangeListner {
+    // Class Variables
+    private ProgressDialog pd;
+    private LocationClient mLocationClient;
+    private FragmentActivity myContext;
+    private String resultString;
+
+    public String LatLng = null;
+    public EditText locationAddress = null;
+    public Double Lat = null;
+    public Double Lng = null;
+    public Double lat = null;
+    public Double lng = null;
+
+    // Constructor is empty and public
+    public AddEvents(){
+
+    }
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.add_events, container, false);
+        locationAddress = (EditText) rootView.findViewById(R.id.tLocation);
+        mLocationClient = new LocationClient(getActivity(), this, this);
+        rootView.findViewById(R.id.locButton).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        pd = ProgressDialog.show(getActivity(), "",
+                                "Finding you!!!", false);
+                        getAddress(v);
+
+                    }
+
+                });
+
+        rootView.findViewById(R.id.shButton).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {                       
+                        if ((Lat != null) && (Lng != null)) {
+                            Toast.makeText(getActivity(),
+                                    LatLng, Toast.LENGTH_SHORT).show();
+                            locationChange(Lat,Lng);
+                        } else {
+                            Toast.makeText(getActivity(),
+                                    "No location was found", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+        }); 
+
+        return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+ // Class is much Larger but I don't think that's the issue.
+ }
+</code></pre>
+
+<h3>MainActivity</h3>
+
+<pre><code>package com.whatshappening;
+//Bunch of imports 
+
+public class MainActivity extends ActionBarActivity implements
+        ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a {@link FragmentPagerAdapter}
+     * derivative, which will keep every loaded fragment in memory. If this
+     * becomes too memory intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        // Set up date in Action Bar
+        String dateString = (String) DateFormat.format("MM-dd-yyyy",
+                new java.util.Date());
+        actionBar.setSubtitle(dateString);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public android.support.v4.app.Fragment getItem(int position) {
+            switch (position) {
+            case (0):
+                return new AddEvents();
+            case (1):
+                return new EventMap();
+            }
+            return null;
+
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+}
+</code></pre>
+
+<h3>Android Manifest file</h3>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.whatshappening"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="11"
+        android:targetSdkVersion="19" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <!--
+     The following two permissions are not required to use
+     Google Maps Android API v2, but are recommended.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat.Light" >
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyCO5Wb1Ow2W3Wq0mB64OFIPwTvGLbCRS9k" />
+
+        <activity
+            android:name="com.whatshappening.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<h3>LogCat</h3>
+
+<pre><code>07-19 19:46:15.880: E/AndroidRuntime(29720): Caused by: android.app.Fragment$InstantiationException: Unable to instantiate fragment com.example.fragment.AddEvents: make sure class name exists, is public, and has an empty constructor that is public
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at android.app.Fragment.instantiate(Fragment.java:597)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at android.app.Fragment.instantiate(Fragment.java:561)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at android.app.Activity.onCreateView(Activity.java:4964)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:695)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    ... 24 more
+07-19 19:46:15.880: E/AndroidRuntime(29720): Caused by: java.lang.ClassNotFoundException: Didn't find class "com.example.fragment.AddEvents" on path: DexPathList[[zip file "/data/app/com.whatshappening-13.apk"],nativeLibraryDirectories=[/data/app-lib/com.whatshappening-13, /vendor/lib, /system/lib]]
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:67)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at java.lang.ClassLoader.loadClass(ClassLoader.java:497)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at java.lang.ClassLoader.loadClass(ClassLoader.java:457)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    at android.app.Fragment.instantiate(Fragment.java:583)
+07-19 19:46:15.880: E/AndroidRuntime(29720):    ... 27 more
+</code></pre>
+
+<h3>add_events.xml</h3>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/beaver"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/tVName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
+        android:text="Event Name:"
+        android:textColor="@android:color/white"
+        android:textSize="22sp" />
+
+    <Button
+        android:id="@+id/locButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/tLocation"
+        android:layout_alignBottom="@+id/tLocation"
+        android:layout_alignParentRight="true"
+        android:text="Get Location"
+        android:textColor="#ffffff" />
+
+    <EditText
+        android:id="@+id/tLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tVLocation"
+        android:layout_marginTop="25dp"
+        android:layout_toLeftOf="@+id/locButton"
+        android:ems="10"
+        android:textColor="@android:color/white" />
+
+    <EditText
+        android:id="@+id/tTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tVTime"
+        android:layout_below="@+id/tVTime"
+        android:layout_marginTop="22dp"
+        android:ems="10"
+        android:inputType="textMultiLine|date"
+        android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/tVDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/tDescription"
+        android:layout_alignLeft="@+id/tTime"
+        android:layout_marginBottom="18dp"
+        android:text="Description:"
+        android:textColor="@android:color/white"
+        android:textSize="22sp" />
+
+    <EditText
+        android:id="@+id/tNames"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tVLocation"
+        android:layout_below="@+id/tVName"
+        android:layout_marginTop="10dp"
+        android:ems="10"
+        android:textColor="@android:color/white" />
+
+    <EditText
+        android:id="@+id/tDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/shButton"
+        android:layout_alignLeft="@+id/tVDescription"
+        android:layout_marginBottom="7dp"
+        android:ems="10"
+        android:inputType="textMultiLine"
+        android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/tVTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tVLocation"
+        android:layout_below="@+id/locButton"
+        android:layout_marginTop="16dp"
+        android:text="Time:"
+        android:textColor="@android:color/white"
+        android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/tVLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tVName"
+        android:layout_below="@+id/tNames"
+        android:layout_marginTop="15dp"
+        android:text="Location:"
+        android:textColor="@android:color/white"
+        android:textSize="22sp" />
+
+    <Button
+        android:id="@+id/shButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="31dp"
+        android:layout_toRightOf="@+id/tDescription"
+        android:text="Share"
+        android:textColor="#ffffff" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>I feel the error must be something really basic. But I have not changed anyrthing from the previous "working" version of the app.</p>

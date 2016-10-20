@@ -1,0 +1,59 @@
+<p>I am implementing my own custom DialogPreference subclass that has a SeekBar used for persisting an integer. I'm a little confused about what needs to go into <code>onSaveInstanceState()</code> and <code>onRestoreInstanceState()</code>. Specifically, do you need to update the UI widget that the user interacts with (in my case, the SeekBar widget) in <code>onRestoreInstanceState()</code>?</p>
+
+<p>The reason I am confused is that the API doc article <a href="http://developer.android.com/guide/topics/ui/settings.html#CustomSaveState">here</a> tells you to do this:</p>
+
+<pre><code>@Override
+protected Parcelable onSaveInstanceState() {
+    final Parcelable superState = super.onSaveInstanceState();
+    if (isPersistent()) {
+        return superState;
+    }
+
+    final SavedState myState = new SavedState(superState);
+    myState.value = mNewValue; //<------------ saves mNewValue
+    return myState;
+}
+
+@Override
+protected void onRestoreInstanceState(Parcelable state) {
+    if (state == null || !state.getClass().equals(SavedState.class)) {
+        super.onRestoreInstanceState(state);
+        return;
+    }
+
+    SavedState myState = (SavedState) state;
+    super.onRestoreInstanceState(myState.getSuperState());
+    mNumberPicker.setValue(myState.value); //<------------ updates the UI widget, not mNewValue!
+}
+</code></pre>
+
+<p>But looking at the source for some official Android Preference classes (<a href="https://github.com/android/platform_frameworks_base/blob/master/core/java/android/preference/EditTextPreference.java">EditTextPreference</a> and <a href="https://github.com/android/platform_frameworks_base/blob/master/core/java/android/preference/ListPreference.java">ListPreference</a>), the UI widget is not updated in <code>onRestoreInstanceState()</code>. Only the underlying value of the Preference is (in the example above, that would be <code>mNewValue</code>).</p>
+
+<p>Here is the relevant source for EditTextPreference:</p>
+
+<pre><code>@Override
+protected Parcelable onSaveInstanceState() {
+    final Parcelable superState = super.onSaveInstanceState();
+    if (isPersistent()) {
+        return superState;
+    }
+
+    final SavedState myState = new SavedState(superState);
+    myState.value = getValue(); //<---- saves mValue
+    return myState;
+}
+
+@Override
+protected void onRestoreInstanceState(Parcelable state) {
+    if (state == null || !state.getClass().equals(SavedState.class)) {
+        super.onRestoreInstanceState(state);
+        return;
+    }
+
+    SavedState myState = (SavedState) state;
+    super.onRestoreInstanceState(myState.getSuperState());
+    setValue(myState.value); //<---- updates mValue, NOT the UI widget!
+}
+</code></pre>
+
+<p>So, what's the consensus? Where I am supposed to update the UI widget (if I am supposed to update it at all...)?</p>

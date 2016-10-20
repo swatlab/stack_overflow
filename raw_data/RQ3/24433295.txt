@@ -1,0 +1,47 @@
+<p>I have this code in the ActionBarSherlock </p>
+
+<pre><code>@Override
+public boolean onRequestSendAccessibilityEvent(View child, AccessibilityEvent event) 
+{
+    if (super.onRequestSendAccessibilityEvent(child, event)) {
+        // Add a record for ourselves as well.
+        AccessibilityEvent record = AccessibilityEvent.obtain();
+        onInitializeAccessibilityEvent(record);
+        // Populate with the text of the requesting child.
+        child.dispatchPopulateAccessibilityEvent(record);
+        event.appendRecord(record);
+        return true;
+    }
+    return false;
+}
+
+@Override
+public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setScrollable(isScrollableForAccessibility());
+    View selectedView = getSelectedView();
+    if (selectedView != null) {
+        info.setEnabled(selectedView.isEnabled());
+    }
+}
+
+@Override
+public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
+    super.onInitializeAccessibilityEvent(event);
+    event.setScrollable(isScrollableForAccessibility());
+    View selectedView = getSelectedView();
+    if (selectedView != null) {
+        event.setEnabled(selectedView.isEnabled());
+    }
+    event.setCurrentItemIndex(getSelectedItemPosition());
+    event.setFromIndex(getFirstVisiblePosition());
+    event.setToIndex(getLastVisiblePosition());
+    event.setItemCount(getCount());
+}
+</code></pre>
+
+<p>And I get compile errors on super.onInitializeAccessibilityEvent(event); and a few other methods. </p>
+
+<p>Would anyone know why this happens? </p>
+
+<p>Thanks!</p>

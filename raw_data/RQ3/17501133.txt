@@ -1,0 +1,96 @@
+<p>I'm trying to make an dataAdapter extend SQLiteOpenHelper. Bellow is the code:</p>
+
+<pre><code>import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import com.muoiot.enlistening.idefined.*;
+import com.muoiot.enlistening.utilities.MsgUtils;
+
+public class DbAdapter extends SQLiteOpenHelper implements DB_INFO, DB_USER, DB_QUESTION {
+
+    public static String defaultDbPath = "";
+    protected SQLiteDatabase databaseControl;
+    private Context context = null;
+
+    public DbAdapter(Context context, String name, CursorFactory factory, int version) {
+        super(context, name, factory, version);
+        this.context = context;
+        defaultDbPath = "/data/data/" + context.getApplicationContext().getPackageName() + "/databases/";
+    }
+
+    /***********************************************************************************/
+    // This function auto call at the first time when the database was not found.
+    /***********************************************************************************/   
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+        MsgUtils.DB("Don't have database, need to copy from asset");
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+    /***********************************************************************************/
+    // This function auto call when the database has been opened.
+    /***********************************************************************************/   
+    @Override
+    public void onOpen(SQLiteDatabase db){
+        MsgUtils.DB(" AAAAAAAAAAAAAAAAAAAAAAAAA has been opened!!!");
+    }
+
+    /***********************************************************************************/
+    // Copy database
+    /***********************************************************************************/       
+    private void copyDataBase() throws IOException {
+
+        // Open your local db as the input stream
+        InputStream myInput = this.context.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = defaultDbPath + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    /***********************************************************************************/
+    // Open and close database 
+    /***********************************************************************************/   
+    public void openDatabase(){
+        databaseControl = this.getWritableDatabase();
+    }
+
+    public void closeDatabase(){
+        this.getWritableDatabase().close();
+    }
+
+}
+</code></pre>
+
+<p>And, now I have an issue with copyDataBase function. I always get an database with out any table. (my phone was rooted, so I copy back the database from data/data//databases to review).</p>
+
+<p>What am I wrong here? Anyone can give me a hand?</p>

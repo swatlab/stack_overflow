@@ -1,0 +1,24 @@
+<p>I'm finding that my CursorLoader callbacks are getting mixed up cursors.</p>
+
+<p>The problem seems to be that </p>
+
+<p>Fragment.getLoaderManager() is the same loader id scope as getActivity().getSupportLoaderManager()</p>
+
+<p>from AOSP</p>
+
+<pre><code>public LoaderManager getLoaderManager() {
+    if (mLoaderManager != null) {
+        return mLoaderManager;
+    }
+    if (mActivity == null) {
+        throw new IllegalStateException("Fragment " + this + " not attached to Activity");
+    }
+    mCheckedForLoaderManager = true;
+    mLoaderManager = mActivity.getLoaderManager(mIndex, mLoadersStarted, true);
+    return mLoaderManager;
+}
+</code></pre>
+
+<p>so what I'm experiencing is ID conflict amongst my fragments, so the wrong cursors are hoping across fragments.</p>
+
+<p>I need a strategy to create both static and/or dynamic(in the case of dynamic amounts of loaders) id's that are aware of every other fragments ids...?</p>

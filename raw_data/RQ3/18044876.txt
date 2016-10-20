@@ -1,0 +1,235 @@
+<p>I've been trying to implement in-app purchases to my app, but for some reason the app exits to homescreen everytime I try to start my test purchase.</p>
+
+<pre><code>08-04 18:01:00.659: W/dalvikvm(10597): threadid=17: thread exiting with uncaught exception (group=0x40fd32a0)
+08-04 18:01:00.659: D/AndroidRuntime(10597): Shutting down VM
+08-04 18:01:00.659: W/dalvikvm(10597): threadid=1: thread exiting with uncaught exception (group=0x40fd32a0)
+</code></pre>
+
+<p>This is my logcat, I do not get an error, so I don't know what I did wrong here..</p>
+
+<p>Here's the .java that probably causes the error:</p>
+
+<pre><code>package com.mitonanetherlands.buttonchooser;
+
+import java.util.ArrayList;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.IntentSender.SendIntentException;
+import android.content.ServiceConnection;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.android.vending.billing.IInAppBillingService;
+import com.mopub.mobileads.MoPubView;
+
+public class BuyPremium extends Activity {
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res,
+            int resId, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+    MoPubView ad1;
+    SharedPreferences completedLevels;
+    Bundle querySku = new Bundle();
+    Bundle skuDetails;
+    String sku;
+    String price;
+    Bundle buyIntentBundle;
+    IInAppBillingService mService;
+    ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = IInAppBillingService.Stub.asInterface(service);
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.buypremium);
+
+        ImageView thankyou = (ImageView) findViewById(R.id.thankyou);
+        thankyou.setImageBitmap(decodeSampledBitmapFromResource(getResources(),
+                R.drawable.thank_you, 450, 600));
+        ad1 = (MoPubView) findViewById(R.id.adviewpremium);
+        ad1.setAdUnitId("d95782d0c22011e295fa123138070049");
+        ad1.loadAd();
+        bindService(new Intent(
+                "com.android.vending.bulling.InAppBillingService.BIND"),
+                mServiceConn, Context.BIND_AUTO_CREATE);
+
+        Button backtomain = (Button) findViewById(R.id.BackToMenu);
+        backtomain.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(
+                        "com.mitonanetherlands.buttonchooser.MAINMENU"));
+            }
+        });
+
+        Button BuyPremium = (Button) findViewById(R.id.BuyButton);
+        BuyPremium.setOnClickListener(new View.OnClickListener() {
+
+            @SuppressWarnings("unused")
+            @Override
+            public void onClick(View arg0) {
+                ArrayList<String> skuList = new ArrayList<String>();
+                skuList.add("pemiumUpgrade");
+
+                querySku.putStringArrayList("premium_apartment_life", skuList);
+                Thread myThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Bundle skuDetails = mService.getSkuDetails(3,
+                                    getPackageName(), "inapp", querySku);
+                        } catch (RemoteException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                myThread.start();
+                int response = skuDetails.getInt("RESPONSE_CODE");
+                if (response == 0) {
+                   ArrayList<String> responseList 
+                      = skuDetails.getStringArrayList("DETAILS_LIST");
+
+                   for (String thisResponse : responseList) {
+                      JSONObject object = null;
+                    try {
+                        object = new JSONObject(thisResponse);
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                      try {
+                        String sku = object.getString("productId");
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                      try {
+                        String price = object.getString("price");
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                   }
+                }
+                try {
+                    Bundle buyIntentBundle = mService.getBuyIntent(3, getPackageName(), sku, "inapp","Premium is aangekocht!");
+                } catch (RemoteException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+                try {
+                    startIntentSenderForResult(pendingIntent.getIntentSender(), 1001, new Intent(), Integer.valueOf(0),Integer.valueOf(0), Integer.valueOf(0));
+                } catch (SendIntentException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+        });
+
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ad1.destroy();
+        if (mServiceConn != null) {
+            unbindService(mServiceConn);
+        }
+    }
+    @SuppressWarnings("unused")
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) { 
+       if (requestCode == 1001) {     
+        int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+          String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+          String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
+
+          if (resultCode == RESULT_OK) {
+             try {
+                JSONObject jo = new JSONObject(purchaseData);
+                String sku = jo.getString("productId");
+                Toast.makeText(this,"You have bought the " + sku + ". Excellent choice!", Toast.LENGTH_LONG).show();
+                SharedPreferences.Editor editor = completedLevels.edit();
+                editor.putBoolean("Paid", true).commit();
+
+              }
+              catch (JSONException e) {
+                    Toast.makeText(this,"Failed to Parse data", Toast.LENGTH_LONG).show();
+                 e.printStackTrace();
+              }
+          }
+       }
+    }
+}
+</code></pre>
+
+<p>Any Ideas?</p>

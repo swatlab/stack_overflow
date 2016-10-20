@@ -1,0 +1,174 @@
+<p>I cannot able to show the bar-charts on the next screen.Here i am using achartengine for creating a bar chart.And i didn't get any errors on the log-cat too.Suggestions please!..</p>
+
+<p>Thanks for your precious time!..</p>
+
+<p><em>Please find my sources for reference</em></p>
+
+<p><strong>Chart_MainActivity.java</strong></p>
+
+<pre><code>public class Chart_MainActivity extends Activity 
+{   
+Button btn;
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+    btn = (Button)findViewById(R.id.button_invoke);
+    btn.setOnClickListener(new View.OnClickListener() 
+    {
+
+    @Override
+    public void onClick(View v) 
+    {
+        Intent int_obj = new Intent(Chart_MainActivity.this,NextActivity.class);
+        startActivity(int_obj);
+        }
+    });   }}
+</code></pre>
+
+<p><strong>NextActivity.java</strong></p>
+
+<pre><code>public class NextActivity extends Activity 
+{
+@Override
+protected void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main1);
+    createIntent();
+ /*     
+    Intent intent = createIntent();
+    startActivity(intent);
+ */
+}   
+
+public void createIntent()
+{       
+    String[] titles = new String[] { "Order's profit of the year", " " };
+
+    List<double[]> values = new ArrayList<double[]>();
+
+    values.add(new double[] { 7, 2, 5, 8 });
+    values.add(new double[] {});
+
+    int[] colors = new int[] { Color.BLUE, Color.WHITE};
+
+    XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+    renderer.setOrientation(Orientation.HORIZONTAL);
+
+setChartSettings(renderer, "Profit for the year 2012", " ", " ",0,10, 0,10, Color.GRAY, Color.LTGRAY);
+
+    renderer.setXLabels(1);
+    renderer.addXTextLabel(0.75, "ord1");
+    renderer.addXTextLabel(1.75, "ord2");
+    renderer.addXTextLabel(2.75, "ord3");
+    renderer.addXTextLabel(3.75, "ord4");
+    renderer.setPanEnabled(true, false);
+
+    int length = renderer.getSeriesRendererCount();
+
+for (int i = 0; i < length; i++) 
+{
+    SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+    seriesRenderer.setDisplayChartValues(true);
+    }
+ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+    }
+
+ protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+ {  
+
+    // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+    XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+    renderer.setAxisTitleTextSize(15);
+    renderer.setChartTitleTextSize(20);
+    renderer.setLabelsTextSize(15);
+    renderer.setLegendTextSize(15);
+
+    int length = colors.length;
+
+    for (int i = 0; i < length; i++) 
+    {
+       SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+       r.setColor(colors[i]);
+       renderer.addSeriesRenderer(r);
+       }
+    return renderer;
+    }
+
+protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+    String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,int labelsColor) 
+    {
+        // sets lots of default values for this renderer
+
+        renderer.setChartTitle(title);
+        renderer.setXTitle(xTitle);
+        renderer.setYTitle(yTitle);
+
+        renderer.setXAxisMin(xMin);
+        renderer.setXAxisMax(xMax);
+
+        renderer.setYAxisMin(yMin);
+        renderer.setYAxisMax(yMax);
+
+        renderer.setAxesColor(axesColor);
+        renderer.setLabelsColor(labelsColor);
+
+        renderer.setApplyBackgroundColor(true);
+        renderer.setBackgroundColor(Color.GRAY);
+      }
+
+protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) 
+{   
+  // adds the axis titles and values into the data-set
+
+    XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+    int length = titles.length;
+
+    for (int i = 0; i < length; i++) 
+    {
+       CategorySeries series = new CategorySeries(titles[i]);
+       double[] v = values.get(i);
+       int seriesLength = v.length;
+
+       for (int k = 0; k < seriesLength; k++) 
+       {
+          series.add(v[k]);
+        }
+       dataset.addSeries(series.toXYSeries());
+      }
+
+      return dataset;
+    }
+}
+</code></pre>
+
+<p><strong>Manifest.xml</strong></p>
+
+<pre><code><manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="com.example.barchart_test"
+android:versionCode="1"
+android:versionName="1.0" >
+
+<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="8" android:maxSdkVersion="15"/>
+
+<application
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity   android:name=".Chart_MainActivity"
+                android:label="@string/title_activity_chart__main" >
+    <intent-filter>
+       <action android:name="android.intent.action.MAIN" />
+         <category android:name="android.intent.category.LAUNCHER" />
+         </intent-filter>
+       </activity>
+    <activity android:name=".NextActivity"></activity>
+
+</application>
+</manifest>
+</code></pre>

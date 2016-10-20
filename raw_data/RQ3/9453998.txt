@@ -1,0 +1,210 @@
+<p>i tried this <a href="http://developer.android.com/guide/tutorials/views/hello-tabwidget.html">http://developer.android.com/guide/tutorials/views/hello-tabwidget.html</a> but it uses deprecated tabactivity, and eclipse suggested I use fragmentactivity instead, and it gives me a sample (on the tooltip), but i think the sample it gave me is really enormous.. I just want a simple tab like the url above game.. any sample on how to use fragmentactivity to achive the same exact tabs like the url (clicking on button on the tabs doesn't change activities; instead it just change the content that's being displayed)?</p>
+
+<p>just for reference, here's the sample that eclipse suggested to me (via the enlarged tooltip):
+enormous, isn't it?</p>
+
+<blockquote>
+  <p>@Deprecated
+           This class is deprecated. New applications should use Fragments instead of this class; to continue to run on older devices,
+  you can use the v4 support library which provides a version of the
+  Fragment API that is compatible down to DONUT. </p>
+  
+  <p>For apps developing against HONEYCOMB or later, tabs are typically
+  presented in the UI using the new ActionBar.newTab() and related APIs
+  for placing tabs within their action bar area.</p>
+  
+  <p>A replacement for TabActivity can also be implemented by directly
+  using TabHost. You will need to define a layout that correctly uses a
+  TabHost with a TabWidget as well as an area in which to display your
+  tab content.</p>
+</blockquote>
+
+<p>A typical example would be:</p>
+
+<pre><code><TabHost
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/tabhost"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"/>
+
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0"/>
+
+        <FrameLayout
+            android:id="@+android:id/realtabcontent"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+</TabHost>
+</code></pre>
+
+<p>The implementation needs to take over responsibility for switching the shown content when the user switches between tabs. </p>
+
+<pre><code>import java.util.HashMap;
+import com.example.android.supportv4.R;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.TabHost;
+
+/**
+ * This demonstrates how you can implement switching between the tabs of a
+ * TabHost through fragments.  It uses a trick (see the code below) to allow
+ * the tabs to switch between fragments instead of simple views.
+ */
+public class FragmentTabs extends FragmentActivity {
+    TabHost mTabHost;
+    TabManager mTabManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.fragment_tabs);
+        mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+
+        mTabManager = new TabManager(this, mTabHost, R.id.realtabcontent);
+
+        mTabManager.addTab(mTabHost.newTabSpec("simple").setIndicator("Simple"),
+                FragmentStackSupport.CountingFragment.class, null);
+        mTabManager.addTab(mTabHost.newTabSpec("contacts").setIndicator("Contacts"),
+                LoaderCursorSupport.CursorLoaderListFragment.class, null);
+        mTabManager.addTab(mTabHost.newTabSpec("custom").setIndicator("Custom"),
+                LoaderCustomSupport.AppListFragment.class, null);
+        mTabManager.addTab(mTabHost.newTabSpec("throttle").setIndicator("Throttle"),
+                LoaderThrottleSupport.ThrottledLoaderListFragment.class, null);
+
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("tab", mTabHost.getCurrentTabTag());
+    }
+
+    /**
+     * This is a helper class that implements a generic mechanism for
+     * associating fragments with the tabs in a tab host.  It relies on a
+     * trick.  Normally a tab host has a simple API for supplying a View or
+     * Intent that each tab will show.  This is not sufficient for switching
+     * between fragments.  So instead we make the content part of the tab host
+     * 0dp high (it is not shown) and the TabManager supplies its own dummy
+     * view to show as the tab content.  It listens to changes in tabs, and takes
+     * care of switch to the correct fragment shown in a separate content area
+     * whenever the selected tab changes.
+     */
+    public static class TabManager implements TabHost.OnTabChangeListener {
+        private final FragmentActivity mActivity;
+        private final TabHost mTabHost;
+        private final int mContainerId;
+        private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+        TabInfo mLastTab;
+
+        static final class TabInfo {
+            private final String tag;
+            private final Class<?> clss;
+            private final Bundle args;
+            private Fragment fragment;
+
+            TabInfo(String _tag, Class<?> _class, Bundle _args) {
+                tag = _tag;
+                clss = _class;
+                args = _args;
+            }
+        }
+
+        static class DummyTabFactory implements TabHost.TabContentFactory {
+            private final Context mContext;
+
+            public DummyTabFactory(Context context) {
+                mContext = context;
+            }
+
+            @Override
+            public View createTabContent(String tag) {
+                View v = new View(mContext);
+                v.setMinimumWidth(0);
+                v.setMinimumHeight(0);
+                return v;
+            }
+        }
+
+        public TabManager(FragmentActivity activity, TabHost tabHost, int containerId) {
+            mActivity = activity;
+            mTabHost = tabHost;
+            mContainerId = containerId;
+            mTabHost.setOnTabChangedListener(this);
+        }
+
+        public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+            tabSpec.setContent(new DummyTabFactory(mActivity));
+            String tag = tabSpec.getTag();
+
+            TabInfo info = new TabInfo(tag, clss, args);
+
+            // Check to see if we already have a fragment for this tab, probably
+            // from a previously saved state.  If so, deactivate it, because our
+            // initial state is that a tab isn't shown.
+            info.fragment = mActivity.getSupportFragmentManager().findFragmentByTag(tag);
+            if (info.fragment != null && !info.fragment.isDetached()) {
+                FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+                ft.detach(info.fragment);
+                ft.commit();
+            }
+
+            mTabs.put(tag, info);
+            mTabHost.addTab(tabSpec);
+        }
+
+        @Override
+        public void onTabChanged(String tabId) {
+            TabInfo newTab = mTabs.get(tabId);
+            if (mLastTab != newTab) {
+                FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+                if (mLastTab != null) {
+                    if (mLastTab.fragment != null) {
+                        ft.detach(mLastTab.fragment);
+                    }
+                }
+                if (newTab != null) {
+                    if (newTab.fragment == null) {
+                        newTab.fragment = Fragment.instantiate(mActivity,
+                                newTab.clss.getName(), newTab.args);
+                        ft.add(mContainerId, newTab.fragment, newTab.tag);
+                    } else {
+                        ft.attach(newTab.fragment);
+                    }
+                }
+
+                mLastTab = newTab;
+                ft.commit();
+                mActivity.getSupportFragmentManager().executePendingTransactions();
+            }
+        }
+    }
+}
+</code></pre>

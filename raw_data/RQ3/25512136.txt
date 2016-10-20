@@ -1,0 +1,143 @@
+<p>I'm having a problem with sqlite android. According to the example in <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">here</a>, i just have to put my database in the assets folder. I follow it but then, i can't find the databases folder or the sqlite file in the ddms file explorer.</p>
+
+<p>Please tell me whats the problem?</p>
+
+<p>Here is my database code.</p>
+
+<pre><code>public class DataBaseManager extends SQLiteOpenHelper {
+private static String DB_PATH = "/data/data/android.qholis.rencanakeuangan/databases/";
+private static String DB_NAME = "MyFinancialPlanning.sqlite";
+private static SQLiteDatabase mDataBase;
+private static DataBaseManager sInstance = null;
+private static final int DATABASE_VERSION = 1;
+
+private DataBaseManager() {
+    super(ApplicationContextProvider.getContext(), DB_NAME, null,
+            DATABASE_VERSION);
+    try {
+        createDataBase();
+        openDataBase();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+public static DataBaseManager instance() {
+    if (sInstance == null) {
+        sInstance = new DataBaseManager();
+    }
+    return sInstance;
+}
+
+private void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();
+    if (dbExist) {
+        // do nothing - database already exist
+    } else {
+        // By calling this method an empty database will be created into
+        // the default system path
+        // of your application so we are gonna be able to overwrite that
+        // database with our database.
+        this.getWritableDatabase();
+        try {
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    } catch (SQLiteException e) {
+        Log.i("DataBaseManager", "DB NOT FOUND");
+        // database doesn't exist yet.
+    }
+
+    if (checkDB != null) {
+        checkDB.close();
+    }
+    return checkDB != null;
+}
+
+public void copyDataBase() throws IOException {
+
+    // Open your local db as the input stream
+    InputStream myInput = ApplicationContextProvider.getContext().getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+private void openDataBase() throws SQLException {
+    // Open the database
+    String myPath = DB_PATH + DB_NAME;
+    mDataBase = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READWRITE);
+}
+
+public Cursor select(String query) throws SQLException {
+    return mDataBase.rawQuery(query, null);
+}
+
+public Cursor insert(String table, ContentValues values) throws SQLException {
+    mDataBase.insert(table, null, values);
+    return null;
+}
+
+public Cursor delete(String table, String where) throws SQLException {
+    mDataBase.delete(table, where, null);
+    return null;
+}
+
+public Cursor update(String table, ContentValues values, String where) {
+    mDataBase.update(table, values, where, null);
+    return null;
+}
+
+public void sqlCommand(String command) {
+    mDataBase.execSQL(command);
+}
+
+@Override
+public synchronized void close() {
+
+    if (mDataBase != null)
+        mDataBase.close();
+
+    super.close();
+}
+
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+}
+}
+</code></pre>

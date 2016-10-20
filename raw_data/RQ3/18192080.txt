@@ -1,0 +1,100 @@
+<p>Streaming MediaPlayer not working on Samsung galaxy s3. Don't have device myself but getting reports of it not working. Also tried Remote Test Lab and does not work. I have tested on many other devices and all work excepted for s3. Any help would be awesome!</p>
+
+<p>Code:</p>
+
+<pre><code>public class Radio extends Activity {
+
+private MediaPlayer mp;
+private ImageButton pauseicon;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.player_1);
+    Toast.makeText(this, "Just one moment please", Toast.LENGTH_LONG).show();
+    pauseicon = (ImageButton) findViewById(R.id.pauseicon);
+    getActionBar().setDisplayHomeAsUpEnabled(true);
+
+    /**
+     * Play button click event plays a song and changes button to pause
+     * image pauses a song and changes button to play image
+     * */
+
+    String res = "http://************";
+
+    mp = new MediaPlayer();
+    try {
+        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mp.setDataSource(res);
+        mp.setOnPreparedListener(new OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer player) {
+                mp.start();
+            }
+        });
+        mp.prepareAsync();
+    } catch (IllegalArgumentException e) {
+        e.printStackTrace();
+    } catch (IllegalStateException e) {
+        e.printStackTrace();
+    } catch (IOException e) {
+
+    }
+
+
+
+    pauseicon.setOnClickListener(new View.OnClickListener() {
+
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+            // No need to check if it is pauseicon
+
+            if (mp.isPlaying()) {
+                mp.pause();
+                ((ImageButton) v).setImageResource(R.drawable.playicon);
+
+            } else {
+                mp.start();
+                ((ImageButton) v).setImageResource(R.drawable.pauseicon);
+            }
+        }
+    });
+
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        NavUtils.navigateUpFromSameTask(this);
+
+        if (mp != null)
+            if (mp.isPlaying())
+                mp.stop();
+
+        mp.release();
+
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+
+    }
+}
+
+@Override
+public void onBackPressed() {
+    if (mp != null) {
+        if (mp.isPlaying())
+            mp.stop();
+
+        mp.release();
+    }
+
+    // there is no reason to call super.finish(); here
+    // call super.onBackPressed(); and it will finish that activity for you
+    super.onBackPressed();
+
+}
+
+  }
+</code></pre>

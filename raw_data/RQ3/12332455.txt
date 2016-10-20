@@ -1,0 +1,310 @@
+<p>I am getting the below error when attempting to query my database with my custom <code>ContentProvider</code> shown below.</p>
+
+<p>I have confirmed the table exists with the correct name and it is still not working.</p>
+
+<p>I was able to get it to work with a raw query, but i want to us the <code>ContentProvider</code> pattern for practice.</p>
+
+<p>Thanks, let me know if you need more information.</p>
+
+<hr>
+
+<p><strong>SQLiteOpenHelper</strong></p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static final String TAG = DatabaseHelper.class.getSimpleName();
+
+    private static final String DB_PATH = 
+            "/data/data/ashton.android.personal.worktc/databases/";
+
+    private static final String DB_NAME = "worktc.db";
+
+    private static final int DB_VERSION = 1;
+
+    private SQLiteDatabase myDatabase;
+
+    private final Context context;
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        this.context = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = this.checkDataBase();
+
+        if (dbExist) {
+            //do nothing - database already exist
+        } else {
+
+            Log.e(TAG, "Database does not exist when trying to create it.");
+
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            this.close();
+
+            try {
+
+                this.copyDataBase();
+
+                Log.e(TAG, "createDatabase database created");
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        File dbFile = new File(DB_PATH + DB_NAME);
+        return dbFile.exists();
+
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = this.context.getAssets().open(DB_NAME);
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(DB_PATH + DB_NAME);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public boolean openDataBase() throws SQLException {
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        this.myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.CREATE_IF_NECESSARY);
+        return this.myDatabase != null;
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if(this.myDatabase != null)
+            this.myDatabase.close();
+
+        super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+}
+</code></pre>
+
+<hr>
+
+<p><strong>ContentProvider</strong></p>
+
+<pre><code>public class WorkTCContentProvider extends ContentProvider {
+
+    private static final String TAG = WorkTCContentProvider.class.getSimpleName();
+
+    public static final String AUTHORITY = 
+            "ashton.android.personal.worktc.database";
+
+    private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    static {
+        sURIMatcher.addURI(
+                AUTHORITY, 
+                ProfessionTable.TABLE_NAME, 
+                ProfessionTable.PROFESSIONS);
+
+        sURIMatcher.addURI(
+                AUTHORITY, 
+                ProfessionTable.TABLE_NAME + "/#", 
+                ProfessionTable.PROFESSIONS_ID);
+    }
+
+    private DatabaseHelper database;
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public String getType(Uri uri) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean onCreate() {
+
+        Log.d(TAG, "before database creation");
+
+        this.database = new DatabaseHelper(getContext());
+        try {
+            this.database.createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        this.database.openDataBase();
+        this.database.close();
+
+        Log.d(TAG, "after database creation");
+
+//      this.database.getWritableDatabase().execSQL( "pragma foreign_keys = on;" );
+
+        return false;
+    }
+
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection,
+            String[] selectionArgs, String sortOrder) {
+
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+
+        switch (sURIMatcher.match(uri)) {
+        case ProfessionTable.PROFESSIONS:
+
+            /*
+             * Dont do anything, just do the normal query.
+             */
+
+            break;
+
+        case ProfessionTable.PROFESSIONS_ID:
+
+            queryBuilder.appendWhere(ProfessionTable._ID + "=" + uri.getLastPathSegment());
+
+            break;
+
+        default:
+            throw new IllegalArgumentException("Unknown URI: " + uri);
+        }
+
+        SQLiteDatabase db = this.database.getReadableDatabase();
+
+        Cursor cursor = queryBuilder.query(
+                db, 
+                projection, 
+                selection, 
+                selectionArgs, 
+                null, 
+                null, 
+                sortOrder);
+
+        cursor.setNotificationUri(WorkTCApp.getContext().getContentResolver(), uri);
+
+        return cursor;
+    }
+
+    @Override
+    public int update(Uri uri, ContentValues values, String selection,
+            String[] selectionArgs) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+}
+</code></pre>
+
+<hr>
+
+<p><strong>ProfessionTable</strong></p>
+
+<pre><code>public final class ProfessionTable implements BaseColumns {
+
+    public static final String TABLE_NAME = "Professions";
+
+    public static final Uri URI = 
+            Uri.parse("content://" + WorkTCContentProvider.AUTHORITY + "/" + TABLE_NAME);
+
+    public static final int PROFESSIONS = 10;
+
+    public static final int PROFESSIONS_ID = 11;
+
+    public static final String NAME = "name";
+
+    public static final String ICON = "icon";
+
+    private ProfessionTable() {}
+}
+</code></pre>
+
+<hr>
+
+<p><strong>Error</strong></p>
+
+<pre><code>09-08 11:16:18.285: E/AndroidRuntime(11651): FATAL EXCEPTION: main
+09-08 11:16:18.285: E/AndroidRuntime(11651): java.lang.RuntimeException: Unable to start activity ComponentInfo{ashton.android.personal.worktc/ashton.android.personal.worktc.controllers.WorkActivity}: java.lang.IllegalStateException: Invalid tables
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1651)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1667)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:935)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.os.Handler.dispatchMessage(Handler.java:99)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.os.Looper.loop(Looper.java:130)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.ActivityThread.main(ActivityThread.java:3687)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at java.lang.reflect.Method.invokeNative(Native Method)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at java.lang.reflect.Method.invoke(Method.java:507)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:842)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:600)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at dalvik.system.NativeStart.main(Native Method)
+09-08 11:16:18.285: E/AndroidRuntime(11651): Caused by: java.lang.IllegalStateException: Invalid tables
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.database.sqlite.SQLiteDatabase.findEditTable(SQLiteDatabase.java:1127)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:330)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:280)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at ashton.android.personal.worktc.database.worktcContentProvider.query(worktcContentProvider.java:104)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.content.ContentProvider$Transport.query(ContentProvider.java:187)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.content.ContentResolver.query(ContentResolver.java:267)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at ashton.android.personal.worktc.views.WorkView.onFinishInflate(WorkView.java:96)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.view.LayoutInflater.rInflate(LayoutInflater.java:631)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.view.LayoutInflater.inflate(LayoutInflater.java:408)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.view.LayoutInflater.inflate(LayoutInflater.java:320)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.view.LayoutInflater.inflate(LayoutInflater.java:276)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.view.View.inflate(View.java:8884)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at ashton.android.personal.worktc.controllers.WorkActivity.onCreate(WorkActivity.java:30)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1615)
+09-08 11:16:18.285: E/AndroidRuntime(11651):    ... 11 more
+</code></pre>

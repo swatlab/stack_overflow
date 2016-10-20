@@ -1,0 +1,279 @@
+<p>I created a Navigation Drawer Menu and added the GridView in the Layout. After adding the GridView, Navigation Drawer Menu Scroll doesn't work. Here is my main.xml code:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>    
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+        <android.support.v4.widget.DrawerLayout
+            xmlns:android="http://schemas.android.com/apk/res/android" 
+            android:id="@+id/drawerlayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF">
+
+            <FrameLayout 
+               android:id="@+id/mainContent"
+               android:layout_width="match_parent"
+               android:layout_height="match_parent">
+            </FrameLayout>
+
+            <ListView 
+                android:background="#FFFFFF"
+                android:divider="@android:color/darker_gray"
+                android:choiceMode="singleChoice"
+                android:dividerHeight="0.1dp"
+                android:id="@+id/drawerList"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start">
+             </ListView>
+
+      </android.support.v4.widget.DrawerLayout>
+
+    <GridView
+        android:id="@+id/gridView1" 
+        android:layout_width="match_parent" 
+        android:layout_height="match_parent"
+        android:numColumns="2"
+        android:layout_alignParentTop="true" /> 
+
+    </RelativeLayout>  
+</code></pre>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+    private DrawerLayout drawerlayout;
+    public ListView listview;
+    MyAdapter myAdapter;
+    //String [] god;
+    private ActionBarDrawerToggle drawerListener;
+    //ArrayList<com.src.hindu.aarti.Item> gridArray = new ArrayList<com.src.hindu.aarti.Item>();
+//   CustomGridViewAdapter customGridAdapter;
+    // GridView gridview;
+     String value;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        //god = getResources().getStringArray(R.array.godess);
+        myAdapter = new MyAdapter(this,generateData());
+        drawerlayout = (DrawerLayout)findViewById(R.id.drawerlayout);
+        listview = (ListView)findViewById(R.id.drawerList);
+        //View tv = (View)findViewById(R.id.header_view);
+        //listview.addHeaderView(tv,null,false);
+        listview.setAdapter(myAdapter);
+
+        drawerListener = new ActionBarDrawerToggle(this,drawerlayout,R.drawable.ic_drawer,R.string.drawer_open,R.string.drawer_close){
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                // TODO Auto-generated method stub
+                super.onDrawerOpened(drawerView);
+                Toast.makeText(getApplicationContext(), "Drawer opened", Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                // TODO Auto-generated method stub
+                super.onDrawerClosed(drawerView);
+                Toast.makeText(getApplicationContext(), "Drawer closed", Toast.LENGTH_LONG).show();
+            }
+        };
+        drawerlayout.setDrawerListener(drawerListener);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        //listview.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,god));
+        listview.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                    int position, long id) {
+                // TODO Auto-generated method stub
+            Toast.makeText(getApplicationContext(),"select by user", Toast.LENGTH_LONG).show();
+                selectedPostion(position);      
+            }
+        });
+
+        /*Bitmap icon_A = BitmapFactory.decodeResource(this.getResources(),R.drawable.ganesha);
+        Bitmap icon_Shiva = BitmapFactory.decodeResource(this.getResources(),R.drawable.shiva);
+        Bitmap icon_human = BitmapFactory.decodeResource(this.getResources(),R.drawable.hanuman);
+        Bitmap icon_laxmi = BitmapFactory.decodeResource(this.getResources(),R.drawable.laxmi);
+        Bitmap icon_saraswati = BitmapFactory.decodeResource(this.getResources(),R.drawable.saraswati);
+        Bitmap icon_vishnu = BitmapFactory.decodeResource(this.getResources(),R.drawable.vishnu);
+        Bitmap icon_maa_durga = BitmapFactory.decodeResource(this.getResources(), R.drawable.maa_durga);
+
+        gridArray.add(new com.src.hindu.aarti.Item(icon_A, "Ganesha"));
+        gridArray.add(new com.src.hindu.aarti.Item(icon_Shiva, "Shiva"));
+        gridArray.add(new com.src.hindu.aarti.Item(icon_human, "Hanuman"));
+        gridArray.add(new com.src.hindu.aarti.Item(icon_laxmi, "Laxmi"));
+        gridArray.add(new com.src.hindu.aarti.Item(icon_saraswati, "Saraswati"));
+        gridArray.add(new com.src.hindu.aarti.Item(icon_vishnu, "Vishnu"));
+        gridArray.add(new com.src.hindu.aarti.Item(icon_maa_durga, "Maa Durga"));
+
+        gridview = (GridView)findViewById(R.id.gridView1);
+
+        customGridAdapter = new com.src.hindu.aarti.CustomGridViewAdapter(this, R.layout.row_grid, gridArray);
+        gridview.setAdapter(customGridAdapter);*/
+
+    }
+    public void selectedPostion(int pos)
+    {
+        listview.setItemChecked(pos, true);
+        //setTitle(god[pos]);
+    }
+    public void setTitle(String title)
+    {
+        getSupportActionBar().setTitle(title);
+
+    }
+     @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onPostCreate(savedInstanceState);
+        drawerListener.syncState();
+
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // TODO Auto-generated method stub
+        super.onConfigurationChanged(newConfig);
+        drawerListener.onConfigurationChanged(newConfig);
+
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if(drawerListener.onOptionsItemSelected(item))
+        {
+             return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    private ArrayList<Model> generateData(){
+        ArrayList<Model> models = new ArrayList<Model>();
+        models.add(new Model("Audio Aarti"));
+        models.add(new Model(R.drawable.ganesha,"Ganesha"));
+        models.add(new Model(R.drawable.vishnu,"Lord Vishnu"));
+        models.add(new Model(R.drawable.laxmi,"Laxmi Mata"));
+        models.add(new Model(R.drawable.hanuman,"Lord Hanuman"));
+        models.add(new Model(R.drawable.shiva,"Lord Shiva"));
+        models.add(new Model(R.drawable.saraswati,"Saraswati Mata"));
+        models.add(new Model(R.drawable.maa_durga,"Maa Durga"));
+        models.add(new Model("Chalisha"));
+        models.add(new Model(R.drawable.hanuman,"Hanuman Chalisa"));
+        models.add(new Model(R.drawable.laxmi,"Laxmi Mata"));
+        models.add(new Model(R.drawable.hanuman,"Lord Hanuman"));
+        models.add(new Model(R.drawable.shiva,"Lord Shiva"));
+        models.add(new Model(R.drawable.saraswati,"Saraswati Mata"));
+        models.add(new Model(R.drawable.maa_durga,"Maa Durga"));
+        return models;
+    }
+}
+</code></pre>
+
+<p><strong>MyAdapter.java</strong></p>
+
+<pre><code>    class MyAdapter extends BaseAdapter
+     {
+     private Context context;
+ // String[] godNames;
+ // int [] images ={R.drawable.ganesha,R.drawable.laxmi,R.drawable.shiva,R.drawable.saraswati,R.drawable.maa_durga,R.drawable.vishnu};
+   private ArrayList<Model> modelsArrayList;
+
+   public MyAdapter(Context context,ArrayList<Model> modelsArrayList) {
+    // TODO Auto-generated constructor stub
+      // this.context =context;
+      // godNames = context.getResources().getStringArray(R.array.godess);
+        this.context = context;
+        this.modelsArrayList = modelsArrayList;
+}
+
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        //TODO Auto-generated method stub
+        /*View row = null;
+
+        if(convertView == null)
+        {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
+            row = inflater.inflate(R.layout.custom_row,null);
+
+        }
+        else 
+        {
+            row = convertView;
+
+        }
+        TextView titleTextView = (TextView) row.findViewById(R.id.textView_row);
+        ImageView titleImageView = (ImageView) row.findViewById(R.id.imageView_row);
+
+        titleTextView.setText(godNames[position]);
+        titleImageView.setImageResource(images[position]);
+
+        return row;*/
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            // 2. Get rowView from inflater
+
+            View row = null;
+            if(!modelsArrayList.get(position).isGroupHeader()){
+                row = inflater.inflate(R.layout.custom_row, null);
+                TextView titleTextView = (TextView) row.findViewById(R.id.textView_row);
+                ImageView titleImageView = (ImageView) row.findViewById(R.id.imageView_row);
+
+                titleTextView.setText(modelsArrayList.get(position).getTitle());
+                titleImageView.setImageResource(modelsArrayList.get(position).getIcon());
+
+           }
+            else{
+
+                row = inflater.inflate(R.layout.group_header_item, null);
+                TextView titleView = (TextView) row.findViewById(R.id.header);
+                titleView.setText(modelsArrayList.get(position).getTitle());
+                row.setLongClickable(false);
+                row.setOnClickListener(null);
+                row.setOnLongClickListener(null);
+
+
+
+        }
+            return row;
+
+    }
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+           return modelsArrayList.size();
+        }
+
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return modelsArrayList.get(position);
+        }
+}
+</code></pre>

@@ -1,0 +1,87 @@
+<p>I am trying to transfer a SQLite database into an app by downloading it and then unzipping it to the correct location. I was successful in transferring the DB when it was unzipped. The error I get is that it cannot find any of the tables I query. I have also been successful in unzipping and reading normal text files. </p>
+
+<p>The DB has Hebrew and English, but that has not caused problems before. The bilingual DB was copied successfully when it was not zipped and bilingual texts have been successfully unzipped and read. Still, it is a possibility that there is an encoding problem going on. That seems weird to me, because as you can see below in the code, I'm just copying the bytes directly.</p>
+
+<h1>-EDIT-</h1>
+
+<p>Let's say the prezipped db is called test1.db. I zipped it, put it in the app, unzipped it and called that test2.db. when I ran a diff command on these two, there were no differences. So there must be a technical issue with the way android is reading the file / or maybe encoding issue on android that doesn't exist on pc?</p>
+
+<p>I hate to do a code dump, but i will post both my copyDatabase() function (which works). That is what I used previously running it on an unzipped DB file. I put it here as comparison. Now I'm trying to use unzipDatabase() function (which doesn't work), and use it on a zipped DB file. The latter function was copied from <a href="http://stackoverflow.com/questions/3382996/how-to-unzip-files-programmatically-in-android">How to unzip files programmatically in Android?</a></p>
+
+<pre><code>private void copyDatabase() throws IOException{
+    String DB_NAME = "test.db";
+    String DB_PATH = "/data/data/org.myapp.myappname/databases/";
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+private boolean unzipDatabase(String path)
+{     
+    String DB_NAME = "test.zip";
+    InputStream is;
+    ZipInputStream zis;
+    try 
+    {
+        String filename;
+        is = myContext.getAssets().open(DB_NAME);
+        zis = new ZipInputStream(is);          
+        ZipEntry ze;
+        byte[] buffer = new byte[1024];
+        int count;
+
+        while ((ze = zis.getNextEntry()) != null) 
+        {
+            // write to a file
+            filename = ze.getName();
+
+            // Need to create directories if not exists, or
+            // it will generate an Exception...
+            if (ze.isDirectory()) {
+                Log.d("yo",path + filename);
+                File fmd = new File(path + filename);
+                fmd.mkdirs();
+                continue;
+            }
+
+            OutputStream fout = new FileOutputStream(path + filename);
+
+            // reading and writing zip
+            while ((count = zis.read(buffer)) != -1) 
+            {
+                fout.write(buffer, 0, count);             
+            }
+
+            fout.flush();
+            fout.close();               
+            zis.closeEntry();
+        }
+
+        zis.close();
+    } 
+    catch(IOException e)
+    {
+        e.printStackTrace();
+        return false;
+    }
+
+    return true;
+}
+</code></pre>

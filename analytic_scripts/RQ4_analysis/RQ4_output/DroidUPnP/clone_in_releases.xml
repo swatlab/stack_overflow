@@ -1,0 +1,46 @@
+<clones>
+<systeminfo processor="nicad3" system="snippets" granularity="functions" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="6852" npairs="8"/>
+<runinfo ncompares="323987" cputime="227680"/>
+
+<clone nlines="40" similarity="100">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.0.0a1/DroidUPnP-2.0.0a1/src/main/java/org/droidupnp/DrawerFragment.java" startline="86" endline="152" pcid="4383"></source>
+</clone>
+
+<clone nlines="40" similarity="100">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.0.0a2/DroidUPnP-2.0.0a2/src/main/java/org/droidupnp/DrawerFragment.java" startline="100" endline="166" pcid="96"></source>
+</clone>
+
+<clone nlines="40" similarity="97">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/master/DroidUPnP-master/src/main/java/org/droidupnp/DrawerFragment.java" startline="95" endline="160" pcid="3838"></source>
+</clone>
+
+<clone nlines="40" similarity="100">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.1.0/DroidUPnP-2.1.0/src/main/java/org/droidupnp/DrawerFragment.java" startline="100" endline="166" pcid="6387"></source>
+</clone>
+
+<clone nlines="40" similarity="97">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.2.0/DroidUPnP-2.2.0/src/main/java/org/droidupnp/DrawerFragment.java" startline="95" endline="160" pcid="3296"></source>
+</clone>
+
+<clone nlines="40" similarity="100">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.0.0/DroidUPnP-2.0.0/src/main/java/org/droidupnp/DrawerFragment.java" startline="100" endline="166" pcid="1263"></source>
+</clone>
+
+<clone nlines="40" similarity="97">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.2.1/DroidUPnP-2.2.1/src/main/java/org/droidupnp/DrawerFragment.java" startline="95" endline="160" pcid="2752"></source>
+</clone>
+
+<clone nlines="40" similarity="100">
+<source file="snippets/48@DroidUPnP.java" startline="100" endline="166" pcid="6"></source>
+<source file="releases/v2.0.0b1/DroidUPnP-2.0.0b1/src/main/java/org/droidupnp/DrawerFragment.java" startline="100" endline="166" pcid="5844"></source>
+</clone>
+
+</clones>

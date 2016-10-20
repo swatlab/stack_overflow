@@ -1,0 +1,96 @@
+<p>I have an android activity with a gridview, each cell contains a textview with a single character (so there are around 60-70 characters/cells on the screen at a time). The scrolling of the gridview is unacceptably slow and unsmooth. I tried replacing the gridview with a listview, and the scrolling of the listview is much faster. How can i speed this up?</p>
+
+<p>The activity layout is:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <GridView
+        android:id="@+id/gridView1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:columnWidth="56dp"
+        android:numColumns="auto_fit" >
+    </GridView>
+
+</LinearLayout>
+</code></pre>
+
+<p>And inside each cell is this layout:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="40sp" />
+
+</LinearLayout>
+</code></pre>
+
+<p>And the code for the activity is:</p>
+
+<pre><code>public class TestGridActivity  extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.grid_activity);
+        GridView gridView = (GridView) findViewById(R.id.gridView1);
+        ArrayList<Map<String, String>> list = getData();
+        SimpleAdapter arrayAdapter = new SimpleAdapter(this, list, 
+            R.layout.grid_layout, new String[] { "literal"}, 
+            new int[] { R.id.textView1});
+        gridView.setAdapter(arrayAdapter);
+    }
+</code></pre>
+
+<p>}</p>
+
+<p>edit: pks asking to post adapter code, the above code I have used a generic simpleAdapter, but i have tried a custom view, which didn't help.</p>
+
+<pre><code>public class GridAdapter extends BaseAdapter {
+    private Context context;
+    private ArrayList<Map<String, String>> list;
+    private LayoutInflater inflater;
+    public static class ViewHolder {
+    TextView textView1;
+    int position;
+    }
+    public GridAdapter(Context c, ArrayList<Map<String, String>> l) {
+        context = c;
+        list = l;
+        inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+    @Override
+    public int getCount() {
+        return list.size();
+    }
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if(convertView == null){
+            convertView = inflater.inflate(R.layout.grid_layout, null);
+            holder = new ViewHolder();
+            holder.textView1 = (TextView) convertView.findViewById(R.id.textView1);
+            holder.position = position;
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+        holder.textView1.setText(list.get(position).get("character"));
+        return convertView;
+    }
+}
+</code></pre>
+
+<p>I've also tried creating all the views in advance, and that didn't help scrolling speed.</p>

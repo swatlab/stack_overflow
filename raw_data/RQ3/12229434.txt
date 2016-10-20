@@ -1,0 +1,145 @@
+<p>I looked in the Context information and it says in the Known Indirect Subclasses for Activity Group, "This class is deprecated. Use the new Fragment and FragmentManager APIs instead" So why in the code below will it not work in my class that extends ListFragment?  When I tried in my class that extends Activity though it works (which it should since its in the Known Indirect Subclasses).  What would I need to do so I can open the database and get information inside of AFragmentTab?  Thank you in advance and please if possible post code.</p>
+
+<p><strong>DataBaseHelper Class:</strong></p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+private static String DB_PATH = "/data/data/com.example.alotoftesting/databases/";    
+private static String DB_NAME = "library1_dev.db"; 
+private SQLiteDatabase myDataBase;  
+private final Context myContext;
+Cursor cursor;
+
+
+public DataBaseHelper(Context c){
+    super(c, DB_NAME, null, 1);
+    this.myContext = c;
+}
+
+public void createDataBase() throws IOException{
+
+    boolean dbExist =  checkDataBase();
+
+    if(dbExist){
+        //do nothing since the database already exist.
+        System.out.println("Database Exist");
+    }
+    else{
+        System.out.println("2.5");
+        this.getReadableDatabase();
+
+        try{
+            System.out.println("3.");
+            copyDataBase();
+            System.out.println("We just copied the database.");
+        }catch(IOException e){
+            throw new Error("Error Copying Database");
+        }
+    }       
+}
+
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+    System.out.println("1.");
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        System.out.println("2.");
+        checkDB =  SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        System.out.println("We are in here");
+    }catch(SQLiteException e){
+        //database doesn't exist yet.
+    }
+
+    if(checkDB != null){
+        checkDB.close();
+        System.out.println("Database Closed");
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase()throws IOException{
+
+    //Opens your local db as the input stream.
+    InputStream myInput =  myContext.getAssets().open(DB_NAME);
+
+    //Path to the just created empty DB.
+    String outFileName =  DB_PATH + DB_NAME;
+
+    //Opens the empty DB as the output stream.
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfiles.
+    byte[] buffer = new byte[1024];
+    int length;
+    while((length = myInput.read(buffer)) > 0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the Streams.
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();        
+}
+
+public void openDatabase() throws SQLException{
+
+    //Open the database.
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+}    
+
+public void closeDatabase() throws SQLException{
+
+    //Close the database.
+    myDataBase.close();
+}
+
+public ArrayList<String> getTableColumn(String tableName, String[] column){
+
+    ArrayList<String> aL = new ArrayList<String>();
+
+    cursor = myDataBase.query(tableName, column, null, null, null, null, null);
+
+    cursor.moveToFirst();
+    while (!cursor.isAfterLast()) {
+      aL.add(cursor.getString(0));
+      cursor.moveToNext();
+    }
+
+    System.out.println(aL);
+    cursor.close();
+    return aL;
+}
+
+@Override
+public void onCreate(SQLiteDatabase db){
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+
+}
+
+
+}
+</code></pre>
+
+<p>The class I want to open the database in, <strong>AFragmentTab Class:</strong></p>
+
+<pre><code>public class AFragmentTab extends ListFragment{
+
+DataBaseHelper myDB;
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onActivityCreated(savedInstanceState);
+
+    myDB = new DataBaseHelper(this);  //<------The error is here.   
+}
+}
+</code></pre>

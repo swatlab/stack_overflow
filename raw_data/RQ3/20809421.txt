@@ -1,0 +1,163 @@
+<p>I tried to add to my application, developed with version 2.3 of Android (tabhost) an action bar (via appcompat v7 lib, not a navigation bar...but an action bar), and failed. Can anyone help me in this task?
+I also tried to change the tabactivity with fragment (support lib v4) but again no results.</p>
+
+<p>my main activity </p>
+
+<pre><code>public class ProjectActivity extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+private TabHost mTabHost;
+private HashMap mapTabInfo = new HashMap();
+private TabInfo mLastTab = null;
+
+private class TabInfo {
+     private String tag;
+     private Class clss;
+     private Bundle args;
+     private Fragment fragment;
+     TabInfo(String tag, Class clazz, Bundle args) {
+         this.tag = tag;
+         this.clss = clazz;
+         this.args = args;
+     }
+
+}
+
+class TabFactory implements TabContentFactory {
+
+    private final Context mContext;
+
+    /**
+     * @param context
+     */
+    public TabFactory(Context context) {
+        mContext = context;
+    }
+
+    /** (non-Javadoc)
+     * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+     */
+    public View createTabContent(String tag) {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+    }
+
+}
+/** (non-Javadoc)
+ * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+ */
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Step 1: Inflate layout
+    setContentView(R.layout.layout_project);
+    // Step 2: Setup TabHost
+    initialiseTabHost(savedInstanceState);
+    if (savedInstanceState != null) {
+        mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); //set the tab as per the saved state
+    }
+}
+
+/** (non-Javadoc)
+ * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+ */
+protected void onSaveInstanceState(Bundle outState) {
+    outState.putString("tab", mTabHost.getCurrentTabTag()); //save the tab selected
+    super.onSaveInstanceState(outState);
+}
+
+/**
+ * Step 2: Setup TabHost
+ */
+private void initialiseTabHost(Bundle args) {
+    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+    TabInfo tabInfo = null;
+    ProjectActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("tab1").setIndicator("tab1"), ( tabInfo = new TabInfo("tab1", tab1Activity.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    ProjectActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("tab2").setIndicator("tab2"), ( tabInfo = new TabInfo("tab2", tab2Activity.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    ProjectActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("tab3").setIndicator("tab3"), ( tabInfo = new TabInfo("tab3", tab3Activity.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    ProjectActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("tab4").setIndicator("tab4"), ( tabInfo = new TabInfo("tab4", tab4Activity.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    // Default to first tab
+    this.onTabChanged("tab1");
+    //
+    mTabHost.setOnTabChangedListener(this);
+}
+
+/**
+ * @param activity
+ * @param tabHost
+ * @param tabSpec
+ * @param clss
+ * @param args
+ */
+private static void addTab(ProjectActivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+    // Attach a Tab view factory to the spec
+    tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+
+    // Check to see if we already have a fragment for this tab, probably
+    // from a previously saved state.  If so, deactivate it, because our
+    // initial state is that a tab isn't shown.
+    tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+    if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.detach(tabInfo.fragment);
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+    }
+
+    tabHost.addTab(tabSpec);
+}
+
+/** (non-Javadoc)
+ * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+ */
+public void onTabChanged(String tag) {
+    TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this,
+                        newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+            }
+        }
+
+        mLastTab = newTab;
+
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+}
+</code></pre>
+
+<p>my fragment</p>
+
+<pre><code>public class tab1Activity extends Fragment {
+/** (non-Javadoc)
+ * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
+ */
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    if (container == null) {
+
+        return null;
+    }
+
+    return (ScrollView)inflater.inflate(R.layout.layout_dimensions, container, false);
+}
+}
+</code></pre>

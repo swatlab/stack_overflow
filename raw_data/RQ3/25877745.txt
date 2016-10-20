@@ -1,0 +1,73 @@
+<p>I'm trying to get the position of my loaded image so when I click it in my GridView it show me it in full screen.</p>
+
+<p>The thing is I don't know how to get the position of my image from my Adapter ! 
+I need to set the imageResurce .. <code>imageView.setImageResource(MyAdapter.getItem(position));</code>this is wrong . I still can't find my position of my loaded image...</p>
+
+<p>My Adapter Code : </p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+    public ArrayList<String> f = new ArrayList<String>();// list of file paths
+    File[] listFile;
+    Bitmap myBitmap;
+    int position;
+
+    public ImageAdapter(Context context) {
+        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public int getCount() {
+        return f.size();
+    }
+
+    public Object getItem(int position) {
+        return f.get(position);
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(
+                    R.layout.galleryitem, null);
+            holder.imageview = (ImageView) convertView.findViewById(R.id.thumbImage);
+
+            convertView.setTag(holder);
+        }
+        else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+
+        myBitmap = BitmapFactory.decodeFile(f.get(position));
+        holder.imageview.setImageBitmap(myBitmap);
+        return convertView;
+    }
+
+
+    public void getFromSdcard()
+    {
+        File file= new File(android.os.Environment.getExternalStorageDirectory(),"/InstaDownloader-");
+
+        if (file.isDirectory())
+        {
+            listFile = file.listFiles();
+
+
+            for (int i = 0; i < listFile.length; i++)
+            {
+                f.add(listFile[i].getAbsolutePath());
+            }
+        }
+    }
+}
+class ViewHolder {
+    ImageView imageview;
+
+
+}
+</code></pre>

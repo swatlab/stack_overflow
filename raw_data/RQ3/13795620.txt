@@ -1,0 +1,157 @@
+<p>I have created a bar chart using achartengine but the values plotted in the graph is static. Now i have created a database using sqlite and i want to draw the bar chart using the values from the database and refresh it every 1 min so that it plots new values if any. I am posting my code below. Please guide me on how to modify the code so that i can do the above. I tried many tutorials online but it didnt help much.</p>
+
+<pre><code>package flu.solutions.travelsense;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.achartengine.ChartFactory;
+import org.achartengine.chart.BarChart.Type;
+import org.achartengine.model.CategorySeries;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.renderer.SimpleSeriesRenderer;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYMultipleSeriesRenderer.Orientation;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;  
+import android.view.Menu;
+public class ChartActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        Intent intent = createIntent();
+        startActivity(intent);
+
+    }
+
+    public Intent createIntent() 
+
+     {
+
+    String[] titles = new String[] { "Top 10 Destinations", " " };
+    List<double[]> values = new ArrayList<double[]>();
+    values.add(new double[] { 8, 6, 7, 6, 7, 7, 9, 5, 7, 8, 8 });
+    values.add(new double[] {});
+
+    int[] colors = new int[] { Color.RED, Color.BLACK};
+
+    XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+    renderer.setOrientation(Orientation.HORIZONTAL);
+
+    setChartSettings(renderer, "Top 10 Destinations", " ", " ", 0,10, 0,10, Color.GRAY, Color.GREEN);
+
+    renderer.setXLabels(1);
+    renderer.setYLabels(10);
+
+    renderer.addXTextLabel(1, "Bangalore");
+    renderer.addXTextLabel(2, "Mysore");
+    renderer.addXTextLabel(3, "Chennai");
+    renderer.addXTextLabel(4, "Delhi");
+    renderer.addXTextLabel(5, "Kolkatta");
+    renderer.addXTextLabel(6, "Kashmir");
+    renderer.addXTextLabel(7, "Hyderabad");
+    renderer.addXTextLabel(8, "Mumbai");
+    renderer.addXTextLabel(9, "Kerala");
+    renderer.addXTextLabel(10, "Gujarat");
+
+    int length = renderer.getSeriesRendererCount();
+    for (int i = 0; i < length; i++) 
+    {
+      SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+      seriesRenderer.setDisplayChartValues(false);
+      }
+
+    return ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+    }
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+    {
+
+    // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+        renderer.setAxisTitleTextSize(26);
+
+        renderer.setChartTitleTextSize(20);
+
+        renderer.setLabelsTextSize(15);
+
+        renderer.setLegendTextSize(25);
+
+        int length = colors.length;
+
+        for (int i = 0; i < length; i++) 
+        {
+          SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+          r.setColor(colors[i]);
+          //r.setChartvalueAngle(-90);
+          r.setChartValuesSpacing(15);
+          renderer.addSeriesRenderer(r);
+        }
+        return renderer;
+      }
+
+       protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+       String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,int labelsColor) 
+      {
+
+      // sets lots of default values for this renderer
+
+       renderer.setChartTitle(title);
+
+       renderer.setXTitle(xTitle);
+       renderer.setYTitle(yTitle);
+
+       renderer.setXAxisMin(xMin);
+       renderer.setXAxisMax(xMax);
+
+       renderer.setYAxisMin(yMin);
+       renderer.setYAxisMax(yMax);
+
+       renderer.setAxesColor(axesColor);
+       renderer.setLabelsColor(labelsColor);
+
+       renderer.setApplyBackgroundColor(true);
+       renderer.setBackgroundColor(Color.WHITE);
+
+       renderer.setBarSpacing(1);
+
+    }
+
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) 
+    {
+
+        // adds the axis titles and values into the dataset
+
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+        int length = titles.length;
+
+        for (int i = 0; i < length; i++) 
+        {
+          CategorySeries series = new CategorySeries(titles[i]);
+          double[] v = values.get(i);
+          int seriesLength = v.length;
+          for (int k = 0; k < seriesLength; k++) 
+          {
+            series.add(v[k]);
+          }
+
+          dataset.addSeries(series.toXYSeries());
+         }
+        return dataset;
+        }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_chart, menu);
+        return true;
+    }
+      }
+</code></pre>

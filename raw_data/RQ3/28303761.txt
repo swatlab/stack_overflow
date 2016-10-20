@@ -1,0 +1,112 @@
+<p>I'm having some issues with this icon, the thing is that I can do an <code>onLongPress</code> then it shows a toast with the text of this item.</p>
+
+<p>My menu "new_offer_menu.xml"</p>
+
+<pre><code>    <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/newOffer"
+        android:icon="@drawable/ic_action_new"
+        android:title="@string/nueva_lista"
+        android:alphabeticShortcut="r"
+        android:orderInCategory="200"
+        android:showAsAction="ifRoom" />
+</menu>
+</code></pre>
+
+<p>This icon isn't in all of my fragments, but when I go to the correct fragment (where it has to be shown), when I click it doesn't do nothing. In my ListaProductosFragment.java I have : </p>
+
+<pre><code>    package info.androidhive.slidingmenu;
+
+import android.app.ActionBar;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
+import android.app.ListFragment;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ListaProductosFragment extends ListFragment {
+    private List<ListViewItem> mItems;        // ListView items list
+    private Menu optionsMenu;
+    public ListaProductosFragment(){}
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+
+
+
+        // initialize the items list
+        mItems = new ArrayList<ListViewItem>();
+        Resources resources = getResources();
+
+        mItems.add(new ListViewItem(resources.getDrawable(R.drawable.tomate_oferta), getString(R.string.aim), getString(R.string.aim_precio), getString(R.string.aim_descuento), getString(R.string.aim_data)));
+        mItems.add(new ListViewItem(resources.getDrawable(R.drawable.levadura_oferta), getString(R.string.youtube), getString(R.string.youtube_precio), getString(R.string.youtube_descuento), getString(R.string.youtube_data)));
+        mItems.add(new ListViewItem(resources.getDrawable(R.drawable.sopa_oferta), getString(R.string.bebo), getString(R.string.bebo_precio), getString(R.string.bebo_descuento), getString(R.string.aim_data)));
+        mItems.add(new ListViewItem(resources.getDrawable(R.drawable.zumo_oferta), getString(R.string.pew), getString(R.string.pew_precio), getString(R.string.pew_descuento), getString(R.string.aim_data)));
+        mItems.add(new ListViewItem(resources.getDrawable(R.drawable.tomate_oferta), getString(R.string.aim), getString(R.string.aim_precio), getString(R.string.aim_descuento), getString(R.string.aim_data)));
+        // initialize and set the list adapter
+        setListAdapter(new ListViewDemoAdapterListaProductos(getActivity(), mItems));
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // remove the dividers from the ListView of the ListFragment
+        getListView().setDivider(null);
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        // retrieve theListView item
+        ListViewItem item = mItems.get(position);
+
+        // do something
+        Toast.makeText(getActivity(), item.title, Toast.LENGTH_SHORT).show();
+
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.new_offer_menu,menu );
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar actions click
+
+
+        switch (item.getItemId()) {
+
+            case R.id.newOffer:
+                Toast.makeText(getActivity(), "this is my Toast message!!! =)",
+                        Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(getActivity(), TipusNouProducte.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+}
+</code></pre>
+
+<p>I've created a toast to see if the problem is the Intent but it doesn't appears anyways, it only do something when I do a LongPress on this item.
+What I'm doing wrong?</p>

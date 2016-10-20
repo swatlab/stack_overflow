@@ -1,0 +1,210 @@
+<p>I have my databasehelper,model and mainactivity but the data is still not displaying. I don't know what is wrong or missing from my code.</p>
+
+<p>This is the data sqlite which I browse using DB Browser for SQLite</p>
+
+<p><a href="http://i.stack.imgur.com/DFIeZ.png" rel="nofollow"><img src="http://i.stack.imgur.com/DFIeZ.png" alt="enter image description here"></a></p>
+
+<blockquote>
+  <p>DatabaseHelper.java</p>
+</blockquote>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "/data/data/com.example.jathniel.myapplication/databases/";
+    private static String DB_NAME = "mydoctorfinder_new_migrate.sqlite";
+    private SQLiteDatabase myDataBase;
+    private Context myContext = null;
+    public static String TAG = "tag";
+
+    private static final String TABLE_DOCTORS = "doctors";
+    private static final String KEY_ID = "id";
+    private static final String KEY_FULLNAME = "full_name";
+    private static final String KEY_GENDER = "gender";
+
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, (SQLiteDatabase.CursorFactory) null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = this.checkDataBase();
+        if(!dbExist) {
+            this.getReadableDatabase();
+
+            try {
+                this.copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error");
+            }
+        }
+    }
+
+    public void copyDataBase() throws IOException {
+        InputStream myInput = this.myContext.getAssets().open(DB_NAME);
+        String outFileName = DB_PATH + DB_NAME;
+        FileOutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+
+        int length;
+        while((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String e = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(e, (SQLiteDatabase.CursorFactory)null, 0);
+        } catch (SQLiteException e) {
+            ;
+        }
+
+        if(checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null;
+    }
+
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        this.myDataBase = SQLiteDatabase.openDatabase(myPath, (SQLiteDatabase.CursorFactory)null, 0);
+    }
+
+    public synchronized void close() {
+        if(this.myDataBase != null) {
+            this.myDataBase.close();
+        }
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    public void createDatabase() {
+    }
+
+    public List<DoctorModel> getAllDoctorList() {
+        List<DoctorModel> doctorsArrayList = new ArrayList<DoctorModel>();
+
+        String selectQuery = "SELECT  * FROM " + TABLE_DOCTORS;
+        Log.d(TAG, selectQuery);
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (c.moveToFirst()) {
+            do {
+
+                DoctorModel doctor = new DoctorModel();
+                doctor.id = c.getInt(c.getColumnIndex(KEY_ID));
+                doctor.full_name = c.getString(c.getColumnIndex(KEY_FULLNAME));
+                doctor.gender = c.getString(c.getColumnIndex(KEY_GENDER));
+
+                doctorsArrayList.add(doctor);
+
+            } while (c.moveToNext());
+        }
+
+        return doctorsArrayList;
+    }
+}
+</code></pre>
+
+<blockquote>
+  <p>Model class</p>
+</blockquote>
+
+<pre><code>public class DoctorModel {
+
+    public int id;
+    public String full_name;
+    public String gender;
+
+    public DoctorModel(){
+
+    }
+
+    public DoctorModel(int id, String full_name, String gender) {
+        // TODO Auto-generated constructor stub
+        this.id = id;
+        this.full_name = full_name;
+        this.gender = gender;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getFull_name() {
+        return full_name;
+    }
+
+    public void setFull_name(String full_name) {
+        this.full_name = full_name;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+}
+</code></pre>
+
+<blockquote>
+  <p>MainActivity</p>
+</blockquote>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+
+    List<DoctorModel> list = new ArrayList<DoctorModel>();
+    DatabaseHelper db;
+    TextView tv;
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        db = new DatabaseHelper(getApplicationContext());
+        tv = (TextView) findViewById(R.id.tv);
+
+        print(db.getAllDoctorList());
+
+    }
+
+    private void print(List<DoctorModel> list) {
+        // TODO Auto-generated method stub
+        String value = "";
+        for(DoctorModel dm : list){
+            value = value+"id: "+dm.id+", fullname: "+dm.full_name+" Gender: "+dm.gender+"\n";
+        }
+        tv.setText(value);
+    }
+}
+</code></pre>

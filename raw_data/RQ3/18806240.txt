@@ -1,0 +1,116 @@
+<p>I have an Activity named PhotoSelectorActivity.  It inherits from a BaseActivity that looks like this:</p>
+
+<pre><code>public class BaseActivity
+extends ActionBarActivity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    Log.d(this.getClass().getSimpleName(),
+        "onCreate("+Integer.toHexString(System.identityHashCode(this))+")");
+}
+
+@Override
+protected void onDestroy() {
+    super.onDestroy();
+    getSupportActionBar().setCustomView(null);
+    Log.d(this.getClass().getSimpleName(),
+        "onDestroy("+Integer.toHexString(System.identityHashCode(this))+")");
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            return onNavigateUp(item);
+        case R.id.menu_item_settings:
+            startActivity(new Intent(this, PreferencesActivity.class));
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+protected ActionBar setupActionBar(boolean enableBackButton) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        getSupportActionBar().setDisplayHomeAsUpEnabled(enableBackButton);
+    }
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setCustomView(R.layout.action_bar);
+    actionBar.setDisplayShowTitleEnabled(false);
+    actionBar.setDisplayShowCustomEnabled(true);
+    return null;
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+}
+</code></pre>
+
+<p>The purpose of this BaseActivity is to provide the same menu and actionbar to each one of my activities.  You'll notice the <code>getSupportActionBar().setCustomView(null)</code> in the <code>onDestroy()</code> method, that's there to try and combat the problem that I may be having.</p>
+
+<p>When i get an orientation change event, i notice in DDMS that i end up with 2 instances of my activity.  One of them may be leaking, but I'm not certain.  Here's a screen shot from DDMS:</p>
+
+<p><img src="http://i.stack.imgur.com/60e8M.png" alt="DDMS screenshot of offending extra activity"></p>
+
+<p>So the object at the top is the Activity in question: PhotoSelectorActivity.  The instance shown here is the previous instance (<code>onDestroy()</code> has already been called on it). Yet it remains in memory even after a forced GC via DDMS.</p>
+
+<p>Another bit of information is that this only seems to happen after using a dialog.  That is, when the Activity is initially displayed and before the user performs and action I can do back to back orientation changes without the # of activities climbing above 1.  After I've used the following dialog i seem to get the extra Activity in memory:</p>
+
+<pre><code>public class PhotoSourceDialog
+extends DialogFragment
+implements DialogInterface.OnClickListener {
+
+public static interface PhotoSourceDialogListener {
+    void onPhotoSourceSelected(String result);
+}
+
+private PhotoSourceDialogListener listener;
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    if (!PhotoSourceDialogListener.class.isInstance(activity)) {
+        throw new IllegalStateException(
+            "Activity must implement PhotoSourceDialogListener");
+    }
+    listener = PhotoSourceDialogListener.class.cast(activity);
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    listener = null;
+}
+
+@Override
+public Dialog onCreateDialog(Bundle savedInstanceState) {
+    return new AlertDialog.Builder(getActivity())
+        .setTitle(R.string.photo_source)
+        .setItems(R.array.photo_sources, this).create();
+}
+
+@Override
+public void onClick(DialogInterface dialog, int which) {
+    String choice = getResources().getStringArray(
+        R.array.photo_sources)[which];
+    if (listener!=null) {
+        listener.onPhotoSourceSelected(choice);
+    }
+}
+
+}
+</code></pre>
+
+<p>and to invoke it i do this in my activity:</p>
+
+<pre><code>PhotoSourceDialog dialog = new PhotoSourceDialog();
+dialog.show(getSupportFragmentManager(), PhotoSourceDialog.class.getName());
+</code></pre>
+
+<p>So my question is this: Should I be worried?  Is this just something that is hanging around for a bit but will eventually be GCd?  I would think that if there was a leak it would grow higher than 2.</p>

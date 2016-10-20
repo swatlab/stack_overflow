@@ -1,0 +1,187 @@
+<p>I don't know what I'm making wrong, but my App crash when I launch. I want to implement Tab bar list with FragmentActivity.
+I really need help :(
+The error returned is :</p>
+
+<pre><code>Unable to start activity ComponentInfo
+Caused by: java.lang.NullPointerException
+            at jardelcompany.bundoransurfco.MainActivity.onCreate(MainActivity.java:79)
+</code></pre>
+
+<p>(line 79 is <code>actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);</code>)</p>
+
+<p>MainActivity.java :</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements
+        ActionBar.TabListener {
+SectionsPagerAdapter mSectionsPagerAdapter;
+ViewPager mViewPager;
+ protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(this,
+                getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+</code></pre>
+
+<p>activity_main.xml :</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:id="@+id/mainLayout"
+    android:background="#FFFFFF"> />
+    <view
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        class="android.support.v4.view.ViewPager"
+        android:id="@+id/pager"/>
+</RelativeLayout>
+</code></pre>
+
+<p>I use SectionsPagerAdapter for FragmentPageAdapter </p>
+
+<p>SectionsPagerAdapter.java:</p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    protected Context mContext;
+
+    public SectionsPagerAdapter(Context context, FragmentManager fm) {
+        super(fm);
+        mContext = context;
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        switch(position) {
+            case 0:
+                return new FirstFragment();
+            case 1:
+                return new LoginFragment();
+        }
+
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return mContext.getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return mContext.getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>
+
+<p>FirstFragment.java:</p>
+
+<pre><code>public class FirstFragment extends ListFragment {
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.activity_main,
+                container, false);
+
+        return rootView;
+    }
+}
+</code></pre>
+
+<p>LoginFragment.java :</p>
+
+<pre><code>    public class LoginFragment extends ListFragment {
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.activity_login,
+                    container, false);
+
+            return rootView;
+        }
+}
+</code></pre>
+
+<p>Here is my AndroidManifest.xml :</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="jardelcompany.bundoransurfco" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" /> <!-- To retrieve the account name (email) as part of sign-in: -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" /> <!-- To auto-complete the email text field in the login form with the user's emails -->
+    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".LoginActivity"
+            android:label="@string/title_activity_login"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize|stateVisible" >
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>And my styles.xml :</p>
+
+<pre><code><resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+
+</resources>
+</code></pre>

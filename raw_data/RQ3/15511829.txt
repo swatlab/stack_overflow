@@ -1,0 +1,69 @@
+<p>I have my sqlite db in my assets folder.  The db is called foo.db   When I go to test my app, either on the emulator or my device, it always says no db present, created blank db.  My db is loaded with data and I want to have it push to the phone or emulator for testing.  Why does this not work?</p>
+
+<p>Below is the section of my app that checks to see if the database is there... but it never finds it.  I have run it in debug mode and the DB_PATH  and DB_NAME have correct values, but still it creates an empty database each time.</p>
+
+<p>What am I overlooking?</p>
+
+<pre><code>/**
+ * Called when the activity is first created.
+ */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.listpage);
+    this.myDbHelper = new DataBaseHelper(this);
+    try {
+        myDbHelper.createDataBase();
+    } catch (IOException ioe) {
+        throw new Error("Unable to create database");
+    }
+    try {
+        myDbHelper.openDataBase();
+    } catch (SQLException sqle) {
+        throw sqle;
+    }
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own database.
+ */
+public void createDataBase() throws IOException {
+    boolean dbExist = checkDataBase();
+    if (dbExist) {
+        //do nothing - database already exist
+        System.out.println("DB alrady exists  comment this out before your deply");
+    } else {
+        System.out.println("an empty DB is beng created  comment this out before your deply");
+        //By calling this method an empty database will be created into the default system path
+        //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }
+}
+
+
+/**
+ * Check if the database already exist to avoid re-copying the file each time you open the
+ * application.
+ *
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase() {
+    SQLiteDatabase checkDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    } catch (SQLiteException e) {
+        //database does't exist yet.
+    }
+
+    if (checkDB != null) {
+        checkDB.close();
+    }
+    return checkDB != null ? true : false;
+}
+</code></pre>

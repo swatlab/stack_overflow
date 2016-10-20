@@ -1,0 +1,265 @@
+<p>I am very much new in the Android app development. I wrote the code to implement contact list in my android app successfully. If I click on a specific contact it shows me the contact name and contact number/s with contact type(Home, phone, other etc). Now I want to add search functionality in it. but I failed to do so. Following is code:</p>
+
+<pre><code>public class Contacts extends Activity {
+
+    private static final String TAG = "[Contacts]";
+    private static final String headerTitle = "Pick a Contact";
+    private static final String searchtext = "";
+    // Default List view for loading the list
+    ListView lstContacts;
+
+
+    JSONObject o;
+    public static boolean goahead = false;
+
+    // Added for fee calculation in background
+    public SQLiteDatabase db;
+
+    // Context
+    Context context;
+
+    // AndroidConstants declaration
+    AndroidConstants ac;
+
+    // Declarations for the Contact list
+    SimpleCursorAdapter mAdapter;
+    MatrixCursor mMatrixCursor;
+    TextView tv_name;
+    TextView tv_details;
+    public static String details_comm;
+    EditText inputSearch;
+    // ProgressBar pbHeaderProgress;
+    LinearLayout progressBarLayout;
+
+    /** Called when the activity is first created. */
+    // onCreate event
+    @SuppressWarnings("deprecation")
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setContentView(R.layout.activity_contact);
+        progressBarLayout = (LinearLayout) findViewById(R.id.linlaHeaderProgress);
+        progressBarLayout.setVisibility(LinearLayout.VISIBLE);
+
+        ActionBar actionBar = getActionBar();
+        actionBar = ActionBarHelper
+                .customActionBar(actionBar, headerTitle, "1");
+
+        context = getApplicationContext();
+        lstContacts = (ListView) findViewById(R.id.listView1);
+        Intent i = getIntent();
+
+        // The contacts from the contacts content provider is stored in this
+        // cursor
+        mMatrixCursor = new MatrixCursor(new String[] { "_id", "name",
+                "details" });
+        tv_name = (TextView) findViewById(R.id.tv_name);
+        tv_details = (TextView) findViewById(R.id.tv_details);
+        inputSearch = (EditText) findViewById(R.id.inputSearch);
+        // Adapter to set data in the listview
+
+        // HIDING INPUTSEARCH
+        // inputSearch.setVisibility(View.GONE);
+
+        mAdapter = new SimpleCursorAdapter(getBaseContext(),
+                R.layout.lv_layout, null, new String[] { "name", "details" },
+                new int[] { R.id.tv_name, R.id.tv_details }, 0);
+        mAdapter.notifyDataSetChanged();
+        // Setting the adapter to listview
+        lstContacts.setAdapter(mAdapter);
+        lstContacts.setTextFilterEnabled(true);
+
+        // Creating an AsyncTask object to retrieve and load listview with
+        // contacts
+        ListViewContactsLoader listViewContactsLoader = new ListViewContactsLoader();
+
+        // Starting the AsyncTask process to retrieve and load listview with
+        // contacts
+        listViewContactsLoader.execute();
+
+        // Database instance
+        db = openOrCreateDatabase(ac.database_name,
+                SQLiteDatabase.CREATE_IF_NECESSARY, null);
+        db.setVersion(1);
+        db.setLocale(Locale.getDefault());
+        db.setLockingEnabled(true);
+
+        // Code for fee calculation working as a background process
+        FeeCalculation feeCal = new FeeCalculation();
+        feeCal.execute();
+
+        lstContacts.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View view,
+                    int position, long index) {
+
+                String tempData = ((TextView) (view.findViewById(R.id.tv_name)))
+                        .getText().toString();
+                String tempData2 = ((TextView) (view
+                        .findViewById(R.id.tv_details))).getText().toString();
+                String[] data = new String[2];
+                data[0] = tempData;
+                data[1] = tempData2;
+                Intent intent = new Intent(Contacts.this, ProcessContacts.class);
+                intent.putExtra("data", data);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_left_in,
+                        R.anim.slide_left_out);
+                finish();
+            }
+        });
+
+        // Code added for contact list search
+
+        inputSearch.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void onTextChanged(CharSequence cs, int arg1, int arg2,
+                    int arg3) {
+                // When user changed the Text
+                Log.d(TAG, "search:" + cs.toString());
+
+                if (mAdapter != null) {
+                    mAdapter.getFilter().filter(cs);
+
+                }
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence arg0, int arg1,
+                    int arg2, int arg3) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+                // TODO Auto-generated method stub
+            }
+        });
+
+        mAdapter.setFilterQueryProvider(new FilterQueryProvider() {
+            public Cursor runQuery(CharSequence constraint) {
+                Log.d(TAG, "CharSequence constraint");
+                Uri uri = ContactsContract.Contacts.CONTENT_URI;
+                Log.d(TAG, "CharSequence constraint1");
+                String[] projection = new String[] {
+                        ContactsContract.Contacts._ID,
+                        ContactsContract.Contacts.DISPLAY_NAME, };
+                Log.d(TAG, "CharSequence constraint2");
+                String selection = ContactsContract.Contacts.DISPLAY_NAME
+                        + " like '" + constraint.toString() + "%'";
+                Log.d(TAG, "CharSequence constraint3");
+                String[] selectionArgs = null;
+                String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
+                        + " COLLATE LOCALIZED ASC";
+                Log.d(TAG, "CharSequence constraint4");
+                Cursor cur = getContentResolver().query(uri, projection,
+                        selection, selectionArgs, sortOrder);
+                String a = DatabaseUtils.dumpCursorToString(cur);
+                Log.e("TAG", "String for the filter===>" + a);
+                return cur;
+
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            // NavUtils.navigateUpFromSameTask(Contacts.this);
+            Intent intent = new Intent(Contacts.this,
+                    AcceptAmountActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_right_in,
+                    R.anim.slide_right_out);
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /** An AsyncTask class to retrieve and load listview with contacts */
+
+    private class ListViewContactsLoader extends AsyncTask<Void, Void, Cursor> {
+
+        protected Cursor doInBackground(Void... params) {
+            String displayName = "";
+            String homePhone = "";
+            String mobilePhone = "";
+            String workPhone = "";
+            String contact = "";
+            Log.d(TAG, "ListViewContactsLoader");
+            ContentResolver cr = getContentResolver();
+            Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI, null,
+                    null, null, "UPPER("
+                            + ContactsContract.Contacts.DISPLAY_NAME + ") ASC");
+            String phone = "";
+            if (cur.getCount() > 0) {
+                while (cur.moveToNext()) {
+                    String id = cur.getString(cur
+                            .getColumnIndex(ContactsContract.Contacts._ID));
+                    String name = cur
+                            .getString(cur
+                                    .getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    if (Integer
+                            .parseInt(cur.getString(cur
+                                    .getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+                        System.out.println("name : " + name + ", ID : " + id);
+                        Cursor pCur = cr
+                                .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                        null,
+                                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID
+                                                + " = ?", new String[] { id },
+                                        null);
+                        String details = "";
+                        while (pCur.moveToNext()) {
+
+                            phone = pCur.getString(pCur
+                                    .getColumnIndex(Phone.NUMBER));
+
+                            int type = pCur.getInt(pCur
+                                    .getColumnIndex(Phone.TYPE));
+
+                            switch (type) {
+                            case Phone.TYPE_HOME:
+                                details += "Home:" + phone + ",";
+                                break;
+                            case Phone.TYPE_MOBILE:
+                                details += "Mobile:" + phone + ",";
+                                break;
+                            case Phone.TYPE_WORK:
+                                details += "Work:" + phone + ",";
+                                break;
+                            case Phone.TYPE_OTHER:
+                                details += "Other:" + phone + ",";
+                                break;
+                            }
+
+                        }
+                        name = name.trim();
+                        details = details.trim();
+                        contact = name + " \n";
+                        contact += details;
+                        contact = contact.trim();
+                        mMatrixCursor
+                                .addRow(new Object[] { id, name, details });
+                        pCur.close();
+                    }
+                }
+            }
+            return mMatrixCursor;
+        }
+
+        @Override
+        protected void onPostExecute(Cursor result) {
+            mAdapter.swapCursor(result);
+            progressBarLayout.setVisibility(View.GONE);
+        }
+    }    
+}
+</code></pre>
+
+<p>App gets crashed and gave the following error:
+10-28 18:29:22.281: E/AndroidRuntime(26985): java.lang.IllegalArgumentException: column 'name' does not exist   </p>

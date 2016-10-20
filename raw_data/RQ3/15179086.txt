@@ -1,0 +1,70 @@
+<p>I am using ViewPager with some Fragments. I would like to achieve the next little effect: if I swipe to the very first page of the viewpager (so the index of the page equals 0), i would like to recreate it. So I do not want it to be pulled from the memory, I would like like to recreate it every time I swipe to that page. 
+I read that I needed to override the instantiateItem method, but I cannot do it. </p>
+
+<pre><code>public class PagerAdapter1 extends FragmentPagerAdapter {
+
+    private List<String> fragments;
+       private static final String TAG = "FragmentPagerAdapter";
+        private static final boolean DEBUG = false;
+
+        private final FragmentManager mFragmentManager;
+        private FragmentTransaction mCurTransaction = null;
+
+    /**
+     * @param fm
+     * @param fragments2
+     */
+    public PagerAdapter1(FragmentManager fm, List<String> fragments2) {
+        super(fm);
+        mFragmentManager=fm;
+        this.fragments = fragments2;
+    }
+    /* (non-Javadoc)
+     * @see android.support.v4.app.FragmentPagerAdapter#getItem(int)
+     */
+    @Override
+    public Fragment getItem(int position) {
+        //return this.fragments.get(position);
+        return Fragment.instantiate(ViewPagerActivity.context, fragments.get(position));
+    }
+
+    /* (non-Javadoc)
+     * @see android.support.v4.view.PagerAdapter#getCount()
+     */
+    @Override
+    public int getCount() {
+        return this.fragments.size();
+    }
+
+
+
+    @Override
+    public Object instantiateItem(View container, int position) {
+       Log.i("OVERRIDE", "OVERRIDE");
+
+        if (mCurTransaction == null) {
+            mCurTransaction = mFragmentManager.beginTransaction();
+        }
+
+        // Do we already have this fragment?
+        String name = makeFragmentName(container.getId(), position);
+        Fragment fragment = mFragmentManager.findFragmentByTag(name);
+        if (fragment != null) {
+            if (DEBUG) Log.v(TAG, "Attaching item #" + position + ": f=" + fragment);
+            mCurTransaction.attach(fragment);
+        } else {
+            fragment = getItem(position);
+            if (DEBUG) Log.v(TAG, "Adding item #" + position + ": f=" + fragment);
+            mCurTransaction.add(container.getId(), fragment,
+                    makeFragmentName(container.getId(), position));
+        }
+
+        return fragment;
+    }
+    private static String makeFragmentName(int viewId, int index) {
+        return "android:switcher:" + viewId + ":" + index;
+    }
+} 
+</code></pre>
+
+<p>I never get the OVERRIDE tag. So my first question is, why dont I get that? And how should I rewrite this method (if this is what I need) to achieve the effect I wrote previously? I want it because I save a state of a checkbox at the page 0, but the optimisation twists it because the page 0 dont get destroyed if I swipe onto page 1, so it does not recreate it and a state of the checkbox dont get saved (unless I swipe to page2, beacuse I use setOffScreenLimit(1)). </p>

@@ -1,0 +1,304 @@
+<p>I'm going to begin by saying that I have read in detail almost every question on SO that I can find related to custom checkable list items and selectors. Many of them have <em>similar</em> issues, but none of the answers solve my problem.</p>
+
+<p>At a point in my app I present a custom list activity. When created, it retrieves a set of static data from the intent that called it and passes that data to it's custom array adapter. Each list item is a simple RelativeLayout that implements the <a href="http://developer.android.com/reference/android/widget/Checkable.html">Checkable</a> interface. By default, if you click on one of the items, a new activity is shown which displays detailed information about the selected contact. However, if an item in the list is long-clicked, an ActionMode is started. Clicking on an item in the list at this point does not display the detail activity, it just sets the item to checked. Then, if the user chooses one of the action mode items, it performs the action on the checked item(s).</p>
+
+<p>An important thing to understand is that in both selection 'modes', clicking on a list item sets it to checked.</p>
+
+<p>All of what I described above works perfectly. My <strong>only</strong> problem has to do with the backgrounds of the list items not being highlighted when they are set to checked, even using the default selector.</p>
+
+<p>What I want to do, is have two selectors: one for each selection mode. In the first, the background doesn't change when an item is checked, and in the second it does. I have tried implementing custom selectors, but even in those state_checked is ignored! Other parts of the selector work fine, but not state_checked. </p>
+
+<p>My implementation of CheckableListItem incorporates ideas from a lot of different examples, so if I'm doing something wrong, or if there is a better way let me know!</p>
+
+<p><strong>Note</strong>: An interesting point is that if I set the background of the list items in results_list_item.xml to my selector, instead of the listSelector property of the ListView, the backgrounds <em>do</em> change when an item is checked. However, doing this causes the long-press transition in my selector not to work.</p>
+
+<p><strong>ResultsActivity.java</strong>:</p>
+
+<pre><code>public class ResultsActivity extends ListActivity implements OnItemLongClickListener {
+
+    private ListView listView;          // Reference to the list belonging to this activity
+    private ActionMode mActionMode;     // Reference to the action mode that can be started
+    private boolean selectionMode;      // Detail mode or check mode
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_results);
+
+        // When the home icon is pressed, go back
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        // Get a reference to the list
+        listView = getListView();
+
+        // Initially in detail mode
+        selectionMode = true;
+
+        // Get the contacts from the intent data and pass them to the contact adapter
+        @SuppressWarnings("unchecked")
+        ArrayList<Contact> results = ((ArrayList<Contact>)getIntent().getSerializableExtra("results"));
+        Contact[] contacts = new Contact[results.size()];
+        ContactArrayAdapter adapter = new ContactArrayAdapter(this, results.toArray(contacts));
+        setListAdapter(adapter);
+
+        // We will decide what happens when an item is long-clicked
+        listView.setOnItemLongClickListener(this);
+    }
+
+    /**
+     * If we are in detail mode, when an item in the list is clicked
+     * create an instance of the detail activity and pass it the
+     * chosen contact
+     */
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        if (selectionMode) {
+            Intent displayContact = new Intent(this, ContactActivity.class);
+            displayContact.putExtra("contact", (Contact)l.getAdapter().getItem(position));
+            startActivity(displayContact);
+        }
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    /**
+     * If the home button is pressed, go back to the
+     * search activity
+     */
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent intent = new Intent(this, SearchActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /**
+     * When an item is long-pressed, switch selection modes 
+     * and start the action mode 
+     */
+    public boolean onItemLongClick(AdapterView<?> adapter, View view, int position, long i) {
+        if (mActionMode != null)
+            return false;
+
+        if (selectionMode) {
+            toggleSelectionMode();
+            listView.startActionMode(new ListActionMode(this, getListView()));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Clear the list's checked items and switch selection modes
+     */
+    public void toggleSelectionMode() {
+        listView.clearChoices();
+        ((ContactArrayAdapter)listView.getAdapter()).notifyDataSetChanged();
+        if (selectionMode) {
+            selectionMode = false;
+        } else {
+            selectionMode = true;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>activity_results.xml</strong>:</p>
+
+<pre><code><ListView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/list"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:choiceMode="multipleChoice" 
+    android:listSelector="@drawable/list_selector" />
+</code></pre>
+
+<p><strong>list_selector.xml</strong>:</p>
+
+<pre><code><selector xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:state_pressed="true" android:drawable="@drawable/blue_transition" />
+    <item android:state_checked="true" android:drawable="@drawable/blue" />
+</selector>
+</code></pre>
+
+<p><strong>TwoLineArrayAdapter</strong>:</p>
+
+<pre><code>public abstract class TwoLineArrayAdapter extends ArrayAdapter<Contact> {
+
+    private int mListItemLayoutResId;
+
+    public TwoLineArrayAdapter(Context context, Contact[] results) {
+        this(context, R.layout.results_list_item, results);
+    }
+
+    public TwoLineArrayAdapter(Context context, int listItemLayoutResourceId, Contact[] results) {
+        super(context, listItemLayoutResourceId, results);
+        mListItemLayoutResId = listItemLayoutResourceId;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        View listItemView = convertView;
+        if (convertView == null) {
+            listItemView = inflater.inflate(mListItemLayoutResId, parent, false);
+        }
+
+        // Get the text views within the layout
+        TextView lineOneView = (TextView)listItemView.findViewById(R.id.results_list_item_textview1);
+        TextView lineTwoView = (TextView)listItemView.findViewById(R.id.results_list_item_textview2);
+
+        Contact c = (Contact)getItem(position);
+
+        lineOneView.setText(lineOneText(c));
+        lineTwoView.setText(lineTwoText(c));
+
+        return listItemView;
+    }
+
+    public abstract String lineOneText(Contact c);
+
+    public abstract String lineTwoText(Contact c);
+
+}
+</code></pre>
+
+<p><strong>ContactArrayAdapter</strong>:</p>
+
+<pre><code>public class ContactArrayAdapter extends TwoLineArrayAdapter {
+
+    public ContactArrayAdapter(Context context, Contact[] contacts) {
+        super(context, contacts);
+    }
+
+    public String lineOneText(Contact c) {
+        return (c.getLastName() + ", " + c.getFirstName());
+    }
+
+    public String lineTwoText(Contact c) {
+        return c.getDepartment();
+    }
+
+}
+</code></pre>
+
+<p><strong>CheckableListItem.java</strong>:</p>
+
+<pre><code>public class CheckableListItem extends RelativeLayout implements Checkable {
+
+    private boolean isChecked;
+    private List<Checkable> checkableViews;
+
+    public CheckableListItem(Context context, AttributeSet attrs,
+            int defStyle) {
+        super(context, attrs, defStyle);
+        initialise(attrs);
+    }
+
+    public CheckableListItem(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initialise(attrs);
+    }
+
+    public CheckableListItem(Context context, int checkableId) {
+        super(context);
+        initialise(null);
+    }
+
+    private void initialise(AttributeSet attrs) {
+        this.isChecked = false;
+        this.checkableViews = new ArrayList<Checkable>(5);
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean check) {
+        isChecked = check;
+        for (Checkable c : checkableViews) {
+            c.setChecked(check);
+        }
+        refreshDrawableState();
+    }
+
+    public void toggle() {
+        isChecked = !isChecked;
+        for (Checkable c : checkableViews) {
+            c.toggle();
+        }
+    }
+
+    private static final int[] CheckedStateSet = {
+        android.R.attr.state_checked
+    };
+
+    protected int[] onCreateDrawableState(int extraSpace) {
+        final int[] drawableState = super.onCreateDrawableState(extraSpace + 1);
+        if (isChecked()) {
+            mergeDrawableStates(drawableState, CheckedStateSet);
+        }
+        return drawableState;
+    }
+
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        final int childCount = this.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            findCheckableChildren(this.getChildAt(i));
+        }
+    }
+
+    private void findCheckableChildren(View v) {
+        if (v instanceof Checkable) {
+            this.checkableViews.add((Checkable) v);
+        }
+        if (v instanceof ViewGroup) {
+            final ViewGroup vg = (ViewGroup) v;
+            final int childCount = vg.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                findCheckableChildren(vg.getChildAt(i));
+            }
+        }
+    }
+}
+</code></pre>
+
+<p><strong>results_list_item.xml</strong>:</p>
+
+<pre><code><com.test.mycompany.Widgets.CheckableListItem
+    android:id="@+id/results_list_item"
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" 
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp" >
+
+    <TextView android:id="@+id/results_list_item_textview1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:textSize="20sp"
+        android:textColor="#000000"
+        android:focusable="false" />
+
+    <TextView android:id="@+id/results_list_item_textview2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/results_list_item_textview1"
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray" 
+        android:focusable="false" />
+
+</com.test.mycompany.Widgets.CheckableListItem>
+</code></pre>

@@ -1,0 +1,183 @@
+<p>I am new to android,
+my application works fine in less (camera)resolution phones , but if my app is used in high (camera)pixel mobile it hangs if i use it for few times(4 to 5).My question is can we create camera code so that i behaves like less resolution camera ? </p>
+
+<p>The code i used for camera.<br>
+        // camera code</p>
+
+<pre><code>public void openCamera() {
+
+    if (Helper.checkCameraHardware(this)) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String dateFileName = sdf.format(new Date());
+
+            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMddHHmmss");
+            String curentDateandTime = sdf1.format(new Date());
+
+            File sdImageMainDirectory = new File(Environment
+                    .getExternalStorageDirectory().getPath()
+                    + "/"
+                    + Helper.IMG_FOLDER + "/" + dateFileName);
+            if (!sdImageMainDirectory.exists()) {
+                sdImageMainDirectory.mkdirs();
+            }
+
+            String PATH = Environment.getExternalStorageDirectory()
+                    .getPath()
+                    + "/"
+                    + Helper.IMG_FOLDER
+                    + "/"
+                    + dateFileName + "/";
+            // PATH = PATH OF DIRECTORY,image_PATH = full path of IMAGE
+
+            image_PATH = PATH + curentDateandTime + ".jpg";
+
+            System.out.println("image_PATH In open camera" + image_PATH);
+            Log.d("Camera", "File exist at in OC" + image_PATH + "  <<");
+
+            File file = new File(PATH, curentDateandTime + ".jpg");
+
+            Uri outputFileUri = Uri.fromFile(file);
+
+            Intent i = new Intent("android.media.action.IMAGE_CAPTURE");
+            i.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(i, 1234);
+
+        } catch (Exception e) {
+            Helper.AlertBox(this,
+                    "Error No: 001\nPlease contact Bluefrog technical person.\n"
+                            + e.toString());
+        }
+    } else {
+        // Helper.AlertBox(this, "Camera Not Found.!");
+        Helper.AlertBox(this, "Image Not Captured !");
+        image_PATH = "";
+        SENDING_IMAGE_PATH = "";
+    }
+}
+
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    // image_PATH = "";
+    image_str = "";
+
+    // super.onActivityResult(requestCode, resultCode, data);
+
+    if (requestCode == 1234) {
+        if (resultCode == RESULT_OK) {
+            // restorePreferences();
+
+            Log.e("image_PATH in OnActivityResultSet", "File exist at "
+                    + image_PATH);
+
+            Log.d("Camera", "File exist at " + image_PATH + "  <<");
+
+            File file = new File(image_PATH);
+            if (file.exists()) {
+
+                Log.e("File exist condition :", "File exist at "
+                        + image_PATH);
+
+                try {
+
+                    iv_MEPhoto.setImageBitmap(Helper.getImage(file
+                            .getPath()));
+
+                    iv_MEPhoto.setVisibility(View.VISIBLE);
+                    photoTaken = true;
+                    SENDING_IMAGE_PATH = image_PATH;
+
+                    Log.e("File exist condition :", "File exist at "
+                            + image_PATH);
+
+                } catch (Exception e) {
+                    Helper.AlertBox(this,
+                            "Error No: 004\nPlease contact Bluefrog technical person.\n"
+                                    + e.toString());
+                    Log.e("Error reading file", e.toString());
+                }
+
+            } else {
+                image_PATH = "";
+                SENDING_IMAGE_PATH = "";
+
+                Helper.AlertBox(this,
+                        "Error No: 005\nPlease contact Bluefrog technical person.");
+            }
+        } else {
+            Helper.AlertBox(this, "Image Not Captured.");
+            image_PATH = "";
+            SENDING_IMAGE_PATH = "";
+        }
+    }
+
+}
+
+// camera code end
+//  in HELPER cLASS reqWidth = 320 ,reqHeight =240
+public static Bitmap getImage(String filePath) {
+
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(filePath, options);
+
+    options.inSampleSize = calculateInSampleSize(options, reqWidth,
+            reqHeight);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+    Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
+    bmp = Bitmap.createScaledBitmap(bmp, reqWidth, reqHeight, true);
+
+    return bmp;
+}
+
+public static String getImageString(String filePath) {
+
+    String imageString = "";
+
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(filePath, options);
+
+    options.inSampleSize = calculateInSampleSize(options, reqWidth,
+            reqHeight);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+    Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
+
+    bmp = Bitmap.createScaledBitmap(bmp, reqWidth, reqHeight, true);
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    bmp.compress(Bitmap.CompressFormat.JPEG, 70, baos); // bm is the bitmap
+    // object
+    byte[] byte_arr = baos.toByteArray();
+    imageString = Base64.encodeBytes(byte_arr);
+    return imageString;
+
+}
+public static int calculateInSampleSize(BitmapFactory.Options options,
+        int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and
+        // width
+        final int heightRatio = Math.round((float) height
+                / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will
+        // guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+</code></pre>

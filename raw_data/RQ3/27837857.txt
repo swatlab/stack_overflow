@@ -1,0 +1,133 @@
+<p>I am doing an Android Project. What I want to do is read a new SMS whenever it is received and store it in a database. I have done up to this. I have a database <code>DBBANKING.db</code>.</p>
+
+<p>The corresponding code is in Reveiversms.java:</p>
+
+<pre><code>package com.example.projdatabsesms;
+
+/*Create class with extending BroadcastReceiver so in onReceive method we can write code which will read each new incoming sms when it comes to mobile.*/
+
+public class Reveiversms extends BroadcastReceiver {
+
+
+@Override
+public void onReceive(Context context, Intent intent) {
+//—get the SMS message passed in—
+Bundle bundle = intent.getExtras();
+SmsMessage[] msgs = null;
+String messages = "";
+if (bundle != null)
+{
+//—retrieve the SMS message received—
+Object[] smsExtra = (Object[]) bundle.get("pdus");
+msgs = new SmsMessage[smsExtra.length];
+
+for (int i=0; i<msgs.length; i++)
+{
+SmsMessage sms = SmsMessage.createFromPdu((byte[])smsExtra[i]);
+//take out content from sms
+String body = sms.getMessageBody().toString();
+String address = sms.getOriginatingAddress();
+
+messages += "SMS from " + address + " :\n";
+messages += body + "\n";
+
+putSmsToDatabase(sms, context );
+}
+//—display the new SMS message—
+//Toast.makeText(context, messages, Toast.LENGTH_SHORT).show();
+
+}
+
+}
+
+private void putSmsToDatabase( SmsMessage sms, Context context )
+{
+DataBaseHelper dataBaseHelper = new DataBaseHelper(context);
+
+SQLiteDatabase db = dataBaseHelper.getWritableDatabase();
+
+String mydate =java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime());
+// Create SMS row
+ContentValues values = new ContentValues();
+
+values.put("address", sms.getOriginatingAddress().toString() );
+values.put("date", mydate);
+values.put("body", sms.getMessageBody().toString());
+
+
+db.insert("datatable", null, values);
+
+db.close();
+
+}
+}
+</code></pre>
+
+<p>DatabaseHelper.java:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+
+//public static final String SMS_URI = “/data/data/org.secure.sms/databases/”;
+public static final String db_name = "DBBANKING.db";
+public static final int version =1;
+Context context;
+public DataBaseHelper(Context context) {
+super(context, db_name, null, version);
+// TODO Auto-generated constructor stub
+this.context =context;
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+// TODO Auto-generated method stub
+
+db.execSQL("create table datatable(address varchar(10), date varchar(10), body varchar(30))");
+Toast.makeText(context, "database created", Toast.LENGTH_LONG).show();
+Log.i("dbcreate", "DATABASE HAS CREATED");
+}
+
+public boolean checkDataBase(String db) {
+
+SQLiteDatabase checkDB = null;
+
+try {
+String myPath = "data/data/"+ context.getPackageName() +"/databases/" + db;
+checkDB = SQLiteDatabase.openDatabase(myPath, null,
+SQLiteDatabase.OPEN_READONLY);
+
+} catch (SQLiteException e) {
+
+// database does’t exist yet.
+
+} catch (Exception e) {
+
+}
+
+if (checkDB != null) {
+
+checkDB.close();
+
+}
+
+return checkDB != null ? true : false;
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+// TODO Auto-generated method stub
+if (oldVersion >= newVersion)
+return;
+
+if (oldVersion == 1) {
+Log.d("New Version", "Datas can be upgraded");
+}
+
+Log.d("Sample Data", "onUpgrade : " + newVersion);
+}
+
+}
+</code></pre>
+
+<p>It works fine. Whenever a new SMS comes, it stores the information in database. Now I have another table in the database, where I am storing SMS Numbers. The name of the field where I am storing the <code>smsnumbers</code> is <code>SMSNUMBERS</code>.</p>
+
+<p>Now I want the functionality, that whenever a new SMS comes into my phone it will check over <code>SMSNUMBER</code> field of <code>DBBANKING.db</code>. If the number matches with the numbers I have given in the field, then it will store the SMS body in the database, else it will not store it. How can I do that?</p>

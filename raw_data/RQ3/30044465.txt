@@ -1,0 +1,223 @@
+<p>I'm trying to create an android app that will read from a existing database table and fetch words. Later I'll show the words on the activity screen. I've saved the database file in ASSETS folder but it's not working. Any help or suggestions will be very much appreciated.
+This is my Database class where I've tried to set the connection to the database.</p>
+
+<pre><code>public class DBManager extends SQLiteOpenHelper {
+
+private static final String db_Word = "";
+private static final String DATABASE_NAME = "SYFYB.sqlite";
+private static final String DATABASE_TABLE = "WORDS";
+private static final int DATABASE_VERSION = 1;
+SQLiteDatabase db = null;
+
+//public void dbCreator(Context dbContext)
+//{
+
+   // try {
+      //  db = dbContext.openOrCreateDatabase(DATABASE_NAME, DATABASE_VERSION, null);
+   // } catch (Exception e){
+
+   // }
+
+//}
+
+public DBManager(Context context)
+{
+    super(context, "SYFYB.sqlite", null, 1);
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+
+
+public void onSelect(SQLiteDatabase db, String selectCommand){
+
+    db.execSQL(selectCommand);
+}
+
+
+private String[] SELECT = {"WORDS"};
+
+private Cursor ShowDATA(SQLiteDatabase dbFromMain){
+
+
+    SQLiteDatabase db;
+    db = this.getReadableDatabase(); // ERROR
+    Cursor cursor = db.query("WORDS",SELECT,null,null,null,null,null);
+
+    cursor.moveToFirst();
+
+    return cursor;
+}
+</code></pre>
+
+<p>I'm using this class from main activity as follows,</p>
+
+<pre><code>SQLiteDatabase dbFile = SQLiteDatabase.openDatabase("SYFYB.sqlite",null,SQLiteDatabase.OPEN_READONLY); //ERROR
+
+    String selectCommand = "select * from WORDS;";
+    DBManager dbObject = new DBManager(getApplicationContext());
+    dbObject.onSelect(dbFile, selectCommand);
+</code></pre>
+
+<p>Commented ERROR lines are shown as error Could not open Database.
+I've tried the Database file saved as .db and .sqlite but neither worked.</p>
+
+<p>UPDATE:
+I'm trying this code now but having a "no such table exists" error.</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+
+private static String DB_PATH = "";
+
+private static final String DB_NAME = "SYFYB.db";
+
+private SQLiteDatabase myDataBase;
+
+private final Context myContext;
+
+public DataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+
+    System.err.println(context.getApplicationInfo().dataDir);
+
+    DB_PATH = context.getApplicationInfo().dataDir + File.separator
+            + "databases" + File.separator;
+
+    System.out.println("-------"+DB_PATH);
+}
+
+public void createDataBase() throws IOException {
+
+    boolean dbExist = checkDataBase();
+
+    if (dbExist) {
+        System.out.println("=============");
+        myDataBase = SQLiteDatabase.openDatabase(DB_PATH+DB_NAME, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    } else {
+
+         myDataBase = this.getReadableDatabase();
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            // throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+
+private boolean checkDataBase() {
+
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+        System.out.println("Database exists."+checkDB);
+
+    } catch (SQLiteException e) {
+
+        System.out.println("Database doesn't exist yet.");
+
+    }
+
+    if (checkDB != null) {
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException {
+
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+
+    String outFileName = DB_PATH + DB_NAME;
+
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public void openDataBase() throws SQLException {
+
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+    if (myDataBase != null)
+        myDataBase.close();
+
+    super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+    // TODO Auto-generated method stub
+
+}
+
+public String fetchData() {
+    String SELECT = "select * from WORDS;";
+    System.out.println("------"+myDataBase);
+    Cursor cursor = myDataBase.rawQuery(SELECT, null);
+    String words = cursor.toString();
+    return words;
+}
+}
+</code></pre>
+
+<p>Main activity looks like,</p>
+
+<pre><code>DataBaseHelper dataBaseHelper = new DataBaseHelper(getBaseContext());
+    try {
+        dataBaseHelper.createDataBase();
+    } catch (IOException ioe) {
+        throw new Error("Unable to create database");
+    }
+
+    dataBaseHelper.getWritableDatabase();
+    // do your code
+    dataBaseHelper.openDataBase();
+    String dbWORDS = dataBaseHelper.fetchData();
+    textView.setText(dbWORDS);
+</code></pre>

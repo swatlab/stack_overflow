@@ -1,0 +1,47 @@
+<p>I have ListPreference which I want to use it for enable/disable multiple preferences which are all under PreferencesScreen/PreferencesCategory (in same activity), so how to do that in one shot? </p>
+
+<p>is there an easy way to disable or enable a grouped preferences depending on ListPreference value in another PreferenceScreen or PreferenceCategory ?</p>
+
+<h2>description to generate similar issue:</h2>
+
+<p>I am using eclipse, however, similar steps are existed in android studio.</p>
+
+<ol>
+<li>create new project, click new -> android application project -> write any name for this test project and press next(s) then finish.</li>
+<li>go to menu: file -> new -> other click on Android object then choose settings then click on next(s) till finish as show bellow.</li>
+</ol>
+
+<p><img src="http://i.stack.imgur.com/GN0lB.png" alt="enter image description here"></p>
+
+<p><img src="http://i.stack.imgur.com/euDmj.png" alt="enter image description here"></p>
+
+<p><img src="http://i.stack.imgur.com/45EBY.png" alt="enter image description here"></p>
+
+<p>after finish click, if any errors appears recompile the project from menu: project -> clean .</p>
+
+<p>now the created project have settings and we can call it by add two lines in MainActivity.java in onOptionsItemSelected method to be like this:</p>
+
+<pre><code>@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Intent i = new Intent (this, SettingsActivity.class);
+            startActivity(i);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+</code></pre>
+
+<p>run the app and click on settings in action bar to open settings activity</p>
+
+<p><img src="http://i.stack.imgur.com/oNYyh.png" alt="enter image description here"></p>
+
+<p>finally the settings will appears, and contains 3 preferences screens as following:</p>
+
+<p><img src="http://i.stack.imgur.com/Bcuqd.png" alt="enter image description here"></p>
+
+<p>look at "add friends to messages" it is in pref_general, what I want is when user change it's value to "never" the all preferences under pref_data_sync should be disabled, while if the new value is "always" then all preferences in pref_notification should disabled otherwise enable all preferences in both screen preferences.</p>

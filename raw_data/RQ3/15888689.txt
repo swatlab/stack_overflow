@@ -1,0 +1,55 @@
+<p>So far I have seen several examples of applications that use <code>BaseAdapter</code> and <code>ArrayAdapter<?></code>. but I am still not completely clear the reasons why should be that way.</p>
+
+<p>The first example is extending from <code>ArrayAdapter<?></code>, this example is used in ListView, the following is the getView method</p>
+
+<pre><code>@override
+public View getView(int position, View convertView, ViewGroup parent) {
+
+    View row = convertView;
+    Holder holder = null;
+
+    // Holder represents the elements of the view to use
+    // Here are initialized   
+    if(null == row) {               
+        row = LayoutInflater.from(mContext).inflate(LAYOUT_ITEM_ID, parent, false);                
+
+        holder = new Holder();
+        holder.titleTextView = (TextView)row.findViewById(android.R.id.title);            
+
+        row.setTag(holder);
+    } else {
+        holder = (Holder) row.getTag();
+    }       
+
+    // here do operations in holder variable example
+    holder.titleTextView.setText("Title " + position);
+
+    return row;
+}
+
+public static class Holder {        
+    TextView titleTextView;     
+}
+</code></pre>
+
+<p>now in a second example a found is used <code>BaseAdapter</code> on a GridView this is the getView method</p>
+
+<pre><code>// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+
+    return imageView;
+}
+</code></pre>
+
+<p>My question is: for a proper use of an Adapter is necessary to use a "Holder" static class, what implications does this have on application performance and compatibility on multiple devices (min API 8).</p>

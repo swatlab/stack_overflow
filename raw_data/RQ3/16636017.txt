@@ -1,0 +1,233 @@
+<p>I am using <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/">this tutorial</a> to import a database into my App.</p>
+
+<p>It runs fine on API 10, </p>
+
+<p>but on API 17 it throws the following error:</p>
+
+<pre><code>05-19 14:52:46.492: E/SQLiteLog(1893): (14) cannot open file at line 30176 of [00bb9c9ce4]
+05-19 14:52:46.492: E/SQLiteLog(1893): (14) os_unix.c:30176: (2) open(/data/data/com.example.koday/databases/dizionario7.sqlite) - 
+05-19 14:52:46.492: E/SQLiteDatabase(1893): Failed to open database '/data/data/com.example.koday/databases/dizionario7.sqlite'.
+05-19 14:52:46.492: E/SQLiteDatabase(1893): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at com.example.koday.DataBaseHelper.checkDataBase(DataBaseHelper.java:82)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at com.example.koday.DataBaseHelper.createDataBase(DataBaseHelper.java:45)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at com.example.koday.MainActivity.frontquiz(MainActivity.java:70)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at com.example.koday.MainActivity.onCreate(MainActivity.java:64)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.Activity.performCreate(Activity.java:5104)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.os.Handler.dispatchMessage(Handler.java:99)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.os.Looper.loop(Looper.java:137)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at android.app.ActivityThread.main(ActivityThread.java:5039)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at java.lang.reflect.Method.invokeNative(Native Method)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at java.lang.reflect.Method.invoke(Method.java:511)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+05-19 14:52:46.492: E/SQLiteDatabase(1893):     at dalvik.system.NativeStart.main(Native Method)
+05-19 14:52:47.683: E/(1893): database aperto
+05-19 14:52:47.683: E/SQLiteLog(1893): (1) no such table: dati
+</code></pre>
+
+<p>Here is my code:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper {
+
+// The Android's default system path of your application database.
+private static String DB_PATH = "/data/data/com.example.koday/databases/";
+
+private static String DB_NAME = "dizionario7.sqlite";
+
+private SQLiteDatabase myDataBase;
+
+private final Context myContext;
+
+/**
+ * Constructor Takes and keeps a reference of the passed context in order to
+ * access to the application assets and resources.
+ * 
+ * @param context
+ */
+public DataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own
+ * database.
+ * */
+public void createDataBase() throws IOException {
+
+    boolean dbExist = checkDataBase();
+
+    if (dbExist) {
+        // do nothing - database already exist
+    } else {
+
+        // By calling this method and empty database will be created into
+        // the default system path
+        // of your application so we are gonna be able to overwrite that
+        // database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each
+ * time you open the application.
+ * 
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase() {
+
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    } catch (SQLiteException e) {
+
+        // database does't exist yet.
+
+    }
+
+    if (checkDB != null) {
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created
+ * empty database in the system folder, from where it can be accessed and
+ * handled. This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException {
+
+    // Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException {
+
+    // Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+    if (myDataBase != null)
+        myDataBase.close();
+
+    super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+
+// Add your public helper methods to access and get content from the
+// database.
+// You could return cursors by doing "return myDataBase.query(....)" so it'd
+// be easy
+// to you to create adapters for your views.
+
+// Getting single contact
+String getkword(String word) {
+    SQLiteDatabase db = this.getReadableDatabase();
+
+    Cursor cursor = db.query("data",
+            new String[] { "_id", "english", "korean" }, "english" + "=?",
+            new String[] { word }, null, null, null, null);
+    if (cursor != null)
+        cursor.moveToFirst();
+
+    String kword = cursor.getString(2);
+    // return contact
+    db.close();
+    return kword;
+
+}
+
+// Getting All Contacts
+public Cursor getCursor() {
+    // Select All Query
+    String selectQuery = "SELECT  * FROM " + "data";
+
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor cursor = db.rawQuery(selectQuery, null);
+
+    // looping through all rows and adding to list
+
+    return cursor;
+}
+
+}
+</code></pre>
+
+<p>EDIT EDIT EDIT EDIT
+I have set permission in my manifest:</p>
+
+<pre><code><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+</code></pre>
+
+<p>Thanks for the help!</p>

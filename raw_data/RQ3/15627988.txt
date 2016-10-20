@@ -1,0 +1,53 @@
+<p>I have been Following the post <a href="http://www.vogella.com/articles/AndroidActionBar/article.html" rel="nofollow">here</a> to learn more about the ActionBar in Android.</p>
+
+<p>In my application i am trying to navigate to the HomeActivity from the action bar icon on every page.....This is how i handle it now but it wont work and crashes the application.</p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item){
+        switch(item.getItemId()){
+        case android.R.id.home:
+            Intent intent = new Intent(this, HomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+</code></pre>
+
+<p>LogCat Here:</p>
+
+<pre><code>03-25 20:02:26.306: E/AndroidRuntime(11346): FATAL EXCEPTION: main
+03-25 20:02:26.306: E/AndroidRuntime(11346): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.testingapp/com.testingapp.HomeActivity}: java.lang.NullPointerException
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2100)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2125)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.ActivityThread.access$600(ActivityThread.java:140)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1227)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.os.Handler.dispatchMessage(Handler.java:99)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.os.Looper.loop(Looper.java:137)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.ActivityThread.main(ActivityThread.java:4898)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at java.lang.reflect.Method.invokeNative(Native Method)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at java.lang.reflect.Method.invoke(Method.java:511)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1008)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:775)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at dalvik.system.NativeStart.main(Native Method)
+03-25 20:02:26.306: E/AndroidRuntime(11346): Caused by: java.lang.NullPointerException
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at com.testingapp.HomeActivity.onCreate(HomeActivity.java:49)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.Activity.performCreate(Activity.java:5206)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1094)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2064)
+03-25 20:02:26.306: E/AndroidRuntime(11346):    ... 11 more
+</code></pre>
+
+<p>menu.xml:</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+<item
+    android:id="@+id/menu_settings"
+    android:orderInCategory="100"
+    android:showAsAction="never"
+    android:title="@string/menu_settings"/>
+
+</menu>
+</code></pre>

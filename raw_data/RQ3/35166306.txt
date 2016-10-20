@@ -1,0 +1,78 @@
+<p>I have a list of objects of class Job, every object has a collection of tags (networks), this collection is mutable and has no impact on hashCode and objects equality.</p>
+
+<p>What I need to do is to get a list of all unique Job objects and for each such object combine all tags, for example, I have a list:</p>
+
+<p><code>[{position: "CTO", dates: "2012-2014", city: "New York", networks: ["foo"]}, {position: "CTO", dates: "2012-2014", city: "New York", networks: ["bar"]}]</code></p>
+
+<p>This should be reduced to <code>[{position: "CTO", dates: "2012-2014", city: "New York", networks: ["foo", "bar"]}]</code></p>
+
+<pre><code>public class Job {
+    private final String position;
+    private final String dates;
+    private final Integer startYear;
+    private final Integer endYear;
+    private final String city;
+    private Set<NetworkType> networks;
+
+    public String getPosition() {
+        return position;
+    }
+
+    public String getDates() {
+        return dates;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public Set<NetworkType> getNetworks() {
+        return networks;
+    }
+
+    public void setNetworks(Set<NetworkType> networks) {
+        this.networks = networks;
+    }
+
+    public Integer getStartYear() {
+        return startYear;
+    }
+
+    public Integer getEndYear() {
+        return endYear;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Job)) {
+            return false;
+        }
+        Job job = (Job) o;
+        return Objects.equals(position, job.position) &&
+                Objects.equals(dates, job.dates) &&
+                Objects.equals(city, job.city);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(position, dates, city);
+    }
+}
+</code></pre>
+
+<p>This is the actual Job class code, and that is how I implemented this operation:</p>
+
+<pre><code>    Map<Job, List<Job>> jobsMap = jobs.stream().collect(Collectors.groupingBy(job -> job));
+    jobsMap.keySet().stream()
+            .peek(job -> jobsMap.get(job).stream().forEach(j -> job.getNetworks().addAll(j.getNetworks())))
+            .sorted(Comparator.comparing((Job o) -> Objects.firstNonNull(o.getEndYear(), Integer.MAX_VALUE))
+                    .reversed())
+            .collect(Collectors.toList());
+</code></pre>
+
+<p>But I feel very bad for this code, especially since I am using external map inside the stream and I wonder is there any way to do that in one chain without intermediate transformations. 
+I would appreciate any valid criticism about my implementation of this functionality.
+Thank you!</p>

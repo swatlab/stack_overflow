@@ -1,0 +1,50 @@
+<p>I use ActionBarSherlock (although I don't think it matters).</p>
+
+<p>I have a Main activity and an About activity. I want the About activity to show the back-arrow by its logo, and do the proper animation and such.
+I don't know how to do this properly.</p>
+
+<p>Currently, I have under onOptionsMenuItemSelected to launch the Main activity when the Up/Home button is pressed, but it's hacky and doesn't really work right. It plays the wrong animation, and handles multitasking poorly.</p>
+
+<p>How do I set this up right?</p>
+
+<p>Here's the part in my Main activity that launches the About:</p>
+
+<pre><code>Intent aboutIntent = new Intent(MainActivity.this, About.class);
+MainActivity.this.startActivity(aboutIntent);
+</code></pre>
+
+<p>Here's my About activity:</p>
+
+<pre><code>package com.stevenschoen.test;
+
+import android.content.Intent;
+import android.os.Bundle;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.MenuItem;
+
+public class About extends SherlockActivity {
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.about);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+            case android.R.id.home:
+                // app icon in action bar clicked; go home
+                Intent intentHome = new Intent(this, MainActivity.class);
+                intentHome.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intentHome);
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>

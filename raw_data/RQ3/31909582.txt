@@ -1,0 +1,90 @@
+<p>I just started developing for android, and I'm having a problem. I a DrawerNavigationListAdapter and a DrawerNavigationListView, and is working perfectly, now I'm trying to add to this a respective icons.</p>
+
+<p>Here is my xml:</p>
+
+<pre><code><RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent" >
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:textSize="18sp"
+        android:background="@drawable/navigation_list_selector" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>the DrawerNavigationListView.java</p>
+
+<pre><code>public class DrawerNavigationListView extends ListView implements AdapterView.OnItemClickListener {
+    public DrawerNavigationListView(Context context) {
+        this(context, null);
+    }
+
+    public DrawerNavigationListView(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public DrawerNavigationListView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+
+        DrawerNavigationListAdapter adapter = new DrawerNavigationListAdapter( getContext(), 1 );
+        adapter.add(getContext().getString(R.string.section_0));
+        ...
+        setAdapter( adapter );
+
+        setOnItemClickListener( this );
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        EventBus.getInstance().post(new DrawerSectionItemClickedEvent((String) parent.getItemAtPosition(position)));
+    }
+}
+</code></pre>
+
+<p>and the DrawerNavigationListAdapter</p>
+
+<pre><code>public class DrawerNavigationListAdapter extends ArrayAdapter<String> {
+
+    public DrawerNavigationListAdapter(Context context, int resource) {
+        super(context, resource);
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if( convertView == null ) {
+            holder = new ViewHolder();
+            convertView = LayoutInflater.from(getContext()).inflate( R.layout.navigation_drawer_list_item, parent, false );
+            holder.title = (TextView) convertView.findViewById( R.id.title );
+            holder.icon = (ImageView) convertView.findViewById(R.id.icon);
+            convertView.setTag( holder );
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.title.setText(getItem(position));
+
+        return convertView;
+    }
+
+    class ViewHolder {
+        TextView title;
+        ImageView icon;
+    }
+}
+</code></pre>
+
+<p>My question is, how can I change this code so I can add the icons?</p>

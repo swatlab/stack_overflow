@@ -1,0 +1,231 @@
+<p>I am trying to use my own created database in my android application using this tutorial <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<p>I have my database in my assets folder have been working for 5 hours to get the work around but in vain.. i always keep getting</p>
+
+<pre><code>01-17 04:09:07.111: E/Database(1060): sqlite3_open_v2("/data/data/com.rahul.besttracker/databases/route", &handle, 1, NULL) failed
+</code></pre>
+
+<p>and </p>
+
+<pre><code>01-17 04:09:07.271: E/AndroidRuntime(1060): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.rahul.besttracker/com.rahul.besttracker.Busdisplay}: android.database.sqlite.SQLiteException: unable to open database file
+</code></pre>
+
+<p>my code</p>
+
+<pre><code>    public class Busdisplay extends ListActivity {
+TextView source, destination;
+String src, dest;
+ArrayList<String> mArrayList;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+
+    init();
+    Bundle caught = getIntent().getExtras();
+    src = caught.getString("source");
+    dest = caught.getString("dest");
+
+    DataBaseHelper entry = null;
+
+    entry = new DataBaseHelper(Busdisplay.this);
+
+    entry.openDataBase();
+
+    mArrayList = entry.readEntry(src, dest);
+
+    entry.close();
+
+    setListAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_list_item_1, mArrayList));
+}
+
+@Override
+protected void onListItemClick(ListView l, View v, int position, long id) {
+    // TODO Auto-generated method stub
+    super.onListItemClick(l, v, position, id);
+}
+
+void init() {
+    source = (TextView) findViewById(R.id.textView1);
+    destination = (TextView) findViewById(R.id.textView2);
+}
+
+   }
+</code></pre>
+
+<p>My DBhelper class</p>
+
+<pre><code>    public class DataBaseHelper extends SQLiteOpenHelper {
+
+// The Android's default system path of your application database.
+private static final String DB_PATH =   "/data/data/com.rahul.besttracker/databases/";
+
+private static final String DB_NAME = "route.db";
+private static final String DB_TABLE1 = "route1";
+private static final String DB_TABLE2 = "route2";
+private SQLiteDatabase myDataBase;
+
+private final Context myContext;
+
+/**
+ * Constructor Takes and keeps a reference of the passed context in order to
+ * access to the application assets and resources.
+ * 
+ * @param context
+ */
+public DataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}
+
+/**
+ * Creates a empty database on the system and rewrites it with your own
+ * database.
+ * */
+public void createDataBase() throws IOException {
+
+    boolean dbExist = checkDataBase();
+
+    if (dbExist) {
+        // do nothing - database already exist
+    } else {
+
+        // By calling this method and empty database will be created into
+        // the default system path
+        // of your application so we are gonna be able to overwrite that
+        // database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each
+ * time you open the application.
+ * 
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase() {
+
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    } catch (SQLiteException e) {
+
+        System.out.print("ERROR");
+    }
+
+    if (checkDB != null) {
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created
+ * empty database in the system folder, from where it can be accessed and
+ * handled. This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException {
+
+    // Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException {
+
+    // Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+            SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+    if (myDataBase != null)
+        myDataBase.close();
+
+    super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    try {
+        createDataBase();
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE1);
+    db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE2);
+    onCreate(db);
+}
+
+public ArrayList<String> readEntry(String src, String dest) {
+
+    // TODO Auto-generated method stub
+    Cursor c = myDataBase.rawQuery("SELECT route_no from " + DB_TABLE1
+            + " WHERE stops LIKE '%" + src + "%,%" + dest + "%';", null);
+    ArrayList<String> mArrayList = new ArrayList<String>();
+    int index = c.getColumnIndex("route_no");
+    for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+        // The Cursor is now set to the right position
+        mArrayList.add(c.getString(index));
+    }
+    return mArrayList;
+}
+
+// Add your public helper methods to access and get content from the
+// database.
+// You could return cursors by doing "return myDataBase.query(....)" so it'd
+// be easy
+// to you to create adapters for your views.
+
+  }
+</code></pre>

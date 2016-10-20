@@ -1,0 +1,38 @@
+<p>I want to copy file to another directory.I know this has been asked million times,I read tons of answers about this but I just can't seem to make it work.This is the code I am currently using:</p>
+
+<pre><code>copyFile(new File(getClass().getResource("/jars/TurnOffClient.jar").toString()),
+   new File("C:\\Documents and Settings\\All Users\\Start Menu\\Programs\\Startup\\karioc.jar"));
+</code></pre>
+
+<p>And this is the method:</p>
+
+<pre><code>public static void copyFile(File sourceFile, File destFile) throws IOException {
+    if(!destFile.exists()) {
+        destFile.createNewFile();
+    }
+
+    FileChannel source = null;
+    FileChannel destination = null;
+
+    try {
+        source = new FileInputStream(sourceFile).getChannel();
+        destination = new FileOutputStream(destFile).getChannel();
+        destination.transferFrom(source, 0, source.size());
+    }
+    finally {
+        if(source != null) {
+            source.close();
+        }
+        if(destination != null) {
+            destination.close();
+        }
+    }
+}
+</code></pre>
+
+<p>This is my dir:
+<img src="http://imageshack.com/a/img820/6418/5g3m.png" alt="Directories"></p>
+
+<p>//////////////////////////////////////////////////////////////////////////////////////////
+And this is the exception I get:
+<img src="https://imagizer.imageshack.us/v2/1318x220q90/841/l2ft.png" alt="Exception"></p>

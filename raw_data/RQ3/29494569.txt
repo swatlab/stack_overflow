@@ -1,0 +1,256 @@
+<p>I am new to Android development and I could use some help!</p>
+
+<p>I am trying to create a GridView to display 1 image loaded 9 times with different filters.  I am using the GPUImage framework for Android and the Universal Image Loader.</p>
+
+<p>Here is what I have so far:</p>
+
+<pre><code>public class FilterActivity extends Activity {
+
+private MyApplication mApp;
+private ArrayList<GPUImageFilter>filters;
+public ArrayList<Bitmap>bitmaps;
+private List<String> filterNames;
+int maxWidth = 120;
+int maxHeight = 120;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_filter);
+
+    Uri imageURI = mApp.getFirstImagePath();
+    ImageLoader imageLoader = ImageLoader.getInstance();
+
+    BitmapFactory.Options resizeOptions = new BitmapFactory.Options();
+    resizeOptions.inSampleSize = 3; // decrease size 3 times
+    resizeOptions.inScaled = true;
+
+    DisplayImageOptions options = new DisplayImageOptions.Builder()
+            .cacheOnDisk(true)
+            .considerExifParams(true)
+            .bitmapConfig(Bitmap.Config.RGB_565)
+            .decodingOptions(resizeOptions)
+            .postProcessor(new BitmapProcessor() {
+                @Override
+                public Bitmap process(Bitmap bmp) {
+
+                    return scaleBitmap(bmp);
+                }
+            })
+            .build();
+
+    Bitmap bmp = imageLoader.loadImageSync(imageURI.toString(), options);
+
+    filterNames = Arrays.asList("grayscale", "documentary", "sepia",
+            "posterize", "noFilter", "lomo",
+            "cool", "warm", "vignette");
+
+    for (String filterName : filterNames ){
+        filters.add(filterWithName(filterName));
+    }
+
+    GPUImage mGPUImage = new GPUImage(this);
+    mGPUImage.getBitmapForMultipleFilters(bmp,filters, new GPUImage.ResponseListener<Bitmap>() {
+        @Override
+        public void response(Bitmap bitmap) {
+            bitmaps.add(bitmap);
+        }
+    });
+
+    GridView gridView = (GridView) findViewById(R.id.gridViewFX);
+    gridView.setAdapter(new ImageAdapter(this));
+    gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+        }
+    });
+
+}
+
+private Bitmap scaleBitmap(Bitmap bm) {
+    int width = bm.getWidth();
+    int height = bm.getHeight();
+
+    Log.v("Pictures", "Width and height are " + width + "--" + height);
+
+    if (width > height) {
+        // landscape
+        float ratio = (float) width / maxWidth;
+        width = maxWidth;
+        height = (int)(height / ratio);
+    } else if (height > width) {
+        // portrait
+        float ratio = (float) height / maxHeight;
+        height = maxHeight;
+        width = (int)(width / ratio);
+    } else {
+        // square
+        height = maxHeight;
+        width = maxWidth;
+    }
+
+    Log.v("Pictures", "after scaling Width and height are " + width + "--" + height);
+
+    bm = Bitmap.createScaledBitmap(bm, width, height, true);
+    return bm;
+}
+private GPUImageFilter filterWithName(String name) {
+
+    GPUImageFilter mGPUImageFilter;
+    switch (name) {
+        default:
+        case "noFilter":
+            mGPUImageFilter = new GPUImageContrastFilter(.5f);
+            break;
+        case "grayscale":
+            mGPUImageFilter = new GPUImageGrayscaleFilter();
+            break;
+        case "documentary":
+            float[] color = new float[]{1.f, 1.f, 1.f, 1.f};
+            mGPUImageFilter = new GPUImageMonochromeFilter(.8f, color);
+            break;
+        case "sepia":
+            mGPUImageFilter = new GPUImageSepiaFilter(.85f);
+            break;
+        case "posterize":
+            mGPUImageFilter = new GPUImagePosterizeFilter();
+            break;
+        case "lomo":
+            mGPUImageFilter = new GPUImagePixelationFilter();
+            break;
+        case "cool":
+            GPUImageLookupFilter amatorka = new GPUImageLookupFilter();
+            amatorka.setBitmap(BitmapFactory.decodeResource(this.getResources(), R.drawable.lookup_amatorka));
+            mGPUImageFilter = amatorka;
+            break;
+        case "warm":
+            mGPUImageFilter = new GPUImageCrosshatchFilter();
+            break;
+        case "vignette":
+            PointF centerPoint = new PointF();
+            centerPoint.x = 0.5f;
+            centerPoint.y = 0.5f;
+            mGPUImageFilter = new GPUImageVignetteFilter(centerPoint, new float[]{0.0f, 0.0f, 0.0f, 0.0f}, 0.3f, 0.75f);
+            break;
+    }
+
+    return mGPUImageFilter;
+}
+
+public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return bitmaps.size();
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {
+            // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageBitmap(bitmaps.get(position));
+        return imageView;
+    }
+
+
+    }
+}
+</code></pre>
+
+<p>and the xml:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+android:paddingRight="@dimen/activity_horizontal_margin"
+android:paddingTop="@dimen/activity_vertical_margin"
+android:paddingBottom="@dimen/activity_vertical_margin"
+tools:context="com.example.andreaskaitis.myapplication.FilterActivity">
+
+android:background="@drawable/background">
+
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/layoutX">
+
+<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:textSize="75dp"
+    android:text="@string/effects"
+    android:layout_gravity="center_horizontal"
+    android:textColorHint="#ffffffff"
+    android:textColor="#ffffffff"
+    android:shadowColor="#000000"
+    android:shadowDx="1"
+    android:shadowDy="1"
+    android:shadowRadius="2"
+    />
+
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="50dp"
+    android:background="@drawable/layout_bg"
+    android:alpha="1"
+    android:id="@+id/roundedLayout">
+
+    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/gridViewFX"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:horizontalSpacing="4dip"
+        android:numColumns="3"
+        android:stretchMode="columnWidth"
+        android:verticalSpacing="4dip"
+        android:padding="4dip" />
+    </LinearLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p></p>
+
+<p>When I try to compile I get this:</p>
+
+<pre><code>    04-07 04:36:12.453    1527-1527/com.example.andreaskaitis.myapplication I/Choreographer﹕ Skipped 37 frames!  The application may be doing too much work on its main thread.
+04-07 04:36:12.485    1527-1565/com.example.andreaskaitis.myapplication W/dalvikvm﹕ threadid=22: thread exiting with uncaught exception (group=0xa4c40648)
+04-07 04:36:12.485    1527-1565/com.example.andreaskaitis.myapplication E/AndroidRuntime﹕ FATAL EXCEPTION: GLThread 119
+    java.lang.NullPointerException
+            at jp.co.cyberagent.android.gpuimage.GPUImageRenderer$3.run(GPUImageRenderer.java:184)
+            at jp.co.cyberagent.android.gpuimage.GPUImageRenderer.runAll(GPUImageRenderer.java:126)
+            at jp.co.cyberagent.android.gpuimage.GPUImageRenderer.onDrawFrame(GPUImageRenderer.java:115)
+            at android.opengl.GLSurfaceView$GLThread.guardedRun(GLSurfaceView.java:1523)
+            at android.opengl.GLSurfaceView$GLThread.run(GLSurfaceView.java:1240)
+</code></pre>
+
+<p>Any help with pointing out what I am doing wrong and how to fix it will be greatly appreciated!</p>

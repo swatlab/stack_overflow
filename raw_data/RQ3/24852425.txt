@@ -1,0 +1,356 @@
+<p>In the following code, does it make sense to have isMatched() in here (in a Value object/java bean)
+? What's a good design. btw, I tried compareTo, compare, hashSet etc. by following other posts of Stack overflow and somehow that still does not work for me to remove dups from two lists.</p>
+
+<pre><code>public class SessionAttributes { 
+
+private static final Logger LOGGER = Logger
+        .getLogger(SessionAttributes.class);
+
+public SessionNotificationAttributes(String userName, String sessionState) {
+    this.userName = userName;
+    this.sessionState = sessionState;
+}
+
+String userName;
+public String getUserName() {
+    return userName;
+}
+public void setUserName(String userName) {
+    this.userName = userName;
+}
+// .. getters/setters for sessionState
+
+ public static isMatched (List<SessionAttributes> list1, 
+             List<SessionAttributes> list2) {
+
+   //.. custom logic here...
+ }
+</code></pre>
+
+<p>}</p>
+
+<p>==== Entire Code per the ask in comment by David. Look at main() method. This is directly copied pasted from Eclipse to meet <a href="http://sscce.org/" rel="nofollow">http://sscce.org/</a>  requirement ========</p>
+
+<pre><code>package snippet;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+
+
+public class SessionAttributes  implements 
+    Comparable<SessionAttributes>, Comparator<SessionAttributes>  {
+
+private static final Logger LOGGER = Logger
+        .getLogger(SessionAttributes.class);
+
+public SessionAttributes(String userName, String sessionState) {
+    /*
+     * String nasPort, String endpointProfile, String audiSessionId, String
+     * epsStatus, String securityGroup, String nasIp, String postureStatus,
+     * String postureTimestamp) {
+     */
+
+    this.userName = userName;
+    this.sessionState = sessionState;
+
+    /*
+     * this.nasPort = nasPort; this.endpoinProfile = endpointProfile;
+     * this.auditSessionId = audiSessionId; this.epsStatus = epsStatus;
+     * this.securityGroup = securityGroup; this.nasIp = nasIp;
+     * this.postureStatus = postureStatus; this.postureTimestamp =
+     * postureTimestamp;
+     */
+
+}
+
+
+String userName;
+public String getUserName() {
+    return userName;
+}
+String sessionState;
+public String getSessionState() {
+    return sessionState;
+}
+public int compareTo(SessionAttributes o) {
+    // TODO Auto-generated method stub
+    if (this.getUserName().equals(o.getUserName()) && this.getSessionState().equalsIgnoreCase(o.getSessionState())) {
+        return 0;
+    }
+    return -1;
+}
+
+public String toString() {
+
+    return "\n User Name : " + this.getUserName() + " Session State : "
+            + getSessionState() + "\n";
+}
+
+
+
+static boolean isMatched(List<SessionAttributes> list1,
+        List<SessionAttributes> list2) {
+
+    if (null == list1 || null == list2)
+        return false;
+
+    System.out.println("Actual List=>" + list1);
+    System.out.println("Expected List=>" + list2);
+    Iterator<SessionAttributes> iterator = list1.iterator();
+
+    while (iterator.hasNext()) {
+        SessionAttributes actual = iterator.next();
+        Iterator<SessionAttributes> iterator2 = list2
+                .iterator();
+        while (iterator2.hasNext()) {
+            SessionAttributes expected = iterator2.next();
+            if (expected.getUserName().equalsIgnoreCase(
+                    actual.getUserName())) {
+                if (expected.getSessionState().equalsIgnoreCase(
+                        actual.getSessionState())) {
+                    System.out.println("Element matched - user name-"
+                            + expected.getUserName() + " State -"
+                            + expected.getSessionState());
+                    iterator.remove();
+                    iterator2.remove();
+                }
+            } else {
+                System.out.println("Element NOT matched - user name-"
+                        + expected.getUserName() + " State -"
+                        + expected.getSessionState());
+
+            }
+        }
+    }
+
+    System.out.println("Lists after removing Dups -");
+    System.out.println("list1 =>" + list1.toString() + " list2 -"
+            + list2.toString());
+
+    if (list1.size() > 0 || list2.size() > 0)
+        return false;
+
+    return true;
+}
+
+static void sortLists () {
+
+    List<SessionAttributes> expectedSessionList = new ArrayList<SessionAttributes>();
+
+    SessionAttributes user11 = new SessionAttributes(
+            "postureuser1", "STARTED"); //
+    // ,null,null,null,null,null,null,null,null);
+
+    SessionAttributes user12 = new SessionAttributes(
+            "postureuser1", "DISCONNECTED");
+
+    SessionAttributes user13 = new SessionAttributes(
+            "postureuser5", "STARTED");
+
+    // ,null,null,null,null,null,null,null,null);
+
+    expectedSessionList.add(user11);
+    expectedSessionList.add(user12);
+    expectedSessionList.add(user13);
+
+    List<SessionAttributes> actualSessionList = new ArrayList<SessionAttributes>();
+
+    SessionAttributes user3 = new SessionAttributes(
+            "postureuser1", "STARTED");
+    // ,null,null,null,null,null,null,null,null);
+
+    SessionAttributes user4 = new SessionAttributes(
+            "postureuser1", "DISCONNECTED");
+
+    SessionAttributes user5 = new SessionAttributes(
+            "postureuser2", "DISCONNECTED");
+
+    // ,null,null,null,null,null,null,null,null);
+
+    actualSessionList.add(user3);
+    actualSessionList.add(user4);
+    actualSessionList.add(user5);
+
+    Set<SessionAttributes> removeDups = new HashSet<SessionAttributes>();
+
+    boolean b1 = removeDups.add(user11);
+    boolean b2 = removeDups.add(user12);
+    boolean b3 = removeDups.add(user13);
+    boolean b4 = removeDups.add(user3);
+    boolean b5 = removeDups.add(user4);
+    boolean b6 = removeDups.add(user5);
+    System.out.println(" Set--" + removeDups);
+
+    // removeDups.addAll(expectedSessionList);
+    // removeDups.addAll(actualSessionList);
+
+    System.out.println("== Printing Set ====");
+    int countMisMatch = 0;
+
+    System.out.println(isMatched(actualSessionList, expectedSessionList));
+
+    // int isMatch = user3.compareTo(user1);
+    // System.out.println("Compare=>" + isMatch);
+}
+
+static void  sortSet () {
+
+    List<SessionAttributes> expectedSessionList = new ArrayList<SessionAttributes>();
+
+    SessionAttributes user11 = new SessionAttributes(
+            "postureuser1", "STARTED"); //
+    // ,null,null,null,null,null,null,null,null);
+
+    SessionAttributes user12 = new SessionAttributes(
+            "postureuser1", "DISCONNECTED");
+
+    SessionAttributes user13 = new SessionAttributes(
+            "postureuser5", "STARTED");
+
+    SessionAttributes user3 = new SessionAttributes(
+            "postureuser1", "STARTED");
+    // ,null,null,null,null,null,null,null,null);
+
+    SessionAttributes user4 = new SessionAttributes(
+            "postureuser1", "DISCONNECTED");
+
+    SessionAttributes user5 = new SessionAttributes(
+            "postureuser2", "DISCONNECTED");
+
+    // ,null,null,null,null,null,null,null,null);
+
+
+    Set<SessionAttributes> removeDups = new HashSet<SessionAttributes>();
+
+    boolean b1 = removeDups.add(user11);
+    boolean b2 = removeDups.add(user12);
+    boolean b3 = removeDups.add(user13);
+    boolean b4 = removeDups.add(user3);
+    boolean b5 = removeDups.add(user4);
+    boolean b6 = removeDups.add(user5);
+    System.out.println(" Set--" + removeDups);
+
+    // removeDups.addAll(expectedSessionList);
+    // removeDups.addAll(actualSessionList);
+
+    System.out.println("== Printing Set ====");
+    System.out.println(removeDups);
+
+    // int isMatch = user3.compareTo(user1);
+    // System.out.println("Compare=>" + isMatch);
+
+
+
+}
+
+public int compare(SessionAttributes o1,
+        SessionAttributes o2) {
+
+    LOGGER.debug("Compare called -[" + o1.getUserName() + "] ["
+            + o2.getUserName() + "]");
+    boolean isSameUserName = o1.userName.equalsIgnoreCase(o2.userName);
+    boolean isSameState = o1.sessionState
+            .equalsIgnoreCase(this.sessionState);
+
+    if (isSameUserName && isSameState)
+        return 0;
+
+    return -1;
+}
+
+public boolean equals(SessionAttributes obj) {
+
+    if (obj == null || !(obj instanceof SessionAttributes)) {
+        return false;
+    }
+    System.out.println(" In equals==");
+    boolean isSameUserName = obj.userName.equalsIgnoreCase(this.userName);
+    boolean isSameState = obj.sessionState
+            .equalsIgnoreCase(this.sessionState);
+    return (isSameUserName && isSameState);
+}
+
+public int hashCode() {
+
+    System.out.println(" in hashcode ");
+    int hash = 1;
+    hash = hash * 17 + this.getUserName().hashCode();
+    hash = hash * 31 + this.getSessionState().hashCode();
+    // hash = hash * 13 + this.getAuditSessionId().hashCode();
+    System.out.println(" hash=>" + hash);
+    return hash;
+}
+
+public static void main(String[] args) {
+    //sortSet();
+    sortLists();
+}
+</code></pre>
+
+<p>}</p>
+
+<p>==== Code from David which is supposed to remove dups. Pasting only relevant portion for better comparison. Somehow, this still does not work </p>
+
+<pre><code>    public int compareTo(SessionAttributesFromDavid o) {
+          if (this == o) {
+            return 0;
+        }
+        // Null is considered less than any object.
+        if (o == null) {
+            return 1;
+        }
+
+        // Use compareToIgnoreCase since you used equalsIgnoreCase in equals.
+
+        int diff = userName.compareToIgnoreCase(o.userName);
+        if (diff != 0)
+            return diff;
+
+        diff = sessionState.compareToIgnoreCase(o.sessionState);
+        return diff;
+    }
+ public boolean equals(Object o) {
+        // See if o is the same object. If it is, return true.
+        if (o == this) {
+            return true;
+        }
+
+        // The instanceof check also checks for null. If o is null, instanceof will be false.
+        if (!(o instanceof SessionAttributes)) {
+            return false;
+        }
+
+        SessionAttributes that = (SessionAttributes) o;
+        return userName.equalsIgnoreCase(that.userName) &&   sessionState.equalsIgnoreCase(sessionState);
+    }
+</code></pre>
+
+<p>Set removeDups = new TreeSet();</p>
+
+<pre><code>        boolean b1 = removeDups.add(user11);
+        boolean b2 = removeDups.add(user12);
+        boolean b3 = removeDups.add(user13);
+        boolean b4 = removeDups.add(user3);
+        boolean b5 = removeDups.add(user4);
+        boolean b6 = removeDups.add(user5);
+
+        System.out.println(" Set--" + removeDups);
+</code></pre>
+
+<p>Set--[
+ User Name : postureuser2 Session State : DISCONNECTED
+, 
+ User Name : postureuser1 Session State : STARTED
+, 
+ User Name : postureuser5 Session State : STARTED
+, 
+ User Name : postureuser1 Session State : DISCONNECTED
+, 
+ User Name : postureuser1 Session State : STARTED
+]</p>

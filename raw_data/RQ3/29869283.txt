@@ -1,0 +1,84 @@
+<p>I was write small application for android which use <code>GridView</code>. This grid show image from the SD Card. Fill images to grid I use Adapter. My problem is that where I scroll grid adapter automatically load from SD Card images, and my application in small time freezes. How I can reconfigured my <code>GridView</code> or adapter or maybe other component for my application work fast. Thank you.<img src="http://i.stack.imgur.com/S5MYQ.png" alt="enter image description here"></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gridview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:horizontalSpacing="10dp"
+    android:numColumns="2"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:layout_marginLeft="3dp"
+    android:layout_marginRight="3dp"
+    android:stretchMode="columnWidth"
+    android:verticalSpacing="10dp" />
+</code></pre>
+
+<p><strong>UPDATE</strong> </p>
+
+<pre><code>public class ImageAdapterFormGIF extends BaseAdapter {
+
+    public static String file_path = "";
+
+    public String[] p = getFileFromFolder();
+
+    Tools t = new Tools();
+    private Context mContext;
+
+    public ImageAdapterFormGIF(Context c) {
+        mContext = c;
+    }
+
+    Tools tools = new Tools();
+
+    public int getCount() {
+        return p.length;
+    }
+
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+
+    public View getView(int position,  View convertView, ViewGroup parent) {
+        ImageView imageView;
+
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams((tools.getWidth(mContext)-48)/2, (tools.getWidth(mContext)-48)/2));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+          //  imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageURI(Uri.parse(new File(p[position]).toString()));
+        imageView.setTag(p[position]);
+
+        return imageView;
+    }
+
+
+    private String[] getFileFromFolder() {
+        Tools tools = new Tools();
+        tools.checkSdcardFolders();
+        String path = "/sdcard/xx/gif/";
+        File f = new File(path);
+        File file[] = f.listFiles();
+        String[] s = new String[file.length];
+        for (int i = 0; i < file.length; i++) {
+            s[i] = "/sdcard/xx/gif/" + file[i].getName();
+        }
+        return s;
+    }
+
+}
+</code></pre>

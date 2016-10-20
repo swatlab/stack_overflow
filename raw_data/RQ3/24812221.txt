@@ -1,0 +1,126 @@
+<p>I'm trying to display images in gridview, I fetched images from remote server by soap service "in ImageAdapter1 class, method:set_mThumbIds()" and get these images to display in class "collection_Items"
+it doesn't work at all!
+can any one please help me!
+I want to fetch images from soap service and view them in girdview</p>
+
+<p>ImageAdapter1 class is:</p>
+
+<pre><code>public class Image_Adapter1 extends BaseAdapter {
+    private Context mContext;
+    Handler handler = new String[30];    
+    public String[] mThumbIds = new String[30];
+    // Constructor
+    public Image_Adapter1(Context c){
+        mContext = c;
+    }
+
+    @Override
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return mThumbIds[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    public void set_mThumbIds(){
+        new Thread(new Runnable() {                 
+            @Override
+            public void run() {
+                // TODO Auto-generated method stub
+                String NAMESPACE = "http://tempuri.org/";
+                String ACTION="http://tempuri.org/getImages";
+                String URL="http://10.0.2.2:50284/WebSite2/Service.asmx";
+                String METHOD="getImages";
+
+                SoapObject Req = new SoapObject(NAMESPACE,METHOD);
+
+                SoapSerializationEnvelope env = new SoapSerializationEnvelope(SoapSerializationEnvelope.VER11);
+                env.dotNet=true;
+                env.setOutputSoapObject(Req);
+                HttpTransportSE androidhttp = new HttpTransportSE(URL);
+
+                SoapObject Result = null;
+                try
+                {
+                    androidhttp.call(ACTION,env);
+                    Result = (SoapObject) env.getResponse();
+                }
+                catch (final Exception c)
+                {
+                    handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        // TODO Auto-generated method stub
+                        Toast.makeText(mContext, c.getMessage(),Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+
+                if (Result != null)
+                {
+                    for (int i=0; i<mThumbIds.length; i++)
+                    {
+                        mThumbIds[i] = Result.getPropertyAsString(i);
+                    }
+                 }
+                else 
+                    Toast.makeText(mContext, "there are no images",Toast.LENGTH_LONG).show();
+
+                }
+        }).start();
+
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        set_mThumbIds();
+        ImageView imageView;
+        if (convertView == null) {
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(150, 200));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(5, 5, 5, 5);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+        imageView.setImageURI(Uri.parse(mThumbIds[position]));
+        return imageView;
+    }
+}
+</code></pre>
+
+<p>and collection_Items class is:</p>
+
+<pre><code>public class Collection_Items extends Activity{
+
+    Image_Adapter1 imgadptr = new Image_Adapter1(this);
+    //___________________________________________________________
+     @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.collection_items);
+
+            GridView gridView = (GridView) findViewById(R.id.grid_view);
+            gridView.setAdapter(imgadptr);
+
+            gridView.setOnItemClickListener(new OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                    Intent i = new Intent(getApplicationContext(), Collection_Item_Details.class);
+                    i.putExtra("id", position);
+                    startActivity(i);
+                }
+            });
+        }
+     public void logout(View view){
+            startActivity(new Intent(Collection_Items.this, Main.class));
+        }
+}
+</code></pre>

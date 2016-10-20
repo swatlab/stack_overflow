@@ -1,0 +1,64 @@
+<p>I want to understand this exception in order to implement a proper fix.</p>
+
+<p>Overview:</p>
+
+<p>There's a ViewPager and it uses a FragmentStatePagerAdapter to instantiate 2 fragments via getItem and <code>MyFragmentClass.newInstance(...)</code>.</p>
+
+<p>Adapter's getItem looks like this:</p>
+
+<pre><code>@Override
+public Fragment getItem(int position) {
+    Fragment fragment = null;
+
+    switch(position) {
+        case 0:
+            fragment = MyFragment2.newInstance(par1);
+            break;
+        case 1:
+            fragment = MyFragment2.newInstance(par2, par3);
+            break;
+    }
+    return fragment;
+}
+</code></pre>
+
+<p>Problem:</p>
+
+<p>When the activity is destroyed, and created again, the adapter is intantiated again, the fragments created again with <code>MyFragmentClass.newInstance(...)</code>... but then on this line:</p>
+
+<p><code>pager.setAdapter(adapter);</code></p>
+
+<p>I get the mentioned exception.</p>
+
+<p>I looked in the source where the exception is thrown, it's this:</p>
+
+<pre><code>@Override
+public Fragment getFragment(Bundle bundle, String key) {
+    int index = bundle.getInt(key, -1);
+    if (index == -1) {
+        return null;
+    }
+    if (index >= mActive.size()) {
+        throw new IllegalStateException("Fragement no longer exists for key "
+                + key + ": index " + index);
+    }
+    Fragment f = mActive.get(index);
+    if (f == null) {
+        throw new IllegalStateException("Fragement no longer exists for key "
+                + key + ": index " + index);
+    }
+    return f;
+}
+</code></pre>
+
+<p>So, a bundle is passed there, with some state which references my old fragments, but this doesn't correspond to the current state (<code>mActive</code>), and the exceptio is thrown.</p>
+
+<p>I don't understand what's the idea behind this, or which way I'm actually supposed to instantiate the fragments... so I have no idea how to solve.</p>
+
+<p>I also tried some trick I got from some other context:</p>
+
+<p><code>pager.setOffscreenPageLimit(1);</code></p>
+
+<p>In order to avoid that the fragments are destroyed when they are off screen (in the case of 2 pages viewpager, although don't know if it works well with state adapter). But don't seems to be related, at least, it doesn't help, still get the same exception.</p>
+
+<p>What I did right now is put a try catch block around the line, and well, then I get blank pages instead of a crash box, also not good.</p>

@@ -1,0 +1,71 @@
+<p>I am using the sample ImageAdpater provided in the google documentation to populate a gridview with drawables. What I'm trying to do is populate the gridview with an array of drawables in an xml file.</p>
+
+<p>I use <code>TypedArray imgs = getResources().obtainTypedArray(R.array.log_type_icons);</code> to access the array from my main activity, but that doesn't work within the ImageAdapter class. </p>
+
+<p>The array:
+
+</p>
+
+<pre><code><string-array name="log_type_icons">
+    <item>@drawable/ic_launcher</item>
+    <item>@drawable/ic_headache</item>
+    <item>@drawable/ic_man</item>
+    <item>@drawable/ic_woman</item>
+    <item>@drawable/ic_kneel</item>
+</string-array>
+</code></pre>
+
+<p></p>
+
+<p>The working ImageAdapter:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    Log.i("log tag", "gotten resources: " + mThumbIds);
+    if (convertView == null) { // if it's not recycled, initialize some
+                                // attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = { R.drawable.ic_headache,
+        R.drawable.ic_kneel, R.drawable.ic_man, R.drawable.ic_woman,
+        R.drawable.ic_launcher };
+}
+</code></pre>
+
+<p>I know I could manually add the drawable references to the Integer array, but I reference the xml array from my main activity as well, so it would be ideal to be able to add to the xml and not have to change the code.
+Does anyone have any insight into this? Am I doing something wrong or missing Something obvious? </p>
+
+<p>Any help would be appreciated,
+Thank you</p>

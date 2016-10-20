@@ -1,0 +1,293 @@
+<p>I am trying to create an android app that takes information about an album and displays it in an expandable list view.The artist's name will be displayed as the parent item, and when artist is selected the albums by that artist will be displayed as the child. I have been able to get the list working so far by initializing the strings in the MyExpandableListAdapter class. However, I want to be able to press a button and add a new view to the List that contains the information. </p>
+
+<p>Here is my code:</p>
+
+<pre><code>package droid.musiclibrary;
+
+/**
+ * Some code taken from:
+ * http://www.dreamincode.net/forums/topic/270612-how-to-get-started-with-expandablelistview/ 
+ */
+
+import java.util.ArrayList;
+import java.util.List;
+import android.app.Activity;
+import android.app.ExpandableListActivity;
+import android.app.ListActivity;
+import android.content.Context;
+import android.content.Intent;
+import android.database.DataSetObserver;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.BaseExpandableListAdapter;
+import android.widget.EditText;
+import android.widget.ExpandableListAdapter;
+import android.widget.ExpandableListView;
+import android.widget.ListAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class AddContent extends Activity {
+
+    private Spinner spinArtist, spinGenre;
+    private EditText addArtist, addGenre, addTitle, addYear;
+    private ArrayAdapter<String> adapterArtist, adapterGenre;
+    private ArrayList<String> artists = new ArrayList<String>();
+    private ArrayList<String> genres = new ArrayList<String>();
+    private ArrayList<String> albums = new ArrayList<String>();
+    private ArrayList<String> albumList = new ArrayList<String>();
+    List<List<String>> albumArray = new ArrayList<List<String>>();
+    private ExpandableListView expList;
+    private MyExpandableListAdapter expAdapter;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        setContentView(R.layout.add_content);
+
+        expList = (ExpandableListView) findViewById(R.id.artistList);
+        expAdapter = new MyExpandableListAdapter(this);
+        expList.setAdapter(expAdapter);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // This is called when the Home (Up) button is pressed
+                // in the Action Bar.
+                Intent parentActivityIntent = new Intent(this, MainActivity.class);
+                parentActivityIntent.addFlags(
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                        Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(parentActivityIntent);
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public AddContent() {
+
+    }
+
+    public void addArtist(View view) {
+        spinArtist = (Spinner) findViewById(R.id.spinArtist);
+        addArtist = (EditText) findViewById(R.id.txtAddArtist);
+        if(addArtist.getText().toString().trim().equals(""))
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You need to enter an artist.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        else
+            artists.add(addArtist.getText().toString());
+
+        adapterArtist = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item, artists);
+        adapterArtist.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinArtist.setAdapter(adapterArtist);
+        addArtist.setText("");
+    }
+
+    public void addGenre(View view) {
+        spinGenre = (Spinner) findViewById(R.id.spinGenre);
+        addGenre = (EditText) findViewById(R.id.txtAddGenre);
+        if(addGenre.getText().toString().trim().equals(""))
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You need to enter a genre.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        else
+            genres.add(addGenre.getText().toString());
+
+        adapterGenre = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item, genres);
+        adapterGenre.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinGenre.setAdapter(adapterGenre);
+        addGenre.setText("");
+    }
+
+    public void addAlbum(View view) {
+
+        addTitle = (EditText) findViewById(R.id.txtAddTitle);
+        addYear = (EditText) findViewById(R.id.txtAddYear);
+
+        if(addTitle.getText().toString().trim().equals(""))
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You need to enter a title.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        else if(spinArtist.getSelectedItem().toString().trim().equals(""))
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You need to select an artist.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        else if(spinGenre.getSelectedItem().toString().trim().equals(""))
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You need to select a genre.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        else if(addYear.getText().toString().trim().equals(""))
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You need to enter a year.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        else
+        {
+            albums.add(addTitle.getText().toString().trim());           
+        }
+
+    }
+
+    public class MyExpandableListAdapter extends BaseExpandableListAdapter {
+        private Context context;
+
+        String[] groups = {"Silverstein"};
+        String[][] children = {{"Discovering the Waterfront"}};
+
+        public MyExpandableListAdapter(Context context) {
+            this.context = context;
+        }
+
+        public Object getChild(int groupPosition, int childPosition) {
+            return children[groupPosition][childPosition];
+        }
+
+        public long getChildId(int groupPosition, int childPosition) {
+            return childPosition;
+        }
+
+        public int getChildrenCount(int groupPosition) {
+            return children[groupPosition].length;
+        }
+
+        public TextView getGenericView() {
+            // Layout parameters for the ExpandableListView
+            AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+                    ViewGroup.LayoutParams.FILL_PARENT, 64);
+
+            TextView tv = new TextView(this.context);
+            tv.setLayoutParams(lp);
+
+            // Center the text vertically
+            tv.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+            // Set the text starting position
+            tv.setPadding(45, 0, 0, 0);
+            return tv;
+        }
+
+        public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
+                View convertView, ViewGroup parent) {
+
+            TextView textView = getGenericView();
+            textView.setText(getChild(groupPosition, childPosition).toString());
+            return textView;
+        }
+
+        public Object getGroup(int groupPosition) {
+            return groups[groupPosition];
+        }
+
+        public int getGroupCount() {
+                return groups.length;
+        }
+
+        public long getGroupId(int groupPosition) {
+            return groupPosition;
+        }
+
+        public View getGroupView(int groupPosition, boolean isExpanded, View convertView,
+                ViewGroup parent) {
+
+            TextView textView = getGenericView();
+            textView.setText(getGroup(groupPosition).toString());
+            return textView;
+        }
+
+        public boolean isChildSelectable(int groupPosition, int childPosition) {
+            return true;
+        }
+
+        public boolean hasStableIds() {
+            return true;
+        }
+    }
+
+    /*public void setArtist(ArrayList<String> artist) {
+        this.artists = artist;
+    }
+
+    public ArrayList<String> getArtist() {
+        return artist;
+    }
+
+    public void setAlbum(ArrayList<String> album) {
+        this.albums = album;
+    }
+
+    public ArrayList<String> getAlbum() {
+        return albums;
+    }
+
+    /**
+     * This will actually be used to sort the added content. 
+     * For example, when sorting by artist, the parent will be the artist's name
+     * and the child entries will be the albums by that artist.
+     * This will probably have to moved to a separate class (Sort.java???)
+     */
+    /*public void addItem(ExpandListChild item, ExpandListParent group) {
+        if(!artistList.contains(group)) {
+            artistList.add((group));
+        }
+        int index = artistList.indexOf(group);
+        ArrayList<ExpandListChild> ch = artistList.get(index).getItems();
+        ch.add(item);
+        artistList.get(index).setItems(ch);
+    }
+
+    public Object getChild(int parentPosition, int childPosition) {
+        ArrayList<ExpandListChild> chList = artistList.get(parentPosition).getItems();
+        return chList.get(childPosition);
+    }
+
+    public long getChildId(int parentPosition, int childPosition) {
+        return childPosition;
+    }*/
+}
+</code></pre>
+
+<p>Is there some way to add the artists and albums ArrayList to the String[] in MyExpandableListAdpter class? I have tried that many different ways and each time I get a NullPointerException.</p>
+
+<p>Any help would be appreciated, I have spent hours searching for an answer to this.</p>

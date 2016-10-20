@@ -1,0 +1,79 @@
+<p>I have an <code>Activity</code> containing some <code>Fragment</code>s in a <code>ViewPager</code>. Here is the adapter (the <code>mFooFragment</code>'s are members of the <code>Activity</code>. </p>
+
+<pre><code>private class HomePagerAdapter extends FragmentPagerAdapter
+{
+    public HomePagerAdapter(FragmentManager fm)
+    {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position)
+    {
+        switch (position)
+        {
+        case 0:
+            mSellingFragment = new SellingFragment();
+            return mSellingFragment;
+        case 1:
+            mSearchFragment = new SearchFragment();
+            return mSearchFragment;
+        case 2:
+            mProfileFragment = new ProfileFragment();
+            return mProfileFragment;
+        }
+        return null;
+    }
+
+    @Override
+    public int getCount()
+    {
+        return 3;
+    }
+}
+</code></pre>
+
+<p>And then I later do stuff like:</p>
+
+<pre><code>mSellingFragment.refresh();
+</code></pre>
+
+<p>Unfortunately, the member fragments can be <code>null</code>. One case I am ok with and can check for - the pages are lazily loaded so they are not available until they are shown. But that is ok, I only want <code>refresh()</code> to act on the visible page.</p>
+
+<p>But sometimes they are <code>null</code> even when visible. I <em>think</em> what is happening is this:</p>
+
+<p>My fragments have <code>setRetainInstance(true)</code> so when I navigate away from the activity it is destroyed but the fragments are retains, and then when I go back to it, the activity is recreated with the old fragments somehow, and <code>getItem()</code> is never called, so <code>mFooFragment</code> is never set.</p>
+
+<p>Is that right? How exactly is one supposed to handle this? One way I can think of is adding a load of <code>setFooFragment(FooFragment f) { mFooFragment = f; }</code> functions to the Activity and calling them from <code>FooFragment.onAttach()</code> but there must be a better way!</p>
+
+<h1>Edit</h1>
+
+<p>I looked up the source code of <code>FragmentPagerAdapter</code> (often the only way to get answers in Android-land!) and it is indeed the case that it saves the fragments:</p>
+
+<pre><code>@Override
+public Object instantiateItem(View container, int position) {
+    if (mCurTransaction == null) {
+        mCurTransaction = mFragmentManager.beginTransaction();
+    }
+
+    // Do we already have this fragment?
+    String name = makeFragmentName(container.getId(), position);
+    Fragment fragment = mFragmentManager.findFragmentByTag(name);
+    if (fragment != null) {
+        if (DEBUG) Log.v(TAG, "Attaching item #" + position + ": f=" + fragment);
+        mCurTransaction.attach(fragment);
+    } else {
+        fragment = getItem(position);
+        if (DEBUG) Log.v(TAG, "Adding item #" + position + ": f=" + fragment);
+        mCurTransaction.add(container.getId(), fragment,
+                makeFragmentName(container.getId(), position));
+    }
+    if (fragment != mCurrentPrimaryItem) {
+        fragment.setMenuVisibility(false);
+    }
+
+    return fragment;
+}
+</code></pre>
+
+<p>Unfortunately it doesn't make those reattached <code>Fragment</code>s available to subclasses!</p>

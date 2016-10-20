@@ -1,0 +1,67 @@
+<p>I am very new. I want to show two button and change their icons but I failed.
+I don't understand the problem.</p>
+
+<p><a href="http://developer.android.com/guide/topics/ui/actionbar.html" rel="nofollow">You can also use "always" to declare that an item always appear as an action button. </a> I read it and used always but it didn' work.</p>
+
+<p>menu_mainxml:</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:myapp="http://schemas.android.com/apk/res-auto" >
+<item android:id="@+id/action_settings"
+    android:title="@string/action_settings"
+    android:icon="@drawable/ic_action_toggle_setting"
+    myapp:showAsAction="always"/>
+
+<item android:id="@+id/action_about"
+    android:title="@string/action_about"
+    android:icon="@drawable/ic_action_toggle_about"
+    myapp:showAsAction="always"/>
+</code></pre>
+
+<p></p>
+
+<p>MainActivityjava:</p>
+
+<pre><code> import android.app.Activity;
+ import android.os.Bundle;
+ import android.view.Menu;
+ import android.view.MenuItem;
+
+public class MainActivity extends Activity {
+private MenuItem item1;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    item1= menu.findItem(R.id.action_about);
+
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+
+     //some code
+        return true;
+    }
+    if (id == R.id.action_about) {
+
+    //some code
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}}
+</code></pre>
+
+<p>My result:
+<a href="http://i.stack.imgur.com/w45zS.png" rel="nofollow"><img src="http://i.stack.imgur.com/w45zS.png" alt="enter image description here"></a></p>

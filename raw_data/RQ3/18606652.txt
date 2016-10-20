@@ -1,0 +1,237 @@
+<p>My SQLIte database is not preserving the previously stored data.I am getting huge trouble for this.I have not found any suitable solution for this.Please some one help me out of this. I want to store my data after the app gets restarted. I am posting my DBhelper class and Main Method.Please help.I want to preserve the data.
+This is My DBhelper Class.</p>
+
+<p><strong>My DBHelper CLass:</strong></p>
+
+<pre><code>public class DBhelper extends SQLiteOpenHelper {
+
+private static String DB_NAME = "photodb";
+private SQLiteDatabase myDataBase; 
+private DBhelper db;
+public Context myContext;
+File dbFile;
+File dbFilepath;
+AssetManager myassest;
+AssetFileDescriptor me;
+Cursor ch;
+
+public DBhelper(Context myContext) { 
+
+    super(myContext, DB_NAME, null, 1);
+    this.myContext = myContext;
+
+    System.out.println("Context value:--"+myContext);
+    String state=Environment.getExternalStorageState();
+    System.out.println("My Storage State:-"+state);
+
+}   
+
+public void createDataBase(Context mycontext) throws IOException{
+
+    boolean dbExist = checkDataBase();
+    if(dbExist){
+        System.out.println("Yes");
+        String path = dbFile.getAbsolutePath();
+
+        System.out.println("My database Path:--"+path);
+    }
+    if(!dbExist)
+    {
+        dbFile= new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+"PhotoApp");
+        boolean flag=dbFile.mkdir();
+        dbFilepath = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+"PhotoApp"+"/"+"photodb");
+        dbFilepath.createNewFile();
+
+
+        System.out.println("Not..."+flag); 
+        try {
+
+            copyDataBase(); 
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+    }   
+
+}
+
+public boolean checkDataBase()
+{
+    dbFile = new        File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+"photodb");
+    return dbFile.exists();
+}
+
+private void copyDataBase() throws IOException{
+
+    InputStream myInput = myContext.getAssets().open("photodb");
+    String outFileName = dbFilepath.getAbsolutePath();
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    String myPath =      Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+"PhotoApp"+"/"+"photodb" ;
+
+    System.out.println("MY DATABASE PATH:----"+myPath);
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null,     SQLiteDatabase.OPEN_READWRITE);
+}
+
+@Override
+public synchronized void close() {
+    if(myDataBase != null)
+        myDataBase.close();
+    super.close();
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public synchronized SQLiteDatabase getWritableDatabase() {
+
+    return super.getWritableDatabase();
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+
+}
+
+public void add(String imagepath,String description,String location)
+{
+    long rowid;
+    ContentValues myvalue = new ContentValues();
+    myvalue.put("imagepath",imagepath);
+    myvalue.put("description", description);
+    myvalue.put("location", location);
+
+    System.out.println("My Image Path:-"+imagepath+"My        Description:--"+description+"My location:--"+location);
+    String sql = "insert into photodetails          values(null,'"+imagepath+"','"+description+"','"+location+"');";
+    myDataBase.execSQL(sql);
+    rowid = myDataBase.insert("photodetails", "id", myvalue);
+    System.out.println("My Row ID is:----"+rowid);
+    System.out.println("DB Updated");
+}
+
+public ArrayList<String> getimages(){
+
+    ch = myDataBase.rawQuery("select imagepath from photodetails" , null);
+    ArrayList <String> imageloc = new ArrayList<String>();
+
+
+    if(ch.getCount() > 0){
+        ch.moveToFirst();
+        do
+        {
+            imageloc.add(ch.getString(0));
+
+        }while(ch.moveToNext());
+    }
+
+    return imageloc;
+}
+
+         public ArrayList<String> getDescriptions(){
+
+    ch = myDataBase.rawQuery("select description from photodetails" , null);
+
+    ArrayList <String> des = new ArrayList<String>();
+
+
+    if(ch.getCount() > 0){
+        ch.moveToFirst();
+        do
+        {
+
+            des.add(ch.getString(0));
+
+        }while(ch.moveToNext());
+    }
+
+    return des;
+}
+
+   public ArrayList<String> getLocations(){
+
+ch = myDataBase.rawQuery("select location from photodetails" , null);
+
+ArrayList <String> local = new ArrayList<String>();
+
+if(ch.getCount() > 0){
+    ch.moveToFirst();
+    do
+    {
+
+        local.add(ch.getString(0));
+    }while(ch.moveToNext());
+}
+
+return local;
+
+   }
+
+  }
+</code></pre>
+
+<p><strong>This is My MainActivity :</strong></p>
+
+<pre><code> public class MainActivity extends Activity {
+
+
+DBhelper mydb;
+Context cont;
+ArrayList<String> myval = new ArrayList<String>();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    mydb = new DBhelper(MainActivity.this);
+
+    try {
+        mydb.createDataBase(MainActivity.this);
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+
+    mydb.openDataBase();
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    mydb.add("helloworld", "Done", "Yes");
+    myval = mydb.getimages();
+    int i=myval.size();
+    System.out.println("SIze:----"+i);
+    finish();
+   // mydb.openDataBase();
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+}
+</code></pre>

@@ -1,0 +1,263 @@
+<p>I created a Tabbed Activaity using Android Studio 1.2.2 wizard,  I hope to close this window when I click the button btnClose, I write the code <code>rootView.getContext().finish();</code> , but it's wrong,
+and <code>PlaceholderFragmentOld.this.finish();</code> is wrong too. </p>
+
+<p>How can I do? Thanks!</p>
+
+<p><strong>PlaceholderFragmentOld.java</strong></p>
+
+<pre><code>package ui.tab;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.support.v4.app.Fragment;
+import android.widget.Button;
+import com.google.android.gms.ads.AdView;
+import info.dodata.messagecleanup.R;
+import bll.PublicParFun;
+import info.dodata.messagecleanup.R;
+
+public class PlaceholderFragmentOld extends Fragment {
+
+    private AdView adView;
+
+    public PlaceholderFragmentOld() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,  Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.cleanup_delete_fragment_old, container, false);
+
+        adView=(AdView) rootView.findViewById(R.id.adView);
+        PublicParFun.SetAD(adView);
+
+        SetButtons(rootView);
+
+        return rootView;
+    }
+
+
+    private void SetButtons(final View rootView){
+        rootView.findViewById(R.id.btnClose).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rootView.getContext().finish();
+            }
+        });
+
+    }
+
+
+}
+</code></pre>
+
+<p><strong>CleanupDelete.java</strong></p>
+
+<pre><code>package ui;
+
+import java.util.Locale;
+
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import info.dodata.messagecleanup.R;
+import ui.tab.PlaceholderFragmentOld;
+import ui.tab.PlaceholderFragmentPerson;
+import ui.tab.PlaceholderFragmentReduce;
+import ui.tab.PlaceholderFragmentTrim;
+
+public class CleanupDelete extends ActionBarActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.cleanup_delete);
+
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            Fragment fragment;
+            switch(position){
+                case 0:
+                    fragment = new PlaceholderFragmentOld();
+                    break;
+                case 1:
+                    fragment = new PlaceholderFragmentReduce();
+                    break;
+                case 2:
+                    fragment = new PlaceholderFragmentTrim();
+                    break;
+                case 3:
+                    fragment = new PlaceholderFragmentPerson();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid section number");
+            }
+
+            return fragment;
+        }
+
+
+
+        @Override
+        public int getCount() {
+            return 4;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.Tab_Old);
+                case 1:
+                    return getString(R.string.Tab_Reduce);
+                case 2:
+                    return getString(R.string.Tab_Trim);
+                case 3:
+                    return getString(R.string.Tab_Person);
+            }
+            return null;
+        }
+    }
+
+}
+</code></pre>
+
+<p><strong>cleanup_delete.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/pager"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+/>
+</code></pre>
+
+<p><strong>cleanup_delete_fragment_old.xml</strong></p>
+
+
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/border_ui" >
+
+
+    <LinearLayout
+        android:id="@+id/linearLayoutMain"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:paddingTop="20dip"
+        android:paddingLeft="10dip"
+        android:paddingRight="10dip"
+        android:orientation="vertical" >
+
+
+        <TextView
+            android:id="@+id/tVDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dip"
+            style="@style/myTextDesciption"
+            android:text="This is a descript"/>
+
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:id="@+id/linearLayoutToolBar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:weightSum="4" >
+
+        <Button
+            android:id="@+id/btnDelete"
+            style="@style/myTextMedium"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="@string/BtnDelete" />
+
+
+        <Button
+            android:id="@+id/btnClose"
+            style="@style/myTextMedium"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="@string/BtnClose" />
+
+    </LinearLayout>
+
+
+</RelativeLayout>
+</code></pre>

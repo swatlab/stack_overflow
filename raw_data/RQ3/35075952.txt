@@ -1,0 +1,309 @@
+<p>I am using a custom adapter to display my listview. First and foremost, I retrieve the information I want to display in my listview using an AsyncTask as the information is retrieved from a PHP web service. Then, to delete an item from the listview it once again calls the web service to do so. On success of the deletion of the selected item, the <code>onPostExecute</code> method receives the results and removes the item. Only on refresh of the fragment will it however be deleted from my listview. </p>
+
+<pre><code> @Override
+    public boolean onContextItemSelected(final MenuItem item) {
+
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+         switch (item.getItemId()) {
+            case VIEW_CONTACT:
+                // other actions
+                return true;
+
+            case EDIT_CONTACT:
+
+                return true;
+
+            case DELETE_CONTACT:
+                // Create AlertDialog for confirmation
+                AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                        .setTitle("Delete Contact List")
+                        .setMessage("Are you sure you want to delete this list?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // continue with delete
+                                new DeleteTask().execute();
+                                dialog.cancel();
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // do nothing
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert);
+
+                builder.show();
+                return true;
+        }
+
+        return true;
+    }
+</code></pre>
+
+<p>The above codes shows the context menu and when user selects delete, an alert dialog will prompt them to confirm the action. When they select ok, it executes the AsyncTask as follows:</p>
+
+<pre><code>public class DeleteTask extends AsyncTask<Void, String ,String>{
+
+    @Override
+    protected void onPreExecute(){
+        super.onPreExecute();
+        pDialog = ProgressDialog.show(context, null, "Loading", true);
+    }
+
+    @Override
+    protected String doInBackground(Void... params){
+        return  DeleteData();
+    }
+
+    @Override
+    protected void onPostExecute(String result){
+        super.onPostExecute(result);
+        pDialog.dismiss();
+
+        if (result.equals("1")) {
+            mAdapter.notifyDataSetChanged(); // this bit didn't work in updating/refreshing the listview
+            Toast.makeText(context, "List successfully deleted", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(context,
+                    "List not deleted", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private String DeleteData(){
+        int success = 0;
+
+        try {
+            List<NameValuePair> paramas = new ArrayList<NameValuePair>();
+            paramas.add(new BasicNameValuePair("listid", listID));
+            JSONParser jParserDelete = new JSONParser();
+            JSONObject jsonObjectA = jParserDelete.makeHttpRequest(Constant.URL
+                    + "removeList.php", "GET", paramas);
+            success = jsonObjectA.getInt(Constant.TAG_SUCCESS);
+            Log.d("contacts", jsonObjectA.toString());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return Integer.toString(success);
+    }
+}
+</code></pre>
+
+<p>I tried using the <code>mAdapter.notifyDataSetChanged();</code> but it didn't work. I know mAdapter is a global variable in the Activity class. Also, to note that my adapter is a custom class. I initially wanted to declare a boolean <code>deleteSuccess</code> globally, then at the <code>onPostExecute</code> set it to true on result == 1, but the <code>onContextItemSelected</code> does not wait for the onPostExecute and just takes the value of deleteSuccess as `false.</p>
+
+<p>Bottom line is, how can I remove the selected item from my adapter and thus successfully "refresh" the ListView right after I delete the item?</p>
+
+<p>Edit: </p>
+
+<p>This is my custom adapter class</p>
+
+<pre><code>import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
+import android.widget.SectionIndexer;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+
+import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
+
+public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAdapter, SectionIndexer, Filterable {
+
+    private final Context mContext;
+    private int[] mSectionIndices;
+    private Character[] mSectionLetters;
+    private LayoutInflater mInflater;
+    private ArrayList<String> mArrayList;
+
+    // for search function
+    private ArrayList<Glossary> glossariesList;
+    private ArrayList<Glossary> glossariesListForSearch;
+
+    public ContactsAdapter(Context context, ArrayList<String> arrayList, ArrayList<Glossary> glossaries) {
+        super();
+        mContext = context;
+        mArrayList = arrayList;
+        mInflater = LayoutInflater.from(context);
+        mSectionIndices = getSectionIndices();
+        mSectionLetters = getSectionLetters();
+
+        this.glossariesList = glossaries;
+        glossariesListForSearch = glossaries;
+    }
+
+    private int[] getSectionIndices() {
+        ArrayList<Integer> sectionIndices = new ArrayList<>();
+        char lastFirstChar = mArrayList.get(0).charAt(0);
+        sectionIndices.add(0);
+
+        for (int i = 1; i < mArrayList.size(); i++) {
+            if (mArrayList.get(i).charAt(0) != lastFirstChar) {
+                lastFirstChar = mArrayList.get(i).charAt(0);
+                sectionIndices.add(i);
+            }
+        }
+
+        int[] sections = new int[sectionIndices.size()];
+        for (int i = 0; i < sectionIndices.size(); i++) {
+            sections[i] = sectionIndices.get(i);
+        }
+        return sections;
+    }
+
+    private Character[] getSectionLetters() {
+
+        Character[] letters = new Character[mSectionIndices.length];
+        for (int i = 0; i < mSectionIndices.length; i++) {
+            letters[i] = mArrayList.get(mSectionIndices[i]).charAt(0);
+        }
+        return letters;
+    }
+
+
+    @Override
+    public int getCount() {
+        return glossariesList.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return glossariesList.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(R.layout.index_list_item_layout, parent, false);
+            holder.text = (TextView) convertView.findViewById(R.id.text);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        Glossary glossary = glossariesList.get(position);
+        holder.text.setText(glossary.getName());
+
+        return convertView;
+    }
+
+    @Override
+    public View getHeaderView(int position, View convertView, ViewGroup parent) {
+        HeaderViewHolder holder;
+
+        if (convertView == null) {
+            holder = new HeaderViewHolder();
+            convertView = mInflater.inflate(R.layout.index_header, parent, false);
+            holder.text = (TextView) convertView.findViewById(R.id.text1);
+            convertView.setTag(holder);
+        } else {
+            holder = (HeaderViewHolder) convertView.getTag();
+        }
+
+        // set header text as first char in name
+        CharSequence headerChar = glossariesList.get(position).getName().subSequence(0,1);
+        holder.text.setText(headerChar);
+
+        return convertView;
+    }
+
+    @Override
+    public long getHeaderId(int position) {
+        // return the first character of the country as ID because this is what
+        // headers are based upon
+        return glossariesList.get(position).getName().subSequence(0, 1).charAt(0);
+    }
+
+    @Override
+    public int getPositionForSection(int section) {
+        if (mSectionIndices.length == 0) {
+            return 0;
+        }
+
+        if (section >= mSectionIndices.length) {
+            section = mSectionIndices.length - 1;
+        } else if (section < 0) {
+            section = 0;
+        }
+        return mSectionIndices[section];
+    }
+
+    @Override
+    public int getSectionForPosition(int position) {
+        for (int i = 0; i < mSectionIndices.length; i++) {
+            if (position < mSectionIndices[i]) {
+                return i - 1;
+            }
+        }
+        return mSectionIndices.length - 1;
+    }
+
+    @Override
+    public Object[] getSections() {
+        return mSectionLetters;
+    }
+
+
+    class HeaderViewHolder {
+        TextView text;
+    }
+
+    class ViewHolder {
+        TextView text;
+    }
+
+
+    @Override
+    public Filter getFilter() {
+        return myFilter;
+    }
+
+    Filter myFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            FilterResults filterResults = new FilterResults();
+            ArrayList<Glossary> tempGlossaryList = new ArrayList<>();
+
+            if (constraint != null && glossariesListForSearch != null) {
+                int length = glossariesListForSearch.size();
+                int i = 0;
+                while (i < length) {
+                    Glossary item = glossariesListForSearch.get(i);
+
+                    if (item.getName().toLowerCase().contains(constraint.toString().toLowerCase())) {
+                        tempGlossaryList.add(item);
+                    }
+                    i++;
+                }
+                filterResults.values = tempGlossaryList;
+                filterResults.count = tempGlossaryList.size();
+            }
+            return filterResults;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            glossariesList = (ArrayList<Glossary>) results.values;
+            if (results.count > 0) {
+                notifyDataSetChanged();
+            } else {
+                notifyDataSetInvalidated();
+            }
+        }
+    };
+}
+</code></pre>

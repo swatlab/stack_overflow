@@ -1,0 +1,85 @@
+<p>I have many to many relation between Customer and BusinessUnit:</p>
+
+<pre><code>public class Customer extends AbstractEntity {
+
+    @JoinTable(name = "CUS_BUS_UNITS", 
+            joinColumns = {
+                @JoinColumn(name = "CUS_ID", referencedColumnName = "CUS_ID")},
+            inverseJoinColumns = {
+                @JoinColumn(name = "BUS_ID", referencedColumnName = "BUS_ID")})
+    @ManyToMany
+    private Collection<BusinessUnit> businessUnits;
+}
+
+public class BusinessUnit extends AbstractEntity {
+
+    @ManyToMany(mappedBy = "businessUnits")
+    private Collection<Customer> customers;
+
+}
+</code></pre>
+
+<p>When i call entityManager.merge(customer); on a customer (already in DB, not altered) i see these two sql commands in log:</p>
+
+<blockquote>
+  <p>Hibernate: update CUSTOMERS set CUS_DESCR=?, CUS_NAME=?, CUS_ENABLED=?
+  where CUS_ID=? Hibernate: delete from CUS_BUS_UNITS where CUS_ID=?</p>
+</blockquote>
+
+<p>Why is hibernate trying to delete a record from join table?
+I need only update customer record and possibly records in the join table - depends on if i added or removed business units on the customer. Business units should not be updated, deleted or inserted. </p>
+
+<p><strong>EDIT:</strong>
+My equals/hashCode are (defined in AbstractEntity):</p>
+
+<pre><code>public int hashCode() {
+    if (getId() != null) {
+        return getId().hashCode();
+    }
+    return super.hashCode();
+}
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (getClass() != obj.getClass()) {
+        return false;
+    }
+    AbstractEntity other = (AbstractEntity) obj;
+    if (getId() == null || other.getId() == null) {
+        return false;
+    }
+    if (!getId().equals(other.getId())) {
+        return false;
+    }
+    return true;
+}
+</code></pre>
+
+<p><strong>EDIT 2</strong>
+Converter for the form:</p>
+
+<pre><code>@FacesConverter("businessUnitConverter")
+public class BusinessUnitConverter implements Converter {
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getAsString(FacesContext context, UIComponent component, Object object) {
+        return ((BusinessUnit) object).getId().toString();
+    }
+
+
+    @Override
+    public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        BusinessUnit businessUnit = new BusinessUnit();
+        businessUnit.setId(Long.parseLong(value));
+        return businessUnit;
+    }
+
+}
+</code></pre>

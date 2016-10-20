@@ -1,0 +1,503 @@
+<p>I am getting this error when i call a new activity via intent and sending values via intent
+here i gave the class calling nw class and their codes separately please check the log cat too i am getting force close i am using android version 4.0.3</p>
+
+<h3>Activity calling another activity when btnf is called</h3>
+
+<pre><code>package dlp.android.digichronicle;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import android.app.Activity;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class displ extends Activity implements View.OnClickListener {
+    Button btnf;// done
+    TextView tvf;// ok
+    EditText edtf, edt2;// db txt
+
+    /** Called when the activity is first created. */
+
+    DBHandandler myDbHelper = new DBHandandler(this);
+    SQLiteDatabase Mydatabase;
+    String stattionlist, s1;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.displ);
+        tvf = (TextView) findViewById(R.id.tvf);
+        edtf = (EditText) findViewById(R.id.edtf);
+        edt2 = (EditText) findViewById(R.id.edt2);
+        btnf = (Button) findViewById(R.id.btnf);
+        btnf.setOnClickListener(this);
+        first();
+    }
+
+    private void first() {
+        String s1 = "", s2 = second.ge;
+        this.myDbHelper = new DBHandandler(this);
+        try {
+            FetchingData();
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        myDbHelper.openDataBase();
+        Mydatabase = myDbHelper.getWritableDatabase();
+        System.out.println("executed");
+        Mydatabase = myDbHelper.getReadableDatabase();
+        System.out.println("sure2");// debug info
+        // calling open() function which will show the text in table in EditText
+        // using SetText method
+        // Function is defined in DBHanadanler.java file
+        if (s2.equalsIgnoreCase("memo")) {
+            s1 = myDbHelper.open("memo", Mydatabase);
+            System.out.println("Called memo" + s1 + s2);
+        }
+        else if (s2.equalsIgnoreCase("reminder"))
+            s1 = myDbHelper.open("reminder", Mydatabase);
+        else if (s2.equalsIgnoreCase("tasks"))
+            s1 = myDbHelper.open("tasks", Mydatabase);
+        else if (s2.equalsIgnoreCase("events"))
+            s1 = myDbHelper.open("events", Mydatabase);
+        else if (s2.equalsIgnoreCase("accounts"))
+            s1 = myDbHelper.open("accounts", Mydatabase);
+        System.out.println("after open");
+
+        edtf.setText(s1);
+        System.out.println("string is : " + s1 + "2nd time");// debug info
+        edtf.setMovementMethod(new ScrollingMovementMethod());
+        tvf.setText(s2);
+    }
+
+    // call the method which is present in datbase
+    private void FetchingData() throws SQLException {
+
+        try {
+            myDbHelper.onCreateDataBase();
+
+        } catch (IOException ioe) {
+
+            throw new Error("Unable to create database");
+
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+        if (v == btnf)
+        {
+            s1 = edtf.getText().toString();
+
+            Intent i3 = new Intent(displ.this, inter.class);
+            i3.putExtra("value", s1);
+            startActivity(i3);
+
+        }
+
+    }
+}
+</code></pre>
+
+<h3>Newly called activity class</h3>
+
+<pre><code>package dlp.android.digichronicle;
+
+import java.io.IOException;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
+
+public class inter extends Activity {
+    DBHandandler myDbHelper;
+    SQLiteDatabase Mydatabase;
+    String s;
+    String stattionlist, DBname = "widgets";
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle b = getIntent().getExtras();
+        System.out.println(b);
+        if (b != null)
+        {
+            s = b.getString("value");
+            System.out.println("INtermediate" + s);
+            Log.e("xxxx2", s);
+            try {
+                FetchingData();
+                myDbHelper.openDataBase();
+                System.out.println("****** After open db");
+                Mydatabase = myDbHelper.getWritableDatabase();
+                System.out.println("###### after writable");
+
+                System.out.println("###### updated string :" + s);
+                String s2 = second.ge;
+
+                if (s2.equalsIgnoreCase("memo")) {
+                    myDbHelper.updateevent("memo", Mydatabase, s);
+                    System.out.println("Called memo" + s2 + s);
+                }
+                else if (s2.equalsIgnoreCase("reminder"))
+                    myDbHelper.updateevent("reminder", Mydatabase, s);
+                else if (s2.equalsIgnoreCase("tasks"))
+                    myDbHelper.updateevent("tasks", Mydatabase, s);
+                else if (s2.equalsIgnoreCase("events"))
+                    myDbHelper.updateevent("events", Mydatabase, s);
+                else if (s2.equalsIgnoreCase("accounts"))
+                    myDbHelper.updateevent("accounts", Mydatabase, s);
+                Toast.makeText(getApplicationContext(), "updated", Toast.LENGTH_LONG).show();
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            myDbHelper.close();
+            Mydatabase.close();
+            Intent i3 = new Intent(inter.this, second.class);
+            startActivity(i3);
+            System.out.println("button end btnf");
+        }
+        // stattionlist=this.myDbHelper.updateevent(Mydatabase,s1);
+        // Toast.makeText(getApplicationContext()," "+s1,100).show();
+
+    }
+
+    private void FetchingData() {
+        // TODO Auto-generated method stub
+        try {
+            myDbHelper.onCreateDataBase();
+        } catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+        try {
+            myDbHelper.openDataBase();
+            Mydatabase = myDbHelper.getWritableDatabase();
+            System.out.println("executed");
+        } catch (SQLException sqle) {
+            throw sqle;
+        }
+    }
+
+    // Intent i2=new Intent(intermediate.this,second.class);
+    // startActivity(i2);
+}
+</code></pre>
+
+<h3>Database Helper class</h3>
+
+<pre><code>package dlp.android.digichronicle; // ur package name
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.Toast;
+
+public class DBHandandler extends SQLiteOpenHelper {
+    private static String DB_PATH = "/data/data/dlp.android.digichronicle/databases/";
+    private static String DB_NAME = "widget.sqlite";
+    private static String TABLENAME = "widgets";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+    public static final String KEY_MEM = "memo";
+    public static final String KEY_TAS = "tasks";
+    public static final String KEY_REM = "reminder";
+    public static final String KEY_EVE = "events";
+    public static final String KEY_DAT = "dated";
+    public static final String KEY_INC = "income";
+    public static final String KEY_EXP = "exp";
+    ArrayList<String> sw;
+    String s = "";
+
+    public DBHandandler(Context context) {
+        super(context, DB_NAME, null, 1);
+        // TODO Auto-generated constructor stub
+        this.myContext = context;
+    }
+
+    public int onCreateDataBase() throws IOException
+    {
+        boolean dbExist = checkDatabase();
+        if (dbExist) {
+            return 0;
+        }
+        else {
+            System.out.println("onCreateDataBase method execution starts");
+            this.getReadableDatabase();
+            copyDataBase();
+            return 1;
+
+        }
+    }
+
+    private boolean checkDatabase() {
+        // TODO Auto-generated method stub
+        SQLiteDatabase checkDB = null;
+        try
+        {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+        if (checkDB != null) {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+
+    }
+
+    private void copyDataBase() throws IOException {
+
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    public String open(String s3, SQLiteDatabase Mydatabase)
+    {
+        ArrayList<String> list = new ArrayList<String>();
+        System.out.println("b4 string is : " + list);
+        String s = "";
+        try {
+            System.out.println("string got is " + s3);
+            String dt = MainActivity.g;
+            System.out.println("Date obtained is " + dt);
+            Cursor c = Mydatabase.rawQuery("select " + " " + s3 + " "
+                    + "from widgets where dated='" + dt + "'", null);
+            System.out.println("after cursor");
+            if (c.moveToFirst())
+            {
+
+                System.out.println("cursor" + c.moveToFirst());
+                do {
+                    System.out.println("before columnindex");
+                    list.add(c.getString(c.getColumnIndex(s3)));
+                    System.out.println("after columnindex");
+                    System.out.println(" string is :  " + list);
+
+                } while (c.moveToNext());
+            }
+            c.close();
+        } catch (SQLiteException se) {
+            Mydatabase.close();
+            System.out.println("exception");
+        }
+
+        s = list.toString();
+        int len = s.length();
+        s = s.substring(1, len - 1);
+        System.out.println("string is : " + list);
+        System.out.println("string is : " + s);
+        return s;
+
+    }
+
+    public String eventdia(SQLiteDatabase mydatabase1) {
+
+        ArrayList<String> list = new ArrayList<String>();
+        System.out.println("Event dialogue start " + list);
+        String s = "";
+        try {
+            System.out.println("geting event");
+            String dt = MainActivity.g;
+            System.out.println("Date obtained in events " + dt);
+            Cursor c = mydatabase1.rawQuery("select events from widgets where dated='" + dt + "'",
+                    null);
+
+            if (c.moveToFirst())
+            {
+                System.out.println("cursor" + c.moveToFirst());
+                do {
+                    list.add(c.getString(c.getColumnIndex("events")));
+                    System.out.println(" string is :  " + list);
+
+                } while (c.moveToNext());
+            }
+            c.close();
+        } catch (SQLiteException se) {
+            mydatabase1.close();
+            System.out.println("exception");
+        }
+
+        s = list.toString();
+        int len = s.length();
+        s = s.substring(1, len - 1);
+        System.out.println("string is : " + list);
+        System.out.println("string is : " + s);
+        return s;
+    }
+
+    public String checkin(SQLiteDatabase mydatabase1) {
+
+        ArrayList<String> list = new ArrayList<String>();
+        System.out.println("b4 string is : " + list);
+        String s = "";
+        try {
+            System.out.println("geting event");
+            String dt = MainActivity.g;
+            System.out.println("Date obtained is" + dt);
+            Cursor c = mydatabase1.rawQuery("select events from widgets where dated='" + dt + "'",
+                    null);
+
+            if (c.moveToFirst())
+            {
+                System.out.println("cursor" + c.moveToFirst());
+                do {
+                    list.add(c.getString(c.getColumnIndex("events")));
+                    System.out.println(" string is :  " + list);
+
+                } while (c.moveToNext());
+            }
+            c.close();
+        } catch (SQLiteException se) {
+            mydatabase1.close();
+            System.out.println("exception");
+        }
+
+        s = list.toString();
+        int len = s.length();
+        s = s.substring(1, len - 1);
+        System.out.println("string is : " + list);
+        System.out.println("string is : " + s);
+        return s;
+    }
+
+    public void updateevent(String ge, SQLiteDatabase mydatabase2, String s1) {
+        // TODO Auto-generated method stub
+        String dt = MainActivity.g;
+        System.out.println("###### before query");
+        ContentValues cvupdate = new ContentValues();
+        cvupdate.put(ge, s1);
+
+        mydatabase2.update(TABLENAME, cvupdate, KEY_DAT + "=" + dt, null);
+
+        // mydatabase2.rawQuery("update widgets set memo="+" "+s1+" "+" where dated='"+dt+"'",null);
+        // mydatabase2.rawQuery("update widgets set "+" "+ge+" = "+s1+" "+"where where dated='"+dt+"'",null);
+        System.out.println("###### after query");
+    }
+
+    // Function inserting new record
+    public void Insertinto(SQLiteDatabase mydatabase2, String date, String memo, String tasks,
+            String reminder, float income, String events, float exp)
+    {
+        ContentValues data = createContentValues(date, memo, tasks, reminder, income, events, exp);
+        System.out.println("data " + data + "  is ");
+        mydatabase2.insert(TABLENAME, null, data);
+        System.out.println("record is done ");
+    }
+
+    // return a content of the database
+    private ContentValues createContentValues(String date, String memo, String tasks,
+            String reminder, float income, String events, float exp)
+    {
+        ContentValues values = new ContentValues();
+        values.put(KEY_DAT, date);
+        values.put(KEY_MEM, memo);
+        values.put(KEY_TAS, tasks);
+        values.put(KEY_REM, reminder);
+        values.put(KEY_INC, income);
+        values.put(KEY_EVE, events);
+        values.put(KEY_EXP, exp);
+        return values;
+    }
+
+    // write ur retreival methods here
+}
+</code></pre>
+
+<h3>Log cat errors</h3>
+
+<pre><code>D/AndroidRuntime(553): Shutting down VM
+W/dalvikvm(553): threadid=1: thread exiting with uncaught exception (group=0x409c01f8)
+E/AndroidRuntime(553): FATAL EXCEPTION: main
+E/AndroidRuntime(553): java.lang.RuntimeException: Unable to start activity ComponentInfo{dlp.android.digichronicle/dlp.android.digichronicle.inter}: java.lang.NullPointerException
+E/AndroidRuntime(553):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1956)
+E/AndroidRuntime(553):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1981)
+E/AndroidRuntime(553):  at android.app.ActivityThread.access$600(ActivityThread.java:123)
+E/AndroidRuntime(553):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1147)
+E/AndroidRuntime(553):  at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(553):  at android.os.Looper.loop(Looper.java:137)
+E/AndroidRuntime(553):  at android.app.ActivityThread.main(ActivityThread.java:4424)
+E/AndroidRuntime(553):  at java.lang.reflect.Method.invokeNative(Native Method)
+E/AndroidRuntime(553):  at java.lang.reflect.Method.invoke(Method.java:511)
+E/AndroidRuntime(553):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+E/AndroidRuntime(553):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+E/AndroidRuntime(553):  at dalvik.system.NativeStart.main(Native Method)
+E/AndroidRuntime(553): Caused by: java.lang.NullPointerException
+E/AndroidRuntime(553):  at dlp.android.digichronicle.inter.FetchingData(inter.java:84)
+E/AndroidRuntime(553):  at dlp.android.digichronicle.inter.onCreate(inter.java:28)
+E/AndroidRuntime(553):  at android.app.Activity.performCreate(Activity.java:4465)
+E/AndroidRuntime(553):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1049)
+E/AndroidRuntime(553):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1920)
+E/AndroidRuntime(553):    ... 11 more
+I/dalvikvm(553): threadid=3: reacting to signal 3
+I/dalvikvm(553): Wrote stack traces to '/data/anr/traces.txt'
+I/dalvikvm(553): threadid=3: reacting to signal 3
+I/dalvikvm(553): Wrote stack traces to '/data/anr/traces.txt'
+I/dalvikvm(553): threadid=3: reacting to signal 3
+I/dalvikvm(553): Wrote stack traces to '/data/anr/traces.txt'
+</code></pre>

@@ -1,0 +1,51 @@
+<p>For some reason the <code>android:layout_height="200sp"</code> attribute does not have any effect. The preview gets drawn correctly in Android Studio but if I run my App the list items are not changing their size according to <code>android:layout_height="200sp"</code>. I am using this <code>RelativeLayout</code> as a list item for a <code>ListView</code>.</p>
+
+<p>Any suggestions?</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="120dip"
+    android:background="#ffffff"
+    >
+
+    <ImageView
+        android:id="@+id/icon"
+        android:src="@drawable/ic_launcher"
+
+        android:layout_width="50dip"
+        android:layout_height="50dip"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentTop="true"
+        android:layout_gravity="center"
+
+        />
+
+</RelativeLayout>
+</code></pre>
+
+<h1>@Edit:</h1>
+
+<p>I've made a simpler example. I would assume that the list items would be <code>120dip</code> in height and got an icon on their left side with <code>50x50 dip</code> in size. The reality is that the list items have the same height as the <code>ImageView</code> for some reason.</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    // TODO Auto-generated method stub
+    ViewHolder holder;
+    if(convertView == null){
+        convertView = mInflater.inflate(R.layout.listview_nearbylist_item, null);
+        holder = new ViewHolder();
+        //holder.text1 = (TextView) convertView.findViewById(R.id.text1);
+        //holder.text2 = (TextView) convertView.findViewById(R.id.text2);
+        //holder.text3 = (TextView) convertView.findViewById(R.id.text3);
+
+        convertView.setTag(holder);
+    } else {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    //holder.text1.setText(items.get(position).getRestaurantName());
+    //holder.text2.setText(items.get(position).getRestaurantGenre());
+    //holder.text3.setText("08:00 - 18:00 Uhr");
+
+    return convertView;
+}
+</code></pre>

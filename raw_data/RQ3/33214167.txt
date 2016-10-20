@@ -1,0 +1,150 @@
+<p>know anyone how can I add one back button on my action bar? I want to add the back button befor INFO tab. I've try some method but no one of them don't work for me. Well let's start with started.</p>
+
+<p>In this <a href="http://i.stack.imgur.com/OjbTL.jpg" rel="nofollow">image</a> in left part it's what I need to do as actionbar and in the right part it's how looks my project right now.</p>
+
+<p>I've try to put that code for add the back button but it don't works:</p>
+
+<pre><code>  actionBar.setDisplayShowTitleEnabled(false);
+  actionBar.setHomeButtonEnabled(true);
+</code></pre>
+
+<p>Here it's my Activity:
+public class TrailActivity extends FragmentActivity implements ActionBar.TabListener {</p>
+
+<pre><code>SectionsPagerAdapter mSectionsPagerAdapter;
+
+ViewPager mViewPager;
+Intent intent;
+Trail trail;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    intent = getIntent();
+    setContentView(R.layout.trail_fracment_main);
+
+    trail = intent.getParcelableExtra("trail");
+
+    final ActionBar actionBar = getActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    actionBar.setDisplayShowTitleEnabled(false);
+    actionBar.setHomeButtonEnabled(true);
+
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    });
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
+    }
+}
+@Override
+public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        if (position == 0) {
+            InfoFragments infoFragments = new InfoFragments();
+            infoFragments.setTrail(trail);
+            Fragment fragment = infoFragments;
+            return fragment;
+        } else if (position == 1) {
+            return new MapFragments();
+
+        } else {
+            return new WondersFragments();
+        }
+
+    }
+
+    @Override
+    public int getCount() {
+        return 3;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            case 2:
+                return getString(R.string.title_section3).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>
+
+<p>Some one told me to try to implement OnBackStackChangedListener and after that he want to put in my code and that:</p>
+
+<pre><code>@Override
+public void onCreate(Bundle savedInstanceState) {
+    //Listen for changes in the back stack
+    getSupportFragmentManager().addOnBackStackChangedListener(this);
+    //Handle when activity is recreated like on orientation Change
+    shouldDisplayHomeUp();
+}
+
+@Override
+public void onBackStackChanged() {
+    shouldDisplayHomeUp();
+}
+
+public void shouldDisplayHomeUp(){
+   //Enable Up button only  if there are entries in the back stack
+   boolean canback = getSupportFragmentManager().getBackStackEntryCount()>0;
+   getSupportActionBar().setDisplayHomeAsUpEnabled(canback);
+}
+
+@Override
+public boolean onSupportNavigateUp() {
+    //This method is called when the up button is pressed. Just the pop back stack.
+    getSupportFragmentManager().popBackStack();
+    return true;
+}
+</code></pre>
+
+<p>Also I've try to add and that override method, but again... nothing happen :(</p>
+
+<pre><code>    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // app icon in action bar clicked; goto parent activity.
+                this.finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+</code></pre>
+
+<p>I've try and that... but again... I've don't obtain any result :(.</p>
+
+<p>So please guys, if anyone know how can I solve that problem, please show me.. I really need to do that and how much fast is possible.</p>

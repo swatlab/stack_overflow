@@ -1,0 +1,186 @@
+<p>I am trying to implement a navigation drawer in android studio. All of the examples I find seem to be using a ListView, I would prefer a linearLayout. </p>
+
+<p>The problem I am having is that when I call isDrawerOpen, my app crashes with "No drawer view found with gravity LEFT". </p>
+
+<p>I have searched all day on Stack and Google but have not found anything that worked. I have tried:</p>
+
+<pre><code>navDrawerLayout.isDrawerOpen(Gravity.LEFT)
+navDrawerLayout.isDrawerOpen(Gravity.RIGHT)
+navDrawerLayout.isDrawerOpen(GravityCompat.START)
+navDrawerLayout.isDrawerOpen(GravityCompat.END)
+navDrawerLayout.isDrawerOpen(navLinearLayout)
+android:gravity="left"
+android:gravity="start"
+android:gravity="left|start"
+android:gravity="start|left"
+android:gravity="right"
+android:gravity="end"
+android:gravity="right|end"
+android:gravity="end|right"
+</code></pre>
+
+<p>and every combination of the above, but nothing seems to work. What else could I be doing wrong to cause this crash?</p>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>import android.content.res.Configuration;
+import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
+
+public class MainActivity extends ActionBarActivity {
+
+    private Toolbar toolbar;
+    private DrawerLayout navDrawerLayout;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+    private LinearLayout navLinearLayout;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        loadToolbar();
+        loadNavigationDrawer();
+    }
+
+    private void loadNavigationDrawer() {
+        navDrawerLayout = (DrawerLayout) findViewById(R.id.nav_drawer_layout);
+        navLinearLayout = (LinearLayout) findViewById(R.id.nav_linear_layout);
+
+        actionBarDrawerToggle = new ActionBarDrawerToggle(
+                this,
+                navDrawerLayout,
+                toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
+        ) {
+            public void onDrawerClosed(View view){
+                super.onDrawerClosed(view);
+                invalidateOptionsMenu();
+                syncState();
+            }
+            public void onDrawerOpened(View view){
+                super.onDrawerOpened(view);
+                invalidateOptionsMenu();
+                syncState();
+            }
+        };
+        navDrawerLayout.setDrawerListener(actionBarDrawerToggle);
+        actionBarDrawerToggle.syncState();
+    }
+
+    private void loadToolbar(){
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        actionBarDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        actionBarDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                if (navDrawerLayout.isDrawerOpen(GravityCompat.START)){
+                    //navDrawerLayout.closeDrawer(Gravity.LEFT);
+                } else {
+                    //navDrawerLayout.openDrawer(Gravity.LEFT);
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+       }
+    }
+}
+</code></pre>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/primary"
+        app:theme="@style/ToolbarTheme"
+        app:popupTheme="@style/Theme.AppCompat"/>
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/nav_drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <FrameLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:id="@+id/nav_linear_layout"
+            android:background="@color/white"
+            android:layout_width="@dimen/navigation_drawer_width"
+            android:layout_height="match_parent"
+            android:gravity="start"
+            android:orientation="vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Header"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Item 1" />
+
+        </LinearLayout>
+
+    </android.support.v4.widget.DrawerLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>The Error</strong></p>
+
+<pre><code>java.lang.IllegalArgumentException: No drawer view found with gravity LEFT
+        at android.support.v4.widget.DrawerLayout.openDrawer(DrawerLayout.java:1293)
+        at android.support.v7.app.ActionBarDrawerToggle.toggle(ActionBarDrawerToggle.java:290)
+        at android.support.v7.app.ActionBarDrawerToggle.access$100(ActionBarDrawerToggle.java:64)
+        at android.support.v7.app.ActionBarDrawerToggle$1.onClick(ActionBarDrawerToggle.java:200)
+        at android.view.View.performClick(View.java:4756)
+        at android.view.View$PerformClick.run(View.java:19749)
+        at android.os.Handler.handleCallback(Handler.java:739)
+        at android.os.Handler.dispatchMessage(Handler.java:95)
+        at android.os.Looper.loop(Looper.java:135)
+        at android.app.ActivityThread.main(ActivityThread.java:5221)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:372)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+</code></pre>

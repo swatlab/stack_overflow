@@ -1,0 +1,60 @@
+<p>The values are in the ArrayList <code>q</code> displayed in console </p>
+
+<pre><code>for(int i=0;i<q.size();i++)
+    {
+        Log.i("outside",""+q.get(i).getAS_name());
+    }
+
+lv = (ListView) findViewById(R.id.listView1);
+      //calling constructor
+    lv.setAdapter(new CustomAdapter(MainActivity.this,q));
+    //lv.setAdapter(adapter);
+</code></pre>
+
+<p>CustomAdapter.java</p>
+
+<pre><code>class CustomAdapter extends ArrayAdapter<GS>
+  {
+       ArrayList<GS> list;
+       LayoutInflater mInfalter;    
+       public CustomAdapter(Context context, ArrayList<GS> list)
+       {
+          super(context,R.layout.customlayout,list);
+          this.list= list;  
+          mInfalter = LayoutInflater.from(context);
+        for(int i=0;i<list.size();i++)
+        {
+            Log.i("................",""+list.get(i).getAS_name()); //-----displayed in logcat-----
+        }
+
+       }
+       @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+          ViewHolder holder;
+          Log.i("..........","Hello in getView"); //--not displayed in logcat
+          if(convertView==null)
+          {
+               convertView = mInfalter.inflate(R.layout.customlayout,parent,false);
+               holder = new ViewHolder();
+               holder.tv1 = (TextView)convertView.findViewById(R.id.textView1); 
+               convertView.setTag(holder); 
+          }else{
+                holder = (ViewHolder)convertView.getTag();
+          } 
+
+                holder.tv1.setText(list.get(position).getAS_name());
+          return convertView;
+    }
+
+  }
+ static class ViewHolder
+    {
+        TextView tv1;
+    }  
+</code></pre>
+
+<p>getView() is not called even once ! </p>
+
+<p>What mistake am i doing?</p>
+
+<p>Thanks in advance</p>

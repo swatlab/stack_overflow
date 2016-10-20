@@ -1,0 +1,29 @@
+<p>I am using <code>android-support-v7-appcompat</code> library.</p>
+
+<p>In my fragment I have a custom action bar with different controls. onclick of button, I change the drawer hamburger icon to back button.</p>
+
+<p>Code :</p>
+
+<pre><code>((MyActivity)getActivity()).mDrawerToggle.setDrawerIndicatorEnabled(false);
+                    actionBar.setHomeButtonEnabled(true);
+                    actionBar.setDisplayHomeAsUpEnabled(true);
+</code></pre>
+
+<p>Now I have a back button displaying on the screen. When I click on the back button nothing happens.</p>
+
+<p>I tried this in my fragment :</p>
+
+<pre><code>@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        // Respond to the action bar's Up/Home button
+        case android.R.id.home:
+            Log.i("Back Button ", "back button clicked ");
+            return true;
+        default: 
+            return super.onOptionsItemSelected(item);
+        }
+    }
+</code></pre>
+
+<p>But still nothing works.</p>

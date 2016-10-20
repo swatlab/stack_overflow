@@ -1,0 +1,207 @@
+<p>I have to make a database of question and their answer.I made it using sqlitedatabase browser 
+and put in Assets folder.
+This is my code to retrieve the row of a particular question id.</p>
+
+<p>Some important information My database name is extenalDB.
+my Tablename is question;</p>
+
+<p>having coloum :     id,question,ans</p>
+
+<p>i have to search for question having id 201.</p>
+
+<p>when i write my query which is in question.java show error id undeclared.</p>
+
+<p>I am new to stackoverflow so if i could not make my self clear please ask</p>
+
+<p>this is my DatabaseHelper class code  </p>
+
+<pre><code> public class DatabaseHelper extends SQLiteOpenHelper{
+
+//The Android's default system path of your application database.
+String DB_PATH =null;
+
+private static String DB_NAME = "extenalDB";
+
+private SQLiteDatabase myDataBase; 
+
+private final Context myContext;
+
+/**
+ * Constructor
+ * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+ * @param context
+ */
+public DatabaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+    DB_PATH="/data/data/"+context.getPackageName()+"/"+"databases/";
+}    // Creates a empty database on the system and rewrites it with your owndatabase.*/
+public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }else{
+
+        //By calling this method and empty database will be created into the default system path
+           //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }}
+     private boolean checkDataBase(){
+     SQLiteDatabase checkDB = null;
+     try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+    public Cursor query(String table,String[] columns, String selection,String[]                  selectionArgs,String groupBy,String having,String orderBy){
+    return myDataBase.query("question", null, null, null, null, null, null);
+}
+    }
+</code></pre>
+
+<p>And another class question.java where by clicking on start buttom question answer and their id is shown in toast message.
+the code of question.java is.</p>
+
+<pre><code>public class question extends Activity{
+Cursor c=null;
+int rid=201;
+
+ @Override
+    public void onCreate(Bundle savedInstanceState) {
+    Intent mintent = getIntent();
+        int intValue = mintent.getIntExtra("qtype",0);
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.question);
+
+
+        ((Button)findViewById(R.id.button1)).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+
+
+                 DatabasseHelper myDbHelper = new DatabasseHelper(question.this);
+                 try {
+
+                    myDbHelper.createDataBase();
+
+            } catch (IOException ioe) {
+
+                throw new Error("Unable to create database");
+
+            }
+
+            try {
+
+                myDbHelper.openDataBase();
+
+            }catch(SQLException sqle){
+
+                throw sqle;
+
+            }
+            Toast.makeText(question.this, "Success", Toast.LENGTH_SHORT).show();
+
+
+
+            c=myDbHelper.query("question", null, id + "=" + rid, null, null,null, null);
+
+                    Toast.makeText(question.this,
+
+                            "id: " + c.getString(0) + "\n" +
+                            "question: " + c.getString(1) + "\n" +
+                            "ans: " + c.getString(2) + "\n" +
+
+                            Toast.LENGTH_LONG).show();
+
+
+            }
+        });
+
+
+        }}
+</code></pre>

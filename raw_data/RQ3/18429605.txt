@@ -1,0 +1,473 @@
+<p>I am developing Android, i used codes from tutorials to write my app,
+my app is a chatbot which take an input (string) from user and give suitable answer:
+for example user types "hi" and chatbot answer "hi there"</p>
+
+<p>my app works fine, but i tried to add a method to handle if user type last inputSentence again in input, i just added simple if() to check repetition, but now problem faced new problem.
+when user and chatbot chat to eahother and then user press back button on phone, and then back to app and try to chat again, when user type something in input, then when chatbot try to find  suitable answer from database, program crashed with "force stop" error,</p>
+
+<p>i just added code here and make new method BOLD:It's a little long...</p>
+
+<pre><code>package com.color.speechbubble;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Random;
+
+import android.app.ListActivity;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.hardware.Camera.Size;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.text.InputFilter.LengthFilter;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+/**
+ * MessageActivity is a main Activity to show a ListView containing Message
+ * items
+ * 
+ * @author Adil Soomro
+ * @author Mehrdad4all
+ * 
+ */
+public class MessageActivity extends ListActivity {
+    /** Called when the activity is first created. */
+
+    // Variables,Constants and Objects $$$$$$$$$$$$$$$$$$
+    // DATABASE VARIABLES
+    private String USER = "user";
+    private String SHOMPET = "shompet";
+
+    Utility utility_obj = new Utility();
+
+    private static String newMessage = "null in sql";
+    ir.mehrdadsalimi.ShompetBot.DataBaseHelper myDbHelper = new ir.mehrdadsalimi.ShompetBot.DataBaseHelper(
+            this);
+
+    ArrayList<Message> messages;
+    AwesomeAdapter adapter;
+    EditText text;
+    static Random rand = new Random();
+    static String sender;
+
+    // to save USER chat Log and check repeatation
+    ArrayList<String> userChatLogArray = new ArrayList<String>();
+    // to check whether this is user's first input
+    public static Boolean firstInput = true;
+
+    // $$$$$$$$$$$$$$$$$$$
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        text = (EditText) this.findViewById(R.id.text);
+
+        sender = utility_obj.sender[rand.nextInt(utility_obj.sender.length - 1)];
+        this.setTitle("ShompetBot(" + sender + ")");
+        messages = new ArrayList<Message>();
+
+        // here we choose between two method, user starts chat or ShompetBot
+        // starts it!
+        // we use random method to choose,
+        // it makes ShompetBot more Real!
+        // we have 7 condition 4 for user starts which is nothing
+        // and 4 which ShompetBot choose one of this sentences randomly
+        switch (rand.nextInt(7)) {
+        case 0:
+            messages.add(new Message("Welcome here!", false));
+
+            break;
+        case 1:
+            messages.add(new Message("user, how are you doing today??!", false));
+            break;
+        case 2:
+            messages.add(new Message("What's up?", false));
+            break;
+        case 3:
+            messages.add(new Message("Hey, How can i help you?", false));
+            break;
+
+        default:
+            break;
+        }
+
+        // messages.add(new Message("Hello", false));
+        // messages.add(new Message("Hi!", true));
+        // messages.add(new Message("Wassup??", false));
+        // messages.add(new
+        // Message("nothing much, working on speech bubbles.",true));
+        // messages.add(new Message("you say!", true));
+        // messages.add(new Message("oh thats great. how are you showing them",
+        // false));
+
+        adapter = new AwesomeAdapter(this, messages);
+        setListAdapter(adapter);
+
+        // addNewMessage(new
+        // Message("mmm, well, using 9 patches png to show them.", true));
+
+    }
+
+    public void sendMessage(View v) {
+        String newMessage = text.getText().toString().trim();
+        userChatLogArray.add(newMessage);
+        this.newMessage = newMessage;
+        if (newMessage.length() > 0) {
+            text.setText("");
+            addNewMessage(new Message(newMessage, true));
+            new SendMessage().execute();
+        }
+    }
+
+    private class SendMessage extends AsyncTask<Void, String, String> {
+        @Override
+        protected String doInBackground(Void... params) {
+            try {
+                Thread.sleep(2000); // simulate a network call
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            this.publishProgress(String.format("%s started writing", sender));
+            try {
+                Thread.sleep(2000); // simulate a network call
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            this.publishProgress(String.format("%s has entered text", sender));
+            try {
+                Thread.sleep(3000);// simulate a network call
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // **************************************************
+            try { // here
+                myDbHelper.createDataBase(); // we
+            } catch (IOException ioe) { // create
+                throw new Error("Unable to create database"); // and
+            } // open
+            try { // DB
+                myDbHelper.openDataBase(); //
+            } catch (SQLException sqle) { //
+                throw sqle; //
+            } //
+            SQLiteDatabase db = myDbHelper.getReadableDatabase();// make an
+            // readable
+            // database
+            // from
+            // existing
+            // one
+            String shompetAnswer = "";// shompet final answer
+            **if (checkRepeatation(firstInput)) {
+                shompetAnswer = " rep test";
+            } else {**
+                // here we first edit userInput to make it easier to search
+                // for suitable answer in DB
+                editEndOfNewMessage();
+
+                Cursor cursor = db.rawQuery(
+                        "SELECT shompet FROM exact_sentence WHERE " + USER
+                                + " = '" + newMessage + "'", null);// query
+                                                                    // exact_sentence
+                                                                    // table
+                ArrayList<String> stringArrayList = new ArrayList<String>();
+                String shompetAnswersSet[] = null;
+                String tempString = "";
+                // check if got answer from exact_sentence table(first engine)
+                if (cursor.moveToFirst()) {
+                    do {
+                        // add to arraylist
+                        tempString = cursor.getString(cursor
+                                .getColumnIndex("shompet"));
+                        stringArrayList.add(tempString);
+
+                    } while (cursor.moveToNext());
+                    shompetAnswersSet = stringArrayList
+                            .toArray(new String[stringArrayList.size()]);
+                    shompetAnswer = shompetAnswersSet[rand
+                            .nextInt(shompetAnswersSet.length)];
+                    cursor.close();
+                }
+                // Here we will use second engine to search DB with 40% accuracy
+                else {
+
+                    cursor = db.rawQuery("SELECT shompet FROM sentence "
+                            + "WHERE LENGTH(user) = ( "
+                            + " SELECT MAX(LENGTH(user)) FROM sentence "
+                            + "  WHERE ? LIKE '%' || " + USER + " || '%' "
+                            + ") AND ? LIKE '%' || " + USER + " || '%' ",
+                            new String[] { newMessage, newMessage });
+
+                    // check if find answer from second engine
+                    if (cursor.moveToFirst()) {
+                        do {
+                            // add to arraylist
+                            tempString = cursor.getString(cursor
+                                    .getColumnIndex("shompet"));
+                            stringArrayList.add(tempString);
+
+                        } while (cursor.moveToNext());
+                        shompetAnswersSet = stringArrayList
+                                .toArray(new String[stringArrayList.size()]);
+                        shompetAnswer = shompetAnswersSet[rand
+                                .nextInt(shompetAnswersSet.length)];
+                    }
+                    cursor.close();
+                }
+                // ***************************************************
+
+            }
+            // to prevent from onPause and onResume errors
+            myDbHelper.close();
+            return shompetAnswer;
+        }
+
+        @Override
+        public void onProgressUpdate(String... v) {
+
+            if (messages.get(messages.size() - 1).isStatusMessage)// check
+                                                                    // wether we
+                                                                    // have
+                                                                    // already
+                                                                    // added a
+                                                                    // status
+                                                                    // message
+            {
+                messages.get(messages.size() - 1).setMessage(v[0]); // update
+                                                                    // the
+                                                                    // status
+                                                                    // for that
+                adapter.notifyDataSetChanged();
+                getListView().setSelection(messages.size() - 1);
+            } else {
+                addNewMessage(new Message(true, v[0])); // add new message, if
+                                                        // there I'm fine,
+                                                        // thanks, what about
+                                                        // you?is no existing
+                                                        // status message
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String text) {
+            if (messages.get(messages.size() - 1).isStatusMessage)// check if
+                                                                    // there is
+                                                                    // any
+                                                                    // status
+                                                                    // message,
+                                                                    // now
+                                                                    // remove
+                                                                    // it.
+            {
+                messages.remove(messages.size() - 1);
+            }
+
+            addNewMessage(new Message(text, false)); // add the original message
+                                                        // from server.
+        }
+
+    }
+
+    void addNewMessage(Message m) {
+        messages.add(m);
+        adapter.notifyDataSetChanged();
+        getListView().setSelection(messages.size() - 1);
+    }
+
+    void editEndOfNewMessage() {
+
+        // here we edit userinput from useless sign at the end of the statement
+        while (newMessage.charAt(newMessage.length() - 1) == '!'
+                || newMessage.charAt(newMessage.length() - 1) == '.'
+                || newMessage.charAt(newMessage.length() - 1) == '?') {
+            newMessage = newMessage.substring(0, newMessage.length() - 1);
+        } //
+        newMessage = newMessage.trim();// delete whitespace from end of
+                                        // statement
+        newMessage = newMessage.toLowerCase();// clear!
+    }
+
+    **public Boolean checkRepeatation(Boolean input)// check equality of user
+    // //
+    // input with last user
+    { // input for repeatation
+        if (input) {
+            firstInput = false;
+            return false;
+        } else {
+            String userChatLog[] = userChatLogArray
+                    .toArray(new String[userChatLogArray.size()]);
+            if (userChatLog[userChatLog.length - 2].equals(newMessage)) {
+                return true;
+            }
+            return false;
+        }
+    }**
+
+}
+</code></pre>
+
+<p>and class which extend SQLiteOpenHelper class:</p>
+
+<pre><code>package ir.mehrdadsalimi.ShompetBot;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.color.speechbubble/databases/";
+
+    private static String DB_NAME = "ShompetBot_DBTest";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = Environment.getExternalStorageDirectory() + "/" + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+}
+</code></pre>

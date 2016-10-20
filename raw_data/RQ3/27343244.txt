@@ -1,0 +1,126 @@
+<p>I want to create a 2 TreeSets to hold sorted Employee Objects,one based on Employee id(int) and other based on Employee name(String).</p>
+
+<p>I have overridden <code>equals()</code> and <code>hashcode()</code> and <code>toString()</code> in the Employee class shown below.</p>
+
+<pre><code>public class Employee {
+    private int id;
+    private String name;
+    @Override
+    public String toString() {
+        return "\nEmployee [id=" + id + ", name=" + name + "]";
+    }
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Employee other = (Employee) obj;
+        if (id != other.id)
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+    public Employee(int id, String name) {
+        super();
+        this.id = id;
+        this.name = name;
+    }
+    public int getId() {
+        return id;
+    }
+    public String getName() {
+        return name;
+    }
+
+
+}
+</code></pre>
+
+<p>I made 2 Comparators for the 2 TreeSets,</p>
+
+<pre><code>public class EmployeeNameComparator implements Comparator<Employee> {
+
+    @Override
+    public int compare(Employee o1, Employee o2) {
+        return o1.getName().compareTo(o2.getName());
+
+    }
+
+}
+
+
+
+
+public class EmployeeIdComparator implements Comparator<Employee>{
+
+    @Override
+    public int compare(Employee o1, Employee o2) {
+
+        if(o1.getId()<o2.getId())return -1;
+        else if(o1.getId()>o2.getId())return 1;
+        else    return 0;
+    }
+
+
+}
+</code></pre>
+
+<p>The Problem is the TreeSet which stores elements based on Id prints the output correctly  ,but the one which stores the elements based on name does not print it as expected,</p>
+
+<pre><code>public class TreeSetTest {
+
+    public static void main(String[] args) {
+        //Employee Objects
+        Employee e1=new Employee(24, " bJohn");
+        Employee e2=new  Employee(14, "aJonathan");
+        Employee e3=new Employee(4, "cJobs");
+
+        //put into a List and Print as it is
+        ArrayList<Employee> employees=new ArrayList<Employee>(3);
+        employees.add(e1);employees.add(e2);employees.add(e3);
+        System.out.println(employees);
+
+        //now create 2  Treesets with  sorted id and Sorted Name
+
+        //the 2 comparators for name and Id
+        EmployeeNameComparator employeeNameComparator=new EmployeeNameComparator();
+        EmployeeIdComparator employeeIdComparator=new EmployeeIdComparator();
+
+        //creating the 2 tree Sets
+        TreeSet<Employee> employeeNameTree=new TreeSet<Employee>(employeeNameComparator);
+        employeeNameTree.addAll(employees);
+
+        TreeSet<Employee> employeesIdTree=new TreeSet<Employee>(employeeIdComparator);
+        employeesIdTree.addAll(employees);
+        //Printing both
+        System.out.println(employeeNameTree);
+        System.out.println(employeesIdTree);
+    }
+}
+</code></pre>
+
+<p><strong>Output:</strong></p>
+
+<pre><code>[Employee [id=24, name= bJohn], Employee [id=14, name=aJonathan], Employee [id=4, name=cJobs]]
+[Employee [id=24, name= bJohn], Employee [id=14, name=aJonathan], Employee [id=4, name=cJobs]]
+[Employee [id=4, name=cJobs], Employee [id=14, name=aJonathan], Employee [id=24, name= bJohn]]
+</code></pre>
+
+<p>As you can see ,row 2 isn't sorted based on the name values.</p>
+
+<p>My assumption all along is that the <code>a.compareTo(b)</code> in String class checks if String 'a' comes before or after String 'b' in the dictionary ie checks the alphabetical order , am i right ?, then why isn't the output as expected?</p>

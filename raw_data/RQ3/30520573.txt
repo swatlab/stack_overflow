@@ -1,0 +1,457 @@
+<p>I have implement a custom listview with a search functionality. When i run the code and type an alphabet in the search box, my application clash. Can anyone help me? thank you.</p>
+
+<p><strong>AllProductActivity</strong></p>
+
+<pre><code>public class AllProductActivity extends Activity {
+
+// Progress Dialog
+//private ProgressDialog pDialog;
+
+private SweetAlertDialog pDialog;
+
+// Creating JSON Parser object
+JSONParser2 jParser = new JSONParser2();
+
+ArrayList<HashMap<String, String>> productsList;
+
+ArrayList<HashMap<String, String>> searchResults;
+
+ListView list;
+LazyAdapter adapter;
+
+
+// url to get all products list
+private static String url_all_products = "http://gemini888.tk/test4/android_connect/get_all_products.php";
+
+// JSON Node names
+public static final String TAG_SUCCESS = "success";
+public static final String TAG_PRODUCTS = "products";
+public static final String TAG_PID = "uid";
+public static final String TAG_NAME = "itemname";
+public static final String TAG_PRICE = "price";
+public static final String TAG_PATH = "path";
+
+// products JSONArray
+JSONArray products = null;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.all_products);
+
+    list = (ListView)findViewById(android.R.id.list);
+    final EditText editsearch = (EditText)findViewById(R.id.searchBox);
+
+    //testing
+    if (android.os.Build.VERSION.SDK_INT > 9)
+    {
+    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+    StrictMode.setThreadPolicy(policy);
+    }
+
+    // Hashmap for ListView
+    productsList = new ArrayList<HashMap<String, String>>();
+
+    // Loading products in Background Thread
+    new LoadAllProducts().execute();
+
+    searchResults=new ArrayList<HashMap<String,String>>(productsList);
+
+
+
+    editsearch.addTextChangedListener(new TextWatcher() { //edit search
+        //Event when changed word on EditTex
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String searchString=editsearch.getText().toString();
+                int textLength=searchString.length();
+                searchResults.clear();
+
+                for (int i = 0; i < productsList.size(); i++)
+                {
+                    String searchName = productsList.get(i).get("TAG_NAME").toString();
+                    if(textLength<=searchName.length()){
+                         if(searchString.equalsIgnoreCase(searchName.substring(0,textLength)))
+                             searchResults.add(productsList.get(i));
+                    }
+                }
+
+                adapter.notifyDataSetChanged();
+              }
+        public void beforeTextChanged(CharSequence s, int start, int count,
+                 int after) {
+
+
+               }
+
+               public void afterTextChanged(Editable s) {
+
+
+               }
+              });
+    // on seleting single product
+    // launching Edit Product Screen
+    list.setOnItemClickListener(new OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view,
+                int position, long id) {
+            // getting values from selected ListItem
+            String pid = ((TextView) view.findViewById(R.id.pid)).getText()
+                    .toString();
+
+            // Starting new intent
+            Intent in = new Intent(getApplicationContext(),
+                    ViewDetailsActivity.class);
+            // sending pid to next activity
+            in.putExtra(TAG_PID, pid);
+
+            // starting new activity and expecting some response back
+            startActivityForResult(in, 100);
+        }
+    });
+
+}
+
+// Response from Edit Product Activity
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    // if result code 100
+    if (resultCode == 100) {
+        // if result code 100 is received
+        // means user edited/deleted product
+        // reload this screen again
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
+    }
+
+}
+
+/**
+ * Background Async Task to Load all product by making HTTP Request
+ * */
+class LoadAllProducts extends AsyncTask<String, String, String> {
+
+    /**
+     * Before starting background thread Show Progress Dialog
+     * */
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        //pDialog = new ProgressDialog(AllProductActivity.this);
+        //pDialog.setMessage("Loading products. Please wait...");
+        //pDialog.setIndeterminate(false);
+        //pDialog.setCancelable(false);
+        //pDialog.show();
+
+        pDialog = new SweetAlertDialog(AllProductActivity.this, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#A5DC86"));
+        pDialog.setTitleText("Loading products. Please wait...");
+        //pDialog.setIndeterminate(false);
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+
+    }
+
+    /**
+     * getting All products from url
+     * */
+    protected String doInBackground(String... args) {
+        // Building Parameters
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        // getting JSON string from URL
+        JSONObject json = jParser.makeHttpRequest(url_all_products, "GET", params);
+
+        // Check your log cat for JSON reponse
+        Log.d("All Products: ", json.toString());
+
+        try {
+            // Checking for SUCCESS TAG
+            int success = json.getInt(TAG_SUCCESS);
+
+            if (success == 1) {
+                // products found
+                // Getting Array of Products
+                products = json.getJSONArray(TAG_PRODUCTS);
+
+                // looping through All Products
+                for (int i = 0; i < products.length(); i++) {
+                    JSONObject c = products.getJSONObject(i);
+
+                    // Storing each json item in variable
+                    String id = c.getString(TAG_PID);
+                    String iname = c.getString(TAG_NAME);
+                    String price = c.getString(TAG_PRICE);
+                    String path = c.getString(TAG_PATH);
+
+                    // creating new HashMap
+                    HashMap<String, String> map = new HashMap<String, String>();
+
+                    // adding each child node to HashMap key => value
+                    map.put(TAG_PID, id);
+                    map.put(TAG_NAME, iname);
+                    map.put(TAG_PRICE, price);
+                    map.put(TAG_PATH, path);
+
+                    // adding HashList to ArrayList
+                    productsList.add(map);
+                }
+            } else {
+                // no products found
+                // Launch Add New product Activity
+                Intent i = new Intent(getApplicationContext(),
+                        NewProductActivity.class);
+                // Closing all previous activities
+                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(i);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * After completing background task Dismiss the progress dialog
+     * **/
+    protected void onPostExecute(String file_url) {
+        // dismiss the dialog after getting all products
+        pDialog.dismiss();
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+
+        adapter=new LazyAdapter(AllProductActivity.this, productsList);
+        list.setAdapter(adapter);
+
+            }
+        });
+
+    }
+
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) { 
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            // app icon in action bar clicked; go home
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
+
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item); 
+    }
+  }
+  }
+</code></pre>
+
+<p><strong>LazyAdapter</strong></p>
+
+<pre><code>public class LazyAdapter extends BaseAdapter {
+
+private Activity activity;
+private ArrayList<HashMap<String, String>> data;
+private static LayoutInflater inflater=null;
+public ImageLoader imageLoader;
+
+public LazyAdapter(Activity a, ArrayList<HashMap<String, String>> d) {
+    activity = a;
+    data=d;
+    inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    imageLoader=new ImageLoader(activity.getApplicationContext());
+}
+
+private class ViewHolder
+{
+ ImageView thumb_image;
+ TextView pid, itemname, price;
+
+}
+
+ViewHolder viewHolder;
+
+
+@Override
+public int getCount() {
+    return data.size();
+}
+
+@Override
+public Object getItem(int position) {
+     return position;
+}
+
+@Override
+public long getItemId(int position) {
+    return position;
+}
+
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+
+    View vi=convertView;
+    if(convertView==null){
+        vi = inflater.inflate(R.layout.list_item, null);
+        viewHolder=new ViewHolder();
+
+    viewHolder.pid = (TextView)vi.findViewById(R.id.pid);
+    viewHolder.itemname = (TextView)vi.findViewById(R.id.name);
+    viewHolder.price = (TextView)vi.findViewById(R.id.price);
+    viewHolder.thumb_image = (ImageView)vi.findViewById(R.id.imageView1); //
+
+    vi.setTag(viewHolder);
+
+    }else
+        viewHolder=(ViewHolder) vi.getTag();
+
+
+    HashMap<String, String> song = new HashMap<String, String>();
+    song = data.get(position);
+
+    viewHolder.pid.setText(song.get(AllProductActivity.TAG_PID));
+    viewHolder.itemname.setText(song.get(AllProductActivity.TAG_NAME));
+    viewHolder.price.setText(song.get(AllProductActivity.TAG_PRICE));
+    imageLoader.DisplayImage(song.get(AllProductActivity.TAG_PATH), viewHolder.thumb_image); //
+
+
+
+
+    Animation animation;
+    animation = AnimationUtils.loadAnimation(activity, R.anim.slide);
+    //animation = AnimationUtils.loadAnimation(activity, (position > lastPosition) ?
+        //  R.anim.up_from_bottom : R.anim.down_from_top);
+    vi.startAnimation(animation);
+
+    return vi;
+}
+
+}
+</code></pre>
+
+<p><strong>Error Log</strong></p>
+
+<pre><code> 05-28 23:01:59.237: E/InputEventSender(1261): Exception dispatching finished signal.
+ 05-28 23:01:59.247: E/MessageQueue-JNI(1261): Exception in MessageQueue callback: handleReceiveCallback
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261): java.lang.NullPointerException
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at mygp.gptrade.AllProductActivity$1.onTextChanged(AllProductActivity.java:99)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.widget.TextView.sendOnTextChanged(TextView.java:7408)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.widget.TextView.handleTextChanged(TextView.java:7467)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.widget.TextView$ChangeWatcher.onTextChanged(TextView.java:9183)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.text.SpannableStringBuilder.sendTextChanged(SpannableStringBuilder.java:962)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.text.SpannableStringBuilder.replace(SpannableStringBuilder.java:496)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.text.SpannableStringBuilder.replace(SpannableStringBuilder.java:435)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.text.SpannableStringBuilder.replace(SpannableStringBuilder.java:30)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.text.method.QwertyKeyListener.onKeyDown(QwertyKeyListener.java:223)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.text.method.TextKeyListener.onKeyDown(TextKeyListener.java:136)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.widget.TextView.doKeyDown(TextView.java:5532)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.widget.TextView.onKeyDown(TextView.java:5343)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.KeyEvent.dispatch(KeyEvent.java:2640)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.View.dispatchKeyEvent(View.java:7665)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at com.android.internal.policy.impl.PhoneWindow$DecorView.superDispatchKeyEvent(PhoneWindow.java:2035)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at com.android.internal.policy.impl.PhoneWindow.superDispatchKeyEvent(PhoneWindow.java:1505)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.app.Activity.dispatchKeyEvent(Activity.java:2418)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at com.android.internal.policy.impl.PhoneWindow$DecorView.dispatchKeyEvent(PhoneWindow.java:1962)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$ViewPostImeInputStage.processKeyEvent(ViewRootImpl.java:3852)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$ViewPostImeInputStage.onProcess(ViewRootImpl.java:3826)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3399)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3449)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3418)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:3525)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:3426)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$AsyncInputStage.apply(ViewRootImpl.java:3582)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3399)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3449)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3418)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:3426)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3399)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3449)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3418)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:3558)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.ViewRootImpl$ImeInputStage.onFinishedInputEvent(ViewRootImpl.java:3718)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.inputmethod.InputMethodManager$PendingEvent.run(InputMethodManager.java:2010)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.inputmethod.InputMethodManager.invokeFinishedInputEventCallback(InputMethodManager.java:1704)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.inputmethod.InputMethodManager.finishedInputEvent(InputMethodManager.java:1695)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.inputmethod.InputMethodManager$ImeInputEventSender.onInputEventFinished(InputMethodManager.java:1987)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.view.InputEventSender.dispatchInputEventFinished(InputEventSender.java:141)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.os.MessageQueue.nativePollOnce(Native Method)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.os.MessageQueue.next(MessageQueue.java:138)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.os.Looper.loop(Looper.java:123)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at android.app.ActivityThread.main(ActivityThread.java:5017)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at java.lang.reflect.Method.invokeNative(Native Method)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at java.lang.reflect.Method.invoke(Method.java:515)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+ 05-28 23:01:59.367: E/MessageQueue-JNI(1261):  at dalvik.system.NativeStart.main(Native Method)
+ 05-28 23:01:59.387: D/AndroidRuntime(1261): Shutting down VM
+ 05-28 23:01:59.387: W/dalvikvm(1261): threadid=1: thread exiting with uncaught exception (group=0xb2affba8)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261): FATAL EXCEPTION: main
+ 05-28 23:01:59.507: E/AndroidRuntime(1261): Process: mygp.gptrade, PID: 1261
+ 05-28 23:01:59.507: E/AndroidRuntime(1261): java.lang.NullPointerException
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at mygp.gptrade.AllProductActivity$1.onTextChanged(AllProductActivity.java:99)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.widget.TextView.sendOnTextChanged(TextView.java:7408)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.widget.TextView.handleTextChanged(TextView.java:7467)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.widget.TextView$ChangeWatcher.onTextChanged(TextView.java:9183)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.text.SpannableStringBuilder.sendTextChanged(SpannableStringBuilder.java:962)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.text.SpannableStringBuilder.replace(SpannableStringBuilder.java:496)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.text.SpannableStringBuilder.replace(SpannableStringBuilder.java:435)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.text.SpannableStringBuilder.replace(SpannableStringBuilder.java:30)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.text.method.QwertyKeyListener.onKeyDown(QwertyKeyListener.java:223)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.text.method.TextKeyListener.onKeyDown(TextKeyListener.java:136)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.widget.TextView.doKeyDown(TextView.java:5532)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.widget.TextView.onKeyDown(TextView.java:5343)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.KeyEvent.dispatch(KeyEvent.java:2640)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.View.dispatchKeyEvent(View.java:7665)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewGroup.dispatchKeyEvent(ViewGroup.java:1408)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at com.android.internal.policy.impl.PhoneWindow$DecorView.superDispatchKeyEvent(PhoneWindow.java:2035)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at com.android.internal.policy.impl.PhoneWindow.superDispatchKeyEvent(PhoneWindow.java:1505)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.app.Activity.dispatchKeyEvent(Activity.java:2418)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at com.android.internal.policy.impl.PhoneWindow$DecorView.dispatchKeyEvent(PhoneWindow.java:1962)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$ViewPostImeInputStage.processKeyEvent(ViewRootImpl.java:3852)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$ViewPostImeInputStage.onProcess(ViewRootImpl.java:3826)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3399)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3449)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3418)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:3525)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:3426)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$AsyncInputStage.apply(ViewRootImpl.java:3582)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3399)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3449)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3418)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:3426)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3399)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3449)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3418)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:3558)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.ViewRootImpl$ImeInputStage.onFinishedInputEvent(ViewRootImpl.java:3718)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.inputmethod.InputMethodManager$PendingEvent.run(InputMethodManager.java:2010)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.inputmethod.InputMethodManager.invokeFinishedInputEventCallback(InputMethodManager.java:1704)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.inputmethod.InputMethodManager.finishedInputEvent(InputMethodManager.java:1695)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.inputmethod.InputMethodManager$ImeInputEventSender.onInputEventFinished(InputMethodManager.java:1987)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.view.InputEventSender.dispatchInputEventFinished(InputEventSender.java:141)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.os.MessageQueue.nativePollOnce(Native Method)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.os.MessageQueue.next(MessageQueue.java:138)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.os.Looper.loop(Looper.java:123)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at android.app.ActivityThread.main(ActivityThread.java:5017)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at java.lang.reflect.Method.invokeNative(Native Method)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at java.lang.reflect.Method.invoke(Method.java:515)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+ 05-28 23:01:59.507: E/AndroidRuntime(1261):    at dalvik.system.NativeStart.main(Native 
+</code></pre>

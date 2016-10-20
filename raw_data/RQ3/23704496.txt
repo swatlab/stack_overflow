@@ -1,0 +1,271 @@
+<p>I have attempted to create a viewable SQLite database to view but it keeps crashing when I try to open it.<br>
+I have tried opening it multiple times and changed a few things to try and fix it, but seeing as I have not fixed it I probably made it worse.<br>
+I can't get anywhere when I open it and it crashes straight away. Sorry for the wall of code but I thought I may aswell give you too much info rather than too little.<br>
+Any input is appreciated.</p>
+
+<h2>DBHelper.java</h2>
+
+<pre><code>package com.example.listviewfromsqlitedb;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+    public SQLiteDatabase DB;
+    public String DBPath;
+    public static String DBName = "sample";
+    public static final int version = '1';
+    public static Context currentContext;
+    public static String tableName = "Resource";
+
+
+    public DBHelper(Context context) {
+        super(context, DBName, null, version);
+        currentContext = context;
+        DBPath = "/data/data/" + context.getPackageName() + "/databases";
+        createDatabase();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+    private void createDatabase() {
+        boolean dbExists = checkDbExists();
+
+        if (dbExists) {
+            // do nothing
+        } else {
+            DB = currentContext.openOrCreateDatabase(DBName, 0, null);
+            DB.execSQL("CREATE TABLE IF NOT EXISTS " +
+                    tableName +
+                    " (LastName VARCHAR, FirstName VARCHAR," +
+                    " Country VARCHAR, Age INT(3));");
+
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('M','shumi','India',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('C','sarah','India',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('D','Lavya','USA',20);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('V','Avi','EU',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('T','Shenoi','Bangla',25);");
+            DB.execSQL("INSERT INTO " +
+                    tableName +
+                    " Values ('L','Lamha','Australia',20);");
+        }
+
+
+    }
+
+    private boolean checkDbExists() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DBPath + DBName;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            // database does't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+}
+</code></pre>
+
+<h2>ListViewFromSQLiteDB.java</h2>
+
+<pre><code>package com.example.listviewfromsqlitedb;
+
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.os.Build;
+
+public class ListViewFromSQLiteDB extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container, new PlaceholderFragment()).commit();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container,
+                    false);
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<h2>AndroidManifest.xml</h2>
+
+<pre><code><manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.listviewfromsqlitedb"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="19" />
+
+       <application android:icon="@drawable/ic_launcher" 
+           android:label="@string/app_name">
+        <activity android:name="com.example.ListViewFromSQLiteDB.DataListView"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+
+</manifest>  
+</code></pre>
+
+<h2>Main.xml</h2>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/container"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+
+<TextView  
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/hello_world"
+    />
+
+</LinearLayout>   
+</code></pre>
+
+<h2>LogCat:</h2>
+
+<pre><code>    05-16 23:31:02.535: D/AndroidRuntime(31302): Shutting down VM
+05-16 23:31:02.555: W/dalvikvm(31302): threadid=1: thread exiting with uncaught exception (group=0x4143f2a0)
+05-16 23:31:02.585: E/AndroidRuntime(31302): FATAL EXCEPTION: main
+05-16 23:31:02.585: E/AndroidRuntime(31302): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.listviewfromsqlitedb/com.example.listviewfromsqlitedb.ListViewFromSQLiteDB}: java.lang.IllegalStateException: You need to use a Theme.AppCompat theme (or descendant) with this activity.
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2100)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2125)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.ActivityThread.access$600(ActivityThread.java:140)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1227)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.os.Handler.dispatchMessage(Handler.java:99)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.os.Looper.loop(Looper.java:137)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.ActivityThread.main(ActivityThread.java:4898)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at java.lang.reflect.Method.invokeNative(Native Method)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at java.lang.reflect.Method.invoke(Method.java:511)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1006)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:773)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at dalvik.system.NativeStart.main(Native Method)
+05-16 23:31:02.585: E/AndroidRuntime(31302): Caused by: java.lang.IllegalStateException: You need to use a Theme.AppCompat theme (or descendant) with this activity.
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.support.v7.app.ActionBarActivityDelegate.onCreate(ActionBarActivityDelegate.java:108)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.support.v7.app.ActionBarActivityDelegateICS.onCreate(ActionBarActivityDelegateICS.java:57)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.support.v7.app.ActionBarActivity.onCreate(ActionBarActivity.java:98)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at com.example.listviewfromsqlitedb.ListViewFromSQLiteDB.onCreate(ListViewFromSQLiteDB.java:18)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.Activity.performCreate(Activity.java:5206)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1083)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2064)
+05-16 23:31:02.585: E/AndroidRuntime(31302):    ... 11 more
+05-16 23:31:42.800: D/AndroidRuntime(32421): Shutting down VM
+05-16 23:31:42.800: W/dalvikvm(32421): threadid=1: thread exiting with uncaught exception (group=0x4143f2a0)
+05-16 23:31:42.810: E/AndroidRuntime(32421): FATAL EXCEPTION: main
+05-16 23:31:42.810: E/AndroidRuntime(32421): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.listviewfromsqlitedb/com.example.listviewfromsqlitedb.ListViewFromSQLiteDB}: java.lang.IllegalStateException: You need to use a Theme.AppCompat theme (or descendant) with this activity.
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2100)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2125)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.ActivityThread.access$600(ActivityThread.java:140)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1227)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.os.Handler.dispatchMessage(Handler.java:99)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.os.Looper.loop(Looper.java:137)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.ActivityThread.main(ActivityThread.java:4898)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at java.lang.reflect.Method.invokeNative(Native Method)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at java.lang.reflect.Method.invoke(Method.java:511)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1006)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:773)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at dalvik.system.NativeStart.main(Native Method)
+05-16 23:31:42.810: E/AndroidRuntime(32421): Caused by: java.lang.IllegalStateException: You need to use a Theme.AppCompat theme (or descendant) with this activity.
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.support.v7.app.ActionBarActivityDelegate.onCreate(ActionBarActivityDelegate.java:108)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.support.v7.app.ActionBarActivityDelegateICS.onCreate(ActionBarActivityDelegateICS.java:57)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.support.v7.app.ActionBarActivity.onCreate(ActionBarActivity.java:98)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at com.example.listviewfromsqlitedb.ListViewFromSQLiteDB.onCreate(ListViewFromSQLiteDB.java:18)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.Activity.performCreate(Activity.java:5206)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1083)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2064)
+05-16 23:31:42.810: E/AndroidRuntime(32421):    ... 11 more
+</code></pre>

@@ -1,0 +1,87 @@
+<p>I already use "getBytes(" UTF-8 ");" but still does not show accents, any suggestions?, dont show any error in logcat :( </p>
+
+<p>tweet = <code>"Reconoce Ramos al 'Chicharito': Sergio Ramos, defensa del Real Madrid, dijo que Javier Hernández es un jugador importante y recono..."</code></p>
+
+<p>return : <code>Reconoce%20Ramos%20al%20%27Chicharito%27%3A%20Sergio%20Ramos%2C%20defensa%20del%20Real%20Madrid%2C%20dijo%20que%20Javier%20Hern%E1ndez%20es%20un%20jugador%20importante%20y%20recono...</code></p>
+
+<p>signatureBase: <code>POST&https%3A%2F%2Fapi.twitter.com%2F1.1%2Fstatuses%2Fupdate.json&oauth_consumer_key%3DqW5IFxldNY0wSPEw8vTw9Q%26oauth_nonce%3Da7254620cc1a2cb59464a315f27ec464b7909a56%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1409680538%26oauth_token%3D264927564-0sHV9UkcRUurnWKMSXSXkV71WnlY68wkFIKv9zUu%26oauth_version%3D1.0%26status%3DReconoce%2520Ramos%2520al%2520%2527Chicharito%2527%253A%2520Sergio%2520Ramos%252C%2520defensa%2520del%2520Real%2520Madrid%252C%2520dijo%2520que%2520Javier%2520Hern%25E1ndez%2520es%2520un%2520jugador%2520importante%2520y%2520recono...</code></p>
+
+<pre><code>public String createRequestSignature(String signatureBase, String consumerSecret, String tokenSecret) 
+        throws Exception {
+        try {
+            String keyString    = URIUtil.encode(consumerSecret) + '&' + URIUtil.encode(tokenSecret);
+            Debug.i("key " + keyString);
+            byte[] keyBytes     = keyString.getBytes("UTF-8");
+            SecretKey key       = new SecretKeySpec(keyBytes, MAC_NAME);
+            Mac mac             = Mac.getInstance(MAC_NAME);
+            mac.init(key);
+            byte[] text         = signatureBase.getBytes("UTF-8");
+            return Base64.encodeBytes(mac.doFinal(text)).trim();
+        } catch (GeneralSecurityException e) {
+            throw e;
+        } catch (UnsupportedEncodingException e) {
+            throw e;
+        }
+    }
+</code></pre>
+
+<p>in the timeline looks:   Reconoce Ramos al 'Chicharito': Sergio Ramos, defensa del Real Madrid, dijo que Javier Hern <strong>?</strong> ndez es un jugador importante y recono...</p>
+
+<pre><code>public String getQueryString() {
+        if (mParams.size() == 0) {
+            return "";
+        }
+        StringBuffer querySb = new StringBuffer();
+        int size = mParams.size();
+        int i = 0;
+        for (String key : mParams.keySet()) {
+            HttpValues values = mParams.get(key);
+            if (values != null) {
+                if (!values.isEmpty()) {
+                    TreeSet<String> vals = values.getAll();
+                    Iterator<String> iterator = vals.iterator();
+                    while (iterator.hasNext()) { 
+                        querySb.append(key + "=" + URIUtil.encode((String) iterator.next()));
+                        if (iterator.hasNext()) {
+                            querySb.append("&");
+                        }
+                    }
+                } else {
+                    querySb.append(key + "=");
+                }
+            } else {
+                querySb.append(key + "=");
+            }
+            if (i != size-1) {
+                querySb.append("&");
+            }
+            i++;
+        }
+
+        return querySb.toString();
+    }
+
+public static String encode(String input) {
+        StringBuilder resultStr = new StringBuilder();
+        for (char ch : input.toCharArray()) {
+            if (isUnSafe(ch)) {
+                resultStr.append('%');
+                resultStr.append(toHex(ch / 16));
+                resultStr.append(toHex(ch % 16));
+            } else {
+                resultStr.append(ch);
+            }
+        }
+        return resultStr.toString();
+    }
+
+    private static char toHex(int ch) {
+        return (char) (ch < 10 ? '0' + ch : 'A' + ch - 10);
+    }
+
+    private static boolean isUnSafe(char ch) {
+        if (ch > 128 || ch < 0)
+            return true;
+        return " %*$&+,/:;=?@<>#%'\n".indexOf(ch) >= 0;
+    }
+</code></pre>

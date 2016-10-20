@@ -1,0 +1,184 @@
+<p>I am creating a very simple app. That is math type of game. Where a math problem is generated, and the user must solve the math problem within a certain amount of time. A lot of the code i have removed to make it easier to read   </p>
+
+<pre><code>import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.graphics.Color;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+import java.util.Random;
+import android.content.Intent;
+import java.util.concurrent.TimeUnit;
+import android.os.CountDownTimer;
+
+import com.google.android.gms.ads.*;
+import android.os.Handler;
+import android.os.Looper;
+import android.app.Activity;
+
+import static android.os.CountDownTimer.*;
+
+public class activity_2 extends MainActivity implements DialogInterface.OnClickListener{
+
+int getWrong=0, num, sum = 0, score = 0, three, four;
+
+Random rand = new Random();
+int one = rand.nextInt(10) + 1;
+int two = rand.nextInt(10) + 1;
+int solution = one + two;
+String myString = String.format("%d + %d =", one, two);
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_2);
+
+    TextView text = (TextView) findViewById(R.id.Question);
+    text.setText("" + myString);
+
+
+    TextView timeSTART = (TextView) findViewById(R.id.TimmerT);
+    timeSTART.setText("10");
+
+
+}
+
+public void buttonONC_ENTER(View V) {
+
+
+    if (solution == sum) {
+
+        score++;
+        TextView TV = (TextView) findViewById(R.id.SCORE);
+        TV.setText("SCORE: " + score);
+
+            one = rand.nextInt(10) + 1;
+            two = rand.nextInt(10) + 1;
+            num = rand.nextInt(4) + 1;
+            switch (num) {
+                case 1:
+                    solution = one + two;
+                    myString = String.format("%d + %d =", one, two);
+                    break;
+                case 2:
+                    if (one > two) {
+                        solution = one - two;
+                        myString = String.format("%d - %d =", one, two);
+                    } else {
+                        solution = two - one;
+                        myString = String.format("%d - %d =", two, one);
+                    }
+                    break;
+                case 3:
+                    solution = two + one;
+                    myString = String.format("%d + %d =", two, one);
+                    break;
+                case 4:
+                    if (two > one) {
+                        solution = two - one;
+                        myString = String.format("%d - %d =", two, one);
+                    } else {
+                        solution = one - two;
+                        myString = String.format("%d - %d =", one, two);
+                    }
+                    break;
+        }
+    } else {
+
+        TextView answerT = (TextView)findViewById(R.id.TimmerT);
+        answerT.setText("WRONG");
+        mistakefinder();
+    }
+
+
+    TextView TV = (TextView) findViewById(R.id.Question);
+    TV.setText("" + myString);
+
+    sum=0;
+    TextView freshsum = (TextView) findViewById(R.id.ANSWER);
+    freshsum.setText("" + sum);
+
+    TimmerCLOCK();
+
+        }
+
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+
+      switch(which){
+          case DialogInterface.BUTTON_POSITIVE:
+               Intent intent = new Intent(this, activity_2.class);
+               startActivity(intent);
+               break;
+          case DialogInterface.BUTTON_NEGATIVE:
+               finish();
+               break;
+       }
+   }
+
+      public void TimmerCLOCK() {
+
+        final TextView timmerT = (TextView) findViewById(R.id.TimmerT);
+
+
+        countDownTimer = new CountDownTimer(10000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                timmerT.setText("" + String.format(TIMEFORMAT,
+                        TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds(
+                                TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished))));
+                timmerT.setTextColor(Color.WHITE);
+            }
+
+            public void onFinish() {
+                timmerT.setText("TO SLOW!");
+                timmerT.setTextColor(Color.RED);
+                mistakefinder();
+
+            }
+        };
+
+            countDownTimer.start();
+
+}
+
+    public void mistakefinder() {
+        getWrong++;
+        TextView textM = (TextView) findViewById(R.id.MISTAKE);
+        switch (getWrong) {
+            case 1:
+                textM.setCompoundDrawablesWithIntrinsicBounds(R.drawable.x_mark_3_xxl, 0, 0, 0);
+                break;
+            case 2:
+
+                    textM.setCompoundDrawablesWithIntrinsicBounds(R.drawable.two_x, 0, 0, 0);
+                    break;
+                case 3:
+
+                    textM.setCompoundDrawablesWithIntrinsicBounds(R.drawable.three_x, 0, 0, 0);
+                    break;
+                case 4:
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity_2.this);
+                    // set title
+                    alertDialogBuilder.setTitle("GAMEOVER!");
+                    // set dialog message
+                    alertDialogBuilder.setMessage("Your Score: " + score).setCancelable(false);
+                    // create alert dialog
+
+                    alertDialogBuilder.setPositiveButton("RETRY", this);
+
+                    alertDialogBuilder.setNegativeButton("EXIT", this);
+
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    // show it
+                    alertDialog.show();
+                    break;
+            }
+        }
+
+
+    }
+</code></pre>
+
+<p>The issue i am having with the app is that when i test the app in android studio. The timer will work and if the math problem is solved. The timer doesn't stop counting, and there will be several timers running simultaneously. So, my goal is that regardless if the solution is right or wrong, the current timer needs to stop and new timer needs to begin. </p>

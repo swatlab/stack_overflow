@@ -1,0 +1,206 @@
+<p><strong>It's working fine</strong> </p>
+
+<p>This is code for accessing external DB from assets folder. In android We can create sqlite database by using SQLite Database Browser. Now the question is how to access this database in source code. The answer is very simple. Store the database in assets folder that is placed in project folder.Please below see that answer.</p>
+
+<p>Please created assets folder -> "your" means database name</p>
+
+<p>1) DatabaseHelper.class</p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper{
+
+    //The Android's default system path of your application database.
+    String DB_PATH =null;
+
+    private static String DB_NAME = "your";
+    private SQLiteDatabase myDataBase; 
+    private final Context myContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+        DB_PATH="/data/data/"+context.getPackageName()+"/"+"databases/";
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        } else {
+
+            //By calling this method and empty database will be created into the default system path
+             //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY+SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }     
+
+    @Override
+    public synchronized void close() {
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+    } 
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    //return cursor
+    public Cursor query(String table,String[] columns, String selection,String[] selectionArgs,String groupBy,String having,String orderBy){
+        return myDataBase.query("cities", null, null, null, null, null, null);
+    }
+}
+</code></pre>
+
+<p>2) <strong>CopyDbActivity.class</strong></p>
+
+<pre><code>public class CopyDbActivity extends Activity {
+    /** Called when the activity is first created. */
+    Cursor c=null;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        ((Button)findViewById(R.id.button01)).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+
+                 DatabaseHelper myDbHelper = new DatabaseHelper(CopyDbActivity.this);
+                 try {
+                    myDbHelper.createDataBase();
+
+            } catch (IOException ioe) {
+                throw new Error("Unable to create database");
+            }
+
+            try {
+                myDbHelper.openDataBase();
+
+            }catch(SQLException sqle){
+                throw sqle;
+            }
+            Toast.makeText(CopyDbActivity.this, "Success", Toast.LENGTH_SHORT).show();
+
+            c=myDbHelper.query("cities", null, null, null, null,null, null);
+            if(c.moveToFirst())
+            {
+                do {
+                    /*Toast.makeText(CopyDbActivity.this,
+                            "_id: " + c.getString(0) + "\n" +
+                            "E_NAME: " + c.getString(1) + "\n" +
+                            "E_AGE: " + c.getString(2) + "\n" +
+                            "E_DEPT:  " + c.getString(3),
+                            Toast.LENGTH_LONG).show();*/
+               } while (c.moveToNext());
+           }
+
+            }
+        });}
+}
+</code></pre>
+
+<p>3) <strong>XML file</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+
+<Button android:id="@+id/button01"
+     android:layout_width="wrap_content" 
+     android:layout_height="wrap_content"
+     android:text="Copy Database">
+        </Button>
+
+</LinearLayout>
+</code></pre>

@@ -1,0 +1,219 @@
+<p>I am facing a huge problem to displaying bitmap image in ImageView in my app. I have an activity which is displaying 8 photos in 2 column and 4 rows. When i click on any photo out of these 8 photos, the photo should be as large as device size. But here i have a issue is that when i click on any photo it give me sometime OutOfMemoryError Error. Please refere my below code where i displaying this large photo inside the imageView : </p>
+
+<pre><code>public class ViewFullImage extends Activity {
+
+    private Bitmap bitmap_general;
+    private ImageView iv;
+    private static final String path = "mfc/cam_img/";
+    private int s_id;
+    private int intentKey;
+    private int width;
+    private int height;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    requestWindowFeature(Window.FEATURE_NO_TITLE);
+    setContentView(R.layout.view_draw_picture);
+
+//  Display  display= ((WindowManager) getSystemService(ViewFullImage.WINDOW_SERVICE)).getDefaultDisplay();
+//  width = display.getWidth(); 
+//  height = display.getHeight(); 
+
+    Display mDisplay= ((Activity) this).getWindowManager().getDefaultDisplay();
+    width= mDisplay.getWidth();
+    height= mDisplay.getHeight();
+
+    Log.v("","===================== viewFullImage.java================");
+
+    Log.v("","This is height ViewImage : "+height/2);
+    Log.v("","This is width ViewImage : "+width/2);
+
+    s_id=getIntent().getIntExtra("s_id", -1);
+    intentKey=getIntent().getIntExtra("iv", -1);
+
+    iv = (ImageView)findViewById(R.id.image);
+
+    new LongOperation().execute();
+
+    }
+
+    //Image Rotation
+    Bitmap rotateBitmap(Bitmap bitmap)
+    {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90);
+        Bitmap bitmap1 = Bitmap.createBitmap(bitmap, 0, 0, 
+                bitmap.getWidth(), bitmap.getHeight(), 
+                                      matrix, true);
+        bitmap.recycle();
+        bitmap=null;
+
+        return bitmap1;
+    }
+
+    //Calculate Image size
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio  = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+    public void onDestroy() {
+        super.onDestroy();
+        System.gc();
+    }
+
+    public static Bitmap decodeSampleImage(File f, int width, int height) {
+        try {
+            System.gc(); // First of all free some memory
+
+            // Decode image size
+
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(new FileInputStream(f), null, o);
+
+            // The new size we want to scale to
+
+            final int requiredWidth = width;
+            final int requiredHeight = height;
+
+            // Find the scale value (as a power of 2)
+
+            int sampleScaleSize = 1;
+
+            while (o.outWidth / sampleScaleSize / 2 >= requiredWidth && o.outHeight / sampleScaleSize / 2 >= requiredHeight)
+                sampleScaleSize *= 2;
+
+            // Decode with inSampleSize
+
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = sampleScaleSize;
+
+            return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+        } catch (Exception e) {
+            Log.v("", e.getMessage()); // We don't want the application to just throw an exception
+        }
+
+        return null;
+    }
+
+    int h;
+    int w;
+
+    class LongOperation extends AsyncTask<String, Void, String> {
+        private ProgressDialog Dialog = new ProgressDialog(ViewFullImage.this);
+
+        @Override
+        protected String doInBackground(String... aurl) {
+
+            runOnUiThread(new Runnable() {
+
+            public void run() {
+                // TODO Auto-generated method stub
+
+                File Dir= Environment.getExternalStorageDirectory();
+                File imageDirectory = new File(Dir,path);
+                File file  = new File(imageDirectory, "img_"+s_id+"_"+intentKey+".jpg");
+
+                String ImgFile_Name = file.getAbsolutePath();
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                BitmapFactory.decodeFile(file.getAbsolutePath(),options);
+
+                h = options.outHeight;
+                w = options.outWidth;
+
+                options.inSampleSize = calculateInSampleSize(options, width/5, height/5);
+                options.inJustDecodeBounds = false;
+                options.inScaled=true;
+
+                if(bitmap_general!=null){
+                    bitmap_general.recycle();
+                    bitmap_general=null;
+                }
+
+                bitmap_general = BitmapFactory.decodeFile(ImgFile_Name,options);
+
+                try {
+                    if(h<w)
+                    {
+                        iv.setImageBitmap(rotateBitmap(bitmap_general));
+                    }
+                    else{
+                        iv.setImageBitmap(bitmap_general);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if(bitmap_general!=null){
+                        bitmap_general.recycle();
+                        bitmap_general=null;
+                    }
+                    System.gc();
+                }
+                finally{
+                    if(bitmap_general!=null){
+                        bitmap_general.recycle();
+                        bitmap_general=null;
+                    }
+                    System.gc();
+                }
+            }
+        });
+
+        return null;
+    }
+
+    protected void onPreExecute() {
+            Dialog.setMessage("Loading Image...");
+            Dialog.show();
+    }
+
+    protected void onPostExecute(String resultGot) {
+        Dialog.dismiss();
+    }
+ }
+}
+</code></pre>
+
+<p>Xml Layout File : </p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:id="@+id/RootView">
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:adjustViewBounds="true"/>
+
+</RelativeLayout>
+</code></pre>
+
+<p>Here in above code i m bit confuse in what Height and Width value should be i need to enter in below statement : </p>
+
+<pre><code>options.inSampleSize = calculateInSampleSize(options, width, height); 
+</code></pre>
+
+<p>Please anybody tell me where i m doing bad thing in my code ?</p>

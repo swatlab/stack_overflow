@@ -1,0 +1,754 @@
+<p>I have developed a tour guide app. Some of the classes have frame animation. 3 activities with frame animation work well. But if another similar activity is clicked, it gives the memory leak error. 
+Images are loaded from Drawables folder. Whole drawable folder contains 3.58 MB. I can't understand why it's giving this error. Please help with this. Thanks in advance. </p>
+
+<p>This is my logcat. </p>
+
+<blockquote>
+  <blockquote>
+    <p>08-18 10:45:14.585: E/dalvikvm-heap(9523): Out of memory on a
+    6444816-byte allocation. </p>
+    
+    <p>prio=5 tid=1 RUNNABLE 08-18 10:45:14.585: I/dalvikvm(9523):   |
+    group="main" sCount=0 dsCount=0 obj=0x41e46578 self=0x41cc9938 08-18
+    10:45:14.585: I/dalvikvm(9523):   | sysTid=9523 nice=-16 sched=0/0
+    cgrp=apps handle=1074774012 08-18 10:45:14.585: I/dalvikvm(9523):   |
+    state=R schedstat=( 4068370710 523035518 4253 ) utm=308 stm=98 core=0</p>
+    
+    <p>08-18 10:45:14.585: I/dalvikvm(9523):   at
+    android.graphics.BitmapFactory.nativeDecodeAsset(Native Method) 
+    android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:596)</p>
+    
+    <p>08-18 10:45:14.585: I/dalvikvm(9523):   at
+    android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:444)</p>
+    
+    <p>08-18 10:45:14.585: I/dalvikvm(9523):   at
+    android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:832)</p>
+    
+    <p>08-18 10:45:14.585: I/dalvikvm(9523):   at
+    android.content.res.Resources.loadDrawable(Resources.java:2988) 
+    android.content.res.TypedArray.getDrawable(TypedArray.java:602) 08-18</p>
+    
+    <p>android.widget.ImageView.(ImageView.java:131) 08-18</p>
+    
+    <p>android.widget.ImageView.(ImageView.java:121) 08-18</p>
+    
+    <p>java.lang.reflect.Constructor.constructNative(Native Method) 08-18</p>
+    
+    <p>java.lang.reflect.Constructor.newInstance(Constructor.java:417) 08-18</p>
+    
+    <p>android.view.LayoutInflater.createView(LayoutInflater.java:600) 08-18
+    10:45:14.585: I/dalvikvm(9523):   at
+    com.android.internal.policy.impl.PhoneLayoutInflater.onCreateView(PhoneLayoutInflater.java:56)
+    08-18 10:45:14.585: I/dalvikvm(9523):   at
+    android.view.LayoutInflater.onCreateView(LayoutInflater.java:675)</p>
+    
+    <p>android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:700)</p>
+    
+    <p>android.view.LayoutInflater.rInflate(LayoutInflater.java:761) 08-18</p>
+    
+    <p>android.view.LayoutInflater.rInflate(LayoutInflater.java:769) 08-18</p>
+    
+    <p>android.view.LayoutInflater.inflate(LayoutInflater.java:498) 08-18</p>
+    
+    <p>android.view.LayoutInflater.inflate(LayoutInflater.java:398) 08-18</p>
+    
+    <p>android.view.LayoutInflater.inflate(LayoutInflater.java:354) 08-18</p>
+    
+    <p>com.android.internal.policy.impl.PhoneWindow.setContentView(PhoneWindow.java:361)
+    08-18 10:45:14.585: I/dalvikvm(9523):   at</p>
+    
+    <p>D/AndroidRuntime(9523): Shutting down VM 08-18 10:45:14.590:
+    W/dalvikvm(9523): threadid=1: thread exiting with uncaught exception
+    (group=0x41e45700) 08-18 10:45:14.595: E/AndroidRuntime(9523): FATAL
+    EXCEPTION: main 08-18 10:45:14.595: E/AndroidRuntime(9523):
+    java.lang.RuntimeException: Unable to start activity
+    ComponentInfo{com.isuru.allaboutkataragama/com.isuru.allaboutkataragama.Kabiliththa_Dewalaya}:
+    android.view.InflateException: Binary XML file line #53: Error
+    inflating class  08-18 10:45:14.595: E/AndroidRuntime(9523):</p>
+    
+    <p>com.android.internal.policy.impl.PhoneLayoutInflater.onCreateView(PhoneLayoutInflater.java:56)</p>
+    
+    <p>android.view.LayoutInflater.onCreateView(LayoutInflater.java:675)
+        at
+    android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:700)
+    at
+    android.view.LayoutInflater.rInflate(LayoutInflater.java:761) 08-18
+        at
+    android.view.LayoutInflater.rInflate(LayoutInflater.java:769) 08-18
+        at
+    android.view.LayoutInflater.inflate(LayoutInflater.java:498) 08-18
+        at
+    android.view.LayoutInflater.inflate(LayoutInflater.java:398) 08-18
+        at
+    android.view.LayoutInflater.inflate(LayoutInflater.java:354) 08-18
+        at
+    com.android.internal.policy.impl.PhoneWindow.setContentView(PhoneWindow.java:361)
+        at
+    android.app.Activity.setContentView(Activity.java:1956) 08-18
+        at
+    com.isuru.allaboutkataragama.Kabiliththa_Dewalaya.onCreate(Kabiliththa_Dewalaya.java:57)
+        at
+    android.app.Activity.performCreate(Activity.java:5372) 08-18
+        at
+    android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1104)
+        at
+    android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2257)</p>
+    
+    <p>10:45:14.595: E/AndroidRuntime(9523): Caused by:
+    java.lang.reflect.InvocationTargetException 08-18 10:45:14.595:
+    E/AndroidRuntime(9523):     at
+    java.lang.reflect.Constructor.constructNative(Native Method) 08-18
+    at
+    java.lang.reflect.Constructor.newInstance(Constructor.java:417) 08-18
+        at
+    android.view.LayoutInflater.createView(LayoutInflater.java:600) 08-18</p>
+    
+    <p>E/AndroidRuntime(9523): Caused by: java.lang.OutOfMemoryError 08-18</p>
+    
+    <p>android.graphics.BitmapFactory.nativeDecodeAsset(Native Method) 08-18</p>
+    
+    <p>android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:596)</p>
+    
+    <p>android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:444)</p>
+    
+    <p>android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:832)</p>
+    
+    <p>android.content.res.Resources.loadDrawable(Resources.java:2988) 08-18</p>
+    
+    <p>android.content.res.TypedArray.getDrawable(TypedArray.java:602) 08-18</p>
+    
+    <p>android.widget.ImageView.(ImageView.java:131) 08-18</p>
+    
+    <p>android.widget.ImageView.(ImageView.java:121)</p>
+  </blockquote>
+</blockquote>
+
+<p>This is my code</p>
+
+<pre><code>public class Kabiliththa_Dewalaya extends FragmentActivity implements LocationListener{
+
+    GoogleMap mGoogleMap;
+    ArrayList<LatLng> mMarkerPoints;
+    double mLatitude=0;
+    double mLongitude=0;
+    ImageView iv1,iv2,iv3;
+    Button contact_kebiliththa;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.kebiliththa);
+
+         BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeResource(getResources(), R.id.imageView1_kabiliththa, options);
+            BitmapFactory.decodeResource(getResources(), R.id.imageView1_kebiMap, options);
+            BitmapFactory.decodeResource(getResources(), R.id.imageView1_kabiliththa2, options);
+            int imageHeight = options.outHeight;
+            int imageWidth = options.outWidth;
+            String imageType = options.outMimeType;
+
+            iv1.setImageBitmap(decodeSampledBitmapFromResource(getResources(), R.id.imageView1_kabiliththa, 100, 100));
+            iv2.setImageBitmap(decodeSampledBitmapFromResource(getResources(), R.id.imageView1_kebiMap, 100, 100));
+            iv2.setImageBitmap(decodeSampledBitmapFromResource(getResources(), R.id.imageView1_kabiliththa2, 100, 100));
+            contact_kebiliththa=(Button) findViewById(R.id.button_contactKebiliththa);
+            contact_kebiliththa.setOnClickListener(new OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    Intent callIntent = new Intent(Intent.ACTION_CALL);
+                    callIntent.setData(Uri.parse("tel:"+"0773539292"));
+                    startActivity(callIntent);
+
+                }
+            });
+
+        // Getting Google Play availability status
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getBaseContext());
+
+        if(status!=ConnectionResult.SUCCESS){ // Google Play Services are not available
+
+            int requestCode = 10;
+            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(status, this, requestCode);
+            dialog.show();
+
+        }else { // Google Play Services are available
+
+            // Initializing 
+            mMarkerPoints = new ArrayList<LatLng>();
+
+            // Getting reference to SupportMapFragment of the activity_main
+            SupportMapFragment fm = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map_kabiliththa);
+
+            // Getting Map for the SupportMapFragment
+            mGoogleMap = fm.getMap();
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(
+                    6.418266, 81.324671)).zoom(8).build();
+
+            mGoogleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+            double Kabiliththalatitude =6.513917;
+            double Kabiliththalongitude =81.691930;
+
+            final LatLng Kabiliththa=new LatLng(Kabiliththalatitude, Kabiliththalongitude );
+            Marker Kabiliththa_marker=mGoogleMap.addMarker(new MarkerOptions().title("Kabiliththa Dewalaya").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE)).position(Kabiliththa));
+            Kabiliththa_marker.showInfoWindow();
+
+            // Enable MyLocation Button in the Map
+            mGoogleMap.setMyLocationEnabled(true);
+
+
+            // Getting LocationManager object from System Service LOCATION_SERVICE
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+            // Creating a criteria object to retrieve provider
+            Criteria criteria = new Criteria();
+
+            // Getting the name of the best provider
+            String provider = locationManager.getBestProvider(criteria, true);
+
+            // Getting Current Location From GPS
+            Location location = locationManager.getLastKnownLocation(provider);
+
+            if(location!=null){
+                onLocationChanged(location);
+            }
+
+            locationManager.requestLocationUpdates(provider, 20000, 0, this);           
+
+          mGoogleMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(m.getPosition(), 17));
+                m.remove();
+                Toast.makeText(getApplicationContext(), "Tap again in the location",
+                           Toast.LENGTH_LONG).show();
+
+                // Setting onclick event listener for the map
+                mGoogleMap.setOnMapClickListener(new OnMapClickListener() {
+
+                    @Override
+                    public void onMapClick(LatLng point) {
+
+                        // Already map contain destination location 
+                        if(mMarkerPoints.size()>1){
+
+                            FragmentManager fm = getSupportFragmentManager();   
+                            mMarkerPoints.clear();
+                            mGoogleMap.clear();
+                            LatLng startPoint = new LatLng(mLatitude, mLongitude);
+                            drawMarker(startPoint);
+                        }
+
+                        drawMarker(point);
+
+                        // Checks, whether start and end locations are captured
+                        if(mMarkerPoints.size() >= 2){                  
+                            LatLng origin = mMarkerPoints.get(0);
+                            LatLng dest = mMarkerPoints.get(1);
+
+                            // Getting URL to the Google Directions API
+                            String url = getDirectionsUrl(origin, dest);                
+
+                            DownloadTask downloadTask = new DownloadTask();
+
+                            // Start downloading json data from Google Directions API
+                            downloadTask.execute(url);
+                        }                   
+                    }
+                });     
+
+                return false;
+            }
+        });
+
+
+        }       
+    }
+
+    private String getDirectionsUrl(LatLng origin,LatLng dest){
+
+        // Origin of route
+        String str_origin = "origin="+origin.latitude+","+origin.longitude;
+
+        // Destination of route
+        String str_dest = "destination="+dest.latitude+","+dest.longitude;          
+
+        // Sensor enabled
+        String sensor = "sensor=false";         
+
+        // Building the parameters to the web service
+        String parameters = str_origin+"&"+str_dest+"&"+sensor;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters;      
+
+        return url;
+    }
+
+    /** A method to download json data from url */
+    private String downloadUrl(String strUrl) throws IOException{
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try{
+                URL url = new URL(strUrl);
+
+                // Creating an http connection to communicate with url 
+                urlConnection = (HttpURLConnection) url.openConnection();
+
+                // Connecting to url 
+                urlConnection.connect();
+
+                // Reading data from url 
+                iStream = urlConnection.getInputStream();
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+                StringBuffer sb  = new StringBuffer();
+
+                String line = "";
+                while( ( line = br.readLine())  != null){
+                        sb.append(line);
+                }
+
+                data = sb.toString();
+
+                br.close();
+
+        }catch(Exception e){
+                Log.d("Exception while downloading url", e.toString());
+        }finally{
+                iStream.close();
+                urlConnection.disconnect();
+        }
+        return data;
+     }
+
+
+
+    /** A class to download data from Google Directions URL */
+    private class DownloadTask extends AsyncTask<String, Void, String>{         
+
+        // Downloading data in non-ui thread
+        @Override
+        protected String doInBackground(String... url) {
+
+            // For storing data from web service
+            String data = "";
+
+            try{
+                // Fetching the data from web service
+                data = downloadUrl(url[0]);
+            }catch(Exception e){
+                Log.d("Background Task",e.toString());
+            }
+            return data;        
+        }
+
+        // Executes in UI thread, after the execution of
+        // doInBackground()
+        @Override
+        protected void onPostExecute(String result) {           
+            super.onPostExecute(result);            
+
+            ParserTask parserTask = new ParserTask();
+
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
+
+        }       
+    }
+
+    /** A class to parse the Google Directions in JSON format */
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> >{
+
+        // Parsing the data in non-ui thread        
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+
+            JSONObject jObject; 
+            List<List<HashMap<String, String>>> routes = null;                     
+
+            try{
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                // Starts parsing data
+                routes = parser.parse(jObject);    
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+
+            // Traversing through all the routes
+            for(int i=0;i<result.size();i++){
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for(int j=0;j<path.size();j++){
+                    HashMap<String,String> point = path.get(j);                 
+
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng); 
+
+                    points.add(position);                       
+                }
+
+                // Adding all the points in the route to LineOptions
+                lineOptions.addAll(points);
+                lineOptions.width(6);
+                lineOptions.color(Color.RED);   
+
+            }
+
+            // Drawing polyline in the Google Map for the i-th route
+            mGoogleMap.addPolyline(lineOptions);                            
+        }           
+    }   
+
+
+
+    private void drawMarker(LatLng point){
+        mMarkerPoints.add(point);
+
+        // Creating MarkerOptions
+        MarkerOptions options = new MarkerOptions();
+
+        // Setting the position of the marker
+        options.position(point);
+
+        /** 
+         * For the start location, the color of marker is GREEN and
+         * for the end location, the color of marker is RED.
+         */
+        if(mMarkerPoints.size()==1){
+            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        }else if(mMarkerPoints.size()==2){
+            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        }
+
+        // Add new marker to the Google Map Android API V2
+        mGoogleMap.addMarker(options);      
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        // Draw the marker, if destination location is not set
+        if(mMarkerPoints.size() < 2){
+
+            mLatitude = location.getLatitude();
+            mLongitude = location.getLongitude();
+            LatLng point = new LatLng(mLatitude, mLongitude);
+
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(point));
+            mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(8));        
+
+            drawMarker(point);          
+        } 
+
+    }
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+            int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        // TODO Auto-generated method stub      
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+        // TODO Auto-generated method stub      
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        // TODO Auto-generated method stub      
+    }
+
+
+}
+</code></pre>
+
+<p>My xml layout</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/RootView" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/textView_kebilithta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:paddingLeft="65dp"
+            android:paddingTop="10dp"
+            android:text="@string/Kebiliththa_header"
+            android:textColor="#000033"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imageView1_kabiliththa"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/imageVw"
+            android:src="@drawable/kabi5" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta1"
+            android:layout_width="wrap_content"
+            android:layout_height="122dp"
+            android:paddingLeft="5dp"
+            android:paddingTop="10dp"
+            android:text="@string/Kebiliththa_description1"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="5dp"
+            android:text="@string/Kebiliththa_decrip2"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imageView1_kabiliththa2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/imageVw"
+            android:src="@drawable/kabi1" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta4"
+            android:layout_width="wrap_content"
+            android:layout_height="99dp"
+            android:paddingLeft="5dp"
+            android:paddingTop="5dp"
+            android:text="@string/Kebiliththa_descrip4"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imageView1_kebiMap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/imageVw"
+            android:paddingTop="5dp"
+            android:src="@drawable/kebiliththa_map" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta41"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="12dp"
+            android:text="@string/Kebiliththa_troute_1_header"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta42"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="2dp"
+            android:text="@string/Kebiliththa_route1"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta43"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="13dp"
+            android:text="@string/Kebiliththa_troute_2_header"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta44"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="2dp"
+            android:text="@string/Kebiliththa_route2"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta45"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="13dp"
+            android:text="@string/Kebiliththa_troute_3_header"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_kebilithta46"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="2dp"
+            android:text="@string/Kebiliththa_route3"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:padding="12dp" >
+
+            <ImageView
+                android:id="@+id/imageView_contactKabi"
+                android:layout_width="54dp"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/imageVw"
+                android:paddingTop="6dp"
+                android:src="@drawable/phone" />
+
+            <Button
+                android:id="@+id/button_contactKebiliththa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#000033"
+                android:text="@string/Kebiliththa_tours"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView_dire"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingTop="25dp"
+            android:text="@string/getDirections1"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_markerDire"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:paddingLeft="5dp"
+            android:text="@string/markerTap"
+            android:textColor="#FF0000" />
+
+        <fragment
+            android:id="@+id/map_kabiliththa"
+            android:layout_width="match_parent"
+            android:layout_height="470dp"
+            android:layout_weight="0.50"
+            class="com.google.android.gms.maps.SupportMapFragment" />
+    </LinearLayout>
+
+</ScrollView>
+</code></pre>
+
+<p>ANimation List</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android" >
+
+     <item
+        android:drawable="@drawable/kiri2"
+        android:duration="10000"/>
+
+     <item
+        android:drawable="@drawable/kiri10"
+        android:duration="8500"/>
+
+     <item
+        android:drawable="@drawable/kiriwehera8"
+        android:duration="8500"/>
+
+
+    <item
+        android:drawable="@drawable/kiri9"
+        android:duration="8500"/>
+
+    <item
+        android:drawable="@drawable/kiriwehera5"
+        android:duration="8500"/>
+
+      <item
+        android:drawable="@drawable/kiriwehera6"
+        android:duration="8500"/>
+    <item
+        android:drawable="@drawable/kiriwehera7"
+        android:duration="9000"/>
+
+</animation-list>
+</code></pre>

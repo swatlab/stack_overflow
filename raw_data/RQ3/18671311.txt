@@ -1,0 +1,148 @@
+<p>I have a problem with displaying combined chart in AChartEngine.<br>
+There are two types of chart that are combined: line and bar chart.<br>
+The first problem is that the starting point of the line does not start at 0 of x-axis.<br>
+I want it to start at x=0 and end at the rightmost side.<br>
+The second problem is that the labels on the top of each bar are not centered.</p>
+
+<p>Here is my code:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.layout_main);
+        GraphicalView view = createIntent();
+        LinearLayout layout = (LinearLayout) findViewById(R.id.graph);
+        layout.addView(view);
+    }
+
+    public GraphicalView createIntent() {
+        String[] titles = new String[] {"Benchmark line"};
+        //List<double []> values = new ArrayList<double []>(); //as y1
+        //values.add(new double[] {20.0, 10.0, 30.0, 25.0, 40.0});
+        double[] y1 = new double[] {20.0, 10.0, 30.0, 25.0, 40.0};
+        List<double[]> x = new ArrayList<double[]>();
+        for(int i=0; i<titles.length ; i++) {
+            x.add(new double[] {1,2,3,4,5});
+        }
+        /*****************************************/
+        List<double []> lineValues = new ArrayList<double []>(); //as values
+        lineValues.add(new double[] {20, 20, 20, 20, 20});
+
+        int[] colors = new int[] {Color.parseColor("#ea2e49")}; //pink
+
+
+        XYMultipleSeriesRenderer mRenderer = buildBarRenderer(colors);
+        mRenderer.setPointSize(0);
+        int length = mRenderer.getSeriesRendererCount(); 
+        for(int i=0 ; i<length ; i++){ 
+            XYSeriesRenderer seriesRenderer = (XYSeriesRenderer) mRenderer.getSeriesRendererAt(i);
+            seriesRenderer.setDisplayChartValues(false);
+            seriesRenderer.setLineWidth(5); 
+            seriesRenderer.setFillPoints(true); 
+        }
+
+
+        mRenderer.setOrientation(Orientation.HORIZONTAL);
+        setChartSettings(mRenderer, "Average Customer Waiting Time", "Table Categories", "Minutes", 0, 6, 0, 120, Color.BLACK, Color.BLACK);
+        mRenderer.setXLabels(0); 
+        mRenderer.setYLabels(10);
+        mRenderer.setShowGrid(true);
+        mRenderer.addXTextLabel(1, "1 SEAT");
+        mRenderer.addXTextLabel(2, "2 SEATS");
+        mRenderer.addXTextLabel(3, "4 SEATS");
+        mRenderer.addXTextLabel(4, "6 SEATS");
+        mRenderer.addXTextLabel(5, "8 SEATS");
+        mRenderer.setXLabelsAlign(Align.CENTER);
+        mRenderer.setYLabelsAlign(Align.RIGHT);
+
+        XYSeries ySeries = new XYSeries("Average Customer Waiting Time");
+        ySeries.add(1, y1[0]);
+        ySeries.add(2, y1[1]);
+        ySeries.add(3, y1[2]);
+        ySeries.add(4, y1[3]);
+        ySeries.add(5, y1[4]);
+        mRenderer.setBarSpacing(0.5);
+
+        XYSeriesRenderer yRenderer = new XYSeriesRenderer();
+        yRenderer.setColor(Color.parseColor("#77c4d3")); //light blue
+
+        XYMultipleSeriesDataset dataset = buildBarDataset(titles, x, lineValues);
+        dataset.addSeries(0,ySeries);
+        mRenderer.addSeriesRenderer(0, yRenderer);
+        yRenderer.setDisplayChartValues(true);
+        yRenderer.setChartValuesTextSize(20); //text size on each bar
+
+        String[] types = new String[] {BarChart.TYPE , LineChart.TYPE};
+        final GraphicalView grfv = ChartFactory.getCombinedXYChartView(this, dataset, mRenderer, types); 
+        return grfv;
+    }
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+        XYMultipleSeriesRenderer mRenderer = new XYMultipleSeriesRenderer();
+        PointStyle[] styles = new PointStyle[] {PointStyle.CIRCLE}; 
+        mRenderer.setAxisTitleTextSize(17);
+        mRenderer.setChartTitleTextSize(25);
+        mRenderer.setLabelsTextSize(15);
+        mRenderer.setLegendTextSize(15);
+        mRenderer.setBarSpacing(1);
+        mRenderer.setPointSize(5f); 
+        mRenderer.setMarginsColor(Color.parseColor("#EEEDED"));
+        mRenderer.setXLabelsColor(Color.BLACK);
+        mRenderer.setYLabelsColor(0,Color.BLACK);
+        mRenderer.setApplyBackgroundColor(true);
+        mRenderer.setBackgroundColor(Color.parseColor("#FBFBFC"));
+        int length = colors.length;
+        for (int i = 0; i < length; i++) { //build benchmark line
+            XYSeriesRenderer r = new XYSeriesRenderer(); //change
+            r.setColor(colors[i]);
+            r.setPointStyle(styles[i]); 
+            mRenderer.addSeriesRenderer(r);
+        }
+        return mRenderer;
+    }
+
+    protected void setChartSettings(XYMultipleSeriesRenderer mRenderer, String title, String xTitle, String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor, int labelsColor) {
+        mRenderer.setChartTitle(title);
+        mRenderer.setYLabelsAlign(Align.RIGHT);
+        mRenderer.setXTitle(xTitle);
+        mRenderer.setYTitle(yTitle);
+        mRenderer.setXAxisMin(xMin);
+        mRenderer.setXAxisMax(xMax);
+        mRenderer.setYAxisMin(yMin);
+        mRenderer.setYAxisMax(yMax);
+        mRenderer.setMargins(new int[] {10, 65, 10, 15});
+        mRenderer.setAxesColor(axesColor);
+        mRenderer.setLabelsColor(labelsColor);
+        //mRenderer.setZoomEnabled(false);
+        mRenderer.setPanEnabled(false, false);
+        mRenderer.setZoomEnabled(false, false);
+    }
+
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double []> xValues, List<double []> yValues) {
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+        int length = titles.length;
+        for(int i=0 ; i<length ; i++) {
+            XYSeries series = new XYSeries(titles[i],0);
+            double[] xV = xValues.get(i);
+            double[] yV = yValues.get(i);
+            int seriesLength = xV.length;
+            for(int k=0 ; k<seriesLength ; k++) {
+                series.add(xV[k],yV[k]);
+            }
+            dataset.addSeries(series);
+        }
+        return dataset;     
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+}
+</code></pre>

@@ -1,0 +1,109 @@
+<p>I have a problem on a graph where adding the graphic layout presents an exception that I can not solve. Using <code>getBarChartView ()</code> works, but when I change to <code>getLineChartView</code> the problem happens. Below an example.</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        final GraphicalView gv =createIntent();       
+        RelativeLayout rl=(RelativeLayout)findViewById(R.id.lytGraficoVendaDiariaBarra);   
+        rl.addView(gv);                
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_main, menu);
+        return true;
+    }
+    public GraphicalView createIntent() {
+        String[] titulos = new String[] { "Valor Faturado" };       
+        int[] colors = new int[] { Color.parseColor("#0066FF")};        
+        XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+        List<double[]> valores = new ArrayList<double[]>();
+        valores.add(new double[] { 5230, 7300, 9240, 10230, 11300, 10040});
+        renderer.setXLabels(1);   
+        renderer.setYLabels(10);    
+        renderer.addXTextLabel(1, "01/12");  
+        renderer.addXTextLabel(2, "02/12");   
+        renderer.addXTextLabel(3, "03/12");  
+        renderer.addXTextLabel(4, "04/12");   
+        renderer.addXTextLabel(5, "05/12");   
+        renderer.addXTextLabel(6, "06/12");    
+        renderer.addXTextLabel(7, "07/12");    
+        int length = renderer.getSeriesRendererCount();   
+        for (int i = 0; i < length; i++) {     
+            SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);   
+            seriesRenderer.setDisplayChartValues(true);           
+        }
+
+//        final GraphicalView grfv = ChartFactory.getBarChartView(getBaseContext(), buildBarDataset(titulos, valores), renderer, Type.DEFAULT);
+        final GraphicalView grfv = ChartFactory.getLineChartView(getBaseContext(), buildBarDataset(titulos, valores), renderer);
+
+        return grfv; 
+        }    
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();     
+        renderer.setAxisTitleTextSize(15);      
+        renderer.setChartTitleTextSize(20);     
+        renderer.setLabelsTextSize(10);             
+        renderer.setLegendTextSize(15);     
+        renderer.setBarSpacing(1);      
+        renderer.setMarginsColor(Color.parseColor("#E0E0E0"));      
+        renderer.setXLabelsColor(Color.BLACK);       
+        renderer.setYLabelsColor(0,Color.BLACK);                  
+        renderer.setApplyBackgroundColor(true);     
+        renderer.setBackgroundColor(Color.parseColor("#FBFBFC"));       
+        renderer.setOrientation(Orientation.HORIZONTAL);        
+        renderer.setZoomButtonsVisible(true); 
+        int length = colors.length;     
+        for (int i = 0; i < length; i++) {         
+            SimpleSeriesRenderer col = new SimpleSeriesRenderer();          
+            col.setColor(colors[i]);                
+            col.setChartValuesSpacing(15);  
+            renderer.addSeriesRenderer(col);     
+        }       
+        setChartSettings(renderer, "Vendas Diárias", "Dias", "Valores", 0.5, 12.5, 0, 24000, Color.BLACK, Color.BLACK);     
+        return renderer;     
+        }       
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titulos, List<double[]> valores) {   
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();     
+        int length = titulos.length;    
+        for (int i = 0; i < length; i++) {  
+            CategorySeries series = new CategorySeries(titulos[i]);    
+            double[] v = valores.get(i);       
+            int seriesLength = v.length;      
+            for (int k = 0; k < seriesLength; k++) {   
+                series.add(v[k]);        
+                }           
+            dataset.addSeries(series.toXYSeries());     
+            }         
+        return dataset;     
+    }   
+    protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle, String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,              int labelsColor) {         
+        renderer.setChartTitle(title);      
+        renderer.setYLabelsAlign(Align.RIGHT);  
+        renderer.setXTitle(xTitle);      
+        renderer.setYTitle(yTitle);     
+        renderer.setXAxisMin(xMin);        
+        renderer.setXAxisMax(xMax);        
+        renderer.setYAxisMin(yMin);     
+        renderer.setYAxisMax(yMax);      
+        renderer.setMargins(new int[] { 30, 40, 10, 40 });     
+        renderer.setAxesColor(axesColor);      
+        renderer.setLabelsColor(labelsColor);                       
+    }   
+}
+</code></pre>
+
+<p>Layout</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/lytGraficoVendaDiariaBarra"
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_height="match_parent" >
+</RelativeLayout>
+</code></pre>

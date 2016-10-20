@@ -1,0 +1,314 @@
+<p>I develope currently a small sample app with fragments and a viewPager. The viewPager shows 3 pages. In each page i instantiate a fragment of the same type. The fragment contains a textView and a button. On button click I want to replace the current fragment with another one. Now my problem is, no matter which button I press only the fragment of page 1 gets replaced. I dont know what I have to do in my pageAdapter class but I guess it has to do with using the same fragment and layout. I think I have to make sure, that my pageAdapter updates the correct page, but how do I achieve that?</p>
+
+<p>For a better understanding why I want to achieve that, that I receive a json string within 3 node of type menu and I want to use each of them as a page in my viewPager.</p>
+
+<p>Can someone show me a short and easy example for such a behavior? I think its a basic approach, so it cant be so difficult.</p>
+
+<p>--------Edit---------</p>
+
+<p>Here is the code:</p>
+
+<pre><code>public class FragmentPagerSupport extends FragmentActivity {
+static final int NUM_ITEMS = 4;
+MyAdapter mAdapter;
+ViewPager mPager;
+
+@Override
+public void onBackPressed() {
+    FragmentManager fm = getFragmentManager();
+    if (fm.getBackStackEntryCount() > 0) {
+        fm.popBackStack();
+    } else {
+        super.onBackPressed();
+    }
+}
+
+public MyAdapter getmAdapter() {
+    return mAdapter;
+}
+
+public ViewPager getmPager() {
+    return mPager;
+}
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.fragment_pager);
+    mAdapter = new MyAdapter(getFragmentManager(), this);
+    mPager = (ViewPager) findViewById(R.id.pager);
+    mPager.setOffscreenPageLimit(NUM_ITEMS + 2);
+    mPager.setAdapter(mAdapter);
+
+    Button button = (Button) findViewById(R.id.goto_first);
+    button.setOnClickListener(new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            mPager.setCurrentItem(0);
+        }
+    });
+
+    button = (Button) findViewById(R.id.goto_last);
+    button.setOnClickListener(new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            mPager.setCurrentItem(NUM_ITEMS - 1);
+        }
+    });
+}
+}
+</code></pre>
+
+<p>MyAdapter:</p>
+
+<pre><code>public MyAdapter(FragmentManager fm, FragmentPagerSupport fragmentPagerSupport) {
+super(fm);
+this.fragmentPagerSupport = fragmentPagerSupport;
+}
+
+@Override
+public int getCount() {
+return NUM_ITEMS;
+}
+
+@Override
+public Fragment getItem(int position) {
+        Fragment newInstance = null;
+        switch (position) {
+        case 0:
+            newInstance = frag1.newInstance(position);
+            break;
+        case 1:
+            newInstance = frag1.newInstance(position);
+            break;
+        case 2:
+            newInstance = frag2.newInstance(position);
+            break;
+        case 3:
+            newInstance = frag2.newInstance(position);
+            break;
+        }
+        return newInstance;
+    }
+</code></pre>
+
+<p>Frag1 & Frag2 & ListItemFrag:</p>
+
+<pre><code>    public static class frag1 extends ListFragment {
+    int mNum;
+    static frag1 newInstance(int num) {
+        frag1 f = new frag1();
+        Supply num input as an argument.
+        Bundle args = new Bundle();
+        args.putInt("num", num);
+        f.setArguments(args);
+        return f;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mNum = getArguments() != null ? getArguments().getInt("num") : 1;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_pager_list, container, false);
+        v.setId(mNum);
+        View tv = v.findViewById(R.id.text);
+        ((TextView) tv).setText("Fragment #" + mNum);
+        return v;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        String[] cheeses = { "Edamer", "Gauda", "Cheddar", "Mozarella", "Maasdamer" };
+        setListAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, cheeses));
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        Log.i("FragmentList", "Item clicked: " + id);
+        String itemName = (String) l.getItemAtPosition(position);
+        Fragment listItemFragment = ListItemFragment.newInstance(itemName);
+        FragmentTransaction trans = getActivity().getFragmentManager().beginTransaction();
+        trans.replace(R.id.root, listItemFragment, listItemFragment.getClass().getName() + "_" + mNum);
+        trans.addToBackStack(itemName);
+        trans.commit();
+    }
+}
+
+public static class frag2 extends ListFragment {
+    int mNum;
+    static frag2 newInstance(int num) {
+        frag2 f = new frag2();
+        Bundle args = new Bundle();
+        args.putInt("num", num);
+        f.setArguments(args);
+        return f;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mNum = getArguments() != null ? getArguments().getInt("num") : 1;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_pager_list, container, false);
+        v.setId(mNum);
+        View tv = v.findViewById(R.id.text);
+        ((TextView) tv).setText("Fragment #" + mNum);
+        return v;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        String[] cheeses = { "Edamer", "Gauda", "Cheddar", "Mozarella", "Maasdamer" };
+        setListAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, cheeses));
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        Log.i("FragmentList", "Item clicked: " + id);
+        String itemName = (String) l.getItemAtPosition(position);
+        Fragment listItemFragment = ListItemFragment.newInstance(itemName);
+        FragmentTransaction trans = getActivity().getFragmentManager().beginTransaction();
+        trans.replace(R.id.root, listItemFragment, listItemFragment.getClass().getName() + "_" + mNum);
+        trans.addToBackStack(itemName);
+        trans.commit();
+    }
+}
+
+public static class ListItemFragment extends Fragment {
+    String itemName;
+    static ListItemFragment newInstance(String itemName) {
+        ListItemFragment i = new ListItemFragment();
+        Bundle args = new Bundle();
+        args.putString("text", itemName);
+        i.setArguments(args);
+        return i;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        itemName = getArguments() != null ? getArguments().getString("text") : "NULL";
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_item, container, false);
+        View tv = v.findViewById(R.id.textView1);
+        ((TextView) tv).setText("Cheese: " + itemName + " selected!");
+        return v;
+    }
+}
+</code></pre>
+
+<p>Pager Layout:</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="4dip"
+    android:gravity="center_horizontal"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+<android.support.v4.view.ViewPager
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="0px"
+        android:layout_weight="1">
+</android.support.v4.view.ViewPager>
+<LinearLayout android:orientation="horizontal"
+        android:gravity="center" android:measureWithLargestChild="true"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_weight="0">
+    <Button
+        android:id="@+id/goto_first"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="first" />
+    <Button android:id="@+id/goto_last"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="last">
+    </Button>
+</LinearLayout>
+</code></pre>
+
+<p></p>
+
+<p>Frag1 Layout:</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="#99EE11"
+android:id="@+id/test">
+<TextView android:id="@+id/text"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:gravity="center_vertical|center_horizontal"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+    android:text="@string/hello_world"/>
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dip"
+    android:layout_weight="1"
+    android:id="@+id/root" >
+    <ListView android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:drawSelectorOnTop="false"/>
+</FrameLayout>
+</code></pre>
+
+<p></p>
+
+<p>Frag2 Layout:</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="#99EE11"
+android:id="@+id/test2">
+<TextView android:id="@+id/text"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:gravity="center_vertical|center_horizontal"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+    android:text="@string/hello_world"/>
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dip"
+    android:layout_weight="1"
+    android:id="@+id/root2" >
+    <ListView android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:drawSelectorOnTop="false"/>
+</FrameLayout>
+</code></pre>
+
+<p></p>
+
+<p>ListItemFrag Layout:</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/ll"
+android:layout_width="fill_parent"
+android:layout_height="match_parent"
+android:layout_alignParentLeft="true"
+android:layout_alignParentTop="true"
+android:layout_marginTop="230dp"
+android:background="#AA33EE"
+android:orientation="vertical" >
+<TextView
+    android:id="@+id/textView1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textAppearance="?android:attr/textAppearanceLarge" />
+</LinearLayout>
+</code></pre>

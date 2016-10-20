@@ -1,0 +1,269 @@
+<p>I created a very <code>fragment</code> to test my app and I got the following error message: </p>
+
+<blockquote>
+  <p>03-28 11:11:58.079: E/AndroidRuntime(11760):
+  java.lang.RuntimeException: Unable to instantiate activity
+  ComponentInfo{com.android.demoresponsevision/com.android.demoresponsevision.fragment.BarcodeScreen}:
+  java.lang.ClassCastException:
+  com.android.demoresponsevision.fragment.BarcodeScreen cannot be cast
+  to android.app.Activity</p>
+</blockquote>
+
+<p>Fragment Code:-</p>
+
+<pre><code>public class BarcodeScreen extends Fragment {
+    TextView tvStatus;
+    TextView tvResult;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.barcode, container, false);
+        tvStatus = (TextView) view.findViewById(R.id.tvStatus);
+        tvResult = (TextView) view.findViewById(R.id.tvResult);
+
+        Button scanBtn = (Button) view.findViewById(R.id.btnScan);
+        // in some trigger function e.g. button press within your code you
+        // should add:
+        scanBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    Utilites.showToast(getActivity(), "Try");
+                    Intent intent = new Intent(
+                            "com.google.zxing.client.android.SCAN");
+                    intent.putExtra("SCAN_MODE", "QR_CODE_MODE,PRODUCT_MODE");
+                    startActivityForResult(intent, 0);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(getActivity(), "ERROR:" + e, 1).show();
+
+                }
+            }
+        });
+        return view;
+
+    }
+
+    // In the same activity you’ll need the following to retrieve the results:
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        Toast.makeText(getActivity(), "result ", 1000).show();
+        if (requestCode == 0) {
+
+            if (resultCode == getActivity().RESULT_OK) {
+                tvStatus.setText(intent.getStringExtra("SCAN_RESULT_FORMAT"));
+                tvResult.setText(intent.getStringExtra("SCAN_RESULT"));
+            }
+
+            else if (resultCode == getActivity().RESULT_CANCELED) {
+                tvStatus.setText("Press a button to start a scan.");
+                tvResult.setText("Scan cancelled.");
+            }
+        }
+    }
+
+}
+</code></pre>
+
+<p>This is my Fragment Activity</p>
+
+<pre><code>public class TabActivity extends FragmentActivity implements
+        OnTabChangeListener {
+    TextView txt;
+    private TabHost mTabHost;
+    private HashMap mapTabInfo = new HashMap();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+        private String tag;
+        private Class clss;
+        private Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String tag, Class clazz, Bundle args) {
+            this.tag = tag;
+            this.clss = clazz;
+            this.args = args;
+        }
+    }
+
+    class TabFactory implements TabContentFactory {
+        private final Context mContext;
+
+        /** * @param context */
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.tabs);
+        // Step 2: Setup TabHost
+
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+        }
+    }
+
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); // save the tab
+                                                                // selected
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Step 2: Setup TabHost
+     */
+    private void initialiseTabHost(Bundle args) {
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        TabActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab1").setIndicator("HomeScreen"),
+                (tabInfo = new TabInfo("Tab1", HomeScreen.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        TabActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab2").setIndicator("SecondScreen"),
+                (tabInfo = new TabInfo("Tab2", SecondHomeScreen.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        // Default to first tab
+        this.onTabChanged("Tab1");
+        //
+        mTabHost.setOnTabChangedListener((OnTabChangeListener) this);
+    }
+
+    private static void addTab(TabActivity activity, TabHost tabHost,
+            TabHost.TabSpec tabSpec, TabInfo tabInfo) { // Attach a Tab view
+                                                        // factory to the spec
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state. If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+
+        tabInfo.fragment = activity.getSupportFragmentManager()
+                .findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager()
+                    .beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+        tabHost.addTab(tabSpec);
+    }
+
+    /**
+     * (non-Javadoc) * @see
+     * android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+     */
+    public void onTabChanged(String tag) {
+        TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager()
+                    .beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+
+                }
+            }
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+
+        }
+    }
+
+}
+</code></pre>
+
+<p>HomeScreen :-</p>
+
+<pre><code>public class HomeScreen extends Fragment implements OnItemClickListener {
+    ListView list;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.home, container, false);
+
+        list = (ListView) view.findViewById(R.id.list);
+        String[] values = new String[] { "Barcode scanner", "Photos ", "Map",
+                "Signature" };
+
+        ArrayAdapter<String> files = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, values);
+
+        list.setAdapter(files);
+        list.setOnItemClickListener(this);
+        return view;
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+
+        if (position == 0) {
+            Utilites.showToast(getActivity(), "Barcode");
+            Intent i_barcode = new Intent(getActivity(), BarcodeScreen.class);
+            startActivity(i_barcode);
+        }
+
+        if (position == 1) {
+            Utilites.showToast(getActivity(), "Photos");
+            Intent i_photo = new Intent(getActivity(), PhotoScreen.class);
+            startActivity(i_photo);
+        }
+        if (position == 2) {
+            Utilites.showToast(getActivity(), "Map");
+            Intent i_map = new Intent(getActivity(), MapScreen.class);
+            startActivity(i_map);
+        }
+        if (position == 3) {
+            Utilites.showToast(getActivity(), "Signature");
+            Intent i_signature = new Intent(getActivity(), BarcodeScreen.class);
+            startActivity(i_signature);
+        }
+
+    }
+
+}
+</code></pre>

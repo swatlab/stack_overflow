@@ -1,0 +1,306 @@
+<p>I am creating a couponing app where coupons are stored in a database and compared to local ads to let users know when to use the coupons. I have created a database that holds all of the coupons and also one for the user's personal library. I am having difficulty in getting the library to show in a <code>GridView</code>. The code for the gridview adapter, the database helper, and the activity code are all below as well as the error that I am receiving. Please help.</p>
+
+<p>LibraryListener.java</p>
+
+<pre><code>public class LibraryListener extends Activity{
+
+    GridView grid;
+    private static final String TABLE_NAME = "Library";
+
+    //set table column names as constants
+    private static final String LIBRARY_ID = "_id";
+    private static final String UPC = "UPC";
+    private static final String DESCRIPTION = "Description";
+    private static final String DISCOUNT = "Discount";
+    private static final String MIN_REQ = "MinReq";
+    private static final String DOUBLE = "Double";
+    private static final String IMAGE = "Image";
+    private static final String EXPIRATION = "Expiration";
+    private static final String QTY = "Qty";
+
+    private static final String[] TABLE_COLUMNS = new String[]{UPC,DESCRIPTION,DISCOUNT,MIN_REQ,DOUBLE,IMAGE,EXPIRATION,QTY};
+
+    private SQLiteDatabase database;
+    private ArrayList<String> libraryUPC;
+    private ArrayList<String> libraryImages;
+    private ArrayList<String> libraryDescription;
+    private ArrayList<Double> libraryDiscount;
+    private ArrayList<Integer> libraryMinReq;
+    private ArrayList<String> libraryDouble;
+    private ArrayList<String> expirationDate;
+    private ArrayList<Integer> libraryQty;
+    private ArrayList<String> imageFilePath;
+    DatabaseHelper dbOpenHelper = new DatabaseHelper(this);
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.gridview);
+
+        GridView gridView = (GridView)findViewById(R.id.gridview);
+
+        try {
+            dbOpenHelper.createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        dbOpenHelper.openDatabase();
+        fillLibrary();
+        dbOpenHelper.close();
+        gridView.setAdapter(new GridViewAdapter(this, libraryDescription,imageFilePath));
+        //setUpList();
+
+    }
+
+    // Fill the library with items from database
+    private void fillLibrary() {
+        libraryImages = new ArrayList<String>();
+        Cursor cursor = database.query(TABLE_NAME, TABLE_COLUMNS, null, null, null, null, LIBRARY_ID);
+        cursor.moveToFirst();
+        if(!cursor.isAfterLast()) {
+            do {
+                //UPC,DESCRIPTION,DISCOUNT,MIN_REQ,DOUBLE,IMAGE,EXPIRATION,QTY
+                String upc = cursor.getString(0);
+                libraryUPC.add(upc);
+                String description = cursor.getString(1);
+                libraryDescription.add(description);
+                double discount = cursor.getDouble(2);
+                libraryDiscount.add(discount);
+                int min = cursor.getInt(3);
+                libraryMinReq.add(min);
+                String dbl = cursor.getString(4);
+                libraryDouble.add(dbl);
+                String image = cursor.getString(5);
+                libraryImages.add(image);
+                String expiration = cursor.getString(6);
+                expirationDate.add(expiration);
+                int qty = cursor.getInt(7);
+                libraryQty.add(qty);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+    }
+}
+</code></pre>
+
+<p>DatabaseHelper.java</p>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper{
+    private static String DB_PATH = "/data/data/com.example.extremesavings/databases/";
+    private static final String DATABASE_NAME="ExtremeSavings";
+    private static final int DATABASE_VERSION=1;
+    private final Context myContext;
+    private SQLiteDatabase db;
+    String description;
+    double discount;
+    String minimum;
+    String dbl;
+    String imagefilePath;
+
+    public DatabaseHelper(Context c){
+        super(c, DATABASE_NAME, null, 1);
+        this.myContext = c;
+    }
+
+    private void showInfoDialog(Context context, String title, String information) {
+        new AlertDialog.Builder (context)
+        .setMessage(information)
+        .setTitle(title)
+        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+
+            }
+        }).show();  
+    }
+
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            showInfoDialog(myContext, "Alert", "Database already exists");
+        }else{
+
+            //create empty database into the default system path
+            this.getWritableDatabase();
+
+            try {
+                //overwrite empty database with internal database
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /*
+     * Check if the database already exist to avoid re-copying the file 
+     * each time you open the application.
+     */
+    public boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DATABASE_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDatabase(){
+
+        //Open the database
+        String myPath = DB_PATH + DATABASE_NAME;
+        db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(db != null)
+                db.close();
+
+            super.close();
+
+    }
+
+    //search table for UPC code
+    public boolean findUpc(String tableName, String upc)
+    {
+        String Query = "Select * from " + tableName + " where UPC = " + upc;
+        Cursor cursor = db.rawQuery(Query, null);
+            if(cursor.getCount() <= 0){
+                cursor.close();
+                return false;
+            }
+        cursor.close();
+        //test to see if coupon is found in database
+        Toast toast = Toast.makeText(myContext, "Coupon found in Database", Toast.LENGTH_LONG);
+        toast.show();
+        return true;
+    }
+
+    //Add coupon from database to library
+    public void addToLibrary(String upc, String expirationDate, int qty)
+    {
+        openDatabase();
+        //search library to see if coupon already exists in table
+        boolean inLibrary = findUpc("Library",upc);
+
+        if (!inLibrary){
+            String selectQuery = "Select * from CouponDatabase where UPC = " + upc;
+            Cursor cursor = db.rawQuery(selectQuery, null);
+            cursor.moveToFirst();
+            if(!cursor.isAfterLast()) {
+                do {
+                    //DESCRIPTION,DISCOUNT,MIN_REQ,DOUBLE,IMAGE,QTY
+                    description = cursor.getString(2);
+                    discount = cursor.getDouble(3);
+                    minimum = cursor.getString(4);
+                    dbl = cursor.getString(5);
+                    imagefilePath = "R.drawable." + cursor.getString(6);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+            //create string to insert data into library table
+            String insertQuery = "INSERT into Library (UPC, Description, Discount, MinReq, Double, Image, Expiration, Qty)" 
+            + "(" + upc + ", " + description + ", " + discount + ", " + minimum + ", " + dbl + ", " + imagefilePath + ", " + expirationDate + ", " + qty + ")";
+            //insert data into Library table
+            db.execSQL(insertQuery);
+            Toast toast = Toast.makeText(myContext, "Item added to Library", Toast.LENGTH_LONG);
+            toast.show();
+        }
+
+    }
+
+
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<blockquote>
+  <p>07-15 23:17:34.485: E/AndroidRuntime(13806): FATAL EXCEPTION: main
+  07-15 23:17:34.485: E/AndroidRuntime(13806): Process: com.example.extremesavings, PID: 13806
+  07-15 23:17:34.485: E/AndroidRuntime(13806): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.extremesavings/com.example.extremesavings.LibraryListener}: java.lang.NullPointerException: Attempt to invoke virtual method 'android.database.Cursor android.database.sqlite.SQLiteDatabase.query(java.lang.String, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String, java.lang.String, java.lang.String)' on a null object reference
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2306)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2366)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.ActivityThread.access$800(ActivityThread.java:149)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1284)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.os.Handler.dispatchMessage(Handler.java:102)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.os.Looper.loop(Looper.java:135)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.ActivityThread.main(ActivityThread.java:5297)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at java.lang.reflect.Method.invoke(Native Method)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at java.lang.reflect.Method.invoke(Method.java:372)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:908)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:703)
+  07-15 23:17:34.485: E/AndroidRuntime(13806): Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'android.database.Cursor android.database.sqlite.SQLiteDatabase.query(java.lang.String, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String, java.lang.String, java.lang.String)' on a null object reference
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at com.example.extremesavings.LibraryListener.fillLibrary(LibraryListener.java:67)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at com.example.extremesavings.LibraryListener.onCreate(LibraryListener.java:57)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.Activity.performCreate(Activity.java:6020)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2259)
+  07-15 23:17:34.485: E/AndroidRuntime(13806):    ... 10 more</p>
+</blockquote>

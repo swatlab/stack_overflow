@@ -1,0 +1,156 @@
+<clones>
+<systeminfo processor="nicad3" system="snippets" granularity="functions" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="1230" npairs="30"/>
+<runinfo ncompares="13744" cputime="44140"/>
+
+<clone nlines="73" similarity="71">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.1.1/OpenBikeSharing-1.1.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="63" endline="178" pcid="354"></source>
+</clone>
+
+<clone nlines="73" similarity="71">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.1/OpenBikeSharing-1.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="63" endline="178" pcid="185"></source>
+</clone>
+
+<clone nlines="73" similarity="71">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.1.3/OpenBikeSharing-1.1.3/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="63" endline="178" pcid="665"></source>
+</clone>
+
+<clone nlines="73" similarity="71">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.1.2/OpenBikeSharing-1.1.2/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="63" endline="178" pcid="756"></source>
+</clone>
+
+<clone nlines="73" similarity="80">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.6/OpenBikeSharing-1.6/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="70" endline="168" pcid="102"></source>
+</clone>
+
+<clone nlines="70" similarity="98">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.5/OpenBikeSharing-1.5/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="73" endline="165" pcid="446"></source>
+</clone>
+
+<clone nlines="69" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.3/OpenBikeSharing-1.3/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="70" endline="161" pcid="1026"></source>
+</clone>
+
+<clone nlines="69" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.4/OpenBikeSharing-1.4/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="72" endline="163" pcid="558"></source>
+</clone>
+
+<clone nlines="69" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.3.1/OpenBikeSharing-1.3.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="71" endline="162" pcid="915"></source>
+</clone>
+
+<clone nlines="69" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.2/OpenBikeSharing-1.2/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="69" endline="160" pcid="1136"></source>
+</clone>
+
+<clone nlines="67" similarity="72">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/v1.6.1/OpenBikeSharing-1.6.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="70" endline="155" pcid="17"></source>
+</clone>
+
+<clone nlines="67" similarity="72">
+<source file="snippets/12@OpenBikeSharing.java" startline="70" endline="161" pcid="1"></source>
+<source file="releases/master/OpenBikeSharing-master/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="70" endline="155" pcid="273"></source>
+</clone>
+
+<clone nlines="19" similarity="80">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/v1.6.1/OpenBikeSharing-1.6.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="176" endline="197" pcid="21"></source>
+</clone>
+
+<clone nlines="19" similarity="80">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/v1.6/OpenBikeSharing-1.6/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="189" endline="210" pcid="107"></source>
+</clone>
+
+<clone nlines="19" similarity="80">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/v1.5/OpenBikeSharing-1.5/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="186" endline="207" pcid="451"></source>
+</clone>
+
+<clone nlines="19" similarity="80">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/master/OpenBikeSharing-master/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="176" endline="197" pcid="277"></source>
+</clone>
+
+<clone nlines="17" similarity="94">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/v1.4/OpenBikeSharing-1.4/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="184" endline="202" pcid="563"></source>
+</clone>
+
+<clone nlines="17" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/v1.3/OpenBikeSharing-1.3/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="182" endline="200" pcid="1031"></source>
+</clone>
+
+<clone nlines="17" similarity="94">
+<source file="snippets/12@OpenBikeSharing.java" startline="182" endline="200" pcid="6"></source>
+<source file="releases/v1.3.1/OpenBikeSharing-1.3.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="183" endline="201" pcid="920"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.5/OpenBikeSharing-1.5/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="262" endline="278" pcid="456"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.3.1/OpenBikeSharing-1.3.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="237" endline="253" pcid="925"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.6/OpenBikeSharing-1.6/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="265" endline="281" pcid="112"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.6.1/OpenBikeSharing-1.6.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="252" endline="268" pcid="26"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.4/OpenBikeSharing-1.4/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="257" endline="273" pcid="568"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/master/OpenBikeSharing-master/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="252" endline="268" pcid="282"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.2/OpenBikeSharing-1.2/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="219" endline="235" pcid="1146"></source>
+</clone>
+
+<clone nlines="16" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="236" endline="252" pcid="11"></source>
+<source file="releases/v1.3/OpenBikeSharing-1.3/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="236" endline="252" pcid="1036"></source>
+</clone>
+
+<clone nlines="13" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="213" endline="227" pcid="9"></source>
+<source file="releases/v1.3.1/OpenBikeSharing-1.3.1/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="214" endline="228" pcid="923"></source>
+</clone>
+
+<clone nlines="13" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="213" endline="227" pcid="9"></source>
+<source file="releases/v1.3/OpenBikeSharing-1.3/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="213" endline="227" pcid="1034"></source>
+</clone>
+
+<clone nlines="13" similarity="100">
+<source file="snippets/12@OpenBikeSharing.java" startline="213" endline="227" pcid="9"></source>
+<source file="releases/v1.2/OpenBikeSharing-1.2/app/src/main/java/be/brunoparmentier/openbikesharing/app/ui/MapActivity.java" startline="196" endline="210" pcid="1144"></source>
+</clone>
+
+</clones>

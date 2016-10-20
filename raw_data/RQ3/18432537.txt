@@ -1,0 +1,176 @@
+<p>My application would allow me to open/copy a database stored in the assets folder.  I'm using a DatabaseHelper class with the following constructor and methods.</p>
+
+<pre><code>public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
+        this.myContext = context;
+    }
+
+/**
+ * Creates a empty database on the system and rewrites it with your own database.
+ * */
+public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }else{
+
+        //By calling this method an empty database will be created into the default system path
+           //of your application so we are going be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each time you open the application.
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public SQLiteDatabase openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    return SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+
+}
+</code></pre>
+
+<p>}</p>
+
+<p>I open the helper in my application class's onCreate method:</p>
+
+<p><code>mDBHelper = new DatabaseHelper(getApplicationContext());</code></p>
+
+<p>Then I perform a Query in my fragment using the following code to retrieve the database from the application class.</p>
+
+<pre><code>readingDb = cpcApplication.prepareDatabase();
+
+Cursor cursor = readingDb.rawQuery("select Z_PK, ZNAME, ZMAP_PIN_ICON from ZFILTER", null);
+</code></pre>
+
+<p>Here's my Logcat log:</p>
+
+<pre><code>08-25 14:35:39.896: E/SQLiteLog(11090): (14) cannot open file at line 30174 of [00bb9c9ce4]
+08-25 14:35:39.896: E/SQLiteLog(11090): (14) os_unix.c:30174: (2) open(/data/data/com.mcgarrybowen.CPC/databases/cpcmodel.sqlite) - 
+08-25 14:35:39.920: E/SQLiteDatabase(11090): Failed to open database '/data/data/com.mcgarrybowen.CPC/databases/cpcmodel.sqlite'.
+08-25 14:35:39.920: E/SQLiteDatabase(11090): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.mcgarrybowen.CPC.Data.DatabaseHelper.checkDataBase(DatabaseHelper.java:69)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.mcgarrybowen.CPC.Data.DatabaseHelper.createDataBase(DatabaseHelper.java:37)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.mcgarrybowen.CPC.CPCApplication.prepareDatabase(CPCApplication.java:148)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.mcgarrybowen.CPC.SiteCategoryFragment.setUpTypes(SiteCategoryFragment.java:160)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.mcgarrybowen.CPC.SiteCategoryFragment.onCreate(SiteCategoryFragment.java:55)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.support.v4.app.Fragment.performCreate(Fragment.java:1455)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:893)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1104)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1460)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.support.v4.app.FragmentManagerImpl$1.run(FragmentManager.java:440)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.os.Handler.handleCallback(Handler.java:615)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.os.Handler.dispatchMessage(Handler.java:92)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.os.Looper.loop(Looper.java:137)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at android.app.ActivityThread.main(ActivityThread.java:5059)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at java.lang.reflect.Method.invokeNative(Native Method)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at java.lang.reflect.Method.invoke(Method.java:511)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:792)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:555)
+08-25 14:35:39.920: E/SQLiteDatabase(11090):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>I have not changed my database id fields to _id as I inherited the database which uses a primary field that is not an integer and has another name.</p>
+
+<p>Thanks in advance for your help.</p>

@@ -1,0 +1,41 @@
+<p>i want to check if the database existed, and i have found some code from internet.</p>
+
+<pre><code>     private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+</code></pre>
+
+<p>but i got an error..cannot open file
+why it can't work?</p>
+
+<pre><code>: sqlite returned: error code = 14, msg = cannot open file at line 27703 of [8609a15dfa], db=/data/data/com.testing.abcde/databases/scj
+: sqlite returned: error code = 14, msg = os_unix.c: open() at line 27703 - "" errno=2 path=/data/data/com.testing.abcde/databases/scj, db=/data/data/com.testing.abcde/databases/scj
+: sqlite3_open_v2("/data/data/com.testing.abcde/databases/scj", &handle, 1, NULL) failed
+: Failed to open the database. closing it.
+: android.database.sqlite.SQLiteCantOpenDatabaseException: unable to open database file
+:   at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+:   at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:1013)
+:   at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:986)
+:   at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:962)
+:   at com.lkland.softkeyboard.easytype.SQLite.checkDataBase(SQLite.java:80)
+:   at com.lkland.softkeyboard.easytype.SQLite.createDataBase(SQLite.java:55)
+</code></pre>

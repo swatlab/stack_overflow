@@ -1,0 +1,24 @@
+<p>XYSeries add method only accepts add(double, double). Why can't it accept add(java.util Date, double) similar to the TimeSeries.</p>
+
+<p>I would like to plot X-axis = dates, 2 Y-axis (left and right) = values but the problem I experienced was I lost the dual y-axis plot (secondary Y-axis on the right hand side) if I use the TimeSeries add method with (Date, double) values. If I use the XYSeries it allows me to do a dual y-axis plot but would not accept Dates in the X-axis.</p>
+
+<p>Code is given below:</p>
+
+<pre><code>public void addXYSeries(XYMultipleSeriesDataset dataset, String[] titles,
+    List<Date[]> xValues, List<double[]> yValues, int scale) {
+    int length = titles.length;
+    for (int i = 0; i < length; i++) {
+        //XYSeries series = new XYSeries(titles[i], scale);
+        TimeSeries series = new TimeSeries(titles[i]);
+        Date[] xV = xValues.get(i);
+        double[] yV = yValues.get(i);
+        int seriesLength = xV.length;
+        for (int k = 0; k < seriesLength; k++) {
+            series.add(xV[k], yV[k]);
+        }
+        dataset.addSeries(series);
+    }
+}
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/arj1o.png" alt="enter image description here"></p>

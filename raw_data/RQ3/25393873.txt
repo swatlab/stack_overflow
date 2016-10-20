@@ -1,0 +1,293 @@
+<p>I'm trying to do an activity that saves with sharedpreferences a int that you choose in a spinner and I'm trying to make that when the user click in a menu the activity reload with the different value of the sharedpreferences int (previously chosed in the spinner), but when the user reload the app it crashes with this message:</p>
+
+<pre><code>08-19 19:02:56.145: D/AndroidRuntime(23142): Shutting down VM
+08-19 19:02:56.145: W/dalvikvm(23142): threadid=1: thread exiting with uncaught exception (group=0x4164bd40)
+08-19 19:02:56.146: E/AndroidRuntime(23142): FATAL EXCEPTION: main
+08-19 19:02:56.146: E/AndroidRuntime(23142): Process: com.example.fluviales, PID: 23142
+08-19 19:02:56.146: E/AndroidRuntime(23142): java.lang.NullPointerException
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at com.example.fluviales.Home_fragment$1$1.run(Home_fragment.java:49)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at android.os.Handler.handleCallback(Handler.java:733)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at android.os.Handler.dispatchMessage(Handler.java:95)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at android.os.Looper.loop(Looper.java:136)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at android.app.ActivityThread.main(ActivityThread.java:5086)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at java.lang.reflect.Method.invokeNative(Native Method)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at java.lang.reflect.Method.invoke(Method.java:515)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+08-19 19:02:56.146: E/AndroidRuntime(23142):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>The weird thing to me is that if I reload the activity using </p>
+
+<pre><code>Intent intent = getIntent();
+finish();
+startActivity(intent);
+</code></pre>
+
+<p>the activity crash, but if I close the app in the multitask and the re-open it the code works!</p>
+
+<p>Here is my MainActivity</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements OnPageChangeListener{
+
+private static final String PREFS_NAME = "ciudad";
+private static final String DATA_TAG = "ciudad";
+private static final int NUM_PAGES = 2;
+
+public ViewPager mPager;
+public PagerAdapter mPagerAdapter;
+String[] ciudades = { "Desde Paraná", "Desde Santa Fe", "Desde el pozo", "Desde abogacia"};
+public int ciudad;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    mPager = (ViewPager) findViewById(R.id.pager);
+    mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+
+    final SharedPreferences sharedPref = MainActivity.this.getPreferences(Context.MODE_PRIVATE);
+    int ciudad_sp = sharedPref.getInt("ciudad", 0);
+
+    final TextView tvv = (TextView) findViewById(R.id.debug);
+    tvv.setText(String.valueOf(ciudad_sp));
+
+
+    Spinner sp = (Spinner) findViewById(R.id.spinner1);
+    ArrayAdapter adapter = ArrayAdapter.createFromResource( this, R.array.opciones, android.R.layout.simple_spinner_item);
+    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    sp.setAdapter(adapter);
+
+    sp.setSelection(ciudad_sp);
+
+    sp.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+        public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+
+                ciudad = position;
+                Toast.makeText(parentView.getContext(), ciudades[position], Toast.LENGTH_SHORT).show();                 
+
+
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putInt("ciudad", position);
+                editor.commit();
+
+        }
+
+        public void onNothingSelected(AdapterView<?> parentView) {
+            mPager.getAdapter().notifyDataSetChanged();
+
+        }
+
+    });
+
+    // Instantiate a ViewPager and a PagerAdapter.
+    mPager.setOnPageChangeListener(this);
+    mPager.setAdapter(mPagerAdapter);
+
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case 0:
+            Intent intent = getIntent();
+            finish();
+            startActivity(intent);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu){
+    super.onCreateOptionsMenu(menu);
+    createMenu(menu);
+    return true;
+}
+
+private void createMenu(Menu menu){
+    MenuItem mnu1 = menu.add(0, 0, 0, "Reload");
+    {
+        mnu1.setAlphabeticShortcut('a');
+        mnu1.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+    }
+}
+
+
+@Override
+public void onBackPressed() {
+    if (mPager.getCurrentItem() == 0) {
+        // If the user is currently looking at the first step, allow the system to handle the
+        // Back button. This calls finish() on this activity and pops the back stack.
+        super.onBackPressed();
+    } else {
+        // Otherwise, select the previous step.
+        mPager.setCurrentItem(mPager.getCurrentItem() - 1);
+    }
+}
+
+
+
+/**
+ * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
+ * sequence.
+ */
+private class ScreenSlidePagerAdapter extends FragmentPagerAdapter {
+    public ScreenSlidePagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+
+
+    @Override
+    public Fragment getItem(int position) {
+
+        SharedPreferences sharedPref = MainActivity.this.getPreferences(Context.MODE_PRIVATE);
+        int ciudad_sp = sharedPref.getInt("ciudad", 0);
+
+
+        if(ciudad_sp == 0){
+            switch(position){
+                case 0:
+                    return new Home_fragment();
+                case 1:
+                    return new Next_fragment();                 
+            }
+        }else if(ciudad_sp == 1){
+            switch(position){
+                case 0:
+                    return new Home_fragment_staFe();
+                case 1:
+                    return new Next_fragment_staFe();                   
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        return NUM_PAGES;
+    }
+
+}
+
+
+@Override
+public void onPageScrollStateChanged(int arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onPageScrolled(int arg0, float arg1, int arg2) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onPageSelected(int position) {
+    String [] hola = {"Siguiente cole", "Siguiente siguiente cole" };
+    setTitle(hola[position]);
+}
+
+
+}
+</code></pre>
+
+<p>And this is my Home_fragment fragment</p>
+
+<pre><code>public class Home_fragment extends Fragment{
+
+public int numeroDelArray, cuantosQuedan, HoraActual_en_minutos;
+
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.inicio, container, false);
+
+
+    final int[] horas = { 1,3,4,5,6,6,7,7,7,8,8,9,9,9,10,11,11,11,12,13,13,14,14,14,15,15,16,16,17,17,18,18,19,19,20,20,21,21,22,23 };
+    final int[] minutos = { 0,0,0,10,10,20,0,10,30,20,40,20,30,50,40,0,40,50,10,10,20,0,10,30,20,40,30,50,0,40,0,50,10,20,0,20,10,30,40,50 };
+
+    final Handler mHandler = new Handler();
+
+
+    new Thread(new Runnable() {
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
+        while (true) {
+            try {
+                Thread.sleep(1000);
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        // TODO Auto-generated method stub
+                        // Write your code here to update the UI.
+                        numeroDelArray = checkHour();
+                        // Down here is the error that the logcat shows
+                        TextView tv_minutos = (TextView) getView().findViewById(R.id.minutos);
+                        TextView tv_horaDelQueSale = (TextView) getView().findViewById(R.id.textoQueQueda);
+                        Calendar c = Calendar.getInstance(); 
+                        HoraActual_en_minutos = (c.get(Calendar.HOUR_OF_DAY) * 60 ) + c.get(Calendar.MINUTE);
+
+                        cuantosQuedan = horas[numeroDelArray]*60 + minutos[numeroDelArray] - HoraActual_en_minutos;
+
+                        if(cuantosQuedan > 60){
+                            tv_minutos.setText("+60");
+                        }else{
+                            tv_minutos.setText(String.valueOf(cuantosQuedan));
+                        }
+                        tv_horaDelQueSale.setText("QUE SALE A LAS " + String.valueOf(String.format("%02d", horas[numeroDelArray])) + ":" + String.valueOf(String.format("%02d", minutos[numeroDelArray])));
+
+                        }
+
+
+                    });
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            }
+        }
+    }).start();
+
+
+    return rootView;
+}
+
+private int checkHour() {
+    // TODO Auto-generated method stub
+    int[] horas = { 1,3,4,5,6,6,7,7,7,8,8,9,9,9,10,11,11,11,12,13,13,14,14,14,15,15,16,16,17,17,18,18,19,19,20,20,21,21,22,23 };
+    int[] minutos = { 0,0,0,10,10,20,0,10,30,20,40,20,30,50,40,0,40,50,10,10,20,0,10,30,20,40,30,50,0,40,0,50,10,20,0,20,10,30,40,50 };
+
+
+    int minutosQueUso = 9999, lugarQueQueda = 0;
+    Calendar c = Calendar.getInstance(); 
+    int HoraActualenminutos = (c.get(Calendar.HOUR_OF_DAY) * 60 ) + c.get(Calendar.MINUTE);
+
+    if (horas.length != minutos.length){
+        Toast.makeText(getActivity(), "No acomodaste bien la hora de los minutos", Toast.LENGTH_SHORT).show();
+    }else{
+        for(int lugar = 0; lugar < minutos.length; lugar++){
+            if((horas[lugar]*60 + minutos[lugar] - HoraActualenminutos) > 0 && (horas[lugar]*60 + minutos[lugar] - HoraActualenminutos) < minutosQueUso ){
+
+                minutosQueUso = horas[lugar]*60 + minutos[lugar] - HoraActualenminutos;
+                lugarQueQueda = lugar;
+            }
+        }
+    }
+
+    return lugarQueQueda;
+
+
+
+}}
+</code></pre>
+
+<p>And other question I have is that if someone know a method to reload the activity when the user change the spinner value, I tried to reload the activity in my <code>setOnItemSelected</code> but it generates a infinite loop, thanks in advanced!</p>

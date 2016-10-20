@@ -1,0 +1,106 @@
+<p>I'm trying to make an app with an image gallery in it inside a fragment, but not getting errors in the code but getting this error below. Any help would be awesome, only a beginner. If you wish any more details just ask.</p>
+
+<p>Think its something to do with the 34th line which is:       GridView gridview = (GridView) getView().findViewById(R.id.gridview);</p>
+
+<p>Code:</p>
+
+<pre><code> public class Fragment_3 extends Fragment{
+  private static View view;
+  @Override
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+      if (view != null) {
+          ViewGroup parent = (ViewGroup) view.getParent();
+          if (parent != null)
+              parent.removeView(view);
+      }
+      try {
+          view = inflater.inflate(R.layout.fragment_3, container, false);
+      } catch (InflateException e) {
+      }
+
+     GridView gridview = (GridView) getView().findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this.getActivity()));
+
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                Toast.makeText(Fragment_3.this.getActivity(), "" + position, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        return view;
+}
+
+  public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {  // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        // references to our images
+        private Integer[] mThumbIds = {
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_0, R.drawable.sample_1,
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7,
+                R.drawable.sample_0, R.drawable.sample_1,
+                R.drawable.sample_2, R.drawable.sample_3,
+                R.drawable.sample_4, R.drawable.sample_5,
+                R.drawable.sample_6, R.drawable.sample_7
+        };
+    }
+ }
+</code></pre>
+
+<p>Error</p>
+
+<pre><code> 06-24 14:02:27.385: E/AndroidRuntime(3959): FATAL EXCEPTION: main
+ 06-24 14:02:27.385: E/AndroidRuntime(3959): java.lang.NullPointerException
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at com.bottlecapp.ahmetmikko.Fragment_3.onCreateView(Fragment_3.java:34)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.support.v4.app.Fragment.performCreateView(Fragment.java:1460)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:911)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1088)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1444)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.support.v4.app.FragmentManagerImpl$1.run(FragmentManager.java:429)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.os.Handler.handleCallback(Handler.java:725)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.os.Handler.dispatchMessage(Handler.java:92)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.os.Looper.loop(Looper.java:137)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at java.lang.reflect.Method.invokeNative(Native Method)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at java.lang.reflect.Method.invoke(Method.java:511)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+06-24 14:02:27.385: E/AndroidRuntime(3959):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

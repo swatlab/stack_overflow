@@ -1,0 +1,107 @@
+<p>I have tried to copy my db in the asset folder to the internal app memory. </p>
+
+<p>The db contains two table. One table is totally empty that should allow the user to insert their data into the table.
+Another table is preloaded with data that provides the information of the app (the reason why i need to load the preloaded db into the app)
+Should i have two separate db because when i was dealing with the preloaded db, the db was populating into the app memory just fine but for some reason now i could not do so because of that extra table.</p>
+
+<p>Is it possible that the DB i put in my asset is corrupted because i do not have android-metadata inside? The db in my asset folder is just created with my data from CSV sheet.</p>
+
+<p>Before this problem, i refractor my package name and changed them in manifest as well. Could it be one of the problem?</p>
+
+<p>Heres the code </p>
+
+<p>DBHelper.class</p>
+
+<pre><code>@Override
+public void onCreate(SQLiteDatabase db)
+{
+    db.execSQL(DB_CREATE_SQL);
+    db.execSQL(DB_CREATE_SQL_FOR_GAME);
+}
+    public void createDatabase(Context context) throws IOException
+{
+    Log.d("Create Database","In method");
+    // If database does not exist, copy it from the asset
+    if (checkDatabase() == false)
+    {
+        try
+        {
+            // Copy the database from assets
+            copyDatabase(context);
+            Log.d("Create Database","Copying");
+        }
+        catch (IOException mIOException)
+        {
+            Log.d("Create Database","Failed");
+            throw new Error("ErrorCopyingDataBase");
+        }
+    }
+}
+
+
+public void copyDatabase(Context context) throws IOException
+{
+    // Open your local db as the input stream
+    InputStream myInput = context.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[10240];
+    int length;
+    while ((length = myInput.read(buffer)) > 0)
+    {
+        myOutput.write(buffer, 0, length);
+    }
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public boolean checkDatabase()
+{
+
+    String myPath = DB_PATH + DB_NAME;
+    File f = new File(myPath);
+    return f.exists();
+}
+</code></pre>
+
+<p>I am actually getting IO exception whenever i run the app because i am actually populating the asset right after the app is launched.</p>
+
+<p>Logcat</p>
+
+<pre><code>09-25 16:55:42.878: E/SQLiteDatabase(28815): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:278)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:217)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:464)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:186)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:178)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+09-25 16:55:42.878: E/SQLiteDatabase(28815):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+</code></pre>
+
+<p>I have tried to just copy the database into the folder after using getWritableDatabase() to create the path of the db (which would mean it will override any existing one) and i got this error</p>
+
+<pre><code>09-26 11:09:46.370: E/System(2444): Uncaught exception thrown by finalizer
+09-26 11:09:46.380: E/System(2444): java.io.IOException: close failed: EIO (I/O error)
+09-26 11:09:46.380: E/System(2444):     at libcore.io.IoUtils.close(IoUtils.java:41)
+09-26 11:09:46.380: E/System(2444):     at java.io.RandomAccessFile.close(RandomAccessFile.java:166)
+09-26 11:09:46.380: E/System(2444):     at java.io.RandomAccessFile.finalize(RandomAccessFile.java:175)
+09-26 11:09:46.380: E/System(2444):     at java.lang.Daemons$FinalizerDaemon.doFinalize(Daemons.java:186)
+09-26 11:09:46.380: E/System(2444):     at java.lang.Daemons$FinalizerDaemon.run(Daemons.java:169)
+09-26 11:09:46.380: E/System(2444):     at java.lang.Thread.run(Thread.java:856)
+09-26 11:09:46.380: E/System(2444): Caused by: libcore.io.ErrnoException: close failed: EIO (I/O error)
+09-26 11:09:46.380: E/System(2444):     at libcore.io.Posix.close(Native Method)
+09-26 11:09:46.380: E/System(2444):     at libcore.io.BlockGuardOs.close(BlockGuardOs.java:75)
+09-26 11:09:46.380: E/System(2444):     at libcore.io.IoUtils.close(IoUtils.java:38)
+09-26 11:09:46.380: E/System(2444):     ... 5 more
+</code></pre>

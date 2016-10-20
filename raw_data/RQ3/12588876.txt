@@ -1,0 +1,72 @@
+<p>I'm a beginner android developer and I can't understand why my first tab content isn't shown. I have been searching on the Internet for quite a while, but I haven't succeeded yet. :(</p>
+
+<p>Two other tabs are displayed properly, just the first one fails (despite the fragment I attach to it, so it's not the first fragment's problem, I think)</p>
+
+<p>I tried to carefully follow some tutorials and studied many examples, but I still can't find the reason why...</p>
+
+<p>Here is how I setup the tabHost:</p>
+
+<pre><code>private void initialiseTabHost(Bundle args) {
+    mTabHost = (TabHost)findViewById(R.id.main_tabhost);
+    mTabHost.setup();
+    TabInfo tabInfo = null;
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("My").setIndicator(createTabView(mTabHost.getContext(), "My")), ( tabInfo = new TabInfo("My", MyCinemasFragment.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);  
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("All").setIndicator(createTabView(mTabHost.getContext(), "All")), ( tabInfo = new TabInfo("All", AllCinemasFragment.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Win!").setIndicator(createTabView(mTabHost.getContext(), "Win!")), ( tabInfo = new TabInfo("Win!", OffersFragment.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+    this.onTabChanged("My");
+
+    mTabHost.setOnTabChangedListener(this);
+}
+</code></pre>
+
+<p>and this is my addTab method:</p>
+
+<pre><code>private static void addTab(TabsFragmentActivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+
+    tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+
+    tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+    if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.detach(tabInfo.fragment);
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+    }
+
+    tabHost.addTab(tabSpec);
+}
+</code></pre>
+
+<p>However, I feel like onTabChanged messes everything up...</p>
+
+<pre><code>public void onTabChanged(String tag) {
+    TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this, newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+            }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+} 
+</code></pre>
+
+<p>Thank you in advance...</p>

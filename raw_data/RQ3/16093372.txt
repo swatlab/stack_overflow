@@ -1,0 +1,27 @@
+<p>I have the following code to enable to home button to act as a back button.  The problem I'm facing is from this activity if I use the real back button it simply goes back to the previous activity just as I left it.  If I use the home button it's reloading the page so I lose what was previously done to it.  I'm sure it's something simple I'm missing.</p>
+
+<pre><code>@Override
+public boolean onCreateOptionsMenu(Menu menu) 
+{
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.census_management_search, menu);
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+    // Handle item selection
+    switch (item.getItemId()) 
+    {
+        case android.R.id.home:
+            Intent intent = new Intent(this, CensusManagementActivity.class);
+            NavUtils.navigateUpTo(this, intent);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>

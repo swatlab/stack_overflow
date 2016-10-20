@@ -1,0 +1,89 @@
+<p>I have a bookmarklet that is normally fired with:</p>
+
+<pre><code>javascript: function loadScript(scriptURL) {
+var scriptElem = document.createElement('SCRIPT'); 
+scriptElem.setAttribute('language', 'JavaScript'); 
+scriptElem.setAttribute('src', scriptURL); 
+document.body.appendChild(scriptElem);
+} loadScript('http:/www.pathtojavascript.co.uk/javascript.min.js');
+</code></pre>
+
+<p>from a bookmark.</p>
+
+<p>I am now trying to get this fired in an Android app, I have a webview and an Android button below the webview, what I am trying to do is load the bookmarklet into the webview when the Android button is pressed.</p>
+
+<p>I have been looking at <a href="http://android-er.blogspot.co.uk/2011/10/call-javascript-inside-webview-from.html" rel="nofollow">http://android-er.blogspot.co.uk/2011/10/call-javascript-inside-webview-from.html</a></p>
+
+<p>However this I think is used when the javascript is in the html file that is loaded in the webview, while mine is to appear above the current webpage and the javascript is found at  <code>http:/www.pathtojavascript.co.uk/javascript.min.js</code></p>
+
+<p>My current class:</p>
+
+<pre><code>public class SearchViewer extends SherlockActivity {
+
+    TextView grabit;
+    WebView webView;
+
+    @SuppressLint("JavascriptInterface")
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.searchviewer);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setIcon(R.drawable.ic_arrowleft);
+
+        Intent intent = getIntent();
+        String url = intent.getStringExtra("URL");
+        String name = intent.getStringExtra("Name");
+        setTitle(name);
+
+        webView = (WebView) findViewById(R.id.webView1);
+        webView.loadUrl(url);
+        webView.getSettings().setLoadWithOverviewMode(true);
+        webView.getSettings().setUseWideViewPort(true);
+        webView.getSettings().setJavaScriptEnabled(true); 
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return false;
+            }
+        });
+        grabit = (TextView) findViewById(R.id.grabit);
+        grabit.setOnClickListener(OnClick_grabit);
+
+
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+        case android.R.id.home:
+            finish();
+             break;
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+        return false;
+    }
+
+    public void onStart() {
+        super.onStart();
+        EasyTracker.getInstance(this).activityStart(this); 
+    }
+
+    public void onStop() {
+        super.onStop();
+        EasyTracker.getInstance(this).activityStop(this);
+      }
+
+
+    private OnClickListener OnClick_grabit = new OnClickListener() {
+        public void onClick(View v) {
+            //Code to launch javascript?
+        }
+    };
+
+
+
+}
+</code></pre>

@@ -1,0 +1,764 @@
+<p>I've been stuck here for almost a week trying find the answer on the internet but sadly nothing worked. :( Everytime I try to update using this method:</p>
+
+<pre><code>private Tenant updateTenantWithApplicationProperties(List<TenantApplicationProperty> newTenantApplicationProperties, String tenantId) {
+    String reason = "Update application properties.";
+    Tenant existingTenant = tenantRepository.findById(tenantId);
+
+    List<TenantApplicationProperty> temp = existingTenant.getTenantApplicationProperties();
+    existingTenant.setTenantApplicationProperties(newTenantApplicationProperties);
+
+    setApplicationPropertiesUpdateValues(temp, existingTenant);
+
+    if(newTenantApplicationProperties != null && newTenantApplicationProperties.size() != 0) {
+        Tenant savedTenantWithAppProps = saveTenantWithLog(existingTenant, reason);
+        return savedTenantWithAppProps;
+    }
+    return existingTenant;
+} 
+</code></pre>
+
+<p>Im always getting this error: </p>
+
+<pre><code>javax.persistence.PersistenceException:       org.hibernate.PersistentObjectException: detached entity passed to persist: com.infor.ecom.tenant.manager.model.entity.ApplicationProperty
+        at org.hibernate.ejb.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1361)
+        at org.hibernate.ejb.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1289)
+        at org.hibernate.ejb.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1295)
+        at org.hibernate.ejb.AbstractEntityManagerImpl.merge(AbstractEntityManagerImpl.java:876)
+</code></pre>
+
+<p>But when Im using this method it works fine:</p>
+
+<pre><code>public Tenant updateTenant(Tenant tenant) {
+        List<Database> databases = tenant.getDatabases();
+        List<Administrator> administrators = tenant.getAdministrators();
+
+        validateUpdateTenant(tenant);
+        validateDatabases(databases);
+        validateAdministrators(administrators);
+
+        Tenant existingTenant = findByIdWithAllDetails(tenant.getId());
+        List<Database> listExistingDatabases = existingTenant.getDatabases();
+        Database existingEcomDb = getDatabaseByType(listExistingDatabases,
+                TenantManagerConstants.ECOM_DATASOURCE);
+        setDatabaseUpdateValues(listExistingDatabases, tenant);
+        setAdministratorsUpdateValues(existingTenant.getAdministrators(),
+                tenant);
+        setProductUpdateValue(existingTenant.getProduct(), tenant);
+            setApplicationPropertiesUpdateValues(existingTenant.getTenantApplicationProperties(), tenant);
+        setEcomDBParamsDefaultValues(tenant);
+        setAdministratorDefaultValues(tenant);
+        Database updateEcomDb = getDatabaseByType(tenant.getDatabases(),
+                TenantManagerConstants.ECOM_DATASOURCE);
+
+        Boolean shouldInstallNewDB = true;
+        if (existingEcomDb.getName().equalsIgnoreCase(updateEcomDb.getName())
+                && existingEcomDb.getHost().equalsIgnoreCase(
+                        updateEcomDb.getHost())
+                && existingEcomDb.getPort().equals(updateEcomDb.getPort())) {
+            shouldInstallNewDB = false;
+        } else {
+            testEcomDBConnection(updateEcomDb);
+        }
+        int ecomDbTableCount = getEcomDBTableCount(updateEcomDb);
+        String[][] languages = formatAndValidateLanguages(updateEcomDb
+                .getEcomDatabaseParameters().getLanguages());
+        Tenant updatedTenant = saveExistingTenant(tenant);
+
+        if (updatedTenant != null) {
+            if (shouldInstallNewDB || ecomDbTableCount == 0) {
+                installDatabase(updateEcomDb, languages, updatedTenant);
+            } else {
+                updateDatabase(updateEcomDb, languages, updatedTenant);
+            }
+            storageService.updateTenantFolderStructure(updatedTenant);
+        } else {
+            throw new TenantManagerException(
+                    ApiMessageConstants.M_TENANT_PROVISION_ERROR,
+                    ApiMessageConstants.C_TENANT_PROVISION_ERROR);
+        }
+
+        return updatedTenant;
+    }
+</code></pre>
+
+<p>So here is my complete codes:</p>
+
+<p>Tenant.java</p>
+
+<pre><code>package com.infor.ecom.tenant.manager.model.entity;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import com.infor.ecom.tenant.manager.constant.TenantManagerConstants;
+import com.infor.ecom.tenant.manager.constant.TenantStatusEnum;
+
+@Entity
+@Table(name="tenant")
+@XmlRootElement(name = "Tenant",namespace = "http://com.infor.ecom.tenant.manager/Tenant")
+public class Tenant extends BaseModel {
+
+    private static final long serialVersionUID = -6687293822212120396L;
+
+    @Id
+    private String id;
+
+    private String displayName;
+
+    private String description;
+
+    private String url;
+
+    private String apiKey;
+
+    private String status;
+
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Database> databases;
+
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Activity> activites;
+
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Administrator> administrators;
+
+    private String message;
+
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<TenantApplicationProperty> tenantApplicationProperties;
+
+    @OneToOne(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Product product;
+
+    public Database findEcomDatabase() {
+        Database database = null;
+        if(databases != null) {
+            for(Database db : databases) {
+                if(db.getDatasource() != null) {
+                    if(TenantManagerConstants.ECOM_DATASOURCE.equals(db.getDatasource().getName())) {
+                        database = db;
+                        break;
+                    }
+                }
+            }
+        }
+        return database;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(TenantStatusEnum statusEnum) {
+        this.status = statusEnum.name();
+    }
+
+    public List<Database> getDatabases() {
+        return databases;
+    }
+
+    public void setDatabases(List<Database> databases) {
+        this.databases = databases;
+    }
+
+    public void addDatabase(Database database) {
+        if (this.databases == null) {
+            this.databases = new ArrayList<Database>(); 
+        }
+        database.setTenant(this);
+        this.databases.add(database);
+    }
+
+    public List<Activity> getActivites() {
+        return activites;
+    }
+
+    public void setActivites(List<Activity> activities) {
+        this.activites = activities;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<Administrator> getAdministrators() {
+        return this.administrators;
+    }
+
+    public void setAdministrators(List<Administrator> administrators) {
+        for (Administrator admin:administrators) {
+            admin.setTenant(this);
+        }
+        this.administrators = administrators;
+    }
+
+    public void addAdministrator(Administrator administrator) {
+        if (this.administrators == null) {
+            this.administrators = new ArrayList<Administrator>(); 
+        }
+        administrator.setTenant(this);
+        this.administrators.add(administrator);
+    }
+
+    public List<TenantApplicationProperty> getTenantApplicationProperties() {
+        return tenantApplicationProperties;
+    }
+
+    public void setTenantApplicationProperties(
+            List<TenantApplicationProperty> tenantApplicationProperties) {
+        this.tenantApplicationProperties = tenantApplicationProperties;
+    }
+
+        public void addTenantApplicationProperty(TenantApplicationProperty tenantApplicationProperty) {
+            if (this.tenantApplicationProperties == null) {
+                    this.tenantApplicationProperties = new ArrayList<TenantApplicationProperty>(); 
+            }
+            tenantApplicationProperty.setTenant(this);
+            this.tenantApplicationProperties.add(tenantApplicationProperty);
+        }   
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        product.setTenant(this);
+        this.product = product;
+    }
+
+}
+</code></pre>
+
+<p>TenantApplicationProperty.java</p>
+
+<pre><code>package com.infor.ecom.tenant.manager.model.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import com.infor.ecom.tenant.manager.model.entity.pk.TenantApplicationPropertyPK;
+
+@Entity
+@Table(name = "tenant_application_property")
+@IdClass(TenantApplicationPropertyPK.class)
+public class TenantApplicationProperty extends BaseModel {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
+    @Id
+    @OneToOne
+    @JoinColumn(name = "application_property_id")
+    private ApplicationProperty applicationProperty;
+
+    private String value;
+
+    public TenantApplicationProperty() {
+        super();
+    }
+
+    /**
+     * Added constructor to handle custom query for
+     * findByTenantIdApplicationPropertyName. No need to retrieve Tenant and
+     * ApplicationProperty
+     * 
+     * @param value
+     */
+    public TenantApplicationProperty(String value) {
+        setTenant(null);
+        setApplicationProperty(null);
+        setValue(value);
+    }
+
+    public Tenant getTenant() {
+        return tenant;
+    }
+
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant;
+    }
+
+    public ApplicationProperty getApplicationProperty() {
+        return applicationProperty;
+    }
+
+    public void setApplicationProperty(ApplicationProperty applicationProperty) {
+        this.applicationProperty = applicationProperty;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime
+                * result
+                + ((applicationProperty == null) ? 0 : applicationProperty
+                        .hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (getClass() != object.getClass())
+            return false;
+
+        TenantApplicationProperty tenantAppProp = (TenantApplicationProperty) object;
+        if (applicationProperty == null) {
+            if (tenantAppProp.applicationProperty != null) {
+                return false;
+            }
+        } else if (!applicationProperty.getApplicationPropertyGroup().getName().equals(tenantAppProp.applicationProperty.getApplicationPropertyGroup().getName())
+                    || !applicationProperty.getName().equals(tenantAppProp.applicationProperty.getName())) {
+            return false;
+        }
+
+        return true;
+    }
+
+}
+</code></pre>
+
+<p>TenanatApplicationPropertyPK.java</p>
+
+<pre><code>package com.infor.ecom.tenant.manager.model.entity.pk;
+
+public class TenantApplicationPropertyPK implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String tenant;
+
+    private Integer applicationProperty;
+
+    public String getTenantId() {
+        return tenant;
+    }
+
+    public void setTenantId(String tenant) {
+        this.tenant = tenant;
+    }
+
+    public Integer getApplicationPropertyId() {
+        return applicationProperty;
+    }
+
+    public void setApplicationPropertyId(Integer applicationProperty) {
+        this.applicationProperty = applicationProperty;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime
+                * result
+                + ((applicationProperty == null) ? 0 : applicationProperty
+                        .hashCode());
+        result = prime * result + ((tenant == null) ? 0 : tenant.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null) {
+            return false;
+        }
+
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        TenantApplicationPropertyPK tenantAppPropPK = (TenantApplicationPropertyPK) obj;
+        if (applicationProperty == null) {
+            if (tenantAppPropPK.applicationProperty != null) {
+                return false;
+            }
+        } else if (!applicationProperty
+                .equals(tenantAppPropPK.applicationProperty)) {
+            return false;
+        }
+        if (tenant == null) {
+            if (tenantAppPropPK.tenant != null) {
+                return false;
+            }
+        } else if (!tenant.equals(tenantAppPropPK.tenant)) {
+            return false;
+        }
+        return true;
+    }
+
+}
+</code></pre>
+
+<p>ApplicationProperty.java</p>
+
+<pre><code>    package com.infor.ecom.tenant.manager.model.entity;
+
+    import javax.persistence.Entity;
+    import javax.persistence.GeneratedValue;
+    import javax.persistence.GenerationType;
+    import javax.persistence.Id;
+    import javax.persistence.JoinColumn;
+    import javax.persistence.OneToOne;
+    import javax.persistence.Table;
+
+
+    @Entity
+    @Table(name = "application_property")
+    public class ApplicationProperty extends BaseModel {
+
+        private static final long serialVersionUID = 1L;
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Integer id;
+
+        private String name;
+
+        private String defaultValue;
+
+        private boolean isVisible;
+
+        private boolean clientVisible;
+
+        @OneToOne
+        @JoinColumn(name = "property_group_id")
+        private ApplicationPropertyGroup applicationPropertyGroup;
+
+        @OneToOne
+        @JoinColumn(name = "property_type_id")
+        private ApplicationPropertyType applicationPropertyType;
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getDefaultValue() {
+            return defaultValue;
+        }
+
+        public void setDefaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        public boolean getIsVisible() {
+            return isVisible;
+        }
+
+        public void setIsVisible(boolean isVisible) {
+            this.isVisible = isVisible;
+        }
+
+        public boolean getClientVisible() {
+            return clientVisible;
+        }
+
+        public void setClientVisible(boolean clientVisible) {
+            this.clientVisible = clientVisible;
+        }
+
+        public ApplicationPropertyGroup getApplicationPropertyGroup() {
+            return applicationPropertyGroup;
+        }
+
+        public void setApplicationPropertyGroup(ApplicationPropertyGroup applicationPropertyGroup) {
+            this.applicationPropertyGroup = applicationPropertyGroup;
+        }
+
+        public ApplicationPropertyType getApplicationPropertyType() {
+            return applicationPropertyType;
+        }
+
+        public void setApplicationPropertyType(ApplicationPropertyType applicationPropertyType) {
+            this.applicationPropertyType = applicationPropertyType;
+        }
+
+    }
+</code></pre>
+
+<p>ApplicationPropertyGroup.java</p>
+
+<pre><code>package com.infor.ecom.tenant.manager.model.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "application_property_group")
+public class ApplicationPropertyGroup extends BaseModel {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+}
+</code></pre>
+
+<p>ApplicationPropertyType.java</p>
+
+<pre><code>package com.infor.ecom.tenant.manager.model.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "application_property_type")
+public class ApplicationPropertyType extends BaseModel {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+}
+</code></pre>
+
+<p>TenantServiceImpl.java</p>
+
+<pre><code>private Tenant updateTenantWithApplicationProperties(List<TenantApplicationProperty> newTenantApplicationProperties, String tenantId) {
+    String reason = "Update application properties.";
+    Tenant existingTenant = tenantRepository.findById(tenantId);
+
+    List<TenantApplicationProperty> temp = existingTenant.getTenantApplicationProperties();
+    existingTenant.setTenantApplicationProperties(newTenantApplicationProperties);
+
+    setApplicationPropertiesUpdateValues(temp, existingTenant);
+
+    if(newTenantApplicationProperties != null && newTenantApplicationProperties.size() != 0) {
+        Tenant savedTenantWithAppProps = saveTenantWithLog(existingTenant, reason);
+        return savedTenantWithAppProps;
+    }
+    return existingTenant;
+} 
+
+private Tenant saveTenantWithLog(Tenant tenant, String reason) {
+    Tenant updatedTenant = tenantRepository.save(tenant);
+    TenantLog tenantLog = new TenantLog();
+
+    tenantLog.setTenantId(updatedTenant.getId());
+    tenantLog.setDisplayName(updatedTenant.getDisplayName());
+    tenantLog.setDescription(updatedTenant.getDescription());
+    tenantLog.setUrl(updatedTenant.getUrl());
+    tenantLog.setApiKey(updatedTenant.getApiKey());
+    tenantLog.setStatus(TenantStatusEnum.valueOf(updatedTenant.getStatus()));
+    tenantLog.setReason(reason);
+    tenantLog.setMessage(updatedTenant.getMessage());
+    tenantLogRepository.save(tenantLog);
+
+    return updatedTenant;
+}   
+
+private void setApplicationPropertiesUpdateValues(List<TenantApplicationProperty> existingTenantAppProps, Tenant tenant) {
+    List<TenantApplicationProperty> newTenantApplicationProperties = (tenant.getTenantApplicationProperties() != null) ? tenant.getTenantApplicationProperties() : new ArrayList<TenantApplicationProperty>();
+
+    if(newTenantApplicationProperties.size() != 0) {
+        for(TenantApplicationProperty tenantAppProp : newTenantApplicationProperties) {
+            int index = existingTenantAppProps.indexOf(tenantAppProp);      
+            if (index < 0) {
+                // throw an error -- tenantAppProp should always exist, right?
+            } else {
+                existingTenantAppProps.get(index).setValue(tenantAppProp.getValue());
+            }
+        }
+        tenant.setTenantApplicationProperties(existingTenantAppProps);
+    }
+}
+
+public Tenant updateTenant(Tenant tenant) {
+        List<Database> databases = tenant.getDatabases();
+        List<Administrator> administrators = tenant.getAdministrators();
+
+        validateUpdateTenant(tenant);
+        validateDatabases(databases);
+        validateAdministrators(administrators);
+
+        Tenant existingTenant = findByIdWithAllDetails(tenant.getId());
+        List<Database> listExistingDatabases = existingTenant.getDatabases();
+        Database existingEcomDb = getDatabaseByType(listExistingDatabases,
+                TenantManagerConstants.ECOM_DATASOURCE);
+        setDatabaseUpdateValues(listExistingDatabases, tenant);
+        setAdministratorsUpdateValues(existingTenant.getAdministrators(),
+                tenant);
+        setProductUpdateValue(existingTenant.getProduct(), tenant);
+            setApplicationPropertiesUpdateValues(existingTenant.getTenantApplicationProperties(), tenant);
+        setEcomDBParamsDefaultValues(tenant);
+        setAdministratorDefaultValues(tenant);
+        Database updateEcomDb = getDatabaseByType(tenant.getDatabases(),
+                TenantManagerConstants.ECOM_DATASOURCE);
+
+        Boolean shouldInstallNewDB = true;
+        if (existingEcomDb.getName().equalsIgnoreCase(updateEcomDb.getName())
+                && existingEcomDb.getHost().equalsIgnoreCase(
+                        updateEcomDb.getHost())
+                && existingEcomDb.getPort().equals(updateEcomDb.getPort())) {
+            shouldInstallNewDB = false;
+        } else {
+            testEcomDBConnection(updateEcomDb);
+        }
+        int ecomDbTableCount = getEcomDBTableCount(updateEcomDb);
+        String[][] languages = formatAndValidateLanguages(updateEcomDb
+                .getEcomDatabaseParameters().getLanguages());
+        Tenant updatedTenant = saveExistingTenant(tenant);
+
+        if (updatedTenant != null) {
+            if (shouldInstallNewDB || ecomDbTableCount == 0) {
+                installDatabase(updateEcomDb, languages, updatedTenant);
+            } else {
+                updateDatabase(updateEcomDb, languages, updatedTenant);
+            }
+            storageService.updateTenantFolderStructure(updatedTenant);
+        } else {
+            throw new TenantManagerException(
+                    ApiMessageConstants.M_TENANT_PROVISION_ERROR,
+                    ApiMessageConstants.C_TENANT_PROVISION_ERROR);
+        }
+
+        return updatedTenant;
+    }
+
+private Tenant saveExistingTenant(Tenant tenant) {
+    tenant.setStatus(TenantStatusEnum.INPROGRESS);
+    tenant.setMessage(ApiMessageConstants.M_DATABASE_UPDATE_INPROGRESS);
+    String reason = ApiMessageConstants.R_UPDATE_TENANT;
+    return saveTenantWithLog(tenant, reason);
+}
+</code></pre>

@@ -1,0 +1,202 @@
+<p>hello i have a grid view of images while on item click images are viewed in a viewpager , this is working fine but i need to make the images zoomable in the pager here is my code </p>
+
+<p>ImageAdapter.java</p>
+
+<pre><code>    import com.netvariant.qareeboon.android.R;
+
+    import android.content.Context;
+    import android.view.View;
+    import android.view.ViewGroup;
+    import android.widget.BaseAdapter;
+    import android.widget.ImageView;
+
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        public Object getItem(int position) {
+            return mThumbIds[position];
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // Create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {  // If it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+
+        // References to our images in res > drawable
+        public Integer[] mThumbIds = {
+                R.drawable.bg_logo, R.drawable.three,
+                R.drawable.four, R.drawable.two,
+                R.drawable.one, R.drawable.btn_about,
+
+        };
+    }
+</code></pre>
+
+<p>ImagePagerAdapter.java  </p>
+
+<pre><code>import java.util.List;
+
+import android.support.v4.view.PagerAdapter;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+
+public class ImagePagerAdapter extends PagerAdapter {
+
+    private List<ImageView> images;
+
+    public ImagePagerAdapter(List<ImageView> images) {
+        this.images = images;
+    }
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position) {
+        ImageView imageView = images.get(position);
+        container.addView(imageView);
+        return imageView;
+    }
+
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        container.removeView(images.get(position));
+    }
+
+    @Override
+    public int getCount() {
+        return images.size();
+    }
+
+    @Override
+    public boolean isViewFromObject(View view, Object o) {
+        return view == o;
+    }
+}
+</code></pre>
+
+<p>ImageViewPager.java</p>
+
+<pre><code>package com.netvariant.android.qareeboon;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.netvariant.qareeboon.android.R;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.widget.ImageView;
+
+public class ImageViewPager extends Activity {
+    // Declare Variable
+    int position;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Set title for the ViewPager
+        setTitle("ViewPager");
+        // Get the view from view_pager.xml
+        setContentView(R.layout.view_pager);
+
+        // Retrieve data from MainActivity on item click event
+        Intent p = getIntent();
+        position = p.getExtras().getInt("id");
+
+        ImageAdapter imageAdapter = new ImageAdapter(this);
+        List<ImageView> images = new ArrayList<ImageView>();
+
+        // Retrieve all the images
+        for (int i = 0; i < imageAdapter.getCount(); i++) {
+            ImageView imageView = new ImageView(this);
+            imageView.setImageResource(imageAdapter.mThumbIds[i]);
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            images.add(imageView);
+        }
+
+        // Set the images into ViewPager
+        ImagePagerAdapter pageradapter = new ImagePagerAdapter(images);
+        ViewPager viewpager = (ViewPager) findViewById(R.id.pager);
+        viewpager.setAdapter(pageradapter);
+        // Show images following the position
+        viewpager.setCurrentItem(position);
+    }
+}
+</code></pre>
+
+<p>mainactivity.java</p>
+
+<pre><code>package com.netvariant.android.qareeboon;
+import com.netvariant.qareeboon.android.R;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.content.Intent;
+import android.view.Menu;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.GridView;
+import android.view.View;
+
+public class InfoGraphicActivity extends Activity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Set title for the GridView
+        setTitle("GridView");
+        // Get the view from grid_view.xml
+        setContentView(R.layout.grid_view);
+
+        // Set the images from ImageAdapter.java to GridView
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+       // ViewPager viewPager =(ViewPager)findViewById(R.id.pager);
+        gridview.setAdapter(new ImageAdapter(this));
+
+        // Listening to GridView item click
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+
+                // Launch ImageViewPager.java on selecting GridView Item
+                Intent i = new Intent(getApplicationContext(), ImageViewPager.class);
+
+                // Send the click position to ImageViewPager.java using intent
+                i.putExtra("id", position);
+
+                // Start ImageViewPager
+                startActivity(i);
+            }
+        });
+    }
+
+    // Not using options menu for this tutorial
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.info_graphic, menu);
+        return true;
+    }
+}
+</code></pre>

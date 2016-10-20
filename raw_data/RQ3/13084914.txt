@@ -1,0 +1,166 @@
+<p>I'm building an Android app right now, and if I press the Home button or lock the screen after a given scenario (it's really specific), my app crashes with the error: </p>
+
+<pre><code>10-26 13:57:50.132: E/AndroidRuntime(8663): FATAL EXCEPTION: main
+10-26 13:57:50.132: E/AndroidRuntime(8663): java.lang.RuntimeException: Unable to pause activity {.views.MainActivity}: java.lang.IllegalStateException: Failure saving state: active LoginFragment{4053d5a0} has cleared index: -1
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread.performPauseActivity(ActivityThread.java:2365)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread.performPauseActivity(ActivityThread.java:2322)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread.handlePauseActivity(ActivityThread.java:2302)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread.access$1700(ActivityThread.java:117)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:949)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.os.Handler.dispatchMessage(Handler.java:99)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.os.Looper.loop(Looper.java:130)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread.main(ActivityThread.java:3694)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at java.lang.reflect.Method.invokeNative(Native Method)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at java.lang.reflect.Method.invoke(Method.java:507)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:860)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:618)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at dalvik.system.NativeStart.main(Native Method)
+10-26 13:57:50.132: E/AndroidRuntime(8663): Caused by: java.lang.IllegalStateException: Failure saving state: active LoginFragment{4053d5a0} has  cleared index: -1
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.support.v4.app.FragmentManagerImpl.saveAllState(FragmentManager.java:1695)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.support.v4.app.FragmentActivity.onSaveInstanceState(FragmentActivity.java:499)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at views.MainActivity.onSaveInstanceState(MainActivity.java:62)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.Activity.performSaveInstanceState(Activity.java:1042)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.Instrumentation.callActivityOnSaveInstanceState(Instrumentation.java:1181)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     at android.app.ActivityThread.performPauseActivity(ActivityThread.java:2347)
+10-26 13:57:50.132: E/AndroidRuntime(8663):     ... 12 more
+</code></pre>
+
+<p>I have no idea what this error comes from and what the general cause of this error is.</p>
+
+<p><strong>Edit:</strong><br>
+I'm sorry, I'll give out some more information. Basically, I have a FragmentActivity (which is my <code>Tabhost</code>) and each tab is a fragment from which I can navigate to another fragment. </p>
+
+<p>The specific scenario is as following: </p>
+
+<ul>
+<li>Application opens, Tab 0 with Fragment 0 (<code>LoginFragment</code>) is displayed.</li>
+<li>User logs in, LoginFragment gets replaced with ProfileFragment. </li>
+<li>From the <code>ProfileFragment</code>, the user has the ability to logout, and does so, which replaces the Profilefragment with Loginfragment again.</li>
+<li>User navigates to different Tab from TabHost. </li>
+<li>User navigates back to the original Tab.</li>
+<li>User then locks screen / uses the Home button, crashing the application with the given error. </li>
+</ul>
+
+<p>I only get the error on this specific scenario.  </p>
+
+<p>The error originates from the TabManager class within the <code>TabHost FragmentActivity</code>, here is the code (mainly from the Android FragmentTabs example, with a few minor adjustments):</p>
+
+<pre><code>public static class TabManager implements TabHost.OnTabChangeListener {
+    private final FragmentActivity mActivity;
+    private final TabHost mTabHost;
+    private final int mContainerId;
+    private final HashMap<String, TabInfo> mTabs = new HashMap<String, TabInfo>();
+    TabInfo mLastTab;
+
+    static final class TabInfo {
+        private final String tag;
+        private final Class<?> clss;
+        private final Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String _tag, Class<?> _class, Bundle _args) {
+            tag = _tag;
+            clss = _class;
+            args = _args;
+        }
+    }
+
+    static class DummyTabFactory implements TabHost.TabContentFactory {
+        private final Context mContext;
+
+        public DummyTabFactory(Context context) {
+            mContext = context;
+        }
+
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    public TabManager(FragmentActivity activity, TabHost tabHost, int containerId) {
+        mActivity = activity;
+        mTabHost = tabHost;
+        mContainerId = containerId;
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+        tabSpec.setContent(new DummyTabFactory(mActivity));
+        String tag = tabSpec.getTag();
+
+        TabInfo info = new TabInfo(tag, clss, args);
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        info.fragment = mActivity.getSupportFragmentManager().findFragmentByTag(tag);
+                if (info.fragment != null && !info.fragment.isDetached()) {
+                    FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+                    ft.detach(info.fragment);
+                    ft.commit();
+                }
+
+                mTabs.put(tag, info);
+                mTabHost.addTab(tabSpec);
+    }
+
+    public void onTabChanged(String tabId) {
+
+        TabInfo newTab = mTabs.get(tabId);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(mActivity,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(mContainerId, newTab.fragment, newTab.tag);
+
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+            int backEntryCount = mActivity.getSupportFragmentManager().getBackStackEntryCount();
+            if (backEntryCount > 1) {
+                mActivity.getSupportFragmentManager().popBackStack(null, 0);
+            }
+
+            //If there's a current BackTrace, remove it and instantiate the original fragment of the selected tab.
+            FragmentManager fm = mActivity.getSupportFragmentManager();
+            if (fm.getBackStackEntryCount() >= 1) {
+                fm.popBackStack();
+                newTab.fragment.getFragmentManager().beginTransaction().add(mLastTab.fragment.getId(), newTab.fragment = Fragment.instantiate(mActivity,
+                        newTab.clss.getName(), newTab.args));
+            }
+            if (mActivity.getSupportFragmentManager().findFragmentByTag("userprofile") != null) {
+                Fragment fragment = mActivity.getSupportFragmentManager().findFragmentByTag("userprofile");
+                ft.detach(fragment);
+
+            }
+            if (newTab.fragment.getClass().getName().contains("Login") && Preferences.getUser(mActivity).getApikey() != null) {
+                ft.replace(mLastTab.fragment.getId(), new ProfileFragment(), "userprofile");
+                ft.detach(newTab.fragment);
+            }
+
+            if (mActivity.getSupportFragmentManager().findFragmentByTag("Profile") != null) {
+                if (mActivity.getSupportFragmentManager().findFragmentByTag("Profile").isDetached() == true) {
+                    System.out.println(true);
+                    Fragment fragment = mActivity.getSupportFragmentManager().findFragmentByTag("Profile");
+                    mActivity.getSupportFragmentManager().beginTransaction().replace(fragment.getId(), new LoginFragment(), "Profile").commit();
+                }
+            }
+            mLastTab = newTab;
+            ft.commit();  
+            mActivity.getSupportFragmentManager().executePendingTransactions();
+
+        }
+    }
+}
+</code></pre>

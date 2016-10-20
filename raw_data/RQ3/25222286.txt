@@ -1,0 +1,549 @@
+<p>I'm fairly new to Java, and really new to Android development.
+I am trying to make a Morse Code app, which will flash the user's entered message in Morse Code on the device's screen.
+My problem is that I cannot find a way to pause the code to put the timings in.
+I know that putting a wait() or sleep() straight in is out of the question. After some searching around the web, I found some code and implemented it into mine - here is m current code - this is just a countdown to test the waiting:</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.activity_flash);
+
+    // ALL THIS STUFF IS AUTO-GENERATED
+    final View controlsView = findViewById(R.id.fullscreen_content_controls);
+    final View contentView = findViewById(R.id.fullscreen_content);
+
+    // Set up an instance of SystemUiHider to control the system UI for
+    // this activity.
+    mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+    mSystemUiHider.setup();
+    mSystemUiHider
+            .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                // Cached values.
+                int mControlsHeight;
+                int mShortAnimTime;
+
+                @Override
+                @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                public void onVisibilityChange(boolean visible) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                        // If the ViewPropertyAnimator API is available
+                        // (Honeycomb MR2 and later), use it to animate the
+                        // in-layout UI controls at the bottom of the
+                        // screen.
+                        if (mControlsHeight == 0) {
+                            mControlsHeight = controlsView.getHeight();
+                        }
+                        if (mShortAnimTime == 0) {
+                            mShortAnimTime = getResources().getInteger(
+                                    android.R.integer.config_shortAnimTime);
+                        }
+                        controlsView.animate()
+                                .translationY(visible ? 0 : mControlsHeight)
+                                .setDuration(mShortAnimTime);
+                    } else {
+                        // If the ViewPropertyAnimator APIs aren't
+                        // available, simply show or hide the in-layout UI
+                        // controls.
+                        controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                    }
+
+                    if (visible && AUTO_HIDE) {
+                        // Schedule a hide().
+                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                    }
+                }
+            });
+
+    // Set up the user interaction to manually show or hide the system UI.
+    contentView.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            if (TOGGLE_ON_CLICK) {
+                mSystemUiHider.toggle();
+            } else {
+                mSystemUiHider.show();
+            }
+        }
+    });
+
+    // Upon interacting with UI controls, delay any scheduled hide()
+    // operations to prevent the jarring behavior of controls going away
+    // while interacting with the UI.
+
+
+    // EVERYTHING UP TO HERE IS AUTO-GENERATED
+    final TextView currentLabel = (TextView) findViewById(R.id.labelCurrent);
+    final TextView totalLabel = (TextView) findViewById(R.id.labelTotal);
+
+    new Thread () {
+        public void run() {
+            currentLabel.setText("3");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            currentLabel.setText("2");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            currentLabel.setText("1");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        }
+    }.start();
+}
+</code></pre>
+
+<p>When testing this code, I found that in the emulated AVD, it just goes straight back to the MainActivity, and when I generated an APK and tested it on my device, the app crashed.</p>
+
+<p>Any help is appreciated.</p>
+
+<p><strong>EDIT 1- Here's the logcat:</strong></p>
+
+<pre><code>08-09 15:42:29.054    2012-2012/com.example.nat.morseflasher D/gralloc_goldfish﹕ Emulator without GPU emulation detected.
+
+08-09 15:42:38.564    2012-2012/com.example.nat.morseflasher D/dalvikvm﹕ GC_FOR_ALLOC freed 143K, 8% free 3195K/3444K, paused 142ms, total 183ms
+08-09 15:42:55.654    2012-2012/com.example.nat.morseflasher I/Choreographer﹕ Skipped 31 frames!  The application may be doing too much work on its main thread.
+08-09 15:42:56.294    2012-2012/com.example.nat.morseflasher I/Choreographer﹕ Skipped 47 frames!  The application may be doing too much work on its main thread.
+08-09 15:43:07.725    2012-2012/com.example.nat.morseflasher I/Choreographer﹕ Skipped 1159 frames!  The application may be doing too much work on its main thread.
+</code></pre>
+
+<p><strong>EDIT 2:</strong></p>
+
+<p>Ok, so I've implemented the code you provided into mine, although I changed some things so it fits with how I want it.</p>
+
+<p>When I try to run this, the log shows the "Starting morse code flasher..." message, but it never gets to the printing letter or symbol parts. When I tap the ready button, nothing changes at all, and it just goes back to the main activity as defined in the onPostExecute function.</p>
+
+<p>Here's the XML:</p>
+
+<pre><code><FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0099cc"
+    tools:context="com.example.nat.morseflasher.FlashActivity">
+
+    <!-- The primary full-screen view. This can be replaced with whatever view
+         is needed to present your content, e.g. VideoView, SurfaceView,
+         TextureView, etc. -->
+    <TextView android:id="@+id/fullscreen_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:keepScreenOn="true"
+        android:textColor="#33b5e5"
+        android:textStyle="bold"
+        android:textSize="50sp"
+        android:gravity="center"
+        android:text="@string/dummy_content"
+        android:background="#000000" />
+
+    <!-- This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows. -->
+    <FrameLayout android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:background="#000000"
+        android:id="@+id/frameLayout">
+
+    <LinearLayout android:id="@+id/fullscreen_content_controls"
+        style="?metaButtonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:background="@color/black_overlay"
+        android:orientation="horizontal"
+        tools:ignore="UselessParent">
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="-"
+        android:id="@+id/labelCurrent"
+        android:layout_gravity="center"
+        android:layout_marginBottom="40dp"
+        android:textSize="100sp"
+        android:textColor="#ffffff" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="60dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Ready?"
+        android:id="@+id/labelTotal"
+        android:layout_gravity="center"
+        android:layout_marginTop="40dp"
+        android:textSize="25sp"
+        android:gravity="center_horizontal"
+        android:textIsSelectable="false"
+        android:textColor="#ffffff" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tapToGo"
+        android:id="@+id/buttonGo"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="35dp"
+        android:onClick="doMorse" />
+
+    </FrameLayout>
+
+</FrameLayout>
+</code></pre>
+
+<p>Here's the java:</p>
+
+<pre><code>package com.example.nat.morseflasher;
+
+import com.example.nat.morseflasher.util.SystemUiHider;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ *
+ * @see SystemUiHider
+ */
+public class FlashActivity extends Activity {
+    /**
+     * Whether or not the system UI should be auto-hidden after
+     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+     */
+    private static final boolean AUTO_HIDE = true;
+
+    /**
+     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+     * user interaction before hiding the system UI.
+     */
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    /**
+     * If set, will toggle the system UI visibility upon interaction. Otherwise,
+     * will show the system UI visibility upon interaction.
+     */
+    private static final boolean TOGGLE_ON_CLICK = true;
+
+    /**
+     * The flags to pass to {@link SystemUiHider#getInstance}.
+     */
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+
+    /**
+     * The instance of the {@link SystemUiHider} for this activity.
+     */
+    private SystemUiHider mSystemUiHider;
+
+    private final static String TAG = "FlashActivity";
+
+    private final static long TIME_UNIT = 250L;
+    private final static long ONE_SECOND = 1000L;
+    private final static long DOT_DELAY = TIME_UNIT;
+    private final static long DASH_DELAY = TIME_UNIT * 2;
+    private final static long INTRA_LETTER_DELAY = TIME_UNIT;
+    private final static long INTER_LETTER_DELAY = TIME_UNIT * 2;
+    private final static long INTER_WORD_DELAY = TIME_UNIT * 6;
+
+    Button goButton;
+    FrameLayout layoutFrame;
+    TextView currentLabel, totalLabel;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_flash);
+
+        final View controlsView = findViewById(R.id.fullscreen_content_controls);
+        final View contentView = findViewById(R.id.fullscreen_content);
+
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider
+            .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                    // Cached values.
+                    int mControlsHeight;
+                    int mShortAnimTime;
+
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                    public void onVisibilityChange(boolean visible) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                            // If the ViewPropertyAnimator API is available
+                            // (Honeycomb MR2 and later), use it to animate the
+                            // in-layout UI controls at the bottom of the
+                            // screen.
+                            if (mControlsHeight == 0) {
+                                mControlsHeight = controlsView.getHeight();
+                            }
+                            if (mShortAnimTime == 0) {
+                                mShortAnimTime = getResources().getInteger(
+                                        android.R.integer.config_shortAnimTime);
+                            }
+                            controlsView.animate()
+                                    .translationY(visible ? 0 : mControlsHeight)
+                                    .setDuration(mShortAnimTime);
+                        } else {
+                            // If the ViewPropertyAnimator APIs aren't
+                            // available, simply show or hide the in-layout UI
+                            // controls.
+                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                        }
+
+                        if (visible && AUTO_HIDE) {
+                            // Schedule a hide().
+                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                        }
+                    }
+                });
+
+        // Set up the user interaction to manually show or hide the system UI.
+        contentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+            }
+        });
+
+        goButton = (Button) findViewById(R.id.buttonGo);
+        layoutFrame = (FrameLayout) findViewById(R.id.frameLayout);
+        currentLabel = (TextView) findViewById(R.id.labelCurrent);
+        totalLabel = (TextView) findViewById(R.id.labelTotal);
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    Handler mHideHandler = new Handler();
+    Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
+
+    /**
+     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    public void doMorse(View vw) {
+        goButton.setVisibility(View.GONE);
+        (new DoMorseFlashing()).execute();
+    }
+
+    private class DoMorseFlashing extends AsyncTask <String, Boolean, Void> {
+
+        SharedPreferences mPrefs = getSharedPreferences("MorseFlasher", Context.MODE_PRIVATE);
+        String msgStr, currentLetterMorse;
+
+        @Override
+        protected Void doInBackground(String... message) {
+            Log.v(TAG, "Starting Morse Code flasher...");
+            msgStr = mPrefs.getString("prevMsg", "");
+            String totalStr = "";
+
+            /*currentLabel.setText("3");
+             *doDelay(ONE_SECOND);
+             *currentLabel.setText("2");
+             *doDelay(ONE_SECOND);
+             *currentLabel.setText("1");
+             *doDelay(ONE_SECOND);
+             */
+            for(int i=0; i<msgStr.length(); i++) {
+                if(msgStr.charAt(i)=='|') {
+                    doDelay(INTER_WORD_DELAY);
+                }
+                else {
+                    currentLetterMorse = convert(msgStr.charAt(i));
+
+                    currentLabel.setText(msgStr.substring(i, i + 1));
+
+                    totalStr += msgStr.substring(i, i + 1);
+                    totalLabel.setText(totalStr);
+
+                    Log.v(TAG, " flashing letter " + msgStr.charAt(i) + " with morse code " + currentLetterMorse + ":");
+                    for (int j = 0; j < currentLetterMorse.length(); j++) {
+                        Log.v(TAG, "flashing symbol " + currentLetterMorse.charAt(j) + ":");
+                        flash(currentLetterMorse.charAt(j));
+                        doDelay(INTRA_LETTER_DELAY);
+                    }
+                    doDelay(INTER_LETTER_DELAY);
+                }
+            }
+            return null;
+        }
+
+        protected void onPostExecute(Void result) {
+            // Set the button message back to "touch here" to indicate that were done flashing:
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        }
+
+        void flash(char letter) {
+            layoutFrame.setBackgroundColor(Color.WHITE);
+            currentLabel.setTextColor(Color.BLACK);
+            totalLabel.setTextColor(Color.BLACK);
+            switch (letter) {
+                case '.':
+                    doDelay(DOT_DELAY);
+                case '-':
+                    doDelay(DASH_DELAY);
+            }
+            layoutFrame.setBackgroundColor(Color.BLACK);
+            currentLabel.setTextColor(Color.WHITE);
+            totalLabel.setTextColor(Color.WHITE);
+        }
+
+        String convert(char letter){
+            switch (letter){
+                case 'a':
+                    return ".-";
+                case 'b':
+                    return "-…";
+                case 'c':
+                    return "-.-.";
+                case 'd':
+                    return "-..";
+                case 'e':
+                    return ".";
+                case 'f':
+                    return "..-.";
+                case 'g':
+                    return "--.";
+                case 'h':
+                    return "….";
+                case 'i':
+                    return "..";
+                case 'j':
+                    return ".---";
+                case 'k':
+                    return "-.-";
+                case 'l':
+                    return ".-..";
+                case 'm':
+                    return "--";
+                case 'n':
+                    return "-.";
+                case 'o':
+                    return "---";
+                case 'p':
+                    return ".--.";
+                case 'q':
+                    return "--.-";
+                case 'r':
+                    return ".-.";
+                case 's':
+                    return "...";
+                case 't':
+                    return "-";
+                case 'u':
+                    return "..-";
+                case 'v':
+                    return "...-";
+                case 'w':
+                    return ".--";
+                case 'x':
+                    return "-..-";
+                case 'y':
+                    return "-.--";
+                case 'z':
+                    return "--..";
+                case ' ':
+                    return "|";
+                default:
+                    return "|";
+            }
+        }
+
+        void doDelay(Long delay) {
+            try {
+                Thread.sleep(delay);
+
+            } catch (InterruptedException e) {
+                // Ignore interruptions
+            }
+        }
+    }
+}
+</code></pre>
+
+<p>And here's the LogCat:</p>
+
+<pre><code>08-10 18:30:43.856    2090-2090/com.example.nat.morseflasher D/gralloc_goldfish﹕ Emulator without GPU emulation detected.
+08-10 18:30:46.146    2090-2106/com.example.nat.morseflasher D/dalvikvm﹕ GC_FOR_ALLOC freed 146K, 8% free 3192K/3448K, paused 31ms, total 39ms
+08-10 18:30:50.816    2090-2090/com.example.nat.morseflasher I/Choreographer﹕ Skipped 464 frames!  The application may be doing too much work on its main thread.
+08-10 18:31:04.116    2090-2090/com.example.nat.morseflasher I/Choreographer﹕ Skipped 69 frames!  The application may be doing too much work on its main thread.
+08-10 18:31:06.486    2090-2090/com.example.nat.morseflasher I/Choreographer﹕ Skipped 62 frames!  The application may be doing too much work on its main thread.
+08-10 18:31:11.176    2090-2090/com.example.nat.morseflasher I/Choreographer﹕ Skipped 37 frames!  The application may be doing too much work on its main thread.
+08-10 18:31:11.937    2090-2106/com.example.nat.morseflasher V/FlashActivity﹕ Starting Morse Code flasher...
+08-10 18:31:13.437    2090-2090/com.example.nat.morseflasher I/Choreographer﹕ Skipped 109 frames!  The application may be doing too much work on its main thread.
+</code></pre>
+
+<p><strong>EDIT 3:</strong>
+Ok, so the earlier problem was due to the fact that it wasn't retrieving my string from SharedPreferences, so just to make sure everything else worked, I set the message string to "test" in the code. Now, the problem is that when it goes to change the colour of the screen, I get an error saying that only the main thread that created the view hierarchy can touch its views.</p>
+
+<p><strong>EDIT 4:</strong>
+I've fixed the error as aforementioned by using runOnUiThread() when I go to change the screen and text colours, the flashing now works!</p>

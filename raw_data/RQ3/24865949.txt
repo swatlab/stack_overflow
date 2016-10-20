@@ -1,0 +1,177 @@
+<p>I want to make an app like this</p>
+
+<p><img src="http://i.stack.imgur.com/2beKs.png" alt="batch contextual actions in an AbsListView"></p>
+
+<p>I have followed <a href="http://developer.android.com/guide/topics/ui/menus.html#CAB" rel="nofollow">Google's guide to enable batch contextual actions in an <code>AbsListView</code></a>. In my case, I implemented the <code>AbsListView</code> in a <code>Fragment</code> because I want users be able to change layout, I have several layouts for the <code>Activity</code> (a <code>ListView</code>, a <code>GridView</code>, and another <code>AbsListView</code> subclass). I also implement the <code>AbsListView.MultiChoiceModeListener</code> in a separate class because I want to reuse it in several Fragments and Activities.</p>
+
+<p>My problem is: when I long-press the list item, <strong>the contextual action bar doesn't show up</strong>. It responded to a click however (shows that the selector is working).</p>
+
+<p>I have checked and tried-and-error my codes over and over again to make sure I follow everything on the guide correctly, have browsed many trouble-shootings on this topic, but still I can't figure out why the contextual action bar doesn't come up.</p>
+
+<p>Here is one of the Fragments:</p>
+
+<pre><code>public class List extends Bookshelf {
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_list, container, false);
+        ListView list = (ListView) rootView.findViewById(R.id.book_list);
+        list.setAdapter(new BookListAdapter(getActivity()));
+
+        list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        list.setMultiChoiceModeListener(new MultiChoiceCallback(list));
+
+        return rootView;
+    }
+
+    private static class BookListAdapter extends BaseAdapter {
+        private LayoutInflater mInflater;
+
+        public BookListAdapter(Context context) {
+            mInflater = LayoutInflater.from(context);
+        }
+
+        public int getCount() {
+            return 100;
+        }
+
+        public Object getItem(int position) {
+            return position;
+        }
+
+        public long getItemId(int position) {
+            return position;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder holder;
+
+            if (convertView == null) {
+                convertView = mInflater.inflate(R.layout.view_item_book_1text, null);
+                holder = new ViewHolder();
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+            return convertView;
+        }
+
+        static class ViewHolder {
+            TextView title;
+            ImageView cover;
+        }
+    }
+}
+</code></pre>
+
+<p>Here is the MultiChoiceModeListener (<code>MultiChoiceCallback.java</code>):</p>
+
+<pre><code>public class MultiChoiceCallback implements MultiChoiceModeListener {
+    AbsListView usingView;
+
+    public MultiChoiceCallback(AbsListView view) {
+        usingView = view;
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.bookDetails:
+            break;
+        case R.id.category:
+            break;
+        case R.id.delete:
+            break;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        mode.getMenuInflater().inflate(R.menu.select_book, menu);
+        return false;
+    }
+
+    @Override
+    public void onDestroyActionMode(ActionMode mode) {
+    }
+
+    @Override
+    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+        return false;
+    }
+
+    @Override
+    public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+        final int checkedCount = usingView.getCheckedItemCount();
+        switch (checkedCount) {
+            case 0:
+                mode.setTitle(null);
+                break;
+            case 1:
+                mode.setTitle("1 item selected");
+                break;
+            default:
+                mode.setTitle("" + checkedCount + " items selected");
+                break;
+        }
+    }
+}
+</code></pre>
+
+<p>The layout for the Fragment (<code>layout/fragment_list.xml</code>):</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/book_list"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+</ListView>
+</code></pre>
+
+<p>The View list item that is inflated (<code>layout/view_item_book_1text.xml</code>):</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="51dp"
+    android:background="@color/blue_when_clicked"
+    android:clickable="true"
+    android:focusable="true"
+    android:layout_marginLeft="3dp"
+    android:layout_marginRight="3dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal" >
+
+    <ImageView
+        android:id="@+id/cover"
+        android:contentDescription="@string/cover"
+        android:layout_width="75dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/cover_02" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="3dp"
+        android:text="A Book Title"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</LinearLayout>
+</code></pre>
+
+<p>The color selector for each list item (<code>color/blue_when_clicked.xml</code>):</p>
+
+<pre><code><selector xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:drawable="@drawable/color_light_blue" android:state_pressed="true"/>  <!-- pressed -->
+    <item android:drawable="@drawable/color_light_gray" android:state_focused="true"/>  <!-- focused -->
+    <item android:drawable="@drawable/color_light_gray" android:state_activated="true"/> <!-- selected -->
+</selector>
+</code></pre>
+
+<p>Any help would be very appreciated!</p>

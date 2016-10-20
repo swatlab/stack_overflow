@@ -1,0 +1,137 @@
+<p>I am new to Android and I want to create a MySQLite Database using a csv file which is on the sd card. Can you please help me with code.</p>
+
+<pre><code>package com.example.nrbapp;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Environment;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+public class MainActivity extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this));
+
+        gridview.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                Intent i=new Intent(getApplicationContext(),SecondActivity.class);
+                i.putExtra("position_id",""+position);
+                startActivity(i);
+
+
+                //Toast.makeText(MainActivity.this,position + "," + id, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        switch(id) {
+        case R.id.action_settings: 
+            return true;
+        case R.id.action_search:
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if (convertView == null) {  // if it's not recycled, initialize some attributes
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        // references to our images
+        private Integer[] mThumbIds = {
+                R.drawable.bike, R.drawable.car,
+                R.drawable.muv, R.drawable.auto,
+                R.drawable.tractor, R.drawable.commercial
+        };
+    }
+
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<blockquote>
+  <p>This is my MainActivity which is a image gridview and I need to create a database on click of any image.
+  Please help me with this</p>
+</blockquote>

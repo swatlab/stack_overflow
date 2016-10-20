@@ -1,0 +1,405 @@
+<p>I have a simple login page, where one-half of the page is occupied by 2 <code>EditText</code> and a <code>Button</code>, and second half by a <code>ListFragment</code> displaying the public projects. I have made a separate class for Navigation Drawer so that in the future I can display this Navigation Drawer on every activity. Here is the code for <strong>DrawerActivity.java:</strong></p>
+
+<pre><code>public class DrawerActivity extends ActionBarActivity {
+private ListView mDrawerList;
+private ArrayAdapter<String> mAdapter;
+private DrawerLayout mDrawerLayout;
+private String mActivityTitle;
+private ActionBarDrawerToggle mDrawerToggle;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.drawer_layout);
+
+    mDrawerList = (ListView)findViewById(R.id.left_drawer);
+    mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+    mActivityTitle = getTitle().toString();
+
+    addDrawerItems();
+    setupDrawer();
+
+
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setHomeButtonEnabled(true);
+}
+
+private void addDrawerItems() {
+    String[] osArray = { "Android", "iOS", "Windows", "OS X", "Linux" };
+    mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, osArray);
+    mDrawerList.setAdapter(mAdapter);
+
+
+    mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Toast.makeText(DrawerActivity.this, "Time for an upgrade!", Toast.LENGTH_SHORT).show();
+        }
+    });
+}
+
+
+private void setupDrawer() {
+    mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,R.drawable.ic_drawer,
+            R.string.drawer_open, R.string.drawer_close) {
+
+
+        /** Called when a drawer has settled in a completely open state. */
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            getSupportActionBar().setTitle("Navigation!");
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+
+
+        /** Called when a drawer has settled in a completely closed state. */
+        public void onDrawerClosed(View view) {
+            super.onDrawerClosed(view);
+            getSupportActionBar().setTitle(mActivityTitle);
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+    };
+
+
+    mDrawerToggle.setDrawerIndicatorEnabled(true);
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    // Sync the toggle state after onRestoreInstanceState has occurred.
+    mDrawerToggle.syncState();
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+
+    // Activate the navigation drawer toggle
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+
+    return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p><strong>MainActivity.java:</strong></p>
+
+<pre><code>public class MainActivity extends DrawerActivity {
+
+AutoCompleteTextView email;
+EditText password;
+Button submit;
+
+String getEmail, getPassword;
+
+public static HttpClient httpClient;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    email = (AutoCompleteTextView) findViewById(R.id.get_email);
+    password = (EditText) findViewById(R.id.get_password);
+    submit = (Button) findViewById(R.id.login_register);
+
+    Fragment fr = new PublicProjectsFragment();
+    FragmentManager fragmentManager = getFragmentManager();
+    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+    fragmentTransaction.add(R.id.publicProjectFragment, fr).commit();
+
+    /*Typeface customFont = Typeface.createFromAsset(getAssets(), "fonts/titillium.otf");
+    email.setTypeface(customFont);
+    password.setTypeface(customFont);*/
+
+    submit.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            getEmail = email.getText().toString();
+            getPassword = password.getText().toString();
+            new HttpHandler().execute();
+        }
+    });
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+private class HttpHandler extends AsyncTask<String, Void, Void> {
+
+    @Override
+    protected Void doInBackground(String... params) {
+        String url = "http://canvasflip.com/protected/actions/user.php?action=login";
+        String responseStr = "";
+        httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost(url);
+        try {
+            List<NameValuePair> nameValuePair = new ArrayList<NameValuePair>(2);
+            nameValuePair.add(new BasicNameValuePair("loginId", getEmail));
+            nameValuePair.add(new BasicNameValuePair("password", getPassword));
+            httpPost.setEntity(new UrlEncodedFormEntity(nameValuePair));
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            responseStr = EntityUtils.toString(httpEntity);
+            JSONObject jsonObject = new JSONObject(responseStr);
+            final String jsonResult = jsonObject.getString("result");
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (jsonResult.equals("success")) {
+                        Intent i = new Intent(getBaseContext(), ProjectListActivity.class);
+                        startActivity(i);
+                    } else {
+                        AlertDialog.Builder loginFailAlert = new AlertDialog.Builder(MainActivity.this);
+                        loginFailAlert.setTitle("Login Failed");
+                        loginFailAlert.setMessage("Wrong e-mail address or password, please enter again").setCancelable(false).
+                                setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        email.setText("");
+                                        password.setText("");
+                                        dialog.cancel();
+                                    }
+                                });
+                        AlertDialog alertDialog = loginFailAlert.create();
+                        alertDialog.show();
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>ProjectListFragment.java:</strong> The class that displays the <code>ListFragment</code></p>
+
+<pre><code>public class PublicProjectsFragment extends ListFragment {
+String[] projectTitle;
+String[] projectImage;
+
+CustomAdapter adapter;
+
+private List<RowItem> rowItems;
+
+String imgUrl = "http://canvasflip.com/protected/app/elements/userElements/";
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    return inflater.inflate(R.layout.fragment_public_projects,null, false);
+}
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+
+    projectTitle = getResources().getStringArray(R.array.projectTitle);
+    projectImage = getResources().getStringArray(R.array.publicProjectPreview);
+
+    rowItems = new ArrayList<RowItem>();
+
+    for(int i=0; i<projectTitle.length; i++) {
+        String url = imgUrl+projectImage[i]+".png";
+        RowItem item = new RowItem(projectTitle[i], url);
+        rowItems.add(item);
+    }
+
+    adapter = new CustomAdapter(getActivity(), rowItems);
+    setListAdapter(adapter);
+}
+
+@Override
+public void onListItemClick(ListView l, View v, int position, long id) {
+    super.onListItemClick(l, v, position, id);
+    Intent intent;
+    switch (position) {
+        case 0: intent = new Intent(getActivity(), PlayBack.class);
+            intent.putExtra("playUrl", "http://canvasflip.com/protected/app/playback.php?project=694");
+            startActivity(intent);
+            break;
+        case 1: intent = new Intent(getActivity(), PlayBack.class);
+            intent.putExtra("playUrl", "http://canvasflip.com/protected/app/playback.php?project=696");
+            startActivity(intent);
+            break;
+        case 2: intent = new Intent(getActivity(), PlayBack.class);
+            intent.putExtra("playUrl", "http://canvasflip.com/protected/app/playback.php?project=697");
+            startActivity(intent);
+            break;
+        case 3: intent = new Intent(getActivity(), PlayBack.class);
+            intent.putExtra("playUrl", "http://canvasflip.com/protected/app/playback.php?project=777");
+            startActivity(intent);
+            break;
+        } 
+    }
+}
+</code></pre>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".MainActivity"
+android:background="#eeeeee"
+android:orientation="vertical">
+
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dip"
+    android:orientation="vertical"
+    android:layout_marginTop="10dip"
+    android:layout_weight="1">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:weightSum="1">
+        <AutoCompleteTextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:text="testapi@canvasflip.com"
+            android:layout_weight="0.9"
+            android:inputType="textEmailAddress"
+            android:id="@+id/get_email" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:weightSum="1">
+        <EditText
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:text="canvas123"
+            android:layout_weight="0.9"
+            android:inputType="textPassword"
+            android:id="@+id/get_password"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="15dip"
+        android:weightSum="1">
+        <Button
+            android:layout_width="0dip"
+            android:text="@string/login_register"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.4"
+            android:typeface="monospace"
+            android:id="@+id/login_register"/>
+    </LinearLayout>
+</LinearLayout>
+
+<View
+    android:layout_width="fill_parent"
+    android:layout_height="1dip"
+    android:background="@color/DarkGrey"/>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dip"
+    android:orientation="vertical"
+    android:layout_weight="1">
+
+   <fragment
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        class="com.example.amangrover.myapp.PublicProjectsFragment"
+        android:id="@+id/publicProjectFragment"/>
+
+    </LinearLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>drawer_layout.xml</strong></p>
+
+<pre><code><android.support.v4.widget.DrawerLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/drawer_layout"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+<!-- As the main content view, the view below consumes the entire
+     space available using match_parent in both dimensions. -->
+<FrameLayout
+    android:id="@+id/content_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+
+<!-- android:layout_gravity="start" tells DrawerLayout to treat
+     this as a sliding drawer on the left side for left-to-right
+     languages and on the right side for right-to-left languages.
+     The drawer is given a fixed width in dp and extends the full height of
+     the container. A solid background is used for contrast
+     with the content view. -->
+<ListView
+    android:id="@+id/left_drawer"
+    android:layout_width="240dp"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    android:choiceMode="singleChoice"
+    android:divider="@android:color/transparent"
+    android:dividerHeight="0dp"
+    android:background="#111"/>
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>I have been stuck on this problem for 2 days , trying to figure out myself, searching google , but still no luck. The navigation drawer just won't open either by clicking the hamburger icon or by sliding from left. Any help is highly appreciated. </p>

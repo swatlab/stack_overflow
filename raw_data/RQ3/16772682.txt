@@ -1,0 +1,301 @@
+<p>I'm experimenting with <code>SharedPreferences</code>, but I've been having some difficulties with it.</p>
+
+<p>In my Activity I need to call my <code>SharedPreferences</code> when a <code>Button</code> is clicked and the solution is correct. Not only does the check for whether my solution is correct not work, the app crashes with a <code>NullPointerException</code> whenever I call my <code>SharedPreferences</code>. Any Tips?</p>
+
+<p>Here's my Activity:</p>
+
+<pre><code>package com.mitonanetherlands.buttonchooser;
+
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+public class LevelFour_1 extends Activity {
+
+        MoPubView ad1,ad2;
+        TextView Level;
+
+        public static int calculateInSampleSize(
+                BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+        public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                int reqWidth, int reqHeight) {
+
+            // First decode with inJustDecodeBounds=true to check dimensions
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeResource(res, resId, options);
+
+            // Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false;
+            return BitmapFactory.decodeResource(res, resId, options);
+        }
+
+    ImageView person1,person2,person3,person4,person5,person6;
+    ImageView slot1,slot2,slot3,slot4,slot5,slot6;
+    ImageView Appartementen;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.level_sjabloon);
+        Level = (TextView) findViewById(R.id.SjabloonText);
+        Level.setText("Level 4-1");
+
+        ad1 = (MoPubView) findViewById(R.id.LevelLeftTop);
+        ad2 = (MoPubView) findViewById(R.id.LevelRightTop);
+        ad1.setAdUnitId("4f53c030c3e211e295fa123138070049");
+        ad2.setAdUnitId("1abf4e6ac3e311e295fa123138070049");
+        ad1.loadAd();
+        ad2.loadAd();
+
+        person1 = (ImageView) findViewById(R.id.Person1);
+        person2 = (ImageView) findViewById(R.id.Person2);
+        person3 = (ImageView) findViewById(R.id.Person3);
+        person4 = (ImageView) findViewById(R.id.Person4);
+        person5 = (ImageView) findViewById(R.id.Person5);
+        person6 = (ImageView) findViewById(R.id.Person6);
+
+        slot1 = (ImageView) findViewById(R.id.Slot1);
+        slot2 = (ImageView) findViewById(R.id.Slot2);
+        slot3 = (ImageView) findViewById(R.id.Slot3);
+        slot4 = (ImageView) findViewById(R.id.Slot4);
+        slot5 = (ImageView) findViewById(R.id.Slot5);
+        slot6 = (ImageView) findViewById(R.id.Slot6);
+
+        Appartementen = (ImageView) findViewById(R.id.AppartementenComplex);
+
+        Button submit = (Button) findViewById(R.id.SubmitButton);
+        Button reset = (Button) findViewById(R.id.Reset);
+
+        person1.setOnTouchListener(new ChoiceTouchListener());
+        person2.setOnTouchListener(new ChoiceTouchListener());
+        person3.setOnTouchListener(new ChoiceTouchListener());
+        person4.setOnTouchListener(new ChoiceTouchListener());
+        person5.setOnTouchListener(new ChoiceTouchListener());
+        person6.setOnTouchListener(new ChoiceTouchListener());
+
+        slot1.setOnDragListener(new ChoiceDragListener());
+        slot2.setOnDragListener(new ChoiceDragListener());
+        slot3.setOnDragListener(new ChoiceDragListener());
+        slot4.setOnDragListener(new ChoiceDragListener());
+        slot5.setOnDragListener(new ChoiceDragListener());
+        slot6.setOnDragListener(new ChoiceDragListener());
+
+        person1.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.bea,300,450));
+        person2.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.eline,300,450));
+        person3.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.guido,300,450));
+        person4.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.pierre,300,450));
+        //person5.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.rosalinda,300,450));
+        //person6.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.wong,300,450));
+        person1.setTag(R.drawable.bea);
+        person2.setTag(R.drawable.eline);
+        person3.setTag(R.drawable.guido);
+        person4.setTag(R.drawable.pierre);
+        //person5.setTag(R.drawable.rosalinda);
+        //person6.setTag(R.drawable.wong);
+
+
+        Appartementen.setImageBitmap(decodeSampledBitmapFromResource(getResources(),R.drawable.huisje,300,450));
+
+        submit.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                if(Integer.parseInt(slot1.getTag().toString()) == R.drawable.guido && slot2.getTag() == null &&
+                    Integer.parseInt(slot3.getTag().toString()) == R.drawable.bea && Integer.parseInt(slot4.getTag().toString()) == R.drawable.eline &&
+                           slot5.getTag() == null && Integer.parseInt(slot6.getTag().toString()) == R.drawable.pierre){
+                            Toast.makeText(getApplicationContext(), "Your solution is correct! Unlocking next level...", Toast.LENGTH_SHORT).show();
+                            SharedPreferences completedLevels = LevelFour_1.this.getSharedPreferences("com.mitonanetherlands.buttonchooser", Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = completedLevels.edit();
+                            editor.putBoolean("Level 4-1", true).apply();
+                            editor.putString("Last Completed", "4-1").apply();
+                            startActivity(new Intent("com.mitonanetherlands.buttonchooser.L4_2"));
+        //  }else{
+                if(person1.getVisibility() == View.INVISIBLE){
+                    person1.setVisibility(View.VISIBLE);
+                    };if(person2.getVisibility() == View.INVISIBLE){
+                    person2.setVisibility(View.VISIBLE);
+                    };if(person3.getVisibility() == View.INVISIBLE){    
+                    person3.setVisibility(View.VISIBLE);
+                    };if(person4.getVisibility() == View.INVISIBLE){
+                    person4.setVisibility(View.VISIBLE);
+                    };if(person5.getVisibility() == View.INVISIBLE){
+                    person5.setVisibility(View.VISIBLE);
+                    };if(person6.getVisibility() == View.INVISIBLE){
+                        person6.setVisibility(View.VISIBLE);};
+                    slot1.setImageBitmap(null);
+                    slot1.setTag(null);
+                    slot2.setImageBitmap(null);
+                    slot2.setTag(null);
+                    slot3.setImageBitmap(null);
+                    slot3.setTag(null);
+                    slot4.setImageBitmap(null);
+                    slot4.setTag(null);
+                    slot5.setImageBitmap(null);
+                    slot5.setTag(null);
+                    slot6.setImageBitmap(null);
+                    slot6.setTag(null);
+                    Toast.makeText(getApplicationContext(), "Wrong! Resetting...", Toast.LENGTH_SHORT).show();
+        //  }
+                }
+        }});
+
+        reset.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if(person1.getVisibility() == View.INVISIBLE){
+                    person1.setVisibility(View.VISIBLE);
+                    };if(person2.getVisibility() == View.INVISIBLE){
+                    person2.setVisibility(View.VISIBLE);
+                    };if(person3.getVisibility() == View.INVISIBLE){    
+                    person3.setVisibility(View.VISIBLE);
+                    };if(person4.getVisibility() == View.INVISIBLE){
+                    person4.setVisibility(View.VISIBLE);
+                    };if(person5.getVisibility() == View.INVISIBLE){
+                    person5.setVisibility(View.VISIBLE);
+                    };if(person6.getVisibility() == View.INVISIBLE){
+                        person6.setVisibility(View.VISIBLE);};
+                    slot1.setImageBitmap(null);
+                    slot1.setTag(null);
+                    slot2.setImageBitmap(null);
+                    slot2.setTag(null);
+                    slot3.setImageBitmap(null);
+                    slot3.setTag(null);
+                    slot4.setImageBitmap(null);
+                    slot4.setTag(null);
+                    slot5.setImageBitmap(null);
+                    slot5.setTag(null);
+                    slot6.setImageBitmap(null);
+                    slot6.setTag(null);
+            }
+        });
+
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private final class ChoiceTouchListener implements OnTouchListener {
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                /*
+                 * Drag details: we only need default behavior
+                 * - clip data could be set to pass data as part of drag
+                 * - shadow can be tailored
+                 */
+                ClipData data = ClipData.newPlainText("", "");
+                DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+                //start dragging the item touched
+                view.startDrag(data, shadowBuilder, view, 0);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    } 
+
+    private class ChoiceDragListener implements OnDragListener {
+
+        @Override
+        public boolean onDrag(View v, DragEvent event) {
+            switch (event.getAction()) {
+            case DragEvent.ACTION_DRAG_STARTED:
+                //no action necessary
+                break;
+            case DragEvent.ACTION_DRAG_ENTERED:
+                //no action necessary
+                break;
+            case DragEvent.ACTION_DRAG_EXITED:        
+                //no action necessary
+                break;
+            case DragEvent.ACTION_DROP:
+                //handle the dragged view being dropped over a drop view
+                View view = (View) event.getLocalState();
+                //stop displaying the view where it was before it was dragged
+                view.setVisibility(View.INVISIBLE);
+                //view dragged item is being dropped on
+                ImageView dropTarget = (ImageView) v;
+                //view being dragged and dropped
+                ImageView dropped = (ImageView) view;
+                 int plaatje = (Integer) view.getTag();
+
+                Object tag = dropTarget.getTag();
+                //if there is already an item here, set it back visible in its original place
+                if(tag!=null)
+                {
+                    //the tag is the view id already dropped here
+                    int existingID = (Integer)tag;
+                    //set the original view visible again
+                    findViewById(existingID).setVisibility(View.VISIBLE);
+                }
+                //set the tag in the target view being dropped on - to the ID of the view being dropped
+                dropTarget.setImageBitmap(decodeSampledBitmapFromResource(getResources(),plaatje,100,150));
+                dropTarget.setTag(dropped.getId());
+                break;
+            case DragEvent.ACTION_DRAG_ENDED:
+                //no action necessary
+                break;
+            default:
+                break;
+            }
+            return true;
+        }
+    }
+
+
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ad1.destroy();
+        ad2.destroy();
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ad1.destroy();
+        ad2.destroy();
+    }
+
+
+
+}
+</code></pre>
+
+<p>Here's the LogCat:</p>
+
+<pre><code>05-27 13:47:03.974: E/AndroidRuntime(17912): FATAL EXCEPTION: main
+05-27 13:47:03.974: E/AndroidRuntime(17912): java.lang.NullPointerException
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at com.mitonanetherlands.buttonchooser.LevelFour_1$1.onClick(LevelFour_1.java:144)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at android.view.View.performClick(View.java:4223)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at android.view.View$PerformClick.run(View.java:17275)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at android.os.Handler.handleCallback(Handler.java:615)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at android.os.Handler.dispatchMessage(Handler.java:92)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at android.os.Looper.loop(Looper.java:137)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at android.app.ActivityThread.main(ActivityThread.java:4898)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at java.lang.reflect.Method.invokeNative(Native Method)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at java.lang.reflect.Method.invoke(Method.java:511)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1008)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:775)
+05-27 13:47:03.974: E/AndroidRuntime(17912):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

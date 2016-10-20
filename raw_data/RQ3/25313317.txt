@@ -1,0 +1,166 @@
+<pre><code>java.lang.RuntimeException: Unable to start activity     ComponentInfo{appinventor.ai_kksal55.Fikralar10000/appinventor.ai_kksal55.Fikralar10000.MainActivity}: android.database.sqlite.SQLiteException: no such table: android_metadata
+at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1651)
+at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1667)
+at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+at android.app.ActivityThread$H.handleMessage(ActivityThread.java:935)
+at android.os.Handler.dispatchMessage(Handler.java:99)
+at android.os.Looper.loop(Looper.java:130)
+at android.app.ActivityThread.main(ActivityThread.java:3687)
+at java.lang.reflect.Method.invokeNative(Native Method)
+at java.lang.reflect.Method.invoke(Method.java:507)
+at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:867)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:625)
+at dalvik.system.NativeStart.main(Native Method)
+Caused by: android.database.sqlite.SQLiteException: no such table: android_metadata
+at android.database.sqlite.SQLiteDatabase.native_setLocale(Native Method)
+at android.database.sqlite.SQLiteDatabase.setLocale(SQLiteDatabase.java:2015)
+at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java:1872)
+at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:822)
+at appinventor.ai_kksal55.Fikralar10000.DatabaseHelper.openDataBase(DatabaseHelper.java:141)
+at appinventor.ai_kksal55.Fikralar10000.MainActivity.onCreate(MainActivity.java:84)
+at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1615)
+... 11 more
+</code></pre>
+
+<p>my MainActivity.java</p>
+
+<pre><code> kategoriler = new DatabaseHelper(this);
+    DatabaseHelper myDbHelper = new DatabaseHelper(MainActivity.this);      
+    try { myDbHelper.createDataBase();}
+    catch (IOException ioe) {throw new Error("Unable to create database");}
+
+
+    try { myDbHelper.openDataBase();}
+    catch(SQLException sqle){   throw sqle; }
+    Toast.makeText(MainActivity.this, "VeriTabanı Başarıyla Güncellendi", Toast.LENGTH_SHORT).show();
+</code></pre>
+
+<p>and DatabaseHelper.java</p>
+
+<pre><code>package appinventor.ai_kksal55.Fikralar10000;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.R.array;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class DatabaseHelper extends SQLiteOpenHelper{ 
+    String DB_PATH =null;
+    private static String DB_NAME = "anddb3";
+    private SQLiteDatabase myDataBase; 
+    public static final String[] ALL_KEYS = new String[] {"_id", "adi"};
+    private final Context myContext;
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+        DB_PATH="/data/data/"+context.getPackageName()+"/"+"databases/";
+    }   
+public void createDataBase() throws IOException{
+boolean dbExist = checkDataBase();
+
+    if(dbExist){
+    }else{
+
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+}
+private boolean checkDataBase(){
+    SQLiteDatabase checkDB = null;
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+    }
+    return checkDB != null ? true : false;
+}
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+}
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+ //return cursor
+    public Cursor query(String table,String[] columns, String selection,String[] selectionArgs,String groupBy,String having,String orderBy){
+        return myDataBase.query("kat", null, null, null, null, null, null);
+
+    }
+
+    }
+</code></pre>
+
+<p>database is 17 MB. </p>
+
+<p>Why do you lock applications. The application did not work 
+user's phone "Android 2.3.3 - 2.3.7 Galaxy Y (GT-S5360)"</p>
+
+<p>me and my friend, my application works fine. In some people sometimes will not turn on</p>

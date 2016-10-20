@@ -1,0 +1,58 @@
+<p>past 6 months i am working in android project,now i need to create graph in android i used achartengine lib,everything is ok,i can able to get the graph in visual,the problem is i cant able to give spaces between bar graph.Can any one plz guide on this.I have posted my code for bar graph here.</p>
+
+<pre><code>protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+     XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+     renderer.setMarginsColor(Color.parseColor("#ffffff"));
+     renderer.setXLabelsColor(Color.BLACK);
+     renderer.setYLabelsColor(0,Color.BLACK);
+     renderer.setPanEnabled(false, false);
+     renderer.setZoomEnabled(false, false);
+
+     renderer.setBarWidth(75);
+     renderer.setApplyBackgroundColor(true);
+
+     int length = colors.length;
+     for (int i = 0; i < length; i++) {
+       SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+       r.setColor(colors[i]);
+      // r.setChartvalueAngle(-90);
+    //           r.setChartValuesSpacing(60);
+           renderer.addSeriesRenderer(r);
+           renderer.setBarSpacing(0.5);
+         }
+         return renderer;
+       }
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<int[]> values) {
+         XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+         int length = titles.length;
+         for (int i = 0; i < length; i++) {
+           CategorySeries series = new CategorySeries(titles[i]);
+           int[] v = values.get(i);
+           int seriesLength = v.length;
+           for (int k = 0; k < seriesLength; k++) {
+             series.add(v[k]);
+           }
+               dataset.addSeries(series.toXYSeries());
+         }
+         return dataset;
+    }
+    protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,int labelsColor) {
+         renderer.setChartTitle(title);
+         renderer.setYLabelsAlign(Align.RIGHT);
+         renderer.setXTitle(xTitle);
+         renderer.setYTitle(yTitle);
+         renderer.setXAxisMin(0);
+         renderer.setXAxisMax(xMax);
+         renderer.setYAxisMin(yMin);
+         renderer.setYAxisMax(yMax);
+         System.out.println("getting bar width----" +renderer.getBarSpacing());
+         renderer.setOrientation(Orientation.HORIZONTAL);
+         renderer.setShowLabels(true);
+         renderer.setAxesColor(axesColor);
+         renderer.setLabelsColor(labelsColor);
+         renderer.setPanEnabled(false, false);  
+         renderer.setInScroll(false);
+         renderer.setZoomEnabled(false);
+    }
+</code></pre>

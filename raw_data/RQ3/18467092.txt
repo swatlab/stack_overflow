@@ -1,0 +1,130 @@
+<p>My ProgressBar does not reset after audio is done. I ask a question before on this and got it working but now just stopped working and not sure why it doesn't. Any help would be awesome.</p>
+
+<p>All I want is it to chose a audio at random then play one and when finished you can press play again to listen to the same audio it chose at random.</p>
+
+<p>Heres code:</p>
+
+<pre><code> public class player1 extends Activity implements Runnable {
+
+
+private  MediaPlayer mp;
+private ProgressBar progressBar;
+private ImageButton pauseicon;
+private final int NUM_SOUND_FILES = 3;  //*****REPLACE THIS WITH THE ACTUAL NUMBER OF SOUND FILES YOU HAVE*****
+private int mfile[] = new int[NUM_SOUND_FILES];
+private Random rnd = new Random();
+
+
+
+   @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.player_1);
+
+        pauseicon = (ImageButton) findViewById(R.id.pauseicon);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+
+        mfile[0] = R.raw.sound01;  //****REPLACE THESE WITH THE PROPER NAMES OF YOUR SOUND FILES
+        mfile[1] = R.raw.sound02;  //PLACE THE SOUND FILES IN THE /res/raw/ FOLDER IN YOUR PROJECT*****
+        mfile[2] = R.raw.sound03;
+        /**
+         * Play button click event
+         * plays a song and changes button to pause image
+         * pauses a song and changes button to play image
+         * */
+
+
+        try{
+             mp = MediaPlayer.create(player1.this, mfile[rnd.nextInt(NUM_SOUND_FILES)]);
+             mp.seekTo(0);
+             mp.start(); ;         
+             progressBar.setVisibility(ProgressBar.VISIBLE);
+             progressBar.setProgress(0);
+             progressBar.setMax(mp.getDuration());
+             new Thread(this).start();
+
+
+         } catch (IllegalArgumentException e) {
+             e.printStackTrace();
+         } catch (IllegalStateException e) {
+             e.printStackTrace();
+         }
+
+        mp.setOnCompletionListener(new OnCompletionListener() {
+            //When audio is done will change pause to play
+            public void onCompletion(MediaPlayer mp) {
+                pauseicon.setImageResource(R.drawable.playicon);
+
+            }
+        });
+
+
+        pauseicon.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                 // No need to check if it is pauseicon
+
+        if(mp.isPlaying()){
+            mp.pause();
+         ((ImageButton) v).setImageResource(R.drawable.playicon);
+
+        } else {
+            mp.start();
+            ((ImageButton) v).setImageResource(R.drawable.pauseicon);
+     }}});
+
+   }
+        //To update progress bar
+   public void run() {
+        int currentPosition= 0;
+        int total = mp.getDuration();
+        while (mp!=null && currentPosition<=total) {
+            try {
+                Thread.sleep(1000);
+                currentPosition= mp.getCurrentPosition();
+            } catch (InterruptedException e) {
+                return;
+            } catch (Exception e) {
+                return;
+            }            
+            progressBar.setProgress(currentPosition);
+        }
+    }
+   @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+
+
+        if (mp != null)
+        if(mp.isPlaying())
+              mp.stop();
+
+          mp.release();
+
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+    }
+     }
+    @Override 
+    public void onBackPressed(){
+      if (mp != null){
+          if(mp.isPlaying())
+              mp.stop();
+
+          mp.release();
+      }
+
+      //there is no reason to call super.finish(); here
+      //call super.onBackPressed(); and it will finish that activity for you
+      super.onBackPressed(); 
+    }
+    }
+</code></pre>

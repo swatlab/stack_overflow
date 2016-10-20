@@ -1,0 +1,87 @@
+<p>I have used the <a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html" rel="nofollow">Loading Bitmaps Efficiently</a> from developer's Guide and followed the instructions point to point from that tutorial.</p>
+
+<p>As you may know, this is the code I used:</p>
+
+<pre><code>public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth,int reqHeight){
+    //Raw height and width of the Image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height>reqHeight || width>reqWidth) {
+        final int heightratio = Math.round((float)height / (float)reqHeight);
+        final int widthRatio = Math.round((float)width / (float)reqWidth);
+
+        inSampleSize = heightratio < widthRatio ? heightratio : widthRatio;
+    }
+    return inSampleSize;
+}
+public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,int reqWidth,int reqHeight){
+    //first decode with inJustdecodeBounds = true to check dimensions.
+
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeResource(res, resId, options);
+    //Calculate inSampleSize
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    //Decode bitmap with inSampleSize
+    options.inJustDecodeBounds = false;
+
+    return BitmapFactory.decodeResource(res, resId, options);
+}
+</code></pre>
+
+<p>And I am calling this method in a switch case as: </p>
+
+<pre><code>handler.postDelayed(new Runnable() {
+
+        @Override
+        public void run() {
+            // TODO Auto-generated method stub
+            learn_full_iv.setVisibility(View.VISIBLE);
+            learn_full_iv.startAnimation(anim);
+
+            switch (id) {
+            case R.id.a:
+                //learn_full_iv.setImageResource(R.drawable.aeroplane);
+                learn_full_iv.setImageBitmap(decodeSampledBitmapFromResource(
+                        getResources(), R.drawable.aeroplane, learn_full_iv.getWidth(), learn_full_iv.getWidth()));
+                Toast.makeText(getApplicationContext(), "Width : " + learn_full_iv.getWidth() + "Height : " + learn_full_iv.getHeight(), Toast.LENGTH_SHORT).show();
+                playSound(1, 2);
+                break;
+            case R.id.b:
+                //learn_full_iv.setImageResource(R.drawable.ball);
+                learn_full_iv.setImageBitmap(decodeSampledBitmapFromResource(
+                        getResources(), R.drawable.ball, learn_full_iv.getWidth(), learn_full_iv.getWidth()));
+                Toast.makeText(getApplicationContext(), "Width : " + learn_full_iv.getWidth() + "Height : " + learn_full_iv.getHeight(), Toast.LENGTH_SHORT).show();
+                playSound(3, 4);
+                break;
+            case R.id.c:
+                //learn_full_iv.setImageResource(R.drawable.camel);
+                learn_full_iv.setImageBitmap(decodeSampledBitmapFromResource(
+                        getResources(), R.drawable.camel, learn_full_iv.getWidth(), learn_full_iv.getWidth()));
+                Toast.makeText(getApplicationContext(), "Width : " + learn_full_iv.getWidth() + "Height : " + learn_full_iv.getHeight(), Toast.LENGTH_SHORT).show();
+                playSound(5, 6);
+                break;
+            case R.id.d:
+                //learn_full_iv.setImageResource(R.drawable.drum);
+                learn_full_iv.setImageBitmap(decodeSampledBitmapFromResource(
+                        getResources(), R.drawable.drum, learn_full_iv.getWidth(), learn_full_iv.getWidth()));
+                Toast.makeText(getApplicationContext(), "Width : " + learn_full_iv.getWidth() + "Height : " + learn_full_iv.getHeight(), Toast.LENGTH_SHORT).show();
+                playSound(7, 8);
+                break;
+                    default:
+                    break;     
+}
+</code></pre>
+
+<p>And now the problem is every time on Loading the onCreate() , the Image first clicked will display only the solid color of the image and not the whole image, as shown below:</p>
+
+<p><img src="http://i.stack.imgur.com/apJ98.png" alt="Image View Without Width & Height"></p>
+
+<p>And from the next click, whether on the same image or next image, code works fine as:<img src="http://i.stack.imgur.com/tGTq3.png" alt="ImageView with desired width & Height!"></p>
+
+<p>And everything else works as fine until the Activity is restarted. If we restart or resume this Activity the same thing is happening. </p>
+
+<p>So, what is going wrong?</p>

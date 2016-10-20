@@ -1,0 +1,37 @@
+<p>My problem is that my application always fails when the database is copied from asset folder to the phone path: </p>
+
+<pre><code>/data/data/at.atn.android/databases/
+</code></pre>
+
+<p>MY databasename:</p>
+
+<pre><code>atnRoutenplaner.sqlite3
+</code></pre>
+
+<p>My code for the transfer:</p>
+
+<pre><code>private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+    File sampleFile = new File(outFileName);
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+</code></pre>

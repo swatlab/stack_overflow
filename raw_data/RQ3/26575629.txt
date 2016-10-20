@@ -1,0 +1,287 @@
+<p>I'm getting this IllegalStateException as stated in the title, I know this is because somewhere I'm adding a view that already has a parent, but I can't find where? I have tried a few different solutions I've found for other people having this problem, but It haven't worked because they seem to get the problem for another source than I am. Help would be much appreciated!</p>
+
+<p>Error stack:</p>
+
+<pre><code>10-26 17:46:54.783: E/AndroidRuntime(14255): FATAL EXCEPTION: main
+10-26 17:46:54.783: E/AndroidRuntime(14255): Process: com.example.digiexammobile, PID: 14255
+10-26 17:46:54.783: E/AndroidRuntime(14255): java.lang.IllegalStateException: The specified child already has a parent. You must call removeView() on the child's parent first.
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.addViewInner(ViewGroup.java:3562)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.addView(ViewGroup.java:3415)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.addView(ViewGroup.java:3360)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.addView(ViewGroup.java:3336)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.NoSaveStateFrameLayout.wrap(NoSaveStateFrameLayout.java:40)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:951)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1126)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:739)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1489)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:486)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.app.FragmentPagerAdapter.finishUpdate(FragmentPagerAdapter.java:141)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.view.ViewPager.populate(ViewPager.java:1073)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.view.ViewPager.populate(ViewPager.java:919)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1441)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.View.measure(View.java:16521)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.View.measure(View.java:16521)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at com.android.internal.widget.ActionBarOverlayLayout.onMeasure(ActionBarOverlayLayout.java:327)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.View.measure(View.java:16521)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2552)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.View.measure(View.java:16521)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1915)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1109)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1291)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:996)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5603)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.Choreographer$CallbackRecord.run(Choreographer.java:761)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.Choreographer.doCallbacks(Choreographer.java:574)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.Choreographer.doFrame(Choreographer.java:544)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:747)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.os.Handler.handleCallback(Handler.java:733)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.os.Handler.dispatchMessage(Handler.java:95)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.os.Looper.loop(Looper.java:136)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at android.app.ActivityThread.main(ActivityThread.java:5146)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at java.lang.reflect.Method.invokeNative(Native Method)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at java.lang.reflect.Method.invoke(Method.java:515)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:796)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:612)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at de.robv.android.xposed.XposedBridge.main(XposedBridge.java:132)
+10-26 17:46:54.783: E/AndroidRuntime(14255):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>I can't find any reference to any of my files here?</p>
+
+<p>I'm building on top of the standard tabbed application (from the eclipse create application guide), but I have changed a bit of stuff to the support-library alternatives in order to use it with the SwipeRefreshLayout.</p>
+
+<p>My MainActivity.java:</p>
+
+<pre><code>package com.example.digiexammobile;
+
+import java.util.Locale;
+
+import android.app.ActionBar.Tab;
+import android.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.Menu;
+import android.view.MenuItem;
+
+
+public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v13.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+    NWManager nwmanager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        nwmanager = new NWManager();
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(Tab tab, android.app.FragmentTransaction ft) {
+        mViewPager.setCurrentItem(tab.getPosition());
+
+    }
+
+
+    @Override
+    public void onTabUnselected(Tab tab, android.app.FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public void onTabReselected(Tab tab, android.app.FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        Fragment[] fragments = new Fragment[this.getCount()];
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            if(fragments[position] == null){
+                fragments[position] = (Fragment) LibraryListFragment.newInstance(nwmanager);
+            }
+
+            return fragments[position];
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+}
+</code></pre>
+
+<p>LibraryListFragment.java:</p>
+
+<pre><code>package com.example.digiexammobile;
+
+import android.support.v4.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+
+public class LibraryListFragment extends Fragment {
+
+    BaseAdapter listadapter;
+    NWManager nwmanager;
+
+    public static LibraryListFragment newInstance(NWManager nwmanager){
+        LibraryListFragment fragment = new LibraryListFragment();
+        fragment.nwmanager = nwmanager;
+        return fragment;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        View rootView = inflater.inflate(R.layout.fragment_librarylist, container);
+
+        final String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
+            "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
+            "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
+            "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
+            "Linux", "OS/2" }; // You have the necessary data to bind the list.
+
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+        android.R.layout.simple_list_item_1, android.R.id.text1, values); // You have set     the previous array to an adapter that can be now setted to a list.
+
+        ListView list = (ListView) rootView.findViewById(R.id.librarylist);
+        list.setAdapter(adapter);
+
+        return rootView;
+    }
+
+    public void notifyDataSetChanged(){
+        listadapter.notifyDataSetChanged();
+    }
+
+}
+</code></pre>
+
+<p>And finally my fragment_librarylist.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipe_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/librarylist">
+    </ListView>
+
+</android.support.v4.widget.SwipeRefreshLayout>
+</code></pre>
+
+<p>Many thanks in advance!</p>

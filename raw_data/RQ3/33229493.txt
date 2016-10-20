@@ -1,0 +1,238 @@
+<p>I am making udacity popular movies app and i am fetching data from the movie database API and i am getting right data. I am using card view with custom adapter to set data to imageview but picasso is not loading url images. I am getting the images url right.And if i do it with fake data it is slow in loading images. Here's the log of images url that i am getting:
+Log messages:</p>
+
+<pre><code>10-20 02:22:28.094 1639-1639/com.example.sahilshokeen.movie I/Choreographer: 
+Skipped 62 frames!  The application may be doing too much work on its main  thread.
+10-20 02:23:30.773 1639-1654/com.example.sahilshokeen.movie V/Movies:     
+http://image.tmdb.org/t/p/w185//jjBgi2r5cRt36xF6iNUEhzscEcb.jpg
+10-20 02:23:30.773 1639-1654/com.example.sahilshokeen.movie V/Movies:   
+http://image.tmdb.org/t/p/w185//AjbENYG3b8lhYSkdrWwlhVLRPKR.jpg
+10-20 02:23:30.773 1639-1654/com.example.sahilshokeen.movie V/Movies:  
+http://image.tmdb.org/t/p/w185//5JU9ytZJyR3zmClGmVm9q4Geqbd.jpg
+10-20 02:23:30.773 1639-1654/com.example.sahilshokeen.movie V/Movies:  
+http://image.tmdb.org/t/p/w185//69Cz9VNQZy39fUE2g0Ggth6SBTM.jpg
+10-20 02:23:30.773 1639-1654/com.example.sahilshokeen.movie V/Movies:   
+http://image.tmdb.org/t/p/w185//qey0tdcOp9kCDdEZuJ87yE3crSe.jpg
+10-20 02:23:30.773 1639-1654/com.example.sahilshokeen.movie V/Movies:    
+http://image.tmdb.org/t/p/w185//ktyVmIqfoaJ8w0gDSZyjhhOPpD6.
+</code></pre>
+
+<p>So please help. Here's my code:
+MainActivity.java:</p>
+
+<pre><code>package com.example.sahilshokeen.movie;
+
+public class MainActivity extends Activity {
+private RecyclerView recyclerView;
+private GridLayoutManager manager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    //checking network
+    ConnectivityManager connMgr = (ConnectivityManager)
+            getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+    if (networkInfo != null && networkInfo.isConnected()) {
+        // fetch data
+        new FetchData().execute();
+
+    } else {
+        // display error
+        Toast toast = Toast.makeText(this, "No Network", Toast.LENGTH_LONG);
+        toast.show();
+    }
+    //setting adapter
+    recyclerView = (RecyclerView)findViewById(R.id.recyclers);
+    manager = new GridLayoutManager(MainActivity.this, 2);
+    recyclerView.setAdapter(new Adapter(MainActivity.this, Data.image));
+    recyclerView.setHasFixedSize(true);
+    recyclerView.setLayoutManager(manager);
+}
+
+public class FetchData extends AsyncTask<Void, Void, Void> {
+    private HttpURLConnection connection = null;
+    private BufferedReader reader = null;
+    private String json;
+    private String urlString = "http://api.themoviedb.org/3/movie/popular?api_key=b6f6fcfbb225d8c500e4404655ccadcc&certification=G";
+    private String image = " http://image.tmdb.org/t/p/w185/";
+
+    @Override
+    protected Void doInBackground(Void... params) {
+        //connecting to network
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.connect();
+            StringBuffer buffer = new StringBuffer();
+            InputStream stream = connection.getInputStream();
+            reader = new BufferedReader(new InputStreamReader(stream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            json = buffer.toString();
+            //getting json data
+            try {
+                JSONObject object = new JSONObject(json);
+                JSONArray array = object.getJSONArray("results");
+                for (int i = 0; i < 6; i++) {
+                    Data.objects[i] = array.getJSONObject(i);
+                    Data.title[i] = Data.objects[i].getString("original_title");
+                    Data.overview[i] = Data.objects[i].getString("overview");
+                    Data.date[i] = Data.objects[i].getString("release_date");
+                    Data.image[i] = Data.objects[i].getString("poster_path");
+                    Data.vote[i] = Data.objects[i].getDouble("vote_average");
+                    Data.image[i] = image + Data.image[i];
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            connection.disconnect();
+        }
+        try {
+            if (reader != null) {
+                reader.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    if(id==R.id.action_refresh){
+
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+  }
+</code></pre>
+
+<p>Adapter.java:</p>
+
+<pre><code>package com.example.sahilshokeen.movie;
+
+public class Adapter extends RecyclerView.Adapter<Adapter.Holder> {
+private Context mContext;
+private String[] mImages;
+
+public Adapter() {
+}
+
+public Adapter(Context context, String[] mImages) {
+    this.mContext = context;
+    this.mImages = mImages;
+}
+
+
+public static class Holder extends RecyclerView.ViewHolder {
+    public CardView cardView;
+    public ImageView imageView;
+
+    public Holder(View itemView) {
+        super(itemView);
+        cardView = (CardView) itemView.findViewById(R.id.card);
+        imageView = (ImageView) itemView.findViewById(R.id.images);
+    }
+}
+
+@Override
+public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
+    View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.grid_item, parent, false);
+    Holder holder = new Holder(view);
+    return holder;
+}
+
+@Override
+public void onBindViewHolder(Holder holder, int position) {
+        Picasso.with(mContext).load(mImages[position]).into(holder.imageView);
+}
+
+@Override
+public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    super.onAttachedToRecyclerView(recyclerView);
+}
+
+@Override
+public int getItemCount() {
+    return mImages.length;
+    }
+}
+</code></pre>
+
+<p>activity_main.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.RecyclerView  xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:id="@+id/recyclers"
+android:scrollbars="vertical"
+ tools:context=".MainActivity">
+</android.support.v7.widget.RecyclerView>
+</code></pre>
+
+<p>grid_item.xml(To display card view):</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:card_view="http://schemas.android.com/apk/res-auto"
+android:layout_width="200dp" android:layout_height="200dp"
+android:id="@+id/card"
+card_view:cardCornerRadius="4dp"
+android:layout_margin="5dp">
+
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/images"/>
+  </LinearLayout>
+  </android.support.v7.widget.CardView>
+</code></pre>
+
+<p>Data.java(To store data from web):</p>
+
+<pre><code>package com.example.sahilshokeen.movie;
+
+public class Data {
+public static JSONObject[] objects = new JSONObject[6];
+public static String[] title = new String[6];
+public static String[] overview = new String[6];
+public static String[] date = new String[6];
+public static String[] image = new String[6];
+public static Double[] vote = new Double[6];
+}
+</code></pre>

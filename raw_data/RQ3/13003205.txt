@@ -1,0 +1,255 @@
+<p>i'm trying to do the same as on this tutorial:
+<a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a>
+But i'm facing some difficulties.
+Here is my class:</p>
+
+<pre><code>public class TechAgrumeSQLiteHelper extends SQLiteOpenHelper {    
+
+
+
+      //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/test.test.test/databases/";
+
+    private static String DB_NAME = "Player_Club";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+    private static final String TABLE_PLAYERS = "Player";
+    private static final int DATABASE_VERSION = 3;
+    // Contacts Table Columns names
+    private static final String KEY_CODE = "_id";
+    private static final String KEY_NOM = "nom_Player";
+    private static final String KEY_SURNOM = "surnom_Player";
+    private static final String KEY_AGE = "age_Player";
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public TechAgrumeSQLiteHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+        Log.d("I'm here: ","I'm here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        boolean dbExist = checkDataBase();
+        if(dbExist){
+            //do nothing - database already exist
+            Log.d("Copy BD","database already exists!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+                        Log.d("Copy BD","Datbase copied!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+
+
+        void addPlayer(Player player) {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(KEY_NOM, player.getNom_Player()); // Contact Name
+            values.put(KEY_SURNOM, player.getSurnom_Player()); // Contact Phone
+            values.put(KEY_AGE, player.getAge_Player()); // Contact Phone
+
+            // Inserting Row
+            db.insert(TABLE_PLAYERS, null, values);
+            db.close(); // Closing database connection
+        }
+
+        public List<Player> getAllPlayers() {
+            List<Player> playerList = new ArrayList<Player>();
+            // Select All Query
+            String selectQuery = "SELECT  * FROM " + TABLE_PLAYERS;
+
+            SQLiteDatabase db = this.getWritableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
+
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    Player player = new Player();
+                    player.setCode_Player(Integer.parseInt(cursor.getString(0)));
+                    player.setNom_Player(cursor.getString(1));
+                    player.setSurnom_Player(cursor.getString(2));
+                    player.setAge_Player(Integer.parseInt(cursor.getString(3)));
+                    // Adding contact to list
+                    playerList.add(player);
+                } while (cursor.moveToNext());
+            }
+
+            // return contact list
+            return playerList;
+        }
+
+}
+</code></pre>
+
+<p>And here is the MainActivity class:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+    TechAgrumeSQLiteHelper db=new TechAgrumeSQLiteHelper(this);
+    //this.deleteDatabase("Player_Club.db");
+    // Inserting Contacts
+        Log.d("Insert: ", "Inserting ................................................");
+        db.addPlayer(new Player("nom1", "prénom1",25));
+        db.addPlayer(new Player("nom2", "prénom2",24));
+        db.addPlayer(new Player("nom3", "prénom3",26));
+        db.addPlayer(new Player("nom4", "prénom4",16));
+
+        // Reading all contacts
+        Log.d("Reading: ", "Reading all contacts..");
+        List<Player> player = db.getAllPlayers();       
+
+        for (Player cn : player) {
+            String log = "Id: "+cn.getCode_Player()+" ,Name: " + cn.getNom_Player() + " ,Phone: " + cn.getSurnom_Player()+"  ,Age: "+cn.getAge_Player();
+                // Writing Contacts to log
+        Log.d("Name: ", log);}}
+}
+</code></pre>
+
+<p>It gives me this error:</p>
+
+<pre><code>D/I'm here:   ( 6548): I'm here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+D/KeyguardViewMediator(  216): setHidden false
+D/Copy BD( 6548): database already exists!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+D/Insert: ( 6548): Inserting ................................................
+I/SqliteDatabaseCpp( 6548): sqlite returned: error code = 1, msg = no such table: Player, db=/data/data/test.test.test/databases/webview.db
+E/SQLiteDatabase( 6548): Error during inserting
+E/SQLiteDatabase( 6548): android.database.sqlite.SQLiteException: no such table: Player: , while compiling: INSERT INTO Player(surnom_Player,nom_Player,age_Player) VALUES (?,?,?)
+</code></pre>
+
+<p>I went to look if the Player_Club.db really exists:</p>
+
+<pre><code>    adb shell
+    shell@android:/ $ run-as test.test.test
+    run-as test.test.test
+    <a href="mailto:shell@android:/data/data/test.test.test">shell@android:/data/data/test.test.test</a> $ cd /data/data/test.test.test/databases
+    .test.test/databases                                                          <
+    <a href="mailto:shell@android:/data/data/test.test.test">shell@android:/data/data/test.test.test</a>/databases $ ls
+    ls
+   Player_Club.db
+   webview.db
+   webview.db-shm
+   webview.db-wal
+</code></pre>
+
+<p>From these lines i can tell that the database really exists, so i don't know why it's looking for the Player table on the webview.db?</p>

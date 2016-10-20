@@ -1,0 +1,181 @@
+<p>I'm working with Android and I have one menu option, I want that option to start a new activity when I tapped it, but when I try to implement the start activity I always got a force close here are my code :</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item)
+{
+    switch (item.getItemId()) 
+    {
+        case R.id.tentang :
+            startActivity(new Intent(getApplicationContext(), about.class));
+            finish();
+            return true;
+        default : 
+            return super.onContextItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>do you have any idea to fix it?</p>
+
+<p>EDIT : Some people in this forum asked me to show my logcat, and here it is :</p>
+
+<pre><code>09-10 12:08:01.096: INFO/Process(764): Sending signal. PID: 764 SIG: 9
+09-10 12:08:01.306: INFO/ActivityManager(68): Displayed com.dg.tkd/.digital_tkd: +5s285ms
+09-10 12:08:01.947: INFO/ActivityManager(68): Process com.android.launcher (pid 764) has died.
+09-10 12:08:01.957: INFO/WindowManager(68): WIN DEATH: Window{407e2040 com.android.launcher/com.android.launcher2.Launcher paused=false}
+09-10 12:08:04.027: DEBUG/dalvikvm(68): GC_EXPLICIT freed 316K, 47% free 4468K/8327K, external 2904K/3627K, paused 164ms
+09-10 12:08:06.926: WARN/KeyCharacterMap(801): No keyboard for id 0
+09-10 12:08:06.936: WARN/KeyCharacterMap(801): Using default keymap: /system/usr/keychars/qwerty.kcm.bin
+09-10 12:08:07.837: DEBUG/dalvikvm(317): GC_EXPLICIT freed 13K, 55% free 2577K/5703K, external 716K/1038K, paused 847ms
+09-10 12:08:08.906: INFO/ActivityManager(68): Starting: Intent { cmp=com.dg.tkd/.about } from pid 801
+09-10 12:08:09.966: WARN/ActivityManager(68): Activity pause timeout for HistoryRecord{40622310 com.dg.tkd/.digital_tkd}
+09-10 12:08:10.487: DEBUG/dalvikvm(801): GC_EXTERNAL_ALLOC freed 69K, 52% free 2604K/5379K, external 908K/1038K, paused 117ms
+09-10 12:08:10.856: ERROR/dalvikvm-heap(801): 12111476-byte external allocation too large for this process.
+09-10 12:08:10.987: ERROR/GraphicsJNI(801): VM won't let us allocate 12111476 bytes
+09-10 12:08:10.987: DEBUG/dalvikvm(801): GC_FOR_MALLOC freed 2K, 52% free 2602K/5379K, external 908K/1038K, paused 46ms
+09-10 12:08:10.997: DEBUG/skia(801): --- decoder->decode returned false
+09-10 12:08:11.026: DEBUG/AndroidRuntime(801): Shutting down VM
+09-10 12:08:11.026: WARN/dalvikvm(801): threadid=1: thread exiting with uncaught exception (group=0x40015560)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801): FATAL EXCEPTION: main
+09-10 12:08:11.126: ERROR/AndroidRuntime(801): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.dg.tkd/com.dg.tkd.about}: android.view.InflateException: Binary XML file line #7: Error inflating class android.widget.ImageView
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1622)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1638)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:928)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.os.Handler.dispatchMessage(Handler.java:99)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.os.Looper.loop(Looper.java:123)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.ActivityThread.main(ActivityThread.java:3647)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at java.lang.reflect.Method.invokeNative(Native Method)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at java.lang.reflect.Method.invoke(Method.java:507)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at dalvik.system.NativeStart.main(Native Method)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801): Caused by: android.view.InflateException: Binary XML file line #7: Error inflating class android.widget.ImageView
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.createView(LayoutInflater.java:518)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at com.android.internal.policy.impl.PhoneLayoutInflater.onCreateView(PhoneLayoutInflater.java:56)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:568)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.rInflate(LayoutInflater.java:623)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.inflate(LayoutInflater.java:408)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.inflate(LayoutInflater.java:320)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.inflate(LayoutInflater.java:276)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at com.android.internal.policy.impl.PhoneWindow.setContentView(PhoneWindow.java:207)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.Activity.setContentView(Activity.java:1657)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at com.dg.tkd.about.onCreate(about.java:11)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1586)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     ... 11 more
+09-10 12:08:11.126: ERROR/AndroidRuntime(801): Caused by: java.lang.reflect.InvocationTargetException
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at java.lang.reflect.Constructor.constructNative(Native Method)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at java.lang.reflect.Constructor.newInstance(Constructor.java:415)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.view.LayoutInflater.createView(LayoutInflater.java:505)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     ... 22 more
+09-10 12:08:11.126: ERROR/AndroidRuntime(801): Caused by: java.lang.OutOfMemoryError: bitmap size exceeds VM budget
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.graphics.BitmapFactory.nativeDecodeAsset(Native Method)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:450)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:326)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:697)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.content.res.Resources.loadDrawable(Resources.java:1709)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.content.res.TypedArray.getDrawable(TypedArray.java:601)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.widget.ImageView.<init>(ImageView.java:118)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     at android.widget.ImageView.<init>(ImageView.java:108)
+09-10 12:08:11.126: ERROR/AndroidRuntime(801):     ... 25 more
+09-10 12:08:11.197: WARN/ActivityManager(68):   Force finishing activity com.dg.tkd/.about
+09-10 12:08:11.276: WARN/ActivityManager(68):   Force finishing activity com.dg.tkd/.digital_tkd
+09-10 12:08:11.747: INFO/dalvikvm(68): Jit: resizing JitTable from 2048 to 4096
+09-10 12:08:11.841: WARN/ActivityManager(68): Activity pause timeout for HistoryRecord{4065fc60 com.dg.tkd/.about}
+09-10 12:08:11.926: INFO/ActivityManager(68): Start proc com.android.launcher for activity com.android.launcher/com.android.launcher2.Launcher: pid=810 uid=10001 gids={}
+09-10 12:08:14.467: INFO/WindowManager(68): Setting rotation to 0, animFlags=1
+09-10 12:08:14.497: INFO/ActivityManager(68): Config changed: { scale=1.0 imsi=310/260 loc=en_US touch=3 keys=2/1/2 nav=3/1 orien=1 layout=18 uiMode=17 seq=20}
+09-10 12:08:16.466: WARN/WindowManager(68): Window freeze timeout expired.
+09-10 12:08:16.466: WARN/WindowManager(68): Force clearing orientation change: Window{4068bc20 Toast paused=false}
+09-10 12:08:16.657: INFO/ActivityThread(810): Pub com.android.launcher2.settings: com.android.launcher2.LauncherProvider
+09-10 12:08:17.976: DEBUG/dalvikvm(810): GC_EXTERNAL_ALLOC freed 461K, 54% free 2684K/5767K, external 1032K/1038K, paused 120ms
+09-10 12:08:18.946: WARN/ActivityManager(68): Launch timeout has expired, giving up wake lock!
+09-10 12:08:19.087: INFO/ActivityManager(68): Displayed com.android.launcher/com.android.launcher2.Launcher: +7s195ms (total +9s128ms)
+09-10 12:08:19.447: INFO/Process(801): Sending signal. PID: 801 SIG: 9
+09-10 12:08:19.567: INFO/ActivityManager(68): Process com.dg.tkd (pid 801) has died.
+09-10 12:08:19.576: ERROR/InputDispatcher(68): channel '4076f4f8 com.dg.tkd/com.dg.tkd.digital_tkd (server)' ~ Consumer closed input channel or an error occurred.  events=0x8
+09-10 12:08:19.576: ERROR/InputDispatcher(68): channel '4076f4f8 com.dg.tkd/com.dg.tkd.digital_tkd (server)' ~ Channel is unrecoverably broken and will be disposed!
+09-10 12:08:19.637: INFO/WindowManager(68): WIN DEATH: Window{4068bc20 Toast paused=false}
+09-10 12:08:19.996: WARN/ActivityManager(68): Activity idle timeout for HistoryRecord{4065fc60 com.dg.tkd/.about}
+09-10 12:08:20.256: INFO/WindowManager(68): WIN DEATH: Window{4076f4f8 com.dg.tkd/com.dg.tkd.digital_tkd paused=true}
+09-10 12:08:20.427: ERROR/InputDispatcher(68): Received spurious receive callback for unknown input channel.  fd=162, events=0x8
+09-10 12:08:21.057: WARN/InputManagerService(68): Got RemoteException sending setActive(false) notification to pid 801 uid 10036
+09-10 12:08:21.427: DEBUG/dalvikvm(810): GC_EXTERNAL_ALLOC freed 57K, 53% free 2756K/5767K, external 1561K/1572K, paused 92ms
+09-10 12:08:21.767: DEBUG/dalvikvm(68): GC_EXPLICIT freed 640K, 47% free 4488K/8327K, external 3079K/3627K, paused 230ms
+09-10 12:08:24.277: DEBUG/dalvikvm(810): GC_CONCURRENT freed 207K, 50% free 2934K/5767K, external 1796K/2091K, paused 16ms+13ms
+09-10 12:08:24.936: DEBUG/dalvikvm(810): GC_EXTERNAL_ALLOC freed 135K, 51% free 2844K/5767K, external 2026K/2091K, paused 95ms
+09-10 12:08:25.396: ERROR/dalvikvm-heap(810): 12111476-byte external allocation too large for this process.
+09-10 12:08:25.456: ERROR/GraphicsJNI(810): VM won't let us allocate 12111476 bytes
+09-10 12:08:25.648: DEBUG/dalvikvm(810): GC_FOR_MALLOC freed 4K, 51% free 2839K/5767K, external 1917K/2091K, paused 55ms
+09-10 12:08:25.648: DEBUG/skia(810): --- decoder->decode returned false
+09-10 12:08:25.648: WARN/dalvikvm(810): threadid=9: thread exiting with uncaught exception (group=0x40015560)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810): FATAL EXCEPTION: launcher-loader
+09-10 12:08:25.697: ERROR/AndroidRuntime(810): java.lang.OutOfMemoryError: bitmap size exceeds VM budget
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.graphics.BitmapFactory.nativeDecodeAsset(Native Method)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:450)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:326)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:697)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.content.res.Resources.loadDrawable(Resources.java:1709)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.content.res.Resources.getDrawable(Resources.java:581)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.app.ContextImpl$ApplicationPackageManager.getDrawable(ContextImpl.java:2147)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.content.pm.PackageItemInfo.loadIcon(PackageItemInfo.java:140)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.content.pm.ComponentInfo.loadDefaultIcon(ComponentInfo.java:154)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.content.pm.PackageItemInfo.loadIcon(PackageItemInfo.java:145)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at com.android.launcher2.IconCache.cacheLocked(IconCache.java:142)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at com.android.launcher2.IconCache.getTitleAndIcon(IconCache.java:91)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at com.android.launcher2.ApplicationInfo.<init>(ApplicationInfo.java:74)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at com.android.launcher2.LauncherModel$LoaderTask.loadAllAppsByBatch(LauncherModel.java:1119)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at com.android.launcher2.LauncherModel$LoaderTask.loadAndBindAllApps(LauncherModel.java:1019)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at com.android.launcher2.LauncherModel$LoaderTask.run(LauncherModel.java:522)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.os.Handler.handleCallback(Handler.java:587)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.os.Handler.dispatchMessage(Handler.java:92)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.os.Looper.loop(Looper.java:123)
+09-10 12:08:25.697: ERROR/AndroidRuntime(810):     at android.os.HandlerThread.run(HandlerThread.java:60)
+09-10 12:08:25.748: WARN/ActivityManager(68):   Force finishing activity com.android.launcher/com.android.launcher2.Launcher
+09-10 12:08:25.856: INFO/ActivityManager(68): Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.android.launcher/com.android.launcher2.Launcher } from pid 0
+09-10 12:08:29.367: INFO/ActivityManager(68): Displayed com.android.launcher/com.android.launcher2.Launcher: +3s494ms
+09-10 12:08:32.178: INFO/Process(810): Sending signal. PID: 810 SIG: 9
+09-10 12:08:32.257: INFO/ActivityManager(68): Process com.android.launcher (pid 810) has died.
+09-10 12:08:32.286: INFO/WindowManager(68): WIN DEATH: Window{406808e0 com.android.launcher/com.android.launcher2.Launcher paused=false}
+09-10 12:08:32.666: INFO/ActivityManager(68): Start proc com.android.launcher for activity com.android.launcher/com.android.launcher2.Launcher: pid=822 uid=10001 gids={}
+09-10 12:08:33.267: DEBUG/dalvikvm(33): GC_EXPLICIT freed 8K, 54% free 2520K/5379K, external 716K/1038K, paused 589ms
+09-10 12:08:33.447: DEBUG/dalvikvm(33): GC_EXPLICIT freed <1K, 54% free 2520K/5379K, external 716K/1038K, paused 179ms
+09-10 12:08:33.767: DEBUG/dalvikvm(33): GC_EXPLICIT freed <1K, 54% free 2520K/5379K, external 716K/1038K, paused 195ms
+09-10 12:08:34.896: INFO/ActivityThread(822): Pub com.android.launcher2.settings: com.android.launcher2.LauncherProvider
+09-10 12:08:35.977: DEBUG/dalvikvm(822): GC_EXTERNAL_ALLOC freed 462K, 54% free 2685K/5767K, external 1032K/1038K, paused 109ms
+09-10 12:08:37.046: WARN/InputManagerService(68): Got RemoteException sending setActive(false) notification to pid 810 uid 10001
+09-10 12:08:37.267: INFO/ActivityManager(68): Displayed com.android.launcher/com.android.launcher2.Launcher: +4s987ms
+09-10 12:08:37.627: DEBUG/dalvikvm(822): GC_EXTERNAL_ALLOC freed 59K, 53% free 2753K/5767K, external 1561K/1572K, paused 105ms
+09-10 12:08:40.757: DEBUG/dalvikvm(822): GC_CONCURRENT freed 231K, 50% free 2908K/5767K, external 1981K/2091K, paused 19ms+8ms
+09-10 12:08:41.056: DEBUG/dalvikvm(822): GC_EXTERNAL_ALLOC freed 89K, 51% free 2829K/5767K, external 1944K/2091K, paused 97ms
+09-10 12:08:41.546: ERROR/dalvikvm-heap(822): 12111476-byte external allocation too large for this process.
+09-10 12:08:41.687: ERROR/GraphicsJNI(822): VM won't let us allocate 12111476 bytes
+09-10 12:08:41.697: DEBUG/dalvikvm(822): GC_FOR_MALLOC freed 2K, 51% free 2826K/5767K, external 1926K/2091K, paused 52ms
+09-10 12:08:41.747: DEBUG/skia(822): --- decoder->decode returned false
+09-10 12:08:41.767: WARN/dalvikvm(822): threadid=10: thread exiting with uncaught exception (group=0x40015560)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822): FATAL EXCEPTION: launcher-loader
+09-10 12:08:41.806: ERROR/AndroidRuntime(822): java.lang.OutOfMemoryError: bitmap size exceeds VM budget
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.graphics.BitmapFactory.nativeDecodeAsset(Native Method)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:450)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:326)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:697)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.content.res.Resources.loadDrawable(Resources.java:1709)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.content.res.Resources.getDrawable(Resources.java:581)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.app.ContextImpl$ApplicationPackageManager.getDrawable(ContextImpl.java:2147)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.content.pm.PackageItemInfo.loadIcon(PackageItemInfo.java:140)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.content.pm.ComponentInfo.loadDefaultIcon(ComponentInfo.java:154)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.content.pm.PackageItemInfo.loadIcon(PackageItemInfo.java:145)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at com.android.launcher2.IconCache.cacheLocked(IconCache.java:142)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at com.android.launcher2.IconCache.getTitleAndIcon(IconCache.java:91)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at com.android.launcher2.ApplicationInfo.<init>(ApplicationInfo.java:74)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at com.android.launcher2.LauncherModel$LoaderTask.loadAllAppsByBatch(LauncherModel.java:1119)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at com.android.launcher2.LauncherModel$LoaderTask.loadAndBindAllApps(LauncherModel.java:1019)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at com.android.launcher2.LauncherModel$LoaderTask.run(LauncherModel.java:522)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.os.Handler.handleCallback(Handler.java:587)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.os.Handler.dispatchMessage(Handler.java:92)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.os.Looper.loop(Looper.java:123)
+09-10 12:08:41.806: ERROR/AndroidRuntime(822):     at android.os.HandlerThread.run(HandlerThread.java:60)
+</code></pre>
+
+<p>Thank you everybody you're extremely awesome! Now I'm done with this problem.</p>

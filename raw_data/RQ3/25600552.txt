@@ -1,0 +1,357 @@
+<p>When i open an activity it  automatically scrolls to the middle..When i open the fragment which has same layout xml file that the activity has it opens fine without scrolling..
+I tried putting</p>
+
+<pre><code>   View view=getWindow().getDecorView().findViewById(android.R.id.content);
+            view.scrollTo(0,0);
+</code></pre>
+
+<p>but it doesn't worked..
+Why my activity automatically scrolls to middle and how can i adjust it so that it opens without scrolling?</p>
+
+<pre><code>public class TeamDetails extends FragmentActivity {
+    ImageView iv1, iv2, iv3;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.team_details);
+        getActionBar().hide();
+View view=getWindow().getDecorView().findViewById(android.R.id.content);
+        view.scrollTo(0,0);
+        view.setVerticalScrollBarEnabled(false);
+        Configuration config = getResources().getConfiguration();
+        android.support.v4.app.Fragment fragment = null;
+        FragmentManager fragmentManager = getFragmentManager();
+        final FragmentTransaction fragmentTransaction =
+                fragmentManager.beginTransaction();
+        String[] web = {
+                "     dfg",
+                "     fs",
+                "     sfdf",
+                "     fsdf",
+                "     sdfdsf",
+                "     sdf",
+                "     ewr",
+                "     urt",
+                "     wrw",
+                "     zgv",
+
+        } ;
+     int[] mThumbIds = {
+                R.drawable.ply1, R.drawable.ply2,
+                R.drawable.ply3, R.drawable.ply4,
+                R.drawable.ply5, R.drawable.ply6,
+                R.drawable.ply7, R.drawable.ply8,
+                R.drawable.ply9, R.drawable.ply10
+        };
+        CustomGridSingle adapter = new CustomGridSingle(TeamDetails.this, web, mThumbIds);
+
+        GridView grid = (GridView) findViewById(R.id.gridView);
+
+        grid.setAdapter(adapter);
+
+
+
+       iv1 = (ImageView)findViewById(R.id.imageView13);
+        iv1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+              finish();
+            }
+        });
+        iv2 = (ImageView) findViewById(R.id.imageView14);
+        iv2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TeamDetails2 fragment = new TeamDetails2();
+                getSupportFragmentManager().beginTransaction()
+                        .add(android.R.id.content, fragment).commit();
+
+            }
+        });
+        iv3 = (ImageView) findViewById(R.id.imageView15);
+        iv3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TeamDetails4 fragment = new TeamDetails4();
+                getSupportFragmentManager().beginTransaction()
+                        .add(android.R.id.content, fragment).commit();
+            }
+        });
+
+    }
+
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+        private Integer[] mThumbIds = {
+                R.drawable.ply1, R.drawable.ply2,
+                R.drawable.ply3, R.drawable.ply4,
+                R.drawable.ply5, R.drawable.ply6,
+                R.drawable.ply7, R.drawable.ply8,
+                R.drawable.ply9, R.drawable.ply10
+        };
+
+        public ImageAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        public Object getItem(int position) {
+            return mThumbIds[position];
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+
+            if (convertView == null) {
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8, 8, 8, 8);
+            } else {
+                imageView = (ImageView) convertView;
+            }
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+    }
+
+}
+</code></pre>
+
+<p>layout</p>
+
+<pre><code> <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout20"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+
+    >
+    <RelativeLayout
+        android:id="@+id/layout40"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/actionBarSize"
+        android:background="#12abee"
+        android:layout_alignParentTop="true">
+
+        <ImageView
+            android:id="@+id/imageView13"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:padding="10dp"
+            android:src="@drawable/close1"
+            />
+
+        <ImageView
+            android:id="@+id/imageView14"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/textView23"
+            android:padding="10dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/arrowleftside"
+            />
+
+        <textview
+            android:id="@+id/textView23"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+
+            android:layout_toLeftOf="@+id/imageView15"
+            android:text=" | "
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_centerVertical="true"
+            android:textColor="#ffffff"
+
+            android:textSize="30dp"/>
+
+        <ImageView
+            android:id="@+id/imageView15"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:padding="10dp"
+            android:src="@drawable/arrow_rgtside"
+            />
+    </RelativeLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:layout_below="@id/layout40"
+    android:background="#ffffff"
+    android:scrollbars="none"
+
+    >
+
+    <RelativeLayout
+        android:id="@+id/layout12"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent">
+
+        <RelativeLayout
+            android:id="@+id/layout13"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent">
+
+            <RelativeLayout
+                android:id="@+id/layout14"
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent">
+
+                <RelativeLayout
+                    android:id="@+id/layout15"
+                    android:layout_width="match_parent"
+                    android:layout_height="fill_parent">
+
+                    <RelativeLayout
+                        android:id="@+id/layout16"
+                        android:layout_width="match_parent"
+                        android:layout_height="fill_parent">
+
+                        <RelativeLayout
+                            android:id="@+id/layout17"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent">
+
+                            <RelativeLayout
+                                android:id="@+id/layout18"
+                                android:layout_width="match_parent"
+                                android:layout_height="fill_parent">
+
+                                <RelativeLayout
+                                    android:id="@+id/layout19"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="fill_parent">
+
+
+
+                                    <textview
+                                        android:id="@+id/textView1"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+
+
+
+                                        android:layout_below="@+id/layout20"
+                                        android:layout_centerHorizontal="true"
+
+                                        android:paddingTop="15dp"
+                                        android:text="Hyderabad Hotshots"
+                                        android:textAppearance="?android:attr/textAppearanceLarge"
+                                        android:textColor="#000000"
+                                        android:textSize="23dp"
+                                       />
+
+                                    <ImageView
+                                        android:id="@+id/imageView3"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+
+                                        android:layout_toLeftOf="@+id/textView1"
+                                        android:layout_toStartOf="@+id/textView1"
+                                        android:paddingTop="10dp"
+                                        android:src="@drawable/hyd_team2"
+                                        android:adjustViewBounds="true" android:cropToPadding="false" android:scaleType="fitXY"/>
+                                </RelativeLayout>
+
+                                <textview
+                                    android:id="@+id/textView5"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentTop="false"
+                                    android:layout_below="@+id/layout19"
+                                    android:layout_centerHorizontal="true"
+                                    android:padding="10dp"
+                                    android:text="@string/hello"
+                                    android:textColor="#000000"
+
+                                    />
+                            </RelativeLayout>
+
+                            <textview
+                                android:id="@+id/textView11"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/layout18"
+                                android:layout_centerHorizontal="true"
+                                android:text="TEAM PLAYERS"
+                                android:textAppearance="?android:attr/textAppearanceLarge"
+                                android:textColor="#000000" />
+
+
+                        </RelativeLayout>
+
+                        <View
+                            android:layout_width="fill_parent"
+                            android:layout_height="1dp"
+                            android:layout_below="@+id/layout17"
+                            android:background="@android:color/darker_gray" />
+                    </RelativeLayout>
+
+                    <GridView
+                        android:id="@+id/gridView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="600dp"
+                        android:layout_below="@+id/layout16"
+                        android:layout_margin="5dp"
+                        android:columnWidth="600dp"
+                        android:drawSelectorOnTop="true"
+                        android:gravity="center"
+
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:numColumns="3"
+                        android:stretchMode="columnWidth"
+                        android:verticalSpacing="5dp"></GridView>
+
+
+                </RelativeLayout>
+
+                <textview
+                    android:id="@+id/textView12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/layout15"
+                    android:layout_centerHorizontal="true"
+                    android:text="CAMPAIGN SCHEDULE"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="#000000" />
+
+
+            </RelativeLayout>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_below="@+id/layout14"
+                android:background="@android:color/darker_gray" />
+        </RelativeLayout>
+
+        <textview
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/layout13"
+            android:layout_centerHorizontal="true"
+            android:padding="10dp"
+            android:text="@string/hello3"
+            android:textColor="#000000"
+
+            />
+    </RelativeLayout>
+</ScrollView>
+    </RelativeLayout>
+</code></pre>

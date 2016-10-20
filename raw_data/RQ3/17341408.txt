@@ -1,0 +1,220 @@
+<p>After many tries of reducing the image size, I could actually succeed; but still my app is failing to work after I try to view an image which I have shrink ed. Here is the code for that -</p>
+
+<pre><code>    package com.example.tg_db1;
+
+    import java.io.File;
+    import java.io.FileNotFoundException;
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import android.app.Activity;
+    import android.content.Intent;
+    import android.database.Cursor;
+    import android.graphics.Bitmap;
+    import android.graphics.BitmapFactory;
+    import android.media.MediaPlayer;
+    import android.media.MediaRecorder;
+    import android.media.ThumbnailUtils;
+    import android.net.Uri;
+    import android.os.Bundle;
+    import android.provider.MediaStore;
+    import android.view.View;
+    import android.widget.Button;
+    import android.widget.EditText;
+    import android.widget.ImageButton;
+    import android.widget.ImageView;
+    import android.widget.Toast;
+
+    public class add_company extends Activity{
+        ImageView iv;
+        Button b1,b2,b3;
+        EditText et1, et2;
+        RegistrationAdapter adapter;
+        RegistrationOpenHelper helper;
+
+        private static final int REQUEST_CODE = 1;
+        private String logopath;
+        String imgPath = null;
+        private Bitmap ThumbImage;
+
+        //Adding for voice record
+        ImageButton play,record,stop;
+        private String voicerec=null;
+        MediaPlayer mp;
+        MediaRecorder mr;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState){
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.add_company);
+
+            iv = (ImageView)findViewById(R.id.imageView1);
+            b1 = (Button)findViewById(R.id.button1);
+            b2 = (Button)findViewById(R.id.button2);
+            b3 = (Button)findViewById(R.id.button3);
+            et1 = (EditText)findViewById(R.id.editText1);
+            et2 = (EditText)findViewById(R.id.editText2);
+
+            adapter = new RegistrationAdapter(this);
+            iv.setImageDrawable(null);  //Should be blank before selecting the image
+
+        }
+
+        public void browse(View v){
+            @SuppressWarnings("unused")
+            int id = v.getId();
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(intent, REQUEST_CODE);
+        }
+
+        @SuppressWarnings("unused")
+        @Override
+        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+            if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+                Uri imgUri = data.getData();
+                logopath = getPath(imgUri);
+
+                //code to check on large image display
+                //start
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(logopath);
+                int imageHeight = options.outHeight;
+                int imageWidth = options.outWidth;
+                String imageType = options.outMimeType;
+
+                //iv.setImageBitmap(decodeSampledBitmapFromFile(logopath,125,125));
+                //end
+
+                ThumbImage = ThumbnailUtils.extractThumbnail(decodeSampledBitmapFromFile(logopath,125,125), 125, 125);
+                iv.setImageBitmap(ThumbImage);
+
+            }
+        }
+
+        //to display large image
+        //start
+        public static int calculateInSampleSize(
+                BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+        public static Bitmap decodeSampledBitmapFromFile(String path, int reqWidth, int reqHeight) 
+        {
+            // First decode with inJustDecodeBounds=true to check dimensions
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(path, options);
+
+            // Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false;
+            return BitmapFactory.decodeFile(path, options);
+        }
+        //end
+
+
+        private String getPath(Uri uri) {
+            String[] projection = {MediaStore.Images.Media.DATA};
+            @SuppressWarnings("deprecation")
+            Cursor cursor = managedQuery(uri, projection, null, null, null);
+            int col_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(col_index);
+        }
+
+        private String imgFilePath() {
+            File imgFile = null;
+            try {
+                imgFile = File.createTempFile("complogo", ".png");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            FileOutputStream fOut = null;
+            try {
+                fOut = new FileOutputStream(imgFile);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            ThumbImage.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+            imgPath = imgFile.getAbsolutePath();
+            return imgPath;
+        }
+
+        public void reset(View v){
+            et1.setText("");
+            et2.setText("");
+            iv.setImageDrawable(null);  //Image is removed when reset
+
+        }
+    }
+</code></pre>
+
+<p>and the resulting errors from LogCat -</p>
+
+<pre><code>    06-27 16:03:34.380: E/AndroidRuntime(4029): FATAL EXCEPTION: main
+    06-27 16:03:34.380: E/AndroidRuntime(4029): java.lang.RuntimeException: Failure delivering result ResultInfo{who=null, request=1, result=-1, data=Intent { typ=image/jpeg }} to activity {com.example.tg_db1/com.example.tg_db1.add_company}: java.lang.NullPointerException
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.ActivityThread.deliverResults(ActivityThread.java:3103)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.ActivityThread.handleSendResult(ActivityThread.java:3146)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.ActivityThread.access$1100(ActivityThread.java:126)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1202)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.os.Handler.dispatchMessage(Handler.java:99)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.os.Looper.loop(Looper.java:137)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.ActivityThread.main(ActivityThread.java:4586)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at java.lang.reflect.Method.invokeNative(Native Method)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at java.lang.reflect.Method.invoke(Method.java:511)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at dalvik.system.NativeStart.main(Native Method)
+    06-27 16:03:34.380: E/AndroidRuntime(4029): Caused by: java.lang.NullPointerException
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at com.example.tg_db1.add_company.getPath(add_company.java:144)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at com.example.tg_db1.add_company.onActivityResult(add_company.java:79)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.ActivityThread.deliverResults(ActivityThread.java:3099)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     at android.app.Activity.dispatchActivityResult(Activity.java:4839)
+    06-27 16:03:34.380: E/AndroidRuntime(4029):     ... 11 more
+    06-27 16:13:19.045: E/AndroidRuntime(4537): FATAL EXCEPTION: main
+    06-27 16:13:19.045: E/AndroidRuntime(4537): java.lang.RuntimeException: Failure delivering result ResultInfo{who=null, request=1, result=-1, data=Intent {  }} to activity {com.example.tg_db1/com.example.tg_db1.add_company}: java.lang.NullPointerException
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.ActivityThread.deliverResults(ActivityThread.java:3103)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.ActivityThread.handleSendResult(ActivityThread.java:3146)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.ActivityThread.access$1100(ActivityThread.java:126)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1202)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.os.Handler.dispatchMessage(Handler.java:99)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.os.Looper.loop(Looper.java:137)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.ActivityThread.main(ActivityThread.java:4586)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at java.lang.reflect.Method.invokeNative(Native Method)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at java.lang.reflect.Method.invoke(Method.java:511)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at dalvik.system.NativeStart.main(Native Method)
+    06-27 16:13:19.045: E/AndroidRuntime(4537): Caused by: java.lang.NullPointerException
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at com.example.tg_db1.add_company.getPath(add_company.java:145)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at com.example.tg_db1.add_company.onActivityResult(add_company.java:80)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.Activity.dispatchActivityResult(Activity.java:4839)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     at android.app.ActivityThread.deliverResults(ActivityThread.java:3099)
+    06-27 16:13:19.045: E/AndroidRuntime(4537):     ... 11 more
+</code></pre>
+
+<p>Please help. Thanks in advance.</p>

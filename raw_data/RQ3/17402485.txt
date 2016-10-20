@@ -1,0 +1,165 @@
+<pre><code>public class MainActivity extends Activity implements OnClickListener {
+
+    ImageView imageView1;
+    Bitmap s;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        // logHeap("ECAonCreate");
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        imageView1 = (ImageView) findViewById(R.id.imageView1);
+        imageView1.setBackgroundResource(R.drawable.launchimage20481496);
+        // s = decodeFil3e(R.drawable.launchimage20481496);
+        ImageButton btn = (ImageButton) findViewById(R.id.btnEnter);
+        btn.setOnClickListener(this);
+    }
+
+    public int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+    private Bitmap decodeFil3e(int f) {
+        // Decode image size
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        o.inTempStorage = new byte[16 * 1024];
+
+        BitmapFactory.decodeResource(getResources(), f, o);
+
+        Display display = getWindowManager().getDefaultDisplay();
+        int width = display.getWidth();
+        int height = display.getHeight();
+        int[] resized = ImageSize(new int[] { o.outWidth, o.outHeight }, width,
+                height);
+
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = calculateInSampleSize(o2, resized[0], resized[1]);
+        o2.inTempStorage = new byte[16 * 1024];
+        o = null;
+        o2 = null;
+
+        return BitmapFactory.decodeResource(getResources(), f, o2);
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+        imageView1.setBackgroundResource(0);
+        imageView1 = null;
+        System.gc();
+        System.gc();
+        logHeap("ECAonDestroyonClick");
+    };
+
+    public static int[] ImageSize(int[] imgSize, int maxWidth, int maxHeight) {
+        int[] size = new int[2];
+        try {
+            for (double i = 1; i <= 20; i += 0.1) {
+                double height = imgSize[1] / i;
+                double width = imgSize[0] / i;
+                if (height < maxHeight && width < maxWidth) {
+                    size[0] = (int) width;
+                    size[1] = (int) height;
+                    return size;
+                }
+            }
+            return imgSize;
+        } catch (Exception ex) {
+            return size;
+
+        }
+    }
+
+    public static void logHeap(String functionname) {
+        Double allocated = new Double(Debug.getNativeHeapAllocatedSize())
+                / new Double((1048576));
+        Double available = new Double(Debug.getNativeHeapSize()) / 1048576.0;
+        Double free = new Double(Debug.getNativeHeapFreeSize()) / 1048576.0;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        df.setMinimumFractionDigits(2);
+
+        Log.d("tag", "debug. =================================");
+        Log.d("tag", "debug.heap native: allocated " + df.format(allocated)
+                + "MB of " + df.format(available) + "MB (" + df.format(free)
+                + "MB free)");
+        Log.d("tag",
+                "functionname:"
+                        + functionname
+                        + ":debug.memory: allocated: "
+                        + df.format(new Double(Runtime.getRuntime()
+                                .totalMemory() / 1048576))
+                        + "MB of "
+                        + df.format(new Double(
+                                Runtime.getRuntime().maxMemory() / 1048576))
+                        + "MB ("
+                        + df.format(new Double(Runtime.getRuntime()
+                                .freeMemory() / 1048576)) + "MB free)");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        logHeap("ECAonResume");
+    };
+
+    public void onClick(View v) {
+
+        Intent a = new Intent(this, Activity2.class);
+        startActivity(a);
+        finish();
+        //imageView1.setBackgroundResource(0);
+        //imageView1 = null;
+        //System.gc();
+        //System.gc();
+        //logHeap("ECAonDestroyonClick");
+    }
+
+}
+</code></pre>
+
+<p>In the picture 1 heap size is not reduced:
+<img src="http://i.stack.imgur.com/uCm7E.png" alt="enter image description here"></p>
+
+<p>you can see the heap size reduced:
+<img src="http://i.stack.imgur.com/rTQkf.png" alt="enter image description here"></p>
+
+<p>I am facing a strange issue.<br>
+My heap memory is freed , if I uncomment the below code from onClick event</p>
+
+<pre><code>//      imageView1.setBackgroundResource(0);
+//      imageView1 = null;
+//      System.gc();
+//      System.gc();
+//      logHeap("ECAonDestroyonClick");
+</code></pre>
+
+<p>But if I place the same code in the onDestory event, nothing works.
+Where do I make mistake?
+What is the proper way to dispose the image?</p>
+
+<pre><code>java.lang.OutOfMemoryError: bitmap size exceeds VM budget.
+</code></pre>
+
+<p>This is one phrase you'll come across frequently in android while you try to load several large bitmaps in your program. And Why? Because the heap size available to an application is limited and large bitmaps are the easiest way of exhausting it.
+So how do you work around it?</p>

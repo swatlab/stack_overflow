@@ -1,0 +1,59 @@
+<p>I wonder if there is any difference between image extensions <code>.jpg</code> and <code>.JPG</code>. I encountered a problem in that .JPG images cannot be opened with the following code:</p>
+
+<pre><code>public static Bitmap decodeSampledBitmapFromResource(String path,
+            int reqWidth, int reqHeight) {
+        Log.e("PATH", path);
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+
+        // Calculate inSampleSizeа
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        Bitmap b = BitmapFactory.decodeFile(path, options);
+        if(b!=null){
+            Log.d("bitmap","decoded sucsessfully");
+        }else{
+
+            Log.d("bitmap","decoding failed; options: "+options.toString());
+        }
+        return b;
+    }
+public static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+        Log.d("bitmap", "original options: height "+ height + " widnth "+width+" inSampleSize "+inSampleSize);
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+            Log.d("bitmap", "options: height "+ height + " widnth "+width+" inSampleSize "+inSampleSize);
+        }
+
+        return inSampleSize;
+    }
+</code></pre>
+
+<p>If I call </p>
+
+<pre><code>decodeSampledBitmapFromResource(path, 80, 60)
+</code></pre>
+
+<p>on *.JPG image, the returned bitmap is null. 
+I'm asking if they are generally implemented in different way or it is specific for Galaxy S3? (I was not able to repeat it on Galaxy Tab 7.7 or on HTC phones.)</p>

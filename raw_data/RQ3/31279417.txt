@@ -1,0 +1,51 @@
+<p>I am having trouble with license testing my in-app products. I have an app published to the Google Play beta channel, and I have my relevant Google account listed as a license tester in the dev console. (Meaning I can make "purchases" without actually paying for the item(s).)</p>
+
+<p>When I visit the in-app store for the first time, everything works fine. However, upon "purchasing" an item, I receive a signature verification error in the purchase flow response. From that point forward, I also receive the same signature error when querying for the <strong>store inventory.</strong></p>
+
+<p>I need help with this part. I have seen <a href="http://stackoverflow.com/a/22088718/2608235" title="... the android.test.purchased item always fails the TextUtils.isEmpty(signature) check in Security.java ...">posts</a> stating that the method <code>verifyPurchase</code> within <code>Security.java</code> is to blame. Those <a href="http://www.widecodes.com/7xNyXeWgWj/google-play-billing-signature-verification-failed-for-sku-androidtestpurchased.html" rel="nofollow" title="The problem comes from the TextUtils.isEmpty() checks, since the signature will be empty, the code will return false.">other posts</a> state the issue is with <code>android.test.purchased</code> returning an empty String for the signature. What I'm seeing is different. My call passes the <code>isEmpty(signature)</code> test, but then is rejected later in the code. <strong>Why is Google In-App Billing returning a signature that is invalid?</strong> I have included the relevant code below.</p>
+
+<pre><code>public class Security {
+
+    // ...
+
+    // This method is part of the trace from
+    // IabHelper.queryInventory and IabHelper.onActivityResult
+    public static boolean verifyPurchase(String base64PublicKey, String signedData,
+            String signature) {
+        if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) ||
+                TextUtils.isEmpty(signature)) { // Most say their problem is here
+            Log.e(TAG, "Purchase verification failed: missing data.");
+            return false;
+        }
+
+        PublicKey key = Security.generatePublicKey(base64PublicKey);
+        return Security.verify(key, signedData, signature); // My code gets here, but...
+    }
+
+    public static boolean verify(PublicKey publicKey, String signedData,
+            String signature) {
+        Signature sig;
+        try {
+             sig = Signature.getInstance(SIGNATURE_ALGORITHM);
+             sig = initVerify(publicKey);
+             sig.update(signedData.getBytes());
+             if (!sig.verify(Base64.decode(signature))) {  // ...verify fails; return false
+                 Log.e(TAG, "Signature verification failed.");
+                 return false;
+             }
+             return true;
+        } catch (NoSuchAlgorithmException e) {
+            Log.e(TAG, "NoSuchAlgorithmException.");
+        } catch (InvalidKeyException e) {
+            Log.e(TAG, "Invalid key specification.");
+        } catch (SignatureException e) {
+            Log.e(TAG, "Signature exception.");
+        } catch (Base64DecoderException e) {
+            Log.e(TAG, "Base64 decoding failed.");
+        }
+        return false;
+    }
+}
+</code></pre>
+
+<p><strong>Update:</strong> As I mentioned in my comment, I was running a signed APK, with the debuggable flag set to true. I have now tried making an actual purchase, with a real credit card; I saw the exact same results. Even though the Google Play purchase flow completed as expected, I did not actually receive my product. Upon returning to the store, Google Play did not return the in-app inventory.</p>

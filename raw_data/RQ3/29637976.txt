@@ -1,0 +1,173 @@
+<p>I have a App with a Slidingmenu where i can pick different Fragment, which displays different kind of ListFragments.</p>
+
+<p>The ListFragments will be filled by JSON from my Database Server.
+If you Click on one of the Listitems, a new Fragment is shown which contains more Details about the selected Listitem.</p>
+
+<pre><code>public void updateList(final Activity a, final ListFragment L) {
+
+    adapter = new SimpleAdapter(a, mCommentList,
+            R.layout.single_comment, new String[] {TAG_PIC_ID,TAG_CATEGORY, TAG_ACTIVITY, TAG_DATUM, TAG_AKTUSR, TAG_MAXUSR, TAG_GENDER, /*TAG_POST_ID,*/ TAG_TITLE, TAG_MESSAGE,
+                    TAG_USERNAME }, new int[] { R.id.imgrow, R.id.category, R.id.activity/*R.id.id*/ , R.id.datum, R.id.aktusr, R.id.maxusr, R.id.gender, /*R.id.category,*/ R.id.title, R.id.message,
+                    R.id.username });
+
+    L.setListAdapter(adapter);
+
+    ListView lv = L.getListView();  
+
+    lv.setOnItemClickListener(new OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view,
+                int position, long id) {
+
+            int intid = (int)id;
+
+
+            Details nextFrag= new Details();
+            L.getFragmentManager().beginTransaction()
+                .replace(R.id.frame_container, nextFrag, "Test")
+                .addToBackStack(null)
+                .commit();
+
+        }
+
+
+    });
+}
+</code></pre>
+
+<p>When i call the function from a "single" fragment its no problem and the DetailPage is shown.</p>
+
+<p>The Problem is when i call the function from a TabbedActivity with a SectionsPagerAdapter.</p>
+
+<p>The TabbedActivity</p>
+
+<pre><code>package info.androidhive.slidingmenu;
+
+public class TabbedActivity extends Fragment {
+
+
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+public static final String TAG = TabbedActivity.class.getSimpleName();
+
+ViewPager mViewPager;
+
+
+public static TabbedActivity newInstance() {
+    return new TabbedActivity();
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    View v = inflater.inflate(R.layout.activity_item_one, container, false);
+    mSectionsPagerAdapter = new SectionsPagerAdapter(
+            getChildFragmentManager());
+
+    mViewPager = (ViewPager) v.findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    return v;
+}
+
+
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+
+
+        Fragment fragment = new newEntrys();
+
+        switch (position) {
+        case 0:
+            fragment = new newEntrys();
+            break;
+        case 1:
+            fragment = new oldEntrys();
+            break;
+
+        default:
+            break;
+        }
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return "Aktuelle Einträge";
+        case 1:
+            return "Vergangene Einträge";
+        }
+        return null;
+    }
+}}
+</code></pre>
+
+<p>The TabbedActivity contains the 2 Fragments newEntry and oldEntry which are nearly equal.</p>
+
+<pre><code>package info.androidhive.slidingmenu.fragments;
+
+
+
+public class RegisterdEvents_new extends ListFragment{
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+
+
+    View rootView = inflater.inflate(R.layout.read, container, false);
+
+
+    return rootView;
+}
+
+public void startTask(){
+
+    Read SO = new Read();
+
+
+    Load LEvt = SO.new Load(getActivity(), this, "NEW");
+    LEvt.execute();
+
+
+
+
+
+}
+
+public void onResume() {
+    startTask();
+    super.onResume();
+}
+</code></pre>
+
+<p>}</p>
+
+<p>So the function updateList above is called in 
+Load LEvt = SO.new Load(getActivity(), this, "NEW");</p>
+
+<p>But the problem is that i always get the Error</p>
+
+<pre><code>No view found for id 0x7f0a000f (package:id/frame_container) for fragment Details{e3992e2 #0 id=0x7f0a000f Test}
+</code></pre>
+
+<p>Someone of you can help me to solve this problem?</p>

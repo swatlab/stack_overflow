@@ -1,0 +1,22 @@
+<p>I have 2 activities with action bar which has this code in its <code>onCrate</code> method:</p>
+
+<pre><code>getActionBar().setDisplayHomeAsUpEnabled(true);
+</code></pre>
+
+<p>And here is the <code>onOptionsItemSelected</code>:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+   switch (item.getItemId()) 
+   {
+     case android.R.id.icon:
+        finish();
+        return true;
+     default:
+        return super.onOptionsItemSelected(item);
+   }
+}
+</code></pre>
+
+<p>The first activity has a parent activity (configured in the manifest) the second one just opened from fragment (without parent fragment configured in the manifest). In the first activity, when I click the icon, the activity <code>item.getItemId()</code> value is the same as <code>android.R.id.icon</code> which then falls in the switch statement (case: <code>Android.R.id.icon</code>). In the second activity those values are deferent. Why this is happening? I would like to fall in the case: <code>Android.R.id.icon</code> in both activities.   </p>

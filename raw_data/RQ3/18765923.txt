@@ -1,0 +1,169 @@
+<p>MediaPlayer does not pause when a phone call is received. Anyone who any code I could add to fix this. If anyone can help would be great! Only beginner
+I have added the on Stop from answer below it works but then if I try to go back with the back button or back button in the action bar to go to main menu of app, it just crashes. </p>
+
+<pre><code>public class player1 extends Activity implements Runnable {
+
+
+private  MediaPlayer mp;
+private ProgressBar progressBar;
+private ImageButton pauseicon;
+private final int NUM_SOUND_FILES = 3;  //*****REPLACE THIS WITH THE ACTUAL NUMBER OF SOUND FILES YOU HAVE*****
+private int mfile[] = new int[NUM_SOUND_FILES];
+private Random rnd = new Random();
+
+   @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.player_1);
+        pauseicon = (ImageButton) findViewById(R.id.pauseicon);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+
+        mfile[0] = R.raw.sound01;  //****REPLACE THESE WITH THE PROPER NAMES OF YOUR SOUND FILES
+        mfile[1] = R.raw.sound02;  //PLACE THE SOUND FILES IN THE /res/raw/ FOLDER IN YOUR PROJECT*****
+        mfile[2] = R.raw.sound03;
+        // Listeners
+        /**
+         * Play button click event
+         * plays a song and changes button to pause image
+         * pauses a song and changes button to play image
+         * */
+
+
+        try{
+             mp = MediaPlayer.create(player1.this, mfile[rnd.nextInt(NUM_SOUND_FILES)]);
+             mp.seekTo(0);
+             mp.start(); ;         
+             progressBar.setVisibility(ProgressBar.VISIBLE);
+             progressBar.setProgress(0);
+             progressBar.setMax(mp.getDuration());
+             new Thread(this).start();
+
+         } catch (IllegalArgumentException e) {
+             e.printStackTrace();
+         } catch (IllegalStateException e) {
+             e.printStackTrace();
+         }
+
+
+        mp.setOnCompletionListener(new OnCompletionListener() {
+
+            public void onCompletion(MediaPlayer mp) {
+                pauseicon.setImageResource(R.drawable.playicon);
+              mp.seekTo(0);
+
+            }
+        });
+
+        pauseicon.setOnClickListener(new View.OnClickListener() {
+
+               public void onClick(View v) {
+                  if(mp.isPlaying()) {
+                     mp.pause();
+                     ((ImageButton) v).setImageResource(R.drawable.playicon);
+                  } else {
+                     mp.start();
+                     ((ImageButton) v).setImageResource(R.drawable.pauseicon);
+
+                  }
+
+               }
+            });
+   }
+   static boolean runThread = true;
+   public void run() {
+        while ( runThread )  {
+              int currentPosition=0;
+              int total = mp.getDuration();
+              if ( mp != null && currentPosition <= total )  {
+              try {
+                 Thread.sleep(1000);
+                 currentPosition= mp.getCurrentPosition();
+              } catch (InterruptedException e) {
+                 return;
+              } catch (Exception e) {
+                 return;
+              }            
+              progressBar.setProgress(currentPosition);
+           } else
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+        }
+        runThread = false; 
+    }
+
+
+
+   @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+
+
+        if (mp != null)
+        if(mp.isPlaying())
+              mp.stop();
+
+          mp.release();
+
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+    }
+
+       }
+    @Override 
+    public void onBackPressed(){
+      if (mp != null){
+          if(mp.isPlaying())
+              mp.stop();
+
+          mp.release();
+      }
+
+      //there is no reason to call super.finish(); here
+      //call super.onBackPressed(); and it will finish that activity for you
+      super.onBackPressed(); 
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mp != null && mp.isPlaying()){
+            mp.pause();
+        }
+    }
+ }
+</code></pre>
+
+<p>Error</p>
+
+<pre><code> 09-12 14:52:49.755: E/AndroidRuntime(26104): FATAL EXCEPTION: main
+ 09-12 14:52:49.755: E/AndroidRuntime(26104): java.lang.RuntimeException: Unable to stop activity {com.apps.seconds/com.apps.seconds.player1}: java.lang.IllegalStateException
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.ActivityThread.performDestroyActivity(ActivityThread.java:3463)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.ActivityThread.handleDestroyActivity(ActivityThread.java:3517)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.ActivityThread.access$1200(ActivityThread.java:141)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1309)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.os.Handler.dispatchMessage(Handler.java:99)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.os.Looper.loop(Looper.java:137)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.ActivityThread.main(ActivityThread.java:5103)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at java.lang.reflect.Method.invokeNative(Native Method)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at java.lang.reflect.Method.invoke(Method.java:525)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:737)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at dalvik.system.NativeStart.main(Native Method)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104): Caused by: java.lang.IllegalStateException
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.media.MediaPlayer.isPlaying(Native Method)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at com.apps.seconds.player1.onStop(player1.java:154)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.Instrumentation.callActivityOnStop(Instrumentation.java:1212)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.Activity.performStop(Activity.java:5275)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   at android.app.ActivityThread.performDestroyActivity(ActivityThread.java:3458)
+ 09-12 14:52:49.755: E/AndroidRuntime(26104):   ... 11 more
+</code></pre>

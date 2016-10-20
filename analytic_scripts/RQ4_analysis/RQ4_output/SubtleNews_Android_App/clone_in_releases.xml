@@ -1,0 +1,31 @@
+<clones>
+<systeminfo processor="nicad3" system="snippets" granularity="functions" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="492" npairs="5"/>
+<runinfo ncompares="2849" cputime="29390"/>
+
+<clone nlines="96" similarity="100">
+<source file="snippets/44@SubtleNews_Android_App.java" startline="84" endline="218" pcid="1"></source>
+<source file="releases/1.0/SubtleNews_Android_App-1.0/App/src/main/java/in/ac/dtu/subtlenews/InstapaperViewer.java" startline="84" endline="218" pcid="393"></source>
+</clone>
+
+<clone nlines="96" similarity="100">
+<source file="snippets/44@SubtleNews_Android_App.java" startline="84" endline="218" pcid="1"></source>
+<source file="releases/stable/SubtleNews_Android_App-stable/app/src/main/java/in/ac/dtu/subtlenews/InstapaperViewer.java" startline="84" endline="218" pcid="123"></source>
+</clone>
+
+<clone nlines="96" similarity="100">
+<source file="snippets/44@SubtleNews_Android_App.java" startline="84" endline="218" pcid="1"></source>
+<source file="releases/0.7/SubtleNews_Android_App-0.7/App/src/main/java/in/ac/dtu/subtlenews/InstapaperViewer.java" startline="71" endline="207" pcid="224"></source>
+</clone>
+
+<clone nlines="91" similarity="80">
+<source file="snippets/44@SubtleNews_Android_App.java" startline="84" endline="218" pcid="1"></source>
+<source file="releases/0.5/SubtleNews_Android_App-0.5/App/src/main/java/in/ac/dtu/subtlenews/InstapaperViewer.java" startline="67" endline="185" pcid="53"></source>
+</clone>
+
+<clone nlines="91" similarity="80">
+<source file="snippets/44@SubtleNews_Android_App.java" startline="84" endline="218" pcid="1"></source>
+<source file="releases/0.6/SubtleNews_Android_App-0.6/App/src/main/java/in/ac/dtu/subtlenews/InstapaperViewer.java" startline="67" endline="185" pcid="323"></source>
+</clone>
+
+</clones>

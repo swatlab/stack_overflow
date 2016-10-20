@@ -1,0 +1,609 @@
+<p>I am trying to make a list view that contains pictures and text within a fragment that is on a viewpager with tabs, so I can swipe left or right to bring up another fragment.</p>
+
+<p>I'm relatively new to android so what I may be doing could be completely wrong. I can build the project perfectly fine but then when the emulator runs it crashes (log displayed at bottom of page).</p>
+
+<p>I created a separate application and successfully was able to create a list view, but when I try to combine it within a fragment like so, it doesn't work.
+Here is my following code</p>
+
+<blockquote>
+  <p>MainActivity.java</p>
+</blockquote>
+
+<pre><code>import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import android.app.ListFragment;
+import android.content.Intent;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+
+public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+   private List<Posts> myPosts = new ArrayList<Posts>();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+
+        }
+
+         Intent intent = new Intent(MainActivity.this, NotMainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            switch (position){
+                case 0:
+                    return new TheWallFragment();
+                case 1:
+                    return new PeekFragment();
+                case 2:
+                    return new CameraFragment();
+                default:
+                    break;
+
+            }
+
+            return PlaceholderFragment.newInstance(position + 1);
+        }
+
+
+
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.wall_layout, container, false);
+
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<blockquote>
+  <p>NotMainActivity.java</p>
+</blockquote>
+
+<pre><code>public class NotMainActivity extends FragmentActivity {
+
+    private List<Posts> myPosts = new ArrayList<Posts>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        populatePostList();
+        populateListView();
+
+       registerClickCallBack();
+        System.out.print("Main Activity Started");
+
+
+
+    }
+
+
+    private void populatePostList()     {
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+        myPosts.add(new Posts("Ottawa, Ontario", "787", "Picture of my Dog!", R.drawable.dog));
+
+
+
+    }
+
+    private void populateListView() {
+        ArrayAdapter<Posts> adapter = new MyListAdapter();
+        ListView list = (ListView) findViewById(android.R.id.list);
+        list.setAdapter(adapter);
+
+        }
+
+
+    //Handles clicks on the list items
+    private void registerClickCallBack(){
+        ListView list = (ListView) findViewById(android.R.id.list);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Posts clickedPost = myPosts.get(position);
+                String message = "You clicked" + position
+                        +"Location of post is" + clickedPost.getPostlocation();
+                Toast.makeText(NotMainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+
+    private class MyListAdapter extends ArrayAdapter<Posts> {
+        public MyListAdapter() {
+            super(NotMainActivity.this, R.layout.item_view, myPosts);
+        }
+
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            // Make sure we have a view to work with {may have given null}
+            View itemView = convertView;
+            if (itemView != null) {
+                itemView = getLayoutInflater().inflate(R.layout.item_view, parent, false);
+            }
+            // Find the post to work with.
+            Posts currentPost = myPosts.get(position);
+
+
+            //Fill the view
+            ImageView imageView = (ImageView)itemView.findViewById(R.id.item_postImage);
+            imageView.setImageResource(currentPost.getIconID());
+
+            //Fill in Title
+
+            TextView titleText = (TextView) itemView.findViewById(R.id.item_postText);
+            titleText.setText(currentPost.getPosttitle());
+
+            //Set Vote Number
+            TextView voteText = (TextView) itemView.findViewById(R.id.item_postVoteText);
+            voteText.setText(currentPost.getPostvote());
+
+
+
+            return itemView;
+        }
+
+    }
+
+}
+</code></pre>
+
+<blockquote>
+  <p>Posts.java</p>
+</blockquote>
+
+<pre><code>public class Posts {
+    private String postlocation;
+    private String postvote;
+    private String posttitle;
+    private int iconID;
+
+    public Posts(String postlocation, String postvote, String posttitle, int iconID) {
+        this.postlocation = postlocation;
+        this.postvote = postvote;
+        this.posttitle = posttitle;
+        this.iconID = iconID;
+    }
+
+
+
+
+
+
+
+    public String getPostlocation() {
+        return postlocation;
+    }
+
+    public String getPostvote() {
+        return postvote;
+    }
+
+    public String getPosttitle() {
+        return posttitle;
+    }
+    public int getIconID() {
+        return iconID;
+    }
+</code></pre>
+
+<blockquote>
+  <p>TheWallFragment.java</p>
+</blockquote>
+
+<pre><code>public class TheWallFragment extends android.support.v4.app.ListFragment {
+    List<Posts> myPosts = new ArrayList<Posts>();
+    private String[] strListView;
+    private ListView myListView;
+    private int number;
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.wall_layout, container, false);
+        return rootView;
+    }
+
+
+}
+</code></pre>
+
+<blockquote>
+  <p>activity_main.xml</p>
+</blockquote>
+
+<pre><code><android.support.v4.view.ViewPager      xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:id="@+id/pager"
+android:layout_width="match_parent" android:layout_height="match_parent"
+tools:context=".MainActivity" />
+</code></pre>
+
+<blockquote>
+  <p>AndroidManifest.xml</p>
+</blockquote>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.gnumbu.errolgreen.testing" >
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+<activity
+    android:name=".NotMainActivity">
+    </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<blockquote>
+  <p>item_view.xml</p>
+</blockquote>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_postImage"
+        android:src="@drawable/dog"
+        android:maxWidth="80dp"
+        android:minHeight="80dp"
+        android:adjustViewBounds="true"
+        android:layout_marginLeft="14dp"
+        android:layout_marginStart="14dp"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/item_upvoteArrow"
+        android:layout_toEndOf="@+id/item_upvoteArrow"
+        android:layout_alignBottom="@+id/item_downvotearrow" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="This is my dog! My Dog is amazing, give it a lick!"
+        android:id="@+id/item_postText"
+        android:paddingStart="5dp"
+        android:layout_above="@+id/item_downvotearrow"
+        android:layout_toRightOf="@+id/item_postImage"
+        android:layout_toEndOf="@+id/item_postImage" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_upvoteArrow"
+        android:src="@drawable/upvotearrow"
+        android:maxHeight="24dp"
+        android:maxWidth="24dp"
+        android:adjustViewBounds="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/item_downvotearrow"
+        android:layout_alignStart="@+id/item_downvotearrow"
+        android:clickable="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_downvotearrow"
+        android:src="@drawable/downvotearrow"
+        android:maxWidth="24dp"
+        android:maxHeight="24dp"
+        android:adjustViewBounds="true"
+        android:layout_marginLeft="9dp"
+        android:layout_marginStart="9dp"
+        android:layout_below="@+id/item_postVoteText"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:longClickable="false"
+        android:clickable="true" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:text="22"
+        android:id="@+id/item_postVoteText"
+        android:maxHeight="20dp"
+        android:focusableInTouchMode="false"
+        android:visibility="visible"
+        android:singleLine="true"
+        android:gravity="center"
+        android:enabled="true"
+        android:layout_below="@+id/item_upvoteArrow"
+        android:layout_alignLeft="@+id/item_upvoteArrow"
+        android:layout_alignStart="@+id/item_upvoteArrow"
+        android:nestedScrollingEnabled="false"
+        android:layout_width="wrap_content"
+        android:layout_toStartOf="@+id/item_postImage" />
+
+</RelativeLayout>
+</code></pre>
+
+<blockquote>
+  <p>wall_layout.xml</p>
+</blockquote>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/textView"
+        android:layout_gravity="center_horizontal" />
+
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+            />
+</LinearLayout>
+</code></pre>
+
+<blockquote>
+  <p>Error Log</p>
+</blockquote>
+
+<pre><code> java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.ListView.setAdapter(android.widget.ListAdapter)' on a null object reference
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2298)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+            at android.app.ActivityThread.access$800(ActivityThread.java:144)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5223)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+     Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.ListView.setAdapter(android.widget.ListAdapter)' on a null object reference
+            at com.gnumbu.errolgreen.testing.NotMainActivity.populateListView(NotMainActivity.java:70)
+            at com.gnumbu.errolgreen.testing.NotMainActivity.onCreate(NotMainActivity.java:43)
+            at android.app.Activity.performCreate(Activity.java:5937)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2251)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+            at android.app.ActivityThread.access$800(ActivityThread.java:144)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5223)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+</code></pre>
+
+<blockquote>
+  <p>New Error </p>
+</blockquote>
+
+<pre><code> Process: com.gnumbu.errolgreen.testing, PID: 5304
+    java.lang.NullPointerException: Attempt to invoke virtual method 'int android.view.View.getImportantForAccessibility()' on a null object reference
+            at android.widget.AbsListView.obtainView(AbsListView.java:2360)
+            at android.widget.ListView.measureHeightOfChildren(ListView.java:1270)
+            at android.widget.ListView.onMeasure(ListView.java:1182)
+            at android.view.View.measure(View.java:17430)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5463)
+            at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1436)
+            at android.widget.LinearLayout.measureVertical(LinearLayout.java:722)
+            at android.widget.LinearLayout.onMeasure(LinearLayout.java:613)
+            at android.view.View.measure(View.java:17430)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5463)
+            at android.widget.FrameLayout.onMeasure(FrameLayout.java:430)
+            at android.view.View.measure(View.java:17430)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5463)
+            at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1436)
+            at android.widget.LinearLayout.measureVertical(LinearLayout.java:722)
+            at android.widget.LinearLayout.onMeasure(LinearLayout.java:613)
+            at android.view.View.measure(View.java:17430)
+            at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5463)
+            at android.widget.FrameLayout.onMeasure(FrameLayout.java:430)
+            at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2560)
+            at android.view.View.measure(View.java:17430)
+            at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:2001)
+            at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1166)
+            at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1372)
+            at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1054)
+            at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5779)
+            at android.view.Choreographer$CallbackRecord.run(Choreographer.java:767)
+            at android.view.Choreographer.doCallbacks(Choreographer.java:580)
+            at android.view.Choreographer.doFrame(Choreographer.java:550)
+            at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:753)
+            at android.os.Handler.handleCallback(Handler.java:739)
+            at android.os.Handler.dispatchMessage(Handler.java:95)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5221)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+</code></pre>

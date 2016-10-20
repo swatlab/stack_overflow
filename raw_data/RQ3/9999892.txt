@@ -1,0 +1,151 @@
+<p>I have a ListView with EditText inside.
+Actually, when i touch an element of the <code>Listview</code>, the <code>EditText</code> have the focus and the keyboard appeared. Good.
+The problem is i wanna do something on this EditText throught the listView's onItemClickListener, but seems that my code never enter in this method.</p>
+
+<p>I try some <code>setDescendantFocusability</code> to my Listview but don't solve the problem.</p>
+
+<p>Thanks a lot.</p>
+
+<pre><code>public class NoteAdapter extends BaseAdapter {
+
+private ArrayList<String> notes;
+private LayoutInflater inflater;
+private Context context;
+
+public NoteAdapter(Context context, ArrayList<String> notes) {
+    inflater = LayoutInflater.from(context);
+    this.notes = notes;
+    this.context = context;
+}
+
+public int getCount() {
+    // TODO Auto-generated method stub
+    return notes.size();
+}
+
+public Object getItem(int position) {
+    // TODO Auto-generated method stub
+    return notes.get(position);
+}
+
+public long getItemId(int id) {
+    // TODO Auto-generated method stub
+    return id;
+}
+
+
+private class ViewHolder {
+    EditText note;
+}
+
+public View getView(int position, View convertView, ViewGroup parent) {
+    // TODO Auto-generated method stub
+
+    ViewHolder holder;
+    if(convertView == null) {
+        holder = new ViewHolder();
+        convertView = inflater.inflate(R.layout.listenote, null);
+        holder.note = (EditText)convertView.findViewById(R.id.note);
+
+
+        convertView.setTag(holder);
+    }else {
+        holder= (ViewHolder) convertView.getTag();
+    }
+
+    holder.note.setText(notes.get(position));
+
+    return convertView;
+
+
+}
+
+
+}
+</code></pre>
+
+<p>my main activity</p>
+
+<pre><code>@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+    notes = new ArrayList<String>();
+    for(int i=0; i< 10; i++)
+        notes.add("note"+i);
+    EditTextSelected = null;
+
+    adapter = new NoteAdapter(this, notes);
+    lv1 = ((ListView)findViewById(R.id.listeNote));
+    lv1.setAdapter(adapter);
+    lv1.setClickable(true);
+
+    lv1.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> a, View v, int position, long id) {
+            Toast t = Toast.makeText(FastItActivity.this, "hello", 200);
+            t.show();
+
+        }
+    });
+</code></pre>
+
+<p>listenote.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+android:id="@+id/widget1"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <EditText
+    android:id="@+id/note"
+    android:textColor="@color/black"
+    android:textSize="12dp"
+    android:layout_width="wrap_content"
+    android:layout_height="40dp"
+    android:padding="5dp"
+    android:inputType="textMultiLine"
+    android:scrollHorizontally="false"
+    android:gravity="top|left"
+    android:ems="10"
+    android:layout_margin="10dp" 
+    android:background="@drawable/fond_note"
+    />
+
+
+
+ </TableLayout>
+</code></pre>
+
+<p>main.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+android:id="@+id/widget1"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:orientation="vertical"
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:background="@drawable/wooden_top"
+
+>
+
+<ListView 
+    android:id="@+id/listeNote"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:background="@android:color/transparent"
+    android:cacheColorHint="#00000000"
+    android:isScrollContainer="false"
+    android:divider="#00000000"
+
+    >
+</ListView>
+
+
+</TableLayout>
+</code></pre>

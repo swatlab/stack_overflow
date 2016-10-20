@@ -1,0 +1,243 @@
+<p>I'm building an app with <code>MainActivity</code> which extends <code>ActionBarActivity</code> and inplemented with <code>NavigationDrawerFragment.NavigationDrawerCallbacks</code> and has an ActionBar i want to have with any tabs. after runing project i get this error and alert me <code>has stopped</code>:</p>
+
+<pre><code>Caused by: java.lang.ClassCastException: android.support.v4.widget.DrawerLayout cannot be cast to android.support.v4.view.ViewPager
+            at ir.tsms.MainActivity.onCreate(MainActivity.java:43)
+</code></pre>
+
+<p>i want to have <code>MenuSlide</code> inside <code>Tab</code> on <code>MainActivity</code>
+My code:</p>
+
+<pre><code>package ir.tsms;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.*;
+
+import java.util.Locale;
+
+public class MainActivity extends ActionBarActivity implements
+        NavigationDrawerFragment.NavigationDrawerCallbacks, ActionBar.TabListener {
+
+    private NavigationDrawerFragment mNavigationDrawerFragment;
+
+    private CharSequence mTitle;
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mNavigationDrawerFragment = (NavigationDrawerFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.navigation_drawer);
+        mTitle = getTitle();
+
+        mNavigationDrawerFragment.setUp(R.id.navigation_drawer,
+                (DrawerLayout) findViewById(R.id.pager));
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager); /*<-- THIS LINE HAS ERROR */
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    @Override
+    public void onNavigationDrawerItemSelected(int position) {
+        // update the main content by replacing fragments
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager
+                .beginTransaction()
+                .replace(R.id.container,
+                        PlaceholderFragment.newInstance(position + 1)).commit();
+    }
+
+    public void onSectionAttached(int number) {
+        switch (number) {
+            case 1:
+                mTitle = getString(R.string.title_section1);
+                break;
+            case 2:
+                mTitle = getString(R.string.title_section2);
+                break;
+            case 3:
+                mTitle = getString(R.string.title_section3);
+                break;
+        }
+    }
+
+    public void restoreActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setTitle(mTitle);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+            // Only show items in the action bar relevant to this screen
+            // if the drawer is not showing. Otherwise, let the drawer
+            // decide what to show in the action bar.
+            getMenuInflater().inflate(R.menu.main, menu);
+            restoreActionBar();
+            return true;
+        }
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container,
+                    false);
+            return rootView;
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            ((MainActivity) activity).onSectionAttached(getArguments().getInt(
+                    ARG_SECTION_NUMBER));
+        }
+    }
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class
+            // below).
+            return PlaceholderFragment.newInstance(position + 1);
+        }
+
+        public int getCount() {
+            // Show 3 total pages.
+            return 3;
+        }
+
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+}
+</code></pre>
+
+<p><code>MainActivity</code> Layout:</p>
+
+<pre><code><!-- A DrawerLayout is intended to be used as the top-level content view using match_parent for both width and height to consume the full space available. -->
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="ir.tsms.MainActivity" >
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <fragment
+        android:id="@+id/navigation_drawer"
+        android:name="ir.tsms.NavigationDrawerFragment"
+        android:layout_width="@dimen/navigation_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        tools:layout="@layout/fragment_navigation_drawer" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>how to resolve this problem?</p>

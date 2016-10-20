@@ -1,0 +1,263 @@
+<p>i'm trying to read from my database but I get these errors. My db is in the assets folder. I've downloaded the AnyDBAdapter class and just trying to use a simple select function..</p>
+
+<pre><code>02-18 14:18:24.168: E/SQLiteLog(964): (14) cannot open file at line 30176 of [00bb9c9ce4]
+02-18 14:18:24.168: E/SQLiteLog(964): (14) os_unix.c:30176: (2) open(/data/data/com.onlywithalcohol.mk/databases/Alcohol_DB) - 
+02-18 14:18:24.387: E/SQLiteDatabase(964): Failed to open database '/data/data/com.onlywithalcohol.mk/databases/Alcohol_DB'.
+02-18 14:18:24.387: E/SQLiteDatabase(964): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at com.onlywithalcohol.mk.AnyDBAdapter$DatabaseHelper.checkDataBase(AnyDBAdapter.java:150)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at com.onlywithalcohol.mk.AnyDBAdapter$DatabaseHelper.createDataBase(AnyDBAdapter.java:119)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at com.onlywithalcohol.mk.AnyDBAdapter.open(AnyDBAdapter.java:47)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at com.onlywithalcohol.mk.Main$1.onClick(Main.java:30)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.view.View.performClick(View.java:4202)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.view.View$PerformClick.run(View.java:17340)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.os.Handler.handleCallback(Handler.java:725)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.os.Handler.dispatchMessage(Handler.java:92)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.os.Looper.loop(Looper.java:137)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at android.app.ActivityThread.main(ActivityThread.java:5039)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at java.lang.reflect.Method.invokeNative(Native Method)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at java.lang.reflect.Method.invoke(Method.java:511)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+02-18 14:18:24.387: E/SQLiteDatabase(964):  at dalvik.system.NativeStart.main(Native Method)
+02-18 14:18:24.648: D/AndroidRuntime(964): Shutting down VM
+02-18 14:18:24.648: W/dalvikvm(964): threadid=1: thread exiting with uncaught exception (group=0x40a70930)
+02-18 14:18:24.748: E/AndroidRuntime(964): FATAL EXCEPTION: main
+02-18 14:18:24.748: E/AndroidRuntime(964): java.lang.Error: Error copying database
+02-18 14:18:24.748: E/AndroidRuntime(964):  at com.onlywithalcohol.mk.AnyDBAdapter$DatabaseHelper.createDataBase(AnyDBAdapter.java:135)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at com.onlywithalcohol.mk.AnyDBAdapter.open(AnyDBAdapter.java:47)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at com.onlywithalcohol.mk.Main$1.onClick(Main.java:30)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at android.view.View.performClick(View.java:4202)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at android.view.View$PerformClick.run(View.java:17340)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at android.os.Handler.handleCallback(Handler.java:725)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at android.os.Handler.dispatchMessage(Handler.java:92)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at android.os.Looper.loop(Looper.java:137)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at android.app.ActivityThread.main(ActivityThread.java:5039)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at java.lang.reflect.Method.invokeNative(Native Method)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at java.lang.reflect.Method.invoke(Method.java:511)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+02-18 14:18:24.748: E/AndroidRuntime(964):  at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>Here is my AnyDBAdapter class:</p>
+
+<pre><code>package com.onlywithalcohol.mk;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.UUID;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class AnyDBAdapter {
+
+    private static final String TAG = "AnyDBAdapter";
+    private DatabaseHelper mDbHelper;
+    private static SQLiteDatabase mDb;
+
+    //make sure this matches the 
+    //package com.MyPackage;
+    //at the top of this file
+    private static String DB_PATH = "/data/data/com.onlywithalcohol.mk/databases/";
+
+    //make sure this matches your database name in your assets folder
+    // my database file does not have an extension on it 
+    // if yours does
+    // add the extention
+    private static final String DATABASE_NAME = "Alcohol_DB";
+
+    //Im using an sqlite3 database, I have no clue if this makes a difference or not
+    private static final int DATABASE_VERSION = 3;
+
+    private final Context adapterContext;
+
+    public AnyDBAdapter(Context context) {
+        this.adapterContext = context;
+    }
+
+    public AnyDBAdapter open() throws SQLException {
+        mDbHelper = new DatabaseHelper(adapterContext);
+
+        try {
+            mDbHelper.createDataBase();
+        } catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+
+        try {
+            mDbHelper.openDataBase();
+        } catch (SQLException sqle) {
+            throw sqle;
+        }
+        return this;
+    }
+
+    public Cursor selectRecord(int id){
+        Cursor c = mDb.rawQuery("SELECT title FROM alcorecords"
+                + " WHERE id ='"+id+"'", null);
+                   return c;
+    }
+    //Usage from outside
+    // AnyDBAdapter dba = new AnyDBAdapter(contextObject); //in my case contextObject is a Map
+    // dba.open();
+    // Cursor c = dba.ExampleSelect("Rawr!");
+    // contextObject.startManagingCursor(c);
+    // String s1 = "", s2 = "";
+    // if(c.moveToFirst())
+    // do {
+    //  s1 = c.getString(0);
+    //  s2 = c.getString(1);
+    //  } while (c.moveToNext());
+    // dba.close();
+    public Cursor ExampleSelect(String myVariable)
+    {
+        String query = "SELECT locale, ? FROM android_metadata";
+        return mDb.rawQuery(query, new String[]{myVariable});
+    }
+
+    //Usage
+    // AnyDBAdatper dba = new AnyDBAdapter(contextObjecT);
+    // dba.open();
+    // dba.ExampleCommand("en-CA", "en-GB");
+    // dba.close();
+    public void ExampleCommand(String myVariable1, String myVariable2)
+    {
+        String command = "INSERT INTO android_metadata (locale) SELECT ? UNION ALL SELECT ?";
+        mDb.execSQL(command, new String[]{ myVariable1, myVariable2});
+    }
+
+    public void close() {
+        mDbHelper.close();
+    }
+
+    private static class DatabaseHelper extends SQLiteOpenHelper {
+
+        Context helperContext;
+
+        DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            helperContext = context;
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            Log.w(TAG, "Upgrading database!!!!!");
+            //db.execSQL("");
+            onCreate(db);
+        }
+
+        public void createDataBase() throws IOException {
+            boolean dbExist = checkDataBase();
+            if (dbExist) {
+            } else {
+
+                //make sure your database has this table already created in it
+                //this does not actually work here
+                /*
+                 * db.execSQL("CREATE TABLE IF NOT EXISTS \"android_metadata\" (\"locale\" TEXT DEFAULT 'en_US')"
+                 * );
+                 * db.execSQL("INSERT INTO \"android_metadata\" VALUES ('en_US')"
+                 * );
+                 */
+                this.getReadableDatabase();
+                try {
+                    copyDataBase();
+                } catch (IOException e) {
+                    throw new Error("Error copying database");
+                }
+            }
+        }
+
+        public SQLiteDatabase getDatabase() {
+            String myPath = DB_PATH + DATABASE_NAME;
+            return SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+        }
+
+        private boolean checkDataBase() {
+            SQLiteDatabase checkDB = null;
+            try {
+                String myPath = DB_PATH + DATABASE_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                        SQLiteDatabase.OPEN_READONLY);
+            } catch (SQLiteException e) {
+            }
+            if (checkDB != null) {
+                checkDB.close();
+            }
+            return checkDB != null ? true : false;
+        }
+
+        private void copyDataBase() throws IOException {
+
+            // Open your local db as the input stream
+            InputStream myInput = helperContext.getAssets().open(DATABASE_NAME);
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DATABASE_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            // transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+
+            // Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        }
+
+        public void openDataBase() throws SQLException {
+            // Open the database
+            String myPath = DB_PATH + DATABASE_NAME;
+            mDb = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READWRITE);
+        }
+
+        @Override
+        public synchronized void close() {
+
+            if (mDb != null)
+                mDb.close();
+
+            super.close();
+
+        }
+    }
+
+}
+</code></pre>
+
+<p>And all I'm trying to do is this:</p>
+
+<pre><code>AnyDBAdapter adapter = new AnyDBAdapter(getApplicationContext());
+                adapter.open();
+                adapter.selectRecord(num);
+</code></pre>

@@ -1,0 +1,419 @@
+<p>I have an RSS app and i'm using a viewpager to get from one article to another.
+my problem is that , if i open an article from the list, i can always play the videos in it. If i move between the articles (with swipe),i can't play the videos.</p>
+
+<p>So, i guess i have to refresh the fragment when i swipe?Is that the solution?</p>
+
+<p>this is my fragment adapter:</p>
+
+<pre><code>public class DescAdapter extends FragmentStatePagerAdapter {
+    public DescAdapter(FragmentManager fm) {
+        super(fm);
+
+    }
+
+    @Override
+    public int getCount() {
+        entry = new HotOrNot_all(DetailActivity.this);
+        entry.open();
+        long count = entry.fetchPlacesCount();
+        entry.close();
+        return (int) count;
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+
+        DetailFragment frag = new DetailFragment();
+
+        Bundle bundle = new Bundle();
+
+        bundle.putInt("pos", position);
+
+        frag.setArguments(bundle);
+
+
+        return frag;
+
+    }
+
+}
+</code></pre>
+
+<p>DetailActivity.java</p>
+
+<pre><code>public class DetailActivity extends SherlockFragmentActivity {
+
+    int pos;
+    private DescAdapter adapter;
+    private ViewPager pager;
+    private ShareActionProvider mShareActionProvider;
+    private HotOrNot_all entry;
+    String TITLE;
+    String CAT;
+    String DESC;
+    String ROWID;
+    String IMAGE;
+    String DATE;
+    String LINK;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.detail);
+
+        Log.i(this.getComponentName().toString(), "Started");
+        pos = getIntent().getExtras().getInt("pos");
+
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true); 
+
+
+        // Initialize the views
+        adapter = new DescAdapter(getSupportFragmentManager());
+        adapter.notifyDataSetChanged();
+        pager = (ViewPager) findViewById(R.id.pager);
+
+        // Set Adapter to pager:
+        pager.setAdapter(adapter);
+        pager.setCurrentItem(pos);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+        case android.R.id.home:
+            this.
+            finish();
+
+            overridePendingTransition(R.anim.animation_slide_in_left,
+                    R.anim.animation_slide_out_right);
+
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+        }
+    }
+
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        finish();
+        overridePendingTransition(R.anim.animation_slide_in_left,
+                R.anim.animation_slide_out_right);
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    public class DescAdapter extends FragmentStatePagerAdapter {
+        public DescAdapter(FragmentManager fm) {
+            super(fm);
+
+        }
+
+        @Override
+        public int getCount() {
+            entry = new HotOrNot_all(DetailActivity.this);
+            entry.open();
+            long count = entry.fetchPlacesCount();
+            entry.close();
+            return (int) count;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+
+            DetailFragment frag = new DetailFragment();
+
+            Bundle bundle = new Bundle();
+            // bundle.putSerializable("list",TITLE_LIST);
+
+            bundle.putInt("pos", position);
+
+            frag.setArguments(bundle);
+
+
+            return frag;
+
+        }
+
+    }
+
+}
+</code></pre>
+
+<p>DetailFragment.java</p>
+
+<pre><code>public class DetailFragment extends SherlockFragment {
+    private int fPos;
+    private ShareActionProvider mShareActionProvider;
+    String TITLE;
+    String CAT;
+    String DESC;
+    String ROWID;
+    String IMAGE;
+    String DATE;
+    String LINK;
+    private HotOrNot_all entry;
+    static Typeface roboto_bold;
+    static Typeface roboto_regular;
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Bundle bundle = getActivity().getIntent().getExtras();
+
+        roboto_bold = Typeface.createFromAsset(getActivity().getAssets(),
+                "fonts/Roboto-Medium.ttf");
+
+        roboto_regular = Typeface.createFromAsset(getActivity().getAssets(),
+                "fonts/Roboto-Light.ttf");
+        Log.i(this.getActivity().toString(), "Started");
+        fPos = getArguments().getInt("pos");
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        final View view = inflater.inflate(R.layout.detail_fragment, container,
+                false);
+        setHasOptionsMenu(true);
+
+        entry = new HotOrNot_all(getActivity());
+        entry.open();
+        Cursor c = entry.getAllData();
+
+        if (c.moveToPosition(fPos)) {
+
+            TITLE = c.getString(c.getColumnIndexOrThrow(DBHelper.TITLE));
+            CAT = c.getString(c.getColumnIndexOrThrow(DBHelper.CATEGORY));
+            DESC = c.getString(c.getColumnIndexOrThrow(DBHelper.DESCRIPTION));
+            ROWID = c.getString(c.getColumnIndexOrThrow(DBHelper.ROWID));
+            IMAGE = c.getString(c.getColumnIndexOrThrow(DBHelper.IMAGE));
+            DATE = c.getString(c.getColumnIndexOrThrow(DBHelper.DATE));
+            LINK = c.getString(c.getColumnIndexOrThrow(DBHelper.LINK));
+
+        }
+
+        c.close();
+        entry.close();
+        // Initializr views
+        final TextView title = (TextView) view.findViewById(R.id.title);
+        title.setTypeface(roboto_bold);
+        final TextView date = (TextView) view.findViewById(R.id.date);
+        date.setTypeface(roboto_regular);
+
+        final TextView categg = (TextView) view.findViewById(R.id.categg);
+        categg.setTypeface(roboto_regular);
+
+        final WebView desc = (WebView) view.findViewById(R.id.desc);
+
+        desc.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // super.onPageFinished(view, url);
+                desc.loadUrl("javascript:(function() { "
+                        + "document.getElementsByTagName('img')[0].style.display = 'none'; "
+                        + "})()");
+            }
+        });
+
+
+        // Enable the vertical fading edge (by default it is disabled)
+        ScrollView sv = (ScrollView) view.findViewById(R.id.sv);
+        sv.setVerticalFadingEdgeEnabled(true);
+
+        // Set webview properties
+        WebSettings ws = desc.getSettings();
+
+        ws.setSupportZoom(true);
+        // ws.setDisplayZoomControls(true);
+        ws.setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
+        ws.setLightTouchEnabled(false);
+        ws.setPluginState(PluginState.ON);
+        ws.setJavaScriptEnabled(true);
+        ws.setUserAgentString("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.36 (KHTML, like Gecko) Chrome/13.0.766.0 Safari/534.36");
+
+        // ws.setLoadsImagesAutomatically(false);
+        // desc.requestFocus(View.FOCUS_DOWN);
+
+        desc.loadDataWithBaseURL("", DESC,
+                "text/html", "UTF-8", null);
+
+        final WebView web = (WebView) view.findViewById(R.id.my_image);
+        web.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return true;
+            }
+        });
+
+        // read string from reader
+        web.getSettings().setJavaScriptEnabled(true);
+        web.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
+        web.getSettings().setLightTouchEnabled(false);
+        web.getSettings().setPluginState(PluginState.ON);
+
+        web.getSettings()
+                .setUserAgentString(
+                        "Mozilla/5.0 (Linux; U; Android 2.0; en-us; Droid Build/ESD20) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17");
+
+        web.setScrollbarFadingEnabled(true);
+        web.loadDataWithBaseURL(IMAGE,
+                "<img src=\" \" width=\"100%\" border=\"2\"/>", "text/html",
+                "utf-8", null);
+
+        // ----------------------------------------------------###############################$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+        // Set the views
+        title.setText(TITLE);
+
+
+        final Button linkBtn = (Button) view.findViewById(R.id.linkBtn);
+        linkBtn.setBackgroundResource(R.color.white);
+        linkBtn.setTypeface(roboto_regular);
+        linkBtn.setOnClickListener(new Button.OnClickListener() {
+
+            public void onClick(View v) {
+
+                web.setVisibility(View.GONE);
+                title.setVisibility(View.GONE);
+                date.setVisibility(View.GONE);
+                categg.setVisibility(View.GONE);
+                linkBtn.setVisibility(View.GONE);
+
+                desc.getSettings().setJavaScriptEnabled(true);
+                final ProgressDialog progressDialog = new ProgressDialog(view
+                        .getContext());
+                progressDialog.setMessage("Loading  website ...");
+
+                progressDialog.setCancelable(true);
+                progressDialog.show();
+                desc.loadUrl(LINK);
+
+                desc.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView view,
+                            String url) {
+                        view.getSettings().setJavaScriptEnabled(true);
+                        view.loadUrl(url);
+                        view.scrollTo(0, 0);
+
+                        return true;
+
+                    }
+
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        progressDialog.dismiss();
+                    }
+                });
+                // linkBtn.setVisibility(View.GONE);
+
+            }
+        });
+
+        return view;
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+        case R.id.favorite_option2:
+            // app icon in action bar clicked; finish activity to go home
+            // grafei stin vasi dedomenwn
+            // ------------------------
+
+            HotOrNot_favorite entry = new HotOrNot_favorite(this.getActivity());
+            entry.open();
+
+            if (entry.Exists(LINK) == true) {
+                item.setIcon(R.drawable.favorite_empty_gr);
+
+                entry.deleteItemByLink(LINK);
+
+            } else {
+                item.setIcon(R.drawable.favorite_full_gr);
+
+                entry.createEntryNea(TITLE, DESC, LINK, DATE, IMAGE, CAT);
+
+                // entry.update(msg.getTitle(),msg.getagonistiki(),msg.getskor(),msg.getgipedo(),msg.getDate());
+
+
+                // ----------------------------------------
+            }
+
+            entry.close();
+
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.activity_desc, menu);
+        MenuItem switchButton = menu.findItem(R.id.favorite_option2);
+        HotOrNot_favorite entry = new HotOrNot_favorite(this.getActivity());
+        entry.open();
+
+        if (entry.Exists(LINK) == true) {
+
+            switchButton.setIcon(R.drawable.favorite_full_gr);
+
+        }
+
+        entry.close();
+
+        // Locate MenuItem with ShareActionProvider
+        MenuItem shareItem = menu.findItem(R.id.share_option);
+
+        // Fetch and store ShareActionProvider
+        mShareActionProvider = (ShareActionProvider) shareItem
+                .getActionProvider();
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain"); // eixe text/plan
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, getText(R.string.app_name)
+                + " Android App");
+
+        if ((LINK != null) && (TITLE != null)) {
+
+            String shareBody = Html.fromHtml(TITLE + "<br><br>")
+                    + LINK
+                    + Html.fromHtml("<br><br>Send from "
+                            + getText(R.string.app_name) + " Android App");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+
+            // Set the share intent
+            mShareActionProvider.setShareIntent(shareIntent);
+        }
+
+        else {
+
+            String shareBody = LINK;
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+
+            // Set the share intent
+            mShareActionProvider.setShareIntent(shareIntent);
+
+        }
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+
+}
+</code></pre>

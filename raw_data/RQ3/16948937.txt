@@ -1,0 +1,138 @@
+<p>I'm working on a App that should get a JSON response from a webservice and write every element in a <strong>listview</strong>, I have read that I should work with <strong>AsyncTask</strong> to get the HTTP Response and I did it and I could retrieve data from the webservice and display them in <strong>TextViews</strong>. But when I try to display elements in a listview it doesn't display <strong>anything</strong> and gives me the following message in the logcat : <code>06-05 19:44:27.418: I/Choreographer(20731): Skipped 60 frames!  The application may be doing too much work on its main thread.</code></p>
+
+<p>here's my main code : </p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    private static JsonObject response = new JsonObject();
+    private ArrayList<SearchResults> results = new ArrayList<SearchResults>(); 
+    private SearchResults sr1 = null;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        new LoginAction().execute("");  
+
+        ArrayList<SearchResults> searchResults = results;
+        final ListView lv1 = (ListView) findViewById(R.id.ListView01);
+        lv1.setAdapter(new MyCustomBaseAdapter(this, searchResults));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    private class LoginAction extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            Map<String, String> callArgs = new HashMap<String, String>(1);
+
+            callArgs.put("suuid", "dtr0bdQGcqwSh3QO7fVwgVfBNWog6mvEbAyljlLX9E642Yfmur");
+
+            try {
+                response = EventPulseCloud.call("ListEvents", callArgs);
+            } catch (HttpClientException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JsonException e) {
+                e.printStackTrace();
+            } 
+
+            return response.get("Type").toString();
+        }
+
+        protected void onPostExecute(String result) {
+
+            if(result.equals("success")) {
+                JsonArray records = null;
+                try {
+                    records = response.getObject ("Data").getArray ("Records");
+                } catch (JsonException e) {
+                    e.printStackTrace();
+                }
+
+                for(int i = 0; i < records.count(); i++) {
+                    JsonObject record = (JsonObject) records.get(i);
+                    sr1 = new SearchResults();
+                    sr1.setAddress(record.get("address").toString());
+                    results.add(sr1);
+                }
+            }   
+        }   
+    }
+    }
+</code></pre>
+
+<p>My list adapter :</p>
+
+<pre><code>public class MyCustomBaseAdapter extends BaseAdapter {
+    private static ArrayList<SearchResults> searchArrayList;
+
+    private LayoutInflater mInflater;
+
+    public MyCustomBaseAdapter(Context context, ArrayList<SearchResults> results) {
+        searchArrayList = results;
+        mInflater = LayoutInflater.from(context);
+    }
+
+    public int getCount() {
+        return searchArrayList.size();
+    }
+
+    public Object getItem(int position) {
+        return searchArrayList.get(position);
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = mInflater.inflate(R.layout.custom_row_view, null);
+            holder = new ViewHolder();
+            holder.txtAddress = (TextView) convertView.findViewById(R.id.address);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txtAddress.setText(searchArrayList.get(position).getAddress());
+
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView txtAddress;
+    }
+}
+</code></pre>
+
+<p>and finally, SearchResults.java : </p>
+
+<pre><code>public class SearchResults {
+    private String address = "";
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+}
+</code></pre>
+
+<p>So, what do I do wrong ? Do you have an idea about this ? </p>
+
+<p>Thank you.</p>

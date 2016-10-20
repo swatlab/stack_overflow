@@ -1,0 +1,61 @@
+<p>For a project I'm working on, I try to create a multi-dimensional pivot on large data sets. I have all the keys I want to use as <code>int</code>s, so basically, I want to return a set of </p>
+
+<p><code>( int1, int2, int3, .. intN ) -> (Aggregate1, Aggregate2, ... , AggregateM)</code></p>
+
+<p>I cannot use a N-dimensional array, as it might get huge and probably will be sparse. I've looked a Trove, but they do not have a Multi-key map. Apache commons has a multi-key map, but that is for <code>Objects</code>; that would probably work, but seems less interesting as the <code>int</code>s will get auto-boxed to <code>Integers</code> and vice versa. </p>
+
+<p>Does anyone know of a primitive multi-key map implementation? (That maps to objects?)</p>
+
+<p>Or, does anyone have great hints, maybe there is a better approach to my problem?</p>
+
+<p>[edit] Insertion time is less interesting, I need the performance on the lookup, as the map will be heavily used to lookup values.</p>
+
+<p>[edit2]
+Thanks for all the answers. My implemenation choice is a custom class containing an int[], immutable so the <code>hashcode</code> can be calculated on construction time.</p>
+
+<pre><code>private static class MultiIntKey
+{
+    int[] ints;
+
+    private int hashCode;
+
+    MultiIntKey( int[] ints )
+    {
+        this.ints = ints;
+        this.hashCode = Arrays.hashCode( this.ints );
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return this.hashCode;
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if ( this == obj )
+        {
+            return true;
+        }
+        if ( obj == null )
+        {
+            return false;
+        }
+        if ( this.getClass() != obj.getClass() )
+        {
+            return false;
+        }
+        MultiIntKey other = (MultiIntKey) obj;
+        if ( this.hashCode != other.hashCode )
+        {
+            return false;
+        }
+        if ( !Arrays.equals( this.ints, other.ints ) )
+        {
+            return false;
+        }
+        return true;
+    }
+}
+</code></pre>

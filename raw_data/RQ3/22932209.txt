@@ -1,0 +1,83 @@
+<p>I've written a multimedia app. In this I have made a gallery with a viewpager, and a FragmentStatePagerAdapter. I used FragmentStatePagerAdapter so that each time I'have in memory only two images and each time the user scrolls the pager the old picture is destroyed and the new is decoded in bitmap.</p>
+
+<p>I have read lots of tutorials of how to efficiently load a bitmap using in a smart way the inSampleSize option and I've implemented it in such a way. In my phone runs great, but in some phones I get an <code>out of memory exception</code> so this is how I decode my ImageView in each fragment</p>
+
+<pre><code>    @Override
+public void onActivityCreated(Bundle savedInstanceState) {
+
+    super.onActivityCreated(savedInstanceState);
+
+    try {
+        ImageArray=org.apache.commons.io.FileUtils.readFileToByteArray(new File(_imagePaths.get(mImageNum)));
+        if(MyApplication.getDeviceWidth() !=0 || MyApplication.getDeviceHeight()!=0)
+            bitmap=decodeSampledBitmapFromResource(ImageArray,MyApplication.getDeviceWidth(), MyApplication.getDeviceHeight());
+        else{
+            DisplayMetrics metrics = MyApplication.getAppContext().getResources().getDisplayMetrics();
+            bitmap=decodeSampledBitmapFromResource(ImageArray,metrics.widthPixels, metrics.heightPixels);
+
+        }
+
+        mImageView.setImageBitmap(bitmap);
+
+
+    } catch (IOException e) {
+        Log.e("ImageDetailFragment",e.getLocalizedMessage());
+    } 
+
+}
+
+
+
+
+    public static Bitmap decodeSampledBitmapFromResource(byte[] array,int reqWidth, int reqHeight) {
+
+
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    Bitmap b =BitmapFactory.decodeByteArray(array, 0, array.length,options);
+
+    // Calculate inSampleSize
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+    if(b!=null)
+        b.recycle();
+    Log.i("inSampleSize", String.valueOf(options.inSampleSize));
+
+    return  BitmapFactory.decodeByteArray(array, 0, array.length,options);
+
+}
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,
+    int reqWidth,int reqHeight) {
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+if (height > reqHeight || width > reqWidth) {
+
+    // Calculate ratios of height and width to requested height and width
+    final int heightRatio = Math.round((float) height / (float) reqHeight);
+    final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+    // Choose the smallest ratio as inSampleSize value, this will guarantee
+    // a final image with both dimensions larger than or equal to the
+    // requested height and width.
+    inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+}
+
+Log.i("inSample size", String.valueOf(inSampleSize));
+
+
+    if(sampleLimit==-1)
+        return 2;
+
+
+    return inSampleSize;
+}
+</code></pre>
+
+<p>So as you can see (I think) I load each bitmap efficiently and if a screen is smaller inSampleSize goes to 2</p>
+
+<p>My question is how can I compute inSampleSize not depending on screen size only but also on the memory that is available to my app, cause in my phone I get 64MB but i've come across tablets with 38MB or less</p>

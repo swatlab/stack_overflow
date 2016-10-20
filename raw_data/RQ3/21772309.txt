@@ -1,0 +1,107 @@
+<p><img src="http://i.stack.imgur.com/zhAVA.png" alt="This image"></p>
+
+<p>(1) I want both X and Y axis width and height,
+(2) I want X axis lables proper alignment
+(3) I want to change colors of values text, Current is Orange and I want White.</p>
+
+<p>My Code is:</p>
+
+<pre><code>private GraphicalView mView(Context ctx) {
+        GraphicalView v = null;
+
+        String[] titles = new String[] { "" };
+        List<double[]> values = new ArrayList<double[]>();
+
+        double[] mDoubleArray = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0 };
+
+        String[] X_Axis_Lables = { "07:00", "08:00", "09:00", "10:00", "11:00",
+                "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00",
+                "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00",
+                "02:00", "03:00", "04:00", "05:00", "06:00", "07:00" };
+
+        values.add(mDoubleArray);
+        int color = getResources().getColor(R.color.actionbar_header_color);
+        int[] colors = new int[] { color };
+
+        XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+        setChartSettings(renderer, "", "", "", 0, mDoubleArray.length, 0, 1,
+                color, color, X_Axis_Lables);
+        renderer.getSeriesRendererAt(0).setDisplayChartValues(true);
+        renderer.setXLabels(0);
+        renderer.setYLabels(1);
+        renderer.setXLabelsAlign(Align.CENTER);
+        renderer.setYLabelsAlign(Align.LEFT);
+        renderer.setPanEnabled(false, false);
+        renderer.setZoomEnabled(false, false);
+        renderer.setZoomRate(0.0f);
+        renderer.setShowLegend(false);
+        renderer.setBarWidth(10);
+        renderer.setMarginsColor(getResources().getColor(
+                R.color.transparent_background));
+        renderer.setApplyBackgroundColor(true);
+        renderer.setBackgroundColor(Color.TRANSPARENT);
+        renderer.setXLabelsColor(getResources().getColor(R.color.gray));
+        renderer.setYLabelsColor(0, Color.GRAY);
+
+        v = ChartFactory.getBarChartView(ctx, buildBarDataset(titles, values),
+                renderer, Type.STACKED);
+        return v;
+
+    }
+
+    protected void setChartSettings(XYMultipleSeriesRenderer renderer,
+            String title, String xTitle, String yTitle, double xMin,
+            double xMax, double yMin, double yMax, int axesColor,
+            int labelsColor, String[] x_Axis_Lables) {
+        renderer.setChartTitle(title);
+        renderer.setXTitle(xTitle);
+        renderer.setYTitle(yTitle);
+        renderer.setXAxisMin(xMin);
+        renderer.setXAxisMax(xMax);
+        renderer.setYAxisMin(yMin);
+        renderer.setYAxisMax(yMax);
+
+        for (int i = 0; i < x_Axis_Lables.length; i++) {
+            renderer.addXTextLabel(i + 1, x_Axis_Lables[i]);
+
+        }
+        renderer.setXLabelsAngle(270);
+        renderer.setLabelsTextSize(16);
+        renderer.setAxesColor(axesColor);
+        renderer.setLabelsColor(getResources().getColor(R.color.gray));
+    }
+
+    protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) {
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+        renderer.setAxisTitleTextSize(16);
+        renderer.setChartTitleTextSize(20);
+        renderer.setLabelsTextSize(15);
+        renderer.setLegendTextSize(15);
+        int length = colors.length;
+        for (int i = 0; i < length; i++) {
+            SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+            r.setColor(colors[i]);
+            renderer.addSeriesRenderer(r);
+
+        }
+        return renderer;
+    }
+
+    protected XYMultipleSeriesDataset buildBarDataset(String[] titles,
+            List<double[]> values) {
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+        int length = titles.length;
+        for (int i = 0; i < length; i++) {
+            CategorySeries series = new CategorySeries(titles[i]);
+            double[] v = values.get(i);
+            int seriesLength = v.length;
+            for (int k = 0; k < seriesLength; k++) {
+                series.add(v[k]);
+            }
+            dataset.addSeries(series.toXYSeries());
+        }
+        return dataset;
+    }
+</code></pre>

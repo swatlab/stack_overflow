@@ -1,0 +1,631 @@
+<p>MainActivity.java</p>
+
+<pre><code>    package com.pKLabs.RgpvDigest;
+
+
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+
+import cssyllabus.MainCS;
+
+import static com.pKLabs.RgpvDigest.R.layout.activity_main;
+
+public class MainActivity extends ActionBarActivity implements
+        OnItemClickListener, AnimationListener {
+    private DrawerLayout drawerLayout;
+    private ListView listView;
+    private ActionBarDrawerToggle drawerListner;
+    TextView t, t1, t2, t3, t4, t5;
+    Animation rotation, anim;
+    private MyAdapter myAdapter;
+    private static final String AD_UNIT_ID = "ca-app-pub-8935153656417807/4125750777";
+    private static final String TAG = "MainActivity";
+    private InterstitialAd iAd;
+    ImageView iv;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+        anim = new AlphaAnimation(0.0f, 1.0f);
+        anim.setDuration(60); // You can manage the blinking time with this
+                                // parameter
+        anim.setStartOffset(30);
+        anim.setRepeatMode(Animation.REVERSE);
+        anim.setRepeatCount(2);
+
+        iv = (ImageView) findViewById(R.id.imageView1);
+
+        rotation = AnimationUtils.loadAnimation(getApplicationContext(),
+                R.anim.button_rotate);
+        rotation.setRepeatCount(Animation.INFINITE);
+        rotation.setAnimationListener(MainActivity.this);
+
+        iv.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                iv.startAnimation(rotation);
+                t1.startAnimation(anim);
+                t2.startAnimation(anim);
+                t3.startAnimation(anim);
+                t4.startAnimation(anim);
+                t5.startAnimation(anim);
+            }
+        });
+
+        t = (TextView) findViewById(R.id.rgpvtext);
+        t.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                iv.startAnimation(rotation);
+                t1.startAnimation(anim);
+                t2.startAnimation(anim);
+                t3.startAnimation(anim);
+                t4.startAnimation(anim);
+                t5.startAnimation(anim);
+
+            }
+        });
+
+        Typeface tf = Typeface.createFromAsset(getApplicationContext()
+                .getAssets(), "segoe.ttf");
+        TextView t = (TextView) findViewById(R.id.rgpvtext);
+        t.setTypeface(tf);
+        t.setTypeface(tf, tf.BOLD);
+
+        iAd = new InterstitialAd(this);
+        iAd.setAdUnitId(AD_UNIT_ID);
+
+        iAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+
+
+            }
+        });
+
+        loadInterstitial();
+
+        listView = (ListView) findViewById(R.id.drawerlist);
+
+
+
+
+
+        myAdapter = new MyAdapter(this);
+
+        listView.setAdapter(myAdapter);
+        listView.setOnItemClickListener(this);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerListner = new ActionBarDrawerToggle(this, drawerLayout,
+                R.drawable.ic_drawer, R.string.dopen, R.string.dclose);
+
+        drawerLayout.setDrawerListener(drawerListner);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+
+        t1 = (TextView) findViewById(R.id.compu);
+        t1.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
+        t1.setTypeface(tf);
+        t1.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(), Semester.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        t2 = (TextView) findViewById(R.id.calc);
+        t2.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
+        t2.setTypeface(tf);
+        t2.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(), Calculator.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        t3 = (TextView) findViewById(R.id.iv);
+        t3.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
+        t3.setTypeface(tf);
+        t3.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(),
+                        InterviewQuestion.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        t4 = (TextView) findViewById(R.id.prog);
+        t4.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
+        t4.setTypeface(tf);
+        t4.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                Intent intent = new Intent(v.getContext(), Programs.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        t5 = (TextView) findViewById(R.id.abo);
+        t5.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
+        t5.setTypeface(tf);
+        t5.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(v.getContext(), About.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+    }
+
+    private void loadInterstitial() {
+        // TODO Auto-generated method stub
+        AdRequest adRequest = new AdRequest.Builder().build();
+
+        iAd.loadAd(adRequest);
+        System.out.println("Ad loaded success");
+
+    }
+
+    public void showInterstitial() {
+        if (iAd.isLoaded()) {
+            iAd.show();
+            System.out.println("Ad shown success");
+        } else {
+            Log.d(TAG, "Interstitial ad is not loaded yet");
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // TODO Auto-generated method stub
+        super.onConfigurationChanged(newConfig);
+        drawerListner.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onPostCreate(savedInstanceState);
+        drawerListner.syncState();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuItem item = menu.add("share"); // your desired title here
+        item.setIcon(R.drawable.share_icon); // your desired icon here
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                try
+                { Intent i = new Intent(Intent.ACTION_SEND);  
+                  i.setType("text/plain");
+                  i.putExtra(Intent.EXTRA_SUBJECT, "RGPV Digest");
+                  String sAux = "Looking to score high in RGPV ?\n Try out this app :\n\n";
+                  sAux = sAux + "https://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName();
+                  i.putExtra(Intent.EXTRA_TEXT, sAux);  
+                  startActivity(Intent.createChooser(i, "Share via"));
+                }
+                catch(Exception e)
+                { //e.toString();
+                }   
+
+                return true;
+            }
+        });
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if (drawerListner.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position,
+            long id) {
+
+        if (position == 0) {
+
+            Uri uri = Uri
+                    .parse("https://2ce74af0d8de8783b91cdd315eeba0340a4b9277.googledrive.com/host/0B2sDUzNeIK0KODB0ZDRMVjFPaFE/Jobs.html");
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+
+        } else if (position == 1) {
+
+            Intent intent = new Intent(this, MainCS.class);
+            startActivityForResult(intent, 0);
+
+        } else if (position == 2) {
+            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
+                    "mailto","laboratorypk@gmail.comm", null));
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Project Help");
+            intent.putExtra(Intent.EXTRA_TEXT,"Please write a short description of your project and technology you are supposed to use.");
+            startActivity(Intent.createChooser(intent, "Choose an Email client :"));
+        }
+
+        // }
+        else if (position == 3) {
+            Intent intent = new Intent(this, Careerguid.class);
+            startActivityForResult(intent, 0);
+        }
+
+        else if (position == 4) {
+            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
+                    "mailto","laboratorypk@gmail.comm", null));
+            intent.putExtra(Intent.EXTRA_SUBJECT, "PC Games");
+            intent.putExtra(Intent.EXTRA_TEXT,"Hey! I need PC Games pls share the list of Games that you have.");
+            startActivity(Intent.createChooser(intent, "Choose an Email client :"));
+        }
+        else if (position == 5) {
+            Uri uri = Uri.parse("market://details?id=" + getApplicationContext().getPackageName());
+            Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+            try {
+              startActivity(goToMarket);
+            } catch (ActivityNotFoundException e) {
+              startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName())));
+            }
+
+        }
+
+        else if (position == 6) {
+
+            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
+                    "mailto","laboratorypk@gmail.comm", null));
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Query/Feedback");
+            intent.putExtra(Intent.EXTRA_TEXT,"");
+            startActivity(Intent.createChooser(intent, "Choose an Email client :"));
+        }
+
+        drawerLayout.closeDrawers();
+        selectItem(position);
+    }
+
+    public void selectItem(int position) {
+        // TODO Auto-generated method stub
+        listView.setItemChecked(position, true);
+
+    }
+
+    public void setTitle(String title) {
+        getSupportActionBar().setTitle(title);
+    }
+
+    @Override
+    protected void onDestroy() {
+        // TODO Auto-generated method stub
+        showInterstitial();
+        super.onDestroy();
+    }
+
+    private Toast toast;
+    private long lastBackPressTime = 0;
+
+    @Override
+    public void onBackPressed() {
+        if (this.lastBackPressTime < System.currentTimeMillis() - 4000) {
+            toast = Toast.makeText(this, "Press back again to exit",
+                    Toast.LENGTH_LONG);
+            toast.show();
+
+            this.lastBackPressTime = System.currentTimeMillis();
+            drawerLayout.closeDrawers();
+        } else {
+            if (toast != null) {
+                toast.cancel();
+            }
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void onAnimationStart(Animation animation) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onAnimationEnd(Animation animation) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onAnimationRepeat(Animation animation) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+
+class MyAdapter extends BaseAdapter {
+    private Context context;
+    String[] navlist;
+    int[] images = { R.drawable.job, R.drawable.facebook, R.drawable.project,
+            R.drawable.career, R.drawable.games, R.drawable.rate, R.drawable.mail };
+
+    public MyAdapter(Context context) {
+        this.context = context;
+        navlist = context.getResources().getStringArray(R.array.navdra);
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return navlist.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return navlist[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View row = null;
+        if (convertView == null) {
+            LayoutInflater inflater = (LayoutInflater) context
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            row = inflater.inflate(R.layout.customrow, parent, false);
+        }
+
+        else {
+            row = convertView;
+        }
+        TextView titleTextView = (TextView) row.findViewById(R.id.textView11);
+        ImageView titleImageView = (ImageView) row
+                .findViewById(R.id.imageView1);
+        titleTextView.setText(navlist[position]);
+        titleImageView.setImageResource(images[position]);
+
+        return row;
+    }
+
+}
+</code></pre>
+
+<p>Here is activity_main.xml</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/ab" >
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+
+                <ImageView
+                    android:id="@+id/imageView1"
+                    android:layout_width="135dp"
+                    android:layout_height="135dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="30dp"
+                    android:src="@drawable/rgpvicon" />
+
+                <TextView
+                    android:id="@+id/rgpvtext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/imageView1"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginTop="6dp"
+                    android:clickable="true"
+                    android:text="RGPV Digest"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="@drawable/texteff"
+                    android:textSize="36sp" />
+
+                <TextView
+                    android:id="@+id/compu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/rgpvtext"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginTop="25dp"
+                    android:clickable="true"
+                    android:text="Computer Science"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@drawable/texteff"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/calc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/compu"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:text="Calculator"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@drawable/texteff"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/iv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/calc"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:text="Interview Question"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@drawable/texteff"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/prog"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/iv"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:text="Programs"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@drawable/texteff"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/abo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/prog"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:text="About"
+                    android:paddingBottom="20dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@drawable/texteff"
+                    android:textSize="24sp" />
+            </RelativeLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/drawerlist"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        android:background="#4ABC96"
+        android:paddingTop="6dp" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>LOG:</p>
+
+<pre><code> Process: com.pKLabs.RgpvDigest, PID: 1557
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.pKLabs.RgpvDigest/com.pKLabs.RgpvDigest.MainActivity}: java.lang.NullPointerException
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2184)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2233)
+            at android.app.ActivityThread.access$800(ActivityThread.java:135)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5001)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: java.lang.NullPointerException
+            at com.pKLabs.RgpvDigest.MainActivity.onCreate(MainActivity.java:146)
+            at android.app.Activity.performCreate(Activity.java:5231)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2148)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2233)
+            at android.app.ActivityThread.access$800(ActivityThread.java:135)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5001)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+            at dalvik.system.NativeStart.main(Native Method)
+07-23 07:04:44.900      409-763/? W/ActivityManager﹕ Force finishing activity com.pKLabs.RgpvDigest/.MainActivity
+07-23 07:04:45.080      409-428/? D/dalvikvm﹕ GC_FOR_ALLOC freed 312K, 54% free 5989K/12960K, paused 98ms, total 101ms
+07-23 07:04:45.410    1557-1574/? D/dalvikvm﹕ DexOpt: --- BEGIN 'ads1355421311.jar' (bootstrap=0) ---
+07-23 07:04:45.510      409-428/? I/Choreographer﹕ Skipped 38 frames!  The application may be doing too much work on its main thread.
+</code></pre>
+
+<p>Not able to figure out what am i doing wrong, i updated android studio and downloaded API 22 and after that i got many errors in My gradle too. I some how fixed that but it is run time error how can i fix please help me out.</p>

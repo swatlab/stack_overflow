@@ -1,0 +1,45 @@
+<p>I've got this activity, which holds a fragment. This fragment layout consists of a view pager with several fragments (two, actually).</p>
+
+<p>When the view pager is created, its adapter is created, <strong><code>getItem</code> gets called</strong> and my sub fragments are created. Great.</p>
+
+<p>Now when I rotate the screen, the framework handles the fragment re-creation, the adapter is created again in my <code>onCreate</code> from the main fragment, but <strong><code>getItem</code> never gets called</strong>, so my adapter holds wrong references (actually nulls) instead of the two fragments.</p>
+
+<p>What I have found is that the fragment manager (that is, the child fragment manager) contains an array of fragments called <code>mActive</code>, which is of course not accessible from code. However there's this <code>getFragment</code> method:</p>
+
+<pre><code>@Override
+public Fragment getFragment(Bundle bundle, String key) {
+    int index = bundle.getInt(key, -1);
+    if (index == -1) {
+        return null;
+    }
+    if (index >= mActive.size()) {
+        throwException(new IllegalStateException("Fragement no longer exists for key "
+                + key + ": index " + index));
+    }
+    Fragment f = mActive.get(index);
+    if (f == null) {
+        throwException(new IllegalStateException("Fragement no longer exists for key "
+                + key + ": index " + index));
+    }
+    return f;
+}
+</code></pre>
+
+<p><a href="https://github.com/android/platform_frameworks_support/commit/37e2defcdb38fee7acec85747fb8afdcb0fdca7f">I won't comment the typo :)</a><br>
+This is the hack I have implemented in order to update the references to my fragments, in my adapter constructor:</p>
+
+<pre><code>// fm holds a reference to a FragmentManager
+Bundle hack = new Bundle();
+try {
+    for (int i = 0; i < mFragments.length; i++) {
+        hack.putInt("hack", i);
+        mFragments[i] = fm.getFragment(hack, "hack");
+    }
+} catch (Exception e) {
+    // No need to fail here, likely because it's the first creation and mActive is empty
+}
+</code></pre>
+
+<p>I am not proud. This works, but it's ugly. What's the actual way of having a valid adapter after a screen rotation?</p>
+
+<p><em>PS: here's the <a href="https://gist.github.com/BenoitDuffez/7355253">full code</a></em></p>

@@ -1,0 +1,81 @@
+<p>We use the following code to recognise if users unmount/mount the sd-card. registerExternalStorageListener is called from the oncreate method of the main activity.</p>
+
+<p>Unfortunately, it does not work. When unmounting the sd-card, our app crashes and restarts instead. </p>
+
+<p>Any ideas why this happens?</p>
+
+<pre><code>    public void registerExternalStorageListener() {
+    if (mUnmountReceiver == null) {
+        mUnmountReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
+                    mSdCardAvailable = false;
+                } else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) {
+                    mSdCardAvailable = true;
+                }
+            }
+        };
+        IntentFilter iFilter = new IntentFilter();
+        iFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+        iFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        iFilter.addDataScheme("file");
+        registerReceiver(mUnmountReceiver, iFilter);
+    }
+}
+</code></pre>
+
+<p>the stacktrace is here. One of the last entries: WIN DEATH: Window{40957bf8 com.ichi2.anki/com.ichi2.anki.StudyOptions paused=false}</p>
+
+<pre><code>10-30 13:57:31.335: DEBUG/VoldCmdListener(109): storage users /mnt/sdcard
+10-30 13:57:36.179: INFO/PackageManager(190): Updating external media status from mounted to unmounted
+10-30 13:57:36.214: DEBUG/VoldCmdListener(109): asec list
+10-30 13:57:36.226: WARN/InputManagerService(190): Window already focused, ignoring focus gain of: com.android.internal.view.IInputMethodClient$Stub$Proxy@408f1a00
+10-30 13:57:36.410: DEBUG/VoldCmdListener(109): asec path com.teamviewer.teamviewer.market.mobile-1
+10-30 13:57:36.417: INFO/PackageManager(190): Removing non-system package:com.teamviewer.teamviewer.market.mobile
+10-30 13:57:36.417: INFO/ActivityManager(190): Force stopping package com.teamviewer.teamviewer.market.mobile uid=10130
+10-30 13:57:37.117: INFO/ActivityManager(190): Force stopping package com.teamviewer.teamviewer.market.mobile uid=10130
+10-30 13:57:37.214: DEBUG/dalvikvm(10593): GC_EXPLICIT freed 430K, 50% free 2971K/5895K, external 0K/0K, paused 44ms
+10-30 13:57:37.355: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.402: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.453: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.511: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.558: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.613: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.636: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:37.652: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:38.121: DEBUG/szipinf(190): Initializing inflate state
+10-30 13:57:38.156: INFO/MonitorSver(7625): externalAppsListener -- action: android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE
+10-30 13:57:38.394: DEBUG/dalvikvm(190): GC_EXPLICIT freed 970K, 46% free 7837K/14407K, external 1569K/2073K, paused 80ms
+10-30 13:57:38.617: DEBUG/dalvikvm(9161): GC_CONCURRENT freed 242K, 48% free 3610K/6855K, external 0K/0K, paused 30ms+6ms
+10-30 13:57:38.644: DEBUG/dalvikvm(190): GC_EXPLICIT freed 244K, 47% free 7727K/14407K, external 1569K/2073K, paused 116ms
+10-30 13:57:38.699: DEBUG/VoldCmdListener(109): asec unmount com.teamviewer.teamviewer.market.mobile-1 force
+10-30 13:57:38.773: DEBUG/VoldCmdListener(109): storage users /mnt/sdcard
+10-30 13:57:39.015: DEBUG/dalvikvm(9161): GC_CONCURRENT freed 474K, 47% free 3647K/6855K, external 0K/0K, paused 1ms+5ms
+10-30 13:57:39.226: WARN/ActivityManager(190): Killing processes unmount media at adjustment 7
+10-30 13:57:39.226: WARN/ActivityManager(190): Killing ProcessRecord{40910cc8 10313:com.cooliris.media/10029} (adj 8): unmount media
+10-30 13:57:39.230: DEBUG/VoldCmdListener(109): storage users /mnt/sdcard
+10-30 13:57:39.378: DEBUG/VoldCmdListener(109): storage users /mnt/emmc
+10-30 13:57:39.535: WARN/ActivityManager(190): Killing processes unmount media at adjustment 4
+10-30 13:57:39.535: WARN/ActivityManager(190): Killing ProcessRecord{409e8130 10333:com.ichi2.anki/10081} (adj 4): unmount media
+10-30 13:57:39.535: DEBUG/VoldCmdListener(109): storage users /mnt/emmc
+10-30 13:57:39.742: DEBUG/dalvikvm(190): GC_EXPLICIT freed 521K, 47% free 7652K/14407K, external 1561K/2073K, paused 65ms
+10-30 13:57:39.742: INFO/PackageManager(190): Updating external media status from unmounted to unmounted
+10-30 13:57:39.746: DEBUG/VoldCmdListener(109): volume unmount /mnt/sdcard force
+10-30 13:57:39.746: DEBUG/Vold(109): Volume emmc state changing 4 (Mounted) -> 5 (Unmounting)
+10-30 13:57:39.765: INFO/ActivityManager(190): Start proc com.cooliris.media for broadcast com.cooliris.media/com.cooliris.cache.BootReceiver: pid=10606 uid=10029 gids={1015, 3003}
+10-30 13:57:39.937: INFO/k9(2322): storage path "/mnt/sdcard" unmounting
+10-30 13:57:39.964: DEBUG/szipinf(10606): Initializing inflate state
+10-30 13:57:39.972: INFO/ActivityThread(10606): Pub com.cooliris.picasa.contentprovider: com.cooliris.picasa.PicasaContentProvider
+10-30 13:57:40.214: INFO/Database(10606): sqlite returned: error code = 0, msg = Recovered 10 frames from WAL file /data/data/com.cooliris.media/databases/picasa.db-wal
+10-30 13:57:40.285: INFO/BootReceiver(10606): Got intent with action android.intent.action.MEDIA_EJECT
+10-30 13:57:40.339: WARN/ActivityManager(190): Scheduling restart of crashed service com.ichi2.anki/.AnkiDroidWidgetMedium$UpdateService in 5000ms
+10-30 13:57:40.339: WARN/ActivityManager(190): Scheduling restart of crashed service com.ichi2.anki/.AnkiDroidWidgetSmall$UpdateService in 15000ms
+10-30 13:57:40.339: INFO/WindowManager(190): WIN DEATH: Window{40957bf8 com.ichi2.anki/com.ichi2.anki.StudyOptions paused=false}
+10-30 13:57:40.359: VERBOSE/MediaProvider(7827): Detached volume: external
+10-30 13:57:40.421: DEBUG/dalvikvm(9161): GC_CONCURRENT freed 611K, 51% free 3421K/6855K, external 0K/0K, paused 18ms+2ms
+10-30 13:57:40.472: DEBUG/szipinf(10593): Initializing inflate state
+10-30 13:57:40.496: DEBUG/szipinf(10593): Initializing inflate state
+10-30 13:57:40.519: DEBUG/szipinf(10593): Initializing inflate state
+</code></pre>

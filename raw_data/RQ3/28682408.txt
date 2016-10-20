@@ -1,0 +1,124 @@
+<p>So I am attempting to implement a navigation drawer using the appcompat library. I am using a toolbar as my action bar. My issue is that my toolbar is filling the entire screen.</p>
+
+<p><a href="http://imgur.com/9fPbWua" rel="nofollow">This being the problem</a></p>
+
+<p>Here is my toolbar.</p>
+
+<pre><code> <android.support.v7.widget.Toolbar 
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:id="@+id/toolbar"
+     android:minHeight="?attr/actionBarSize"
+     android:background="?attr/colorPrimary" />
+</code></pre>
+
+<p>And my main activity.</p>
+
+<pre><code><LinearLayout 
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tools="http://schemas.android.com/tools"     
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" tools:context=".MainActivity">
+
+
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+        <include layout="@layout/toolbar_main"/>
+
+        <!--- Main Layout -->
+        <FrameLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <!--- Nav Drawer -->
+        <ListView
+            android:id="@+id/navigation_drawer"
+            android:layout_width="@dimen/drawer_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:choiceMode="singleChoice"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp"
+            android:background="#FFF"/>
+    </android.support.v4.widget.DrawerLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p>And finally my source.</p>
+
+<pre><code> public class MainActivity extends ActionBarActivity {
+
+    private Toolbar mToolbar;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout mDrawerLayout;
+    private CharSequence mTitle;
+    private ListView mDrawerList;
+    private String[] mAddresses;
+    private CharSequence mDrawerTitle;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mAddresses = getResources().getStringArray(R.array.addresses);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        //mToolbar.setNavigationIcon(R.drawable.ic_myaccount);
+
+        setSupportActionBar(mToolbar);
+        mTitle = mDrawerTitle = getTitle();
+        //Set up the nav drawer
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,mToolbar,R.string.open_drawer,R.string.close_drawer);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+
+        //Drawer List
+        mDrawerList = (ListView) findViewById(R.id.navigation_drawer);
+        mDrawerList.setAdapter(new ArrayAdapter<>(this, R.layout.drawer_list_item, mAddresses));
+        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        mDrawerToggle.syncState();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState){
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+}
+</code></pre>
+
+<p>EDIT:</p>
+
+<p>If I move the toolbar include outside of the DrawerLayout, then <a href="http://imgur.com/oF7B0Jm" rel="nofollow">this</a> happens in addition to the navigation drawer no longer opening.</p>

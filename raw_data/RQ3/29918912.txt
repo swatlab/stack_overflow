@@ -1,0 +1,207 @@
+<p>I just came across some unexpected behaviour when playing around with some sample code.</p>
+
+<p>As "everybody knows" you cannot modify UI elements from another thread, e.g. the <code>doInBackground()</code> of an <code>AsyncTask</code>.</p>
+
+<p>For example:</p>
+
+<pre><code>public class MainActivity extends Activity {
+    private TextView tv;
+
+    public class MyAsyncTask extends AsyncTask<TextView, Void, Void> {
+        @Override
+        protected Void doInBackground(TextView... params) {
+            params[0].setText("Boom!");
+            return null;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LinearLayout layout = new LinearLayout(this);
+        tv = new TextView(this);
+        tv.setText("Hello world!");
+        Button button = new Button(this);
+        button.setText("Click!");
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MyAsyncTask().execute(tv);
+            }
+        });
+        layout.addView(tv);
+        layout.addView(button);
+        setContentView(layout);
+    }
+}
+</code></pre>
+
+<p>If you run this, and click the button, you're app will stop as expected and you'll find the following stack trace in logcat:</p>
+
+<blockquote>
+  <p>11:21:36.630: E/AndroidRuntime(23922): FATAL EXCEPTION: AsyncTask #1<br>
+  ...<br>
+  11:21:36.630: E/AndroidRuntime(23922): java.lang.RuntimeException: An error occured while executing doInBackground()<br>
+  ...<br>
+  11:21:36.630: E/AndroidRuntime(23922): Caused by: android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.<br>
+  11:21:36.630: E/AndroidRuntime(23922):    at android.view.ViewRootImpl.checkThread(ViewRootImpl.java:6357)  </p>
+</blockquote>
+
+<p>So far so good.</p>
+
+<p>Now I changed the <code>onCreate()</code> to execute the <code>AsyncTask</code> immediately, and not wait for the button click.</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // same as above...
+    new MyAsyncTask().execute(tv);
+}
+</code></pre>
+
+<p>The app doesn't close, nothing in the logs, <code>TextView</code> now displays "Boom!" on the screen. Wow. Wasn't expecting that.</p>
+
+<p>Maybe too early in the <code>Activity</code> lifecycle? Let's move the execute to <code>onResume()</code>.</p>
+
+<pre><code>@Override
+protected void onResume() {
+    super.onResume();
+    new MyAsyncTask().execute(tv);
+}
+</code></pre>
+
+<p>Same behaviour as above.</p>
+
+<p>Ok, let's stick it on a <code>Handler</code>.</p>
+
+<pre><code>@Override
+protected void onResume() {
+    super.onResume();
+    Handler handler = new Handler();
+    handler.post(new Runnable() {
+        @Override
+        public void run() {
+            new MyAsyncTask().execute(tv);
+        }
+    });
+}
+</code></pre>
+
+<p>Same behaviour again. I'm running out of ideas and try <code>postDelayed()</code> with a 1 second delay:</p>
+
+<pre><code>@Override
+protected void onResume() {
+    super.onResume();
+    Handler handler = new Handler();
+    handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+            new MyAsyncTask().execute(tv);
+        }
+    }, 1000);
+}
+</code></pre>
+
+<p>Finally! The expected exception:</p>
+
+<blockquote>
+  <p>11:21:36.630: E/AndroidRuntime(23922): Caused by: android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.  </p>
+</blockquote>
+
+<p>Wow, this is timing related?</p>
+
+<p>I try different delays and it appears that for this particular test run, on this particular device (Nexus 4, running 5.1) the magic number is 60ms, i.e. sometimes is throws the exception, sometimes it updates the <code>TextView</code> as if nothing had happened.</p>
+
+<p>I'm assuming this happens when the view hierarchy has not been fully created at the point where it is modified by the <code>AsyncTask</code>. Is this correct? Is there a better explanation for it? Is there a callback on <code>Activity</code> that can be used to make sure the view hierachy has been fully created? Timing related issues are scary.</p>
+
+<p>I found a similar question here <a href="http://stackoverflow.com/questions/13882786/altering-ui-threads-views-in-asynctask-in-doinbackground-calledfromwrongthread">Altering UI thread's Views in AsyncTask in doInBackground, CalledFromWrongThreadException not always thrown</a> but there is no explanation.</p>
+
+<p><strong>Update:</strong></p>
+
+<p>Due to a request in comments and a proposed answer, I have added some debug logging to ascertain the chain of events...</p>
+
+<pre><code>public class MainActivity extends Activity {
+    private TextView tv;
+
+    public class MyAsyncTask extends AsyncTask<TextView, Void, Void> {
+        @Override
+        protected Void doInBackground(TextView... params) {
+            Log.d("MyAsyncTask", "before setText");
+            params[0].setText("Boom!");
+            Log.d("MyAsyncTask", "after setText");
+            return null;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LinearLayout layout = new LinearLayout(this);
+        tv = new TextView(this);
+        tv.setText("Hello world!");
+        layout.addView(tv);
+        Log.d("MainActivity", "before setContentView");
+        setContentView(layout);
+        Log.d("MainActivity", "after setContentView, before execute");
+        new MyAsyncTask().execute(tv);
+        Log.d("MainActivity", "after execute");
+    }
+}
+</code></pre>
+
+<p>Output:</p>
+
+<blockquote>
+  <p>10:01:33.126: D/MainActivity(18386): before setContentView<br>
+  10:01:33.137: D/MainActivity(18386): after setContentView, before execute<br>
+  10:01:33.148: D/MainActivity(18386): after execute<br>
+  10:01:33.153: D/MyAsyncTask(18386): before setText<br>
+  10:01:33.153: D/MyAsyncTask(18386): after setText  </p>
+</blockquote>
+
+<p>Everything as expected, nothing unusual here, <code>setContentView()</code> completed before <code>execute()</code> is called, which in turn completes before <code>setText()</code> is called from <code>doInBackground()</code>. So that's not it.</p>
+
+<p><strong>Update:</strong></p>
+
+<p>Another example:</p>
+
+<pre><code>public class MainActivity extends Activity {
+    private LinearLayout layout;
+    private TextView tv;
+
+    public class MyAsyncTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            tv.setText("Boom!");
+            return null;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        layout = new LinearLayout(this);
+        Button button = new Button(this);
+        button.setText("Click!");
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tv = new TextView(MainActivity5.this);
+                tv.setText("Hello world!");
+                layout.addView(tv);
+                new MyAsyncTask().execute();
+            }
+        });
+        layout.addView(button);
+        setContentView(layout);
+    }
+}
+</code></pre>
+
+<p>This time, I'm adding the <code>TextView</code> in the <code>onClick()</code> of the <code>Button</code> immediately before calling <code>execute()</code> on the <code>AsyncTask</code>. At this stage the initial <code>Layout</code> (without the <code>TextView</code>) has been displayed properly (i.e. I can see the button and click it). Again, no exception thrown.</p>
+
+<p>And the counter example, if I add <code>Thread.sleep(100);</code> into the <code>execute()</code> before <code>setText()</code> in <code>doInBackground()</code> the usual exception is thrown.</p>
+
+<p>One other thing I have just noticed now is, that just before the exception is thrown, the text of the <code>TextView</code> is actually updated and it displays properly, for just a split second, until the app closes automatically.</p>
+
+<p>I guess something must be happening (asynchronously, i.e. detached from any lifecycle methods/callbacks) to my <code>TextView</code> that somehow "attaches" it to <code>ViewRootImpl</code>, which makes the latter throw the exception. Does anybody have an explanation or pointers to further documentation about what that "something" is?</p>

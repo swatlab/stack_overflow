@@ -1,0 +1,93 @@
+<p>I have two activities that I want this navigation to happen, they are VendorsActivity and QuestionsActivity. The following how my AndroidManifest.xml looks like:</p>
+
+<p>(I am not using the full name of my activities like <code>com.hello.world.MyActivity</code> as I am defined <code>package</code> attribute in <code>manifest</code> node.)</p>
+
+<p>
+</p>
+
+<pre><code><uses-sdk
+    android:minSdkVersion="14"
+    android:targetSdkVersion="19" />
+
+<application
+    android:allowBackup="true"
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity
+        android:name=".VendorsActivity"
+        android:label="@string/vendors_activity_title" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+    <activity
+        android:name=".TestsActivity"
+        android:label="@string/tests_activity_title"
+        android:parentActivityName=".VendorsActivity" >
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value=".VendorsActivity" />
+    </activity>
+    <activity
+        android:name=".QuestionsActivity"
+        android:label="@string/questions_activity_title" >
+    </activity>
+</application>
+</code></pre>
+
+<p></p>
+
+<p>And in <code>TestsActivity</code>, I am calling <code>getActionBar().setDisplayHomeAsUpEnabled(true);</code> method from within <code>onCreate</code> method.</p>
+
+<p>The problem is, it won't work unless I implement the following method in <code>.TestsActivity</code> class:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item)
+{
+    switch (item.getItemId())
+    {
+    case android.R.id.home:
+        NavUtils.navigateUpFromSameTask(TestsActivity.this);
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>But Android Developer Guide says that I don't have to handle the Up button's event as mentioned at the very bottom of hit page: <a href="https://developer.android.com/training/basics/actionbar/adding-buttons.html">https://developer.android.com/training/basics/actionbar/adding-buttons.html</a></p>
+
+<blockquote>
+  <p>Because the system now knows MainActivity is the parent activity for
+  DisplayMessageActivity, when the user presses the Up button, the
+  system navigates to the parent activity as appropriate—you do not need
+  to handle the Up button's event.</p>
+</blockquote>
+
+<p><strong>Edit and Answer:</strong></p>
+
+<p>As Android Developer Guide says:</p>
+
+<blockquote>
+  <p>Beginning in Android 4.1 (API level 16), you can declare the logical
+  parent of each activity by specifying the android:parentActivityName
+  attribute in the  element.</p>
+  
+  <p>If your app supports Android 4.0 and lower, include the Support
+  Library with your app and add a  element inside the
+  . Then specify the parent activity as the value for
+  android.support.PARENT_ACTIVITY, matching the
+  android:parentActivityName attribute.</p>
+</blockquote>
+
+<p>So I think my problem was because of two reasons:</p>
+
+<ol>
+<li><p>Running the app on a proper emulator. I was targeting a higher version but the emulator was running on API 14 (Android 4.0) so it didn't know how to handle <code>android:parentActivityName</code> attribute.</p></li>
+<li><p>Targeting the right API level in Project Build Target properties as shown below:</p></li>
+</ol>
+
+<p><img src="http://i.stack.imgur.com/6UsaJ.png" alt="enter image description here"></p>

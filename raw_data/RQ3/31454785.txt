@@ -1,0 +1,116 @@
+<p>I am trying to implement a simple Navigation Drawer, with a custom drawer icon.</p>
+
+<ul>
+<li><strong>What I want</strong> - To use the custom drawer icon instead of the up caret.</li>
+<li><strong>What is the problem</strong>- The custom icon does'nt show up. Its the 'Up' caret, which is visible all the time.</li>
+<li><p><strong>What I have done</strong>-</p></li>
+<li><p>Used android studio to create a NavDrawer project.</p></li>
+<li><p>Searched for similar probs on Stackoverflow. I've got references for onPostCreate() method, but i've taken care of that.</p></li>
+<li><p>Used android sample app to run the project.</p></li>
+<li><p><strong>See image</strong>- See the top left corner. The up caret is what I would like to replace with my icon</p></li>
+</ul>
+
+<p>Any help is really appreciated !</p>
+
+<p>MainActivity</p>
+
+<p>package com.deep.wealthtrackernew;</p>
+
+<pre><code>    import android.content.res.Configuration;
+    import android.support.v4.widget.DrawerLayout;
+    import android.support.v7.app.ActionBarActivity;
+    import android.os.Bundle;
+    import android.support.v4.app.ActionBarDrawerToggle;
+    import android.view.Menu;
+    import android.view.MenuItem;
+    import android.view.View;
+    import android.widget.ListView;
+
+    import java.util.List;
+
+
+    public class MainActivity extends ActionBarActivity {
+
+        private ListView listView;
+        private DrawerLayout drawerLayout;
+        private ActionBarDrawerToggle actionBarDrawerToggle;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
+
+            listView = (ListView) findViewById(R.id.left_drawer);
+            drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+            actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.drawable.ic_drawer,
+                    R.string.open_drawer, R.string.close_drawer) {
+
+                @Override
+                public void onDrawerOpened(View drawerView) {
+                    super.onDrawerOpened(drawerView);
+    //                getActionBar().setTitle();
+                    supportInvalidateOptionsMenu();
+                }
+
+                @Override
+                public void onDrawerClosed(View drawerView) {
+                    super.onDrawerClosed(drawerView);
+                    getSupportActionBar().setTitle("Wealth Tracker");
+                    supportInvalidateOptionsMenu();
+                }
+            };
+
+            drawerLayout.setDrawerListener(actionBarDrawerToggle);
+
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+        }
+
+        @Override
+        protected void onPostCreate(Bundle savedInstanceState) {
+            super.onPostCreate(savedInstanceState);
+            actionBarDrawerToggle.syncState();
+        }
+
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            actionBarDrawerToggle.onConfigurationChanged(newConfig);
+        }
+
+        @Override
+        public boolean onPrepareOptionsMenu(Menu menu) {
+            // If the nav drawer is open, hide action items related to the content view
+            boolean drawerOpen = drawerLayout.isDrawerOpen(listView);
+    //        menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+            return super.onPrepareOptionsMenu(menu);
+        }
+
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.menu_main, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+
+            if(actionBarDrawerToggle.onOptionsItemSelected(item)){ return true; }
+
+            int id = item.getItemId();
+
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_settings) {
+                return true;
+            }
+
+            return super.onOptionsItemSelected(item);
+        }
+    }
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/31EYX.png" alt="See the top left corner. The up caret is what I would like to replace with my icon"></p>

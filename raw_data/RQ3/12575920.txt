@@ -1,0 +1,106 @@
+<p>I've implemented the ActionbarSherlock's example com.actionbarsherlock.sample.fragments and all works well until the device orientation is changed when the selected tab has child fragments.</p>
+
+<p><strong>All good:</strong></p>
+
+<p>Tab1 -> Fragment1</p>
+
+<p>Tab2 -> Fragment2</p>
+
+<p>Tab3 -> Fragment3</p>
+
+<p>All is good and can rotate device without problems.  Now if I select a list item in Fragment2 to push Fragment2Child1, all is still good until I rotate the device.  </p>
+
+<p><strong>Not good when device rotated:</strong></p>
+
+<p>Tab1 -> Fragment1</p>
+
+<p>Tab2 -> Fragment2 -> <strong>Fragment2Child1</strong></p>
+
+<p>Tab3 -> Fragment3</p>
+
+<p>At this point the tabs and fragments are recreated but Fragment2 is displayed under Fragment2Child1.  It gets worse when you select another tab, at that point Fragment2 is detached but Fragment2Child1 is displayed under the newly selected tab fragment.  I sort of understand the mechanics here but I can't work out how to not attach Fragment2 after rotation and then detaching Fragment2Child1 (or any fragment for that matter) when another tab is selected.</p>
+
+<p>from MainFragment which extends SherlockFragmentActivity</p>
+
+<p>…</p>
+
+<pre><code>int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+if (currentapiVersion >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+
+            mTabManager.addTab(mTabHost.newTabSpec("new").setIndicator(getString(R.string.new_)), NewListSupportActivity.NewListFragment.class, null);
+        mTabManager.addTab(mTabHost.newTabSpec("project").setIndicator(getString(R.string.project)), ProjectSupportActivity.ProjectListFragment.class, null);
+        mTabManager.addTab(mTabHost.newTabSpec("setting").setIndicator(getString(R.string.settings)), SettingSupportActivity.SettingListFragment.class, null);
+
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+        }
+
+    } else {
+</code></pre>
+
+<p>…</p>
+
+<p>From the TabManager class</p>
+
+<pre><code>public void addTab(TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+
+    tabSpec.setContent(new DummyTabFactory(this.mActivity));
+    final String tag = tabSpec.getTag();
+
+    final TabInfo info = new TabInfo(tag, clss, args);
+
+    // Check to see if we already have a fragment for this tab, probably
+    // from a previously saved state. If so, deactivate it, because our
+    // initial state is that a tab isn't shown.
+    info.fragment = this.mActivity.getSupportFragmentManager().findFragmentByTag(tag);
+    if (info.fragment != null && !info.fragment.isDetached()) {
+        final FragmentTransaction ft = this.mActivity.getSupportFragmentManager().beginTransaction();
+        ft.detach(info.fragment);
+        ft.commit();
+    }
+
+    this.mTabs.put(tag, info);
+    this.mTabHost.addTab(tabSpec);
+}
+
+@Override
+public void onTabChanged(String tabId) {
+
+    TabInfo newTab = mTabs.get(tabId);
+    if (mLastTab != newTab) {
+        FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(mActivity, newTab.clss.getName(), newTab.args);
+                ft.add(mContainerId, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+            }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        mActivity.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+</code></pre>
+
+<p>And the code that pushes Fragment2Child1 or any child for that matter</p>
+
+<pre><code>public void pushFragment(TradiesFragment current, TradiesFragment fragment) {
+
+    fragment.setFragmentListener(this);
+    final FragmentManager fm = this.fragment.getFragmentManager();
+    final FragmentTransaction ft = fm.beginTransaction();
+    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+    ft.detach(current);
+    ft.add(this.fragment.getId(), fragment);
+    ft.addToBackStack(null);
+    ft.commit();
+}
+</code></pre>

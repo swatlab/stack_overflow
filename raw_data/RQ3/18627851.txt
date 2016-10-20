@@ -1,0 +1,34 @@
+<p>hi guys i have manged to animate an image by following the android flip animation tutorial, but I have this issue I am try to animate a butterfly like in the app <code>ibutterfly</code> and I am using this method to apply the transformation </p>
+
+<pre><code>protected void applyTransformation(float interpolatedTime, Transformation t) {
+    final float fromDegrees = mFromDegrees;
+    float degrees = fromDegrees
+            + ((mToDegrees - fromDegrees) * interpolatedTime);
+
+    final float centerX = mCenterX;
+    final float centerY = mCenterY;
+    final Camera camera = mCamera;
+
+    final Matrix matrix = t.getMatrix();
+
+    camera.save();
+
+    camera.rotateY(degrees);
+
+
+
+    camera.getMatrix(matrix);
+    camera.restore();
+
+    matrix.preTranslate(-centerX, -centerY);
+    matrix.postTranslate(centerX, centerY);
+
+    matrix.preScale(scaleType.getScale(scale, interpolatedTime),
+            scaleType.getScale(scale, interpolatedTime), centerX, centerY);
+
+}
+</code></pre>
+
+<p>the problem I am having is the image rotate from the middle point but I need to change the rotate axis to left corner is there a way to do that, I tried everything I know but I cannot manage that, if some one can help me with this i will be much thankful </p>
+
+<p>this is the tutorial i followed on <a href="https://code.google.com/p/android-3d-flip-view-transition/" rel="nofollow">Google Code</a>.</p>

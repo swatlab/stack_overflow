@@ -1,0 +1,43 @@
+<p>I am trying to modify the ShareActionProvider function, so that I can intercept the <code>onClick</code> event and prepare the content that I want to share and then call <code>setShareIntent()</code>. So far, I've just copied the source code for <code>ShareActionProvider()</code> to <code>MyShareActionProvider()</code> and trying to compile/execute with my copy of the code.</p>
+
+<p>The <code>ShareActionProvider()</code> uses <code>ActivityChooserModel</code> and <code>ActivityChooserView</code> classes which are defined inside 
+<code>android.support.v7.internal.widget.ActivityChooserModel</code> and </p>
+
+<pre><code>android.support.v7.internal.widget.ActivityChooserView
+</code></pre>
+
+<p>Everything seems ok, except for the <code>activityChooserView.setProvider(this)</code> call in the <code>onCreateActionView()</code> function. </p>
+
+<pre><code>    @Override
+    public View onCreateActionView() {
+        // Create the view and set its data model.
+        ActivityChooserModel dataModel = ActivityChooserModel.get(mContext, mShareHistoryFileName);
+        ActivityChooserView activityChooserView = new ActivityChooserView(mContext);
+        activityChooserView.setActivityChooserModel(dataModel);
+
+        // Lookup and set the expand action icon.
+        TypedValue outTypedValue = new TypedValue();
+        mContext.getTheme().resolveAttribute(R.attr.actionModeShareDrawable, outTypedValue, true);
+        Drawable drawable = mContext.getResources().getDrawable(outTypedValue.resourceId);
+        activityChooserView.setExpandActivityOverflowButtonDrawable(drawable); 
+
+        activityChooserView.setProvider(this);
+
+        // Set content description
+        activityChooserView.setDefaultActionButtonContentDescription(
+            R.string.shareactionprovider_share_with_application);
+        activityChooserView.setExpandActivityOverflowButtonContentDescription(
+            R.string.shareactionprovider_share_with);
+
+        return activityChooserView;
+    }
+</code></pre>
+
+<p>It seems that the ActionProvider that is used inside <code>activityChooser.setProvider()</code> comes from <code>android.support.v4.view.ActionProvider</code> and not <code>android.view.ActionProvider</code>. </p>
+
+<p>If I change the import for the <code>ActionProvider</code> to <code>android.support.v4.view.ActionProvider</code>, then the compile goes through Ok and I can start my app, but when the menu is inflated, I get an error saying <code>MyShareActionProvider</code> (which is used in <code>menu.xml</code> with the full path and is  an extended class of <code>android.support.v4.viewActionProvider</code>) cannot be cast to <code>android.viewActionProvider</code>, which is what I guess <code>inflater.inflate()</code> returns. </p>
+
+<p>Not sure how to proceed from here.</p>
+
+<p>Thank You,
+Gary</p>

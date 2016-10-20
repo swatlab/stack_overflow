@@ -1,0 +1,31 @@
+<clones>
+<systeminfo processor="nicad3" system="snippets" granularity="functions" threshold="30%" minlines="10" maxlines="2500"/>
+<cloneinfo npcs="114773" npairs="5"/>
+<runinfo ncompares="221443154" cputime="151695458"/>
+
+<clone nlines="14" similarity="100">
+<source file="snippets/98@TransportsRennes.java" startline="49" endline="62" pcid="2"></source>
+<source file="releases/1.3.1/TransportsRennes-1.3.1/TransportsRennes/src/fr/ybo/transportsrennes/adapters/TwitterAdapter.java" startline="49" endline="62" pcid="45600"></source>
+</clone>
+
+<clone nlines="14" similarity="100">
+<source file="snippets/98@TransportsRennes.java" startline="49" endline="62" pcid="2"></source>
+<source file="releases/1.3.0/TransportsRennes-1.3.0/TransportsRennes/src/fr/ybo/transportsrennes/adapters/TwitterAdapter.java" startline="49" endline="62" pcid="87161"></source>
+</clone>
+
+<clone nlines="14" similarity="100">
+<source file="snippets/98@TransportsRennes.java" startline="49" endline="62" pcid="2"></source>
+<source file="releases/1.2.1/TransportsRennes-1.2.1/TransportsRennes/src/fr/ybo/transportsrennes/adapters/TwitterAdapter.java" startline="49" endline="62" pcid="53886"></source>
+</clone>
+
+<clone nlines="14" similarity="100">
+<source file="snippets/98@TransportsRennes.java" startline="49" endline="62" pcid="2"></source>
+<source file="releases/1.2.0/TransportsRennes-1.2.0/TransportsRennes/src/fr/ybo/transportsrennes/adapters/TwitterAdapter.java" startline="50" endline="63" pcid="98121"></source>
+</clone>
+
+<clone nlines="14" similarity="100">
+<source file="snippets/98@TransportsRennes.java" startline="49" endline="62" pcid="2"></source>
+<source file="releases/1.3.2/TransportsRennes-1.3.2/TransportsRennes/src/fr/ybo/transportsrennes/adapters/TwitterAdapter.java" startline="49" endline="62" pcid="97442"></source>
+</clone>
+
+</clones>

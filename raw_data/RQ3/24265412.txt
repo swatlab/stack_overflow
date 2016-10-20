@@ -1,0 +1,154 @@
+<p>I start an activity from main activity at startup and finish that activity using finish(). Now the issue is that contents of the activity being called are not visible. Heres the code snippet. </p>
+
+<p>MainActivity onCreate()</p>
+
+<pre><code>protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    Intent intent = new Intent(this, SplashActivity.class);
+    startActivity(intent);
+    // Set up the action bar.
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    // When swiping between different sections, select the corresponding
+    // tab. We can also use ActionBar.Tab#select() to do this if we have
+    // a reference to the Tab.
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        // Create a tab with text corresponding to the page title defined by
+        // the adapter. Also specify this Activity object, which implements
+        // the TabListener interface, as the callback (listener) for when
+        // this tab is selected.
+        actionBar.addTab(
+                actionBar.newTab()
+                        .setText(mSectionsPagerAdapter.getPageTitle(i))
+                        .setTabListener(this));
+    }
+}
+</code></pre>
+
+<p>SplashActivity onCreate()</p>
+
+<pre><code>public class SplashActivity extends ActionBarActivity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_splash);
+    //setContentView(R.layout.fragment_splash);
+    try {
+        Thread.sleep(5000);
+    } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    if (savedInstanceState == null) {
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.container, new PlaceholderFragment()).commit();
+    }
+    finish();
+}
+</code></pre>
+
+<p>SplashActivity Fragment LAYOUT FILE</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.daq.SplashActivity$PlaceholderFragment" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hello_world" />
+
+     <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="192dp"
+        android:layout_height="146dp"
+        android:layout_gravity="center"
+        android:contentDescription="@string/desc"
+        android:src="@drawable/ic_launcher" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>SplashActivity activity_splash.xml</p>
+
+<pre><code><FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.daq.SplashActivity"
+    tools:ignore="MergeRootFrame" >
+
+
+</FrameLayout>
+</code></pre>
+
+<p>Android Manifest FIle</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.daq"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="19" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.example.daq.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.example.daq.SplashActivity"
+            android:label="@string/title_activity_splash"
+            android:parentActivityName="com.example.daq.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.daq.MainActivity" />
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>I donot know why 2 layout files are created when I make one activity (fragment_splash.xml and activity_splash.xml)</p>
+
+<p>I would like to mention that the code works without errors and activities are shown but without content.</p>

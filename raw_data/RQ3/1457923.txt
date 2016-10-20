@@ -1,0 +1,163 @@
+<p>I am using the session proxy method to login to Facebook using Facebook Connect (via my iPhone simulator) and obtain my session key. Am using server side Java to send the notification, however. What I am trying to do is just send a user to user notification back to myself (that's why I set the to_uids as an empty string). I am the logged in user.</p>
+
+<p>Am using the following Facebook REST API:</p>
+
+<p><a href="http://wiki.developers.facebook.com/index.php/Notifications.send" rel="nofollow">http://wiki.developers.facebook.com/index.php/Notifications.send</a></p>
+
+<p>Having trouble sending a user to user notification using the Notifcations.send REST API call...</p>
+
+<pre><code>HttpClient client = new HttpClient();
+String host = "http://www.facebook.com/restserver.php";
+String sessionKey = "42df12eaf555bd728ef236dc-3004114647";
+String notificationsCallId = Long.toString(new java.util.Date().getTime());
+
+// Notifications.send: api_key, call_id, format, method, notification, session key, to_ids, version, 
+String toNotificationsSignature = 
+		"api_key="
+		+ "78c1c4c6a42990fbhh772f8aab96a4r4" 
+		+ "call_id=" + notificationsCallId
+		+ "format=XML" 
+		+ "method=Notifications.send"
+		+ "notification="
+		+ "session_key="+ sessionKey  
+		+ "to_ids" + ""
+		+ "v=1.0"
+		+ "0x786c388bf3cae8668c863215da0ff2";
+
+System.out.println("to md5: " + toNotificationsSignature);
+
+String emptyString = "";
+String notificationsSignature = SimpleMd5.MD5(toNotificationsSignature);
+System.out.println("md5: " + notificationsSignature);
+
+// Parameters
+NameValuePair[] notificationsSendParameters =
+{ 
+	new NameValuePair("api_key", "78c1c4c6a42990fbhh772f8aab96a4r4"),
+	new NameValuePair("call_id", notificationsCallId),
+	new NameValuePair("format", "XML"),
+	new NameValuePair("method", "Notifications.send"),
+	new NameValuePair("notification", ""),
+	new NameValuePair("session_key", sessionKey),
+	new NameValuePair("sig", notificationsSignature),
+	new NameValuePair("to_ids", emptyString),
+	new NameValuePair("v", "1.0") 
+};
+
+PostMethod notificationsSendPost = new PostMethod(host);
+
+notificationsSendPost.setRequestBody(notificationsSendParameters);
+notificationsSendPost.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+notificationsSendPost.setRequestHeader("User-Agent", "Facebook API PHP5 Client 1.1 (curl) 5");
+
+// Execute method and handle any error responses.
+client.executeMethod(notificationsSendPost);
+
+// Create response
+StringBuilder notificationsSendResponse = new StringBuilder();
+
+byte[] byteArrayNotifications = new byte[4096];
+
+for (int n; (n = notificationsSendPost.getResponseBodyAsStream().read(byteArrayNotifications)) != -1;)
+{
+	notificationsSendResponse.append(new String(byteArrayNotifications, 0, n));
+}
+
+String notificationInfo = notificationsSendResponse.toString();
+System.out.println("Notification Info: " + notificationInfo);
+</code></pre>
+
+<p>19:22:06,995 INFO  [STDOUT] Notification Info:</p>
+
+<pre><code><error_response 
+   xmlns="http://api.facebook.com/1.0/" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+   xsi:schemaLocation="http://api.facebook.com/1.0/ http://api.facebook.com/1.0/facebook.xsd">
+   <error_code>104</error_code>
+   <error_msg>Incorrect signature</error_msg>
+   <request_args list="true">
+     <arg>
+        <key>api_key</key>
+        <value>78c1c4c6a42990fbhh772f8aab96a4r4</value>
+     </arg>
+     <arg>
+        <key>call_id</key>
+        <value>1253586126742</value>
+     </arg>
+     <arg>
+        <key>format</key>
+        <value>XML</value>
+     </arg>
+     <arg>
+        <key>method</key>
+        <value>Notifications.send</value>
+     </arg>
+     <arg>
+        <key>notification</key>
+        <value/>
+     </arg>
+     <arg>
+       <key>session_key</key>
+       <value>42df12eaf555bd728ef236dc-3004114647</value>
+     </arg>
+     <arg>
+        <key>sig</key>
+        <value>325a3f78a836fe575ca77be04f66ec9d</value>
+     </arg>
+     <arg>
+        <key>to_ids</key>
+        <value/>
+     </arg>
+     <arg>
+        <key>v</key>
+        <value>1.0</value>
+    </arg>
+    </request_args>
+</error_response>
+</code></pre>
+
+<p>SimpleMd5.toMD5 code:</p>
+
+<pre><code>public class SimpleMd5 {
+
+private static String convertToHex(byte[] data) {
+    StringBuffer buf = new StringBuffer();
+    for (int i = 0; i < data.length; i++) {
+        int halfbyte = (data[i] >>> 4) & 0x0F;
+        int two_halfs = 0;
+        do {
+        	if ((0 <= halfbyte) && (halfbyte <= 9))
+                buf.append((char) ('0' + halfbyte));
+            else
+            	buf.append((char) ('a' + (halfbyte - 10)));
+        	halfbyte = data[i] & 0x0F;
+        } while(two_halfs++ < 1);
+    }
+    return buf.toString();
+}
+
+public static String MD5(String text) 
+throws NoSuchAlgorithmException, UnsupportedEncodingException  {
+	MessageDigest md;
+	md = MessageDigest.getInstance("MD5");
+	byte[] md5hash = new byte[32];
+	md.update(text.getBytes("iso-8859-1"), 0, text.length());
+	md5hash = md.digest();
+	return convertToHex(md5hash);
+  }
+}
+</code></pre>
+
+<p>Question(s):</p>
+
+<p>(1) What am I possibly doing wrong? Why is it returning a 104?</p>
+
+<p>(2) What can I put for the notification string? </p>
+
+<p>I know that its a stripped down version of FBML and HTML, but would like to see an example.</p>
+
+<p>Could I put "Hello" just as a test?</p>
+
+<p>I know I am doing this right, because I have invoked Users.getInfo and Friends.get correctly in my code which doesn't return a 104 error signature. </p>
+
+<p>Thank you for taking the time to read this!</p>

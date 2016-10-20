@@ -1,0 +1,202 @@
+<p>On my code, users can select a "profile picture"
+Users select the picture from gallery (ok work) resize and crop (ok work)
+i have a problem to share the path of the picture, because i have to see that picture in other activity
+i thing to save the full path on a shared preferences, but i have an error of "file not found", but the patch is correct.</p>
+
+<p>Sorry for the english
+ there is the full code: (when i open again this activity, i have the error)</p>
+
+<pre><code>public class profilo extends Activity{
+
+    String nickname;
+    EditText nick;
+    ImageView prof;
+    ImageButton elisse;
+    AlertDialog.Builder builder;
+     private static int RESULT_LOAD_IMAGE = 1;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.settings);
+
+        //codici relativi alla action bar
+        ActionBar ab = getActionBar();
+        ab.setHomeButtonEnabled(true);
+        ab.setDisplayHomeAsUpEnabled(true);
+        setTitle("Impostazioni utente");
+        getActionBar().setIcon(R.drawable.back);
+        //________________________________
+
+
+        updatePreferencesData();
+
+    ImageButton Foto = (ImageButton) findViewById(R.id.imageButton1);
+    Button salva = (Button) findViewById(R.id.buttonSalva);
+    Button password = (Button) findViewById(R.id.button1);
+    elisse= (ImageButton) findViewById(R.id.imageView1);
+    Switch facebook = (Switch) findViewById(R.id.switch1);
+    nick = (EditText) findViewById(R.id.editText1);
+    nickname = "temp";
+    prof= (ImageView) findViewById(R.id.imageView2);
+    View.OnClickListener gestore = new View.OnClickListener() {
+
+        public void onClick(View view) {  
+
+            switch(view.getId()){
+
+              case R.id.imageButton1: //imposta foto profilo
+                  Intent i = new Intent( Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                  startActivityForResult(i, RESULT_LOAD_IMAGE);
+                  break;
+
+              case R.id.buttonSalva: //salva il nickname e le altre impostazioni
+                 nickname = nick.getText().toString();
+                 Toast.makeText(getApplicationContext(), "Salvataggio non implementato", Toast.LENGTH_SHORT).show();
+                System.out.println("il nick name è " +nickname);
+
+                 break;
+
+              case R.id.button1:
+                  Intent intent = new Intent(getApplicationContext(), EditPassword.class);
+                  startActivity(intent);
+                  break;
+
+              case R.id.imageView1:  //setto al click anche sulla foto del profilo, l'apertura della gallery (o lo zoom?? )
+                  Intent b = new Intent( Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                  startActivityForResult(b, RESULT_LOAD_IMAGE);
+                  break;
+
+            }
+          }
+
+        };
+
+        Foto.setOnClickListener(gestore);
+        salva.setOnClickListener(gestore);
+        password.setOnClickListener(gestore);
+        elisse.setOnClickListener(gestore);
+}
+
+
+    //gestisco la grafica della barra
+
+      @Override
+      public boolean onCreateOptionsMenu(Menu menu) {
+              // TODO Auto-generated method stub
+              MenuInflater mMenuInflater = getMenuInflater();
+              mMenuInflater.inflate(R.menu.barra_home, menu);
+
+              return true;
+      }
+
+    //gestisco i click sulla barra in alto
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+            case android.R.id.home:
+                    Intent intent = new Intent(this, MenuLoggato.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    return true;
+           /* case R.id.abForwardHoloLight:
+                    Intent intent2 = new Intent(this, SearchActivity.class);
+                    intent2.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent2);
+                    return true; */
+            default:
+                    return super.onOptionsItemSelected(item);
+
+            }
+    }
+
+
+    @Override
+     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+         super.onActivityResult(requestCode, resultCode, data);
+
+         if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+             Uri selectedImage = data.getData();
+             String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+             Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+             cursor.moveToFirst();
+
+             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+             String picturePath = cursor.getString(columnIndex);
+             cursor.close();
+              // String picturePath contains the path of selected Image
+
+
+             //qui dovrei mandare l'immagine a saverio e poi ritagliarla
+
+
+          SharedPreferences prefs = getSharedPreferences("Preferenze", Context.MODE_PRIVATE);
+          SharedPreferences.Editor editor = prefs.edit();
+         // EditText outputView = (EditText) findViewById(R.id.inputData);
+          CharSequence textData = picturePath;
+
+          if (textData != null) {
+              editor.putString("path", ""+textData);
+             editor.commit();
+          }
+          //aggiorno le preferenze e prendo la foto
+          updatePreferencesData();
+
+         }
+     }
+
+    //metodo per tagliare l'immagine
+    public Bitmap getCroppedBitmap(Bitmap bitmap) {
+         int minore = 0;
+            //devo trovare il minore fra larghezza ed altezza e setto il raggio con quello
+            if( bitmap.getWidth()<=bitmap.getHeight()){
+                minore = bitmap.getWidth();
+            }else{
+                minore = bitmap.getHeight();
+            }
+         Bitmap output = Bitmap.createBitmap(minore, minore, Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        //final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        final Rect rect = new Rect(0, 0, minore, minore);
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        // canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
+        canvas.drawCircle(minore / 2, minore / 2,  minore / 2, paint);
+        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        //Bitmap _bmp = Bitmap.createScaledBitmap(output, 60, 60, false);
+        //return _bmp;
+        return output;
+    }
+
+    private void updatePreferencesData(){
+        // Leggiamo le Preferences
+        SharedPreferences prefs = getSharedPreferences("Preferenze", Context.MODE_PRIVATE);
+        // Leggiamo l'informazione associata alla proprietà TEXT_DATA
+        String textData = prefs.getString("path", "NO");
+
+        System.out.println("path:" + textData);
+        if(textData.equalsIgnoreCase("NO")==false){
+      try{  Bitmap profilo = BitmapFactory.decodeFile(textData);
+          profilo = getCroppedBitmap(profilo);
+          prof.setImageBitmap(profilo);
+          }catch(Exception e){
+              System.out.println("errore " +e);
+          }
+
+            }
+        else{
+            Toast.makeText(getApplicationContext(), "Modifica la foto con un click", Toast.LENGTH_SHORT).show();
+        }
+
+
+    }
+
+
+}
+</code></pre>

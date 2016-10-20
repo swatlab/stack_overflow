@@ -1,0 +1,76 @@
+<p>After getting an outOfMemory error I wanted to load my bitmaps using an AsyncTask so I got this code sample from the android developer website and I'm having some trouble getting everything working together.</p>
+
+<pre><code>public class BitmapLoader {
+
+public static int calculateInSampleSize(BitmapFactory.Options options,
+        int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and
+        // width
+        final int heightRatio = Math.round((float) height
+                / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will
+        // guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+
+public static Bitmap decodeSampledBitmapFromResource(String orgImagePath,
+        int reqWidth, int reqHeight) {
+
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(orgImagePath, options);
+    options.inSampleSize = calculateInSampleSize(options, reqWidth,
+            reqHeight);
+    options.inJustDecodeBounds = false;
+    return BitmapFactory.decodeFile(orgImagePath, options);
+}
+
+class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
+    private final WeakReference<ImageView> imageViewReference;
+    private int data = 0;
+
+    public BitmapWorkerTask(ImageView imageView) {
+        // Use a WeakReference to ensure the ImageView can be garbage
+        // collected
+        imageViewReference = new WeakReference<ImageView>(imageView);
+    }
+
+    // Decode image in background.
+    @Override
+    protected Bitmap doInBackground(Integer... params) {
+        data = params[0];
+        return decodeSampledBitmapFromResource(getResources(), data, 100,
+                100);
+    }
+
+    // Once complete, see if ImageView is still around and set bitmap.
+    @Override
+    protected void onPostExecute(Bitmap bitmap) {
+        if (imageViewReference != null && bitmap != null) {
+            final ImageView imageView = imageViewReference.get();
+            if (imageView != null) {
+                imageView.setImageBitmap(bitmap);
+            }
+        }
+    }
+}
+}
+</code></pre>
+
+<p>I am getting an error: the method getResources() is undefined for the type BitmapLoader.BitmapWorkerTask. I'm relatively new to android so its very possible that I'm using the wrong method or something so I was hoping someone could enlighten me on the correct usage or at least point me in the right direction. Thanks in advance.</p>
+
+<p><a href="http://developer.android.com/training/displaying-bitmaps/process-bitmap.html" rel="nofollow">link to the code i copied</a></p>

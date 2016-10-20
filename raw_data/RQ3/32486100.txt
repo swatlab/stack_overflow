@@ -1,0 +1,262 @@
+<p>I am building an activity on a mobile app that would accept donations.  I am using the <a href="https://github.com/SufficientlySecure/donations" rel="nofollow">DonationsFragment</a> as a guide.  I am attempting to replace the Spinner used in the above example with an EditText so that the donor can type in a value to donate.</p>
+
+<p>The following is my source code:</p>
+
+<pre><code>public class DonateFragment extends Fragment {
+
+public static final String ARG_DEBUG = "debug";
+
+public static final String ARG_GOOGLE_ENABLED = "googleEnabled";
+public static final String ARG_GOOGLE_PUBKEY = "googlePubkey";
+public static final String ARG_GOOGLE_CATALOG = "googleCatalog";
+public static final String ARG_GOOGLE_CATALOG_VALUES = "googleCatalogValues";
+
+private static final String TAG = "Donations Library";
+
+// http://developer.android.com/google/play/billing/billing_testing.html
+private static final String[] CATALOG_DEBUG = new String[]{"android.test.purchased",
+        "android.test.canceled", "android.test.refunded", "android.test.item_unavailable"};
+
+private EditText mGoogleEditText;
+private Spinner mGoogleSpinner;
+
+// Google Play helper object
+private IabHelper mHelper;
+
+protected boolean mDebug = false;
+
+protected boolean mGoogleEnabled = false;
+protected String mGooglePubkey = "";
+protected String[] mGoogleCatalog = new String[]{};
+protected String[] mGoogleCatalogValues = new String[]{};
+
+/**
+ * Instantiate DonationsFragment.
+ *
+ * @param debug               You can use BuildConfig.DEBUG to propagate the debug flag from your app to the Donations library
+ * @param googleEnabled       Enabled Google Play donations
+ * @param googlePubkey        Your Google Play public key
+ * @param googleCatalog       Possible item names that can be purchased from Google Play
+ * @param googleCatalogValues Values for the names
+ * @return DonationsFragment
+ */
+public static DonateFragment newInstance(boolean debug, boolean googleEnabled, String googlePubkey, String[] googleCatalog,
+                                            String[] googleCatalogValues) {
+    DonateFragment donateFragment = new DonateFragment();
+    Bundle args = new Bundle();
+
+    args.putBoolean(ARG_DEBUG, debug);
+
+    args.putBoolean(ARG_GOOGLE_ENABLED, googleEnabled);
+    args.putString(ARG_GOOGLE_PUBKEY, googlePubkey);
+    args.putStringArray(ARG_GOOGLE_CATALOG, googleCatalog);
+    args.putStringArray(ARG_GOOGLE_CATALOG_VALUES, googleCatalogValues);
+
+    donateFragment.setArguments(args);
+    return donateFragment;
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    mDebug = getArguments().getBoolean(ARG_DEBUG);
+
+    mGoogleEnabled = getArguments().getBoolean(ARG_GOOGLE_ENABLED);
+    mGooglePubkey = getArguments().getString(ARG_GOOGLE_PUBKEY);
+    mGoogleCatalog = getArguments().getStringArray(ARG_GOOGLE_CATALOG);
+    mGoogleCatalogValues = getArguments().getStringArray(ARG_GOOGLE_CATALOG_VALUES);
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    return inflater.inflate(R.layout.donatefraggoogle, container, false);
+}
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+
+    /* Google */
+    if (mGoogleEnabled) {
+        // inflate google view into stub
+        ViewStub googleViewStub = (ViewStub) getActivity().findViewById(R.id.vwsGoogle);
+        googleViewStub.inflate();
+
+        // choose donation amount
+        mGoogleEditText = (EditText) getActivity().findViewById(R.id.txtDonate);
+
+        Button btGoogle = (Button) getActivity().findViewById(R.id.donations__google_android_market_donate_button);
+        btGoogle.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                donateGoogleOnClick(v);
+            }
+        });
+
+        // Create the helper, passing it our context and the public key to verify signatures with
+        if (mDebug)
+            Log.d(TAG, "Creating IAB helper.");
+        mHelper = new IabHelper(getActivity(), mGooglePubkey);
+
+        // enable debug logging (for a production application, you should set this to false).
+        mHelper.enableDebugLogging(mDebug);
+
+        // Start setup. This is asynchronous and the specified listener
+        // will be called once setup completes.
+        if (mDebug)
+            Log.d(TAG, "Starting setup.");
+        mHelper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
+            public void onIabSetupFinished(IabResult result) {
+                if (mDebug)
+                    Log.d(TAG, "Setup finished.");
+
+                if (!result.isSuccess()) {
+                    // Oh noes, there was a problem.
+                    openDialog(android.R.drawable.ic_dialog_alert, R.string.donations__google_android_market_not_supported_title,
+                            getString(R.string.donations__google_android_market_not_supported));
+                    return;
+                }
+
+                // Have we been disposed of in the meantime? If so, quit.
+                if (mHelper == null) return;
+            }
+        });
+    }
+}
+
+/**
+ * Open dialog
+ */
+void openDialog(int icon, int title, String message) {
+    AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+    dialog.setIcon(icon);
+    dialog.setTitle(title);
+    dialog.setMessage(message);
+    dialog.setCancelable(true);
+    dialog.setNeutralButton(R.string.donations__button_close,
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            }
+    );
+    dialog.show();
+}
+
+/**
+ * Donate button executes donations based on selection in spinner
+ */
+public void donateGoogleOnClick(View view) {
+    String strDonation;
+    strDonation = mGoogleEditText.getText().toString();
+    if (mDebug)
+        Log.d(TAG, "selected item in spinner: " + strDonation);
+
+    if (mDebug) {
+        // when debugging, choose android.test.x item
+        mHelper.launchPurchaseFlow(getActivity(),
+                strDonation, IabHelper.ITEM_TYPE_INAPP,
+                0, mPurchaseFinishedListener, null);
+    } else {
+        mHelper.launchPurchaseFlow(getActivity(),
+                strDonation, IabHelper.ITEM_TYPE_INAPP,
+                0, mPurchaseFinishedListener, null);
+    }
+}
+
+// Callback for when a purchase is finished
+IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener = new IabHelper.OnIabPurchaseFinishedListener() {
+    public void onIabPurchaseFinished(IabResult result, Purchase purchase) {
+        if (mDebug)
+            Log.d(TAG, "Purchase finished: " + result + ", purchase: " + purchase);
+
+        // if we were disposed of in the meantime, quit.
+        if (mHelper == null) return;
+
+        if (result.isSuccess()) {
+            if (mDebug)
+                Log.d(TAG, "Purchase successful.");
+
+            // directly consume in-app purchase, so that people can donate multiple times
+            mHelper.consumeAsync(purchase, mConsumeFinishedListener);
+
+            // show thanks openDialog
+            openDialog(android.R.drawable.ic_dialog_info, R.string.donations__thanks_dialog_title,
+                    getString(R.string.donations__thanks_dialog));
+        }
+    }
+};
+
+// Called when consumption is complete
+IabHelper.OnConsumeFinishedListener mConsumeFinishedListener = new IabHelper.OnConsumeFinishedListener() {
+    public void onConsumeFinished(Purchase purchase, IabResult result) {
+        if (mDebug)
+            Log.d(TAG, "Consumption finished. Purchase: " + purchase + ", result: " + result);
+
+        // if we were disposed of in the meantime, quit.
+        if (mHelper == null) return;
+
+        if (result.isSuccess()) {
+            if (mDebug)
+                Log.d(TAG, "Consumption successful. Provisioning.");
+        }
+        if (mDebug)
+            Log.d(TAG, "End consumption flow.");
+    }
+};
+
+@Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (mDebug)
+        Log.d(TAG, "onActivityResult(" + requestCode + "," + resultCode + "," + data);
+    if (mHelper == null) return;
+
+    // Pass on the fragment result to the helper for handling
+    if (!mHelper.handleActivityResult(requestCode, resultCode, data)) {
+        // not handled, so handle it ourselves (here's where you'd
+        // perform any handling of activity results not related to in-app
+        // billing...
+        super.onActivityResult(requestCode, resultCode, data);
+    } else {
+        if (mDebug)
+            Log.d(TAG, "onActivityResult handled by IABUtil.");
+    }
+}
+}
+</code></pre>
+
+<p>When I click on the Donate button as I was testing it on my phone, it crashes and I get the following messages in LogCat:</p>
+
+<pre><code>09-09 13:37:09.626: E/AndroidRuntime(7707): FATAL EXCEPTION: main
+09-09 13:37:09.626: E/AndroidRuntime(7707): Process: com.danielburgnerjr.flipulatorfree, PID: 7707
+09-09 13:37:09.626: E/AndroidRuntime(7707): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.danielburgnerjr.flipulatorfree/com.danielburgnerjr.flipulatorfree.DonateActivity}: java.lang.ClassCastException: android.widget.TextView cannot be cast to android.widget.EditText
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2413)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2471)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.ActivityThread.access$900(ActivityThread.java:175)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1308)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.os.Handler.dispatchMessage(Handler.java:102)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.os.Looper.loop(Looper.java:146)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.ActivityThread.main(ActivityThread.java:5602)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at java.lang.reflect.Method.invokeNative(Native Method)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at java.lang.reflect.Method.invoke(Method.java:515)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1283)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1099)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at dalvik.system.NativeStart.main(Native Method)
+09-09 13:37:09.626: E/AndroidRuntime(7707): Caused by: java.lang.ClassCastException: android.widget.TextView cannot be cast to android.widget.EditText
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at com.danielburgnerjr.flipulatorfree.DonateFragment.onActivityCreated(DonateFragment.java:105)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.support.v4.app.Fragment.performActivityCreated(Fragment.java:1508)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:947)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1104)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1467)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.support.v4.app.FragmentActivity.onStart(FragmentActivity.java:570)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.Instrumentation.callActivityOnStart(Instrumentation.java:1177)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.Activity.performStart(Activity.java:5461)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2386)
+09-09 13:37:09.626: E/AndroidRuntime(7707):     ... 11 more
+</code></pre>
+
+<p>Is there something I have overlooked?</p>

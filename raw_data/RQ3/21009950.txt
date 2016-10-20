@@ -1,0 +1,118 @@
+<p>Hi i want to make a ListView in a Dialog, with a custom ArrayList adapter, so that when i click on the item to retrieve the Object.</p>
+
+<p>What i have done is the follow: 
+Create a Layout with a ListView element for the Dialog</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical" >
+
+<ListView
+    android:id="@+id/dialogListView"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:divider="#b5b5b5"
+    android:dividerHeight="1dp" />
+</LinearLayout>
+</code></pre>
+
+<p>Created a Custom Layout for items in the listView</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="horizontal" 
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"> 
+
+ <TextView android:id="@+id/singleItemDialogList"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_vertical"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentBottom="true"
+    android:textStyle="bold"
+    android:textSize="22dp"
+    android:textColor="#FFFFFF"
+    android:padding="10dp"
+    android:background="#336699" />
+</LinearLayout>
+</code></pre>
+
+<p>I have my Custom adapter</p>
+
+<pre><code>public class AddressBookAdapter extends BaseAdapter {
+
+private List<AddressBook> objects;
+private LayoutInflater layoutInflater;
+
+public AddressBookAdapter(Context context, List<AddressBook> objects) {
+    this.objects = objects;
+    layoutInflater = LayoutInflater.from(context);
+}
+
+public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder holder;
+
+    if (convertView == null) {
+        convertView = layoutInflater.inflate(R.layout.dialog_list_layout, null);
+        holder = new ViewHolder();
+        holder.simpleItemDialog = (TextView) convertView.findViewById(R.id.singleItemDialogList);
+        convertView.setTag(holder);         
+    } else {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    holder.simpleItemDialog.setText(objects.get(position).getAddress());
+    return convertView;
+}
+
+@Override
+public int getCount() {
+    return objects.size();
+}
+
+@Override
+public AddressBook getItem(int position) {
+    // TODO Auto-generated method stub
+    return objects.get(position);
+}
+
+@Override
+public long getItemId(int position) {
+    // TODO Auto-generated method stub
+    return position;
+}
+
+static class ViewHolder {
+    TextView simpleItemDialog;
+}
+}
+</code></pre>
+
+<p>And finally where i create the dialog and set the adapter</p>
+
+<pre><code>        final Dialog dialog = new Dialog(this);
+    View view = getLayoutInflater().inflate(R.layout.dialog_list_layout, null);
+    ListView lv = (ListView) view.findViewById(R.id.dialogListView);
+    AddressBookAdapter aba = new AddressBookAdapter(Logged.this, cachedData.getAddressBookList());
+    Log.w("ABA",""+aba.getCount());
+    lv.setAdapter(aba);
+    lv.setOnItemClickListener(new OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                long arg3) {
+            Log.w("CLICK","ITEM");
+
+        }
+    });
+    dialog.setContentView(view);
+    dialog.show();
+</code></pre>
+
+<p>Ok now when i open the Dialog i get the error: NullPointerException and points to AddressBookAdapter.getView(line 38) -> Line 38 is: <code>holder.simpleItemDialog.setText(objects.get(position).getAddress());</code></p>
+
+<p>Thank you</p>

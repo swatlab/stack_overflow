@@ -1,0 +1,74 @@
+<p>I'm doing a code to remove one line from a <code><p:datatable></code> using a commandLink in the same line.</p>
+
+<p><strong>XHTML</strong></p>
+
+<pre><code><p:dataTable value="#{demandaController.equipeFornecedor}"
+    var="equipe" id="dtEquipe" style="width:70%; margin-top:5%">
+    ...
+
+    <p:column headerText="Excluir" width="20%">
+        <p:commandLink value="Excluir" actionListener="#{demandaController.removerFuncEquipe(equipe)}" update="dtEquipe" ></p:commandLink>
+    </p:column>
+</p:dataTable>
+</code></pre>
+
+<p><strong>Bean</strong></p>
+
+<pre><code>private List<Equipe> equipeFornecedor = new ArrayList<Equipe>();
+
+public void removerFuncEquipe(Equipe funcionario) {
+    equipeFornecedor.remove(funcionario);
+}
+</code></pre>
+
+<p>The method removerFuncEquipe(equipe) is called with the correct item value (inspected)</p>
+
+<p>But...when i try to remove it by equipeFornecedor.Remove(item), it removes the incorrect value of my list.
+What am I doing wrong??</p>
+
+<p><strong>EDIT</strong>: </p>
+
+<pre><code>public abstract class DefaultEntity implements Serializable {
+
+@Override
+public int hashCode() {
+final int prime = 31;
+int result = 1;
+result = prime * result + (getId() == null ? 0 : getId().hashCode());
+return result;
+}
+
+@Override
+public boolean equals(final Object obj) {
+if (this == obj) {
+    return true;
+}
+if (obj == null) {
+    return false;
+}
+if (getClass() != obj.getClass()) {
+    return false;
+}
+DefaultEntity other = (DefaultEntity) obj;
+if (getId() == null) {
+    if (other.getId() != null) {
+    return false;
+    }
+} else if (!getId().equals(other.getId())) {
+    return false;
+}
+return true;
+}
+
+}
+</code></pre>
+
+<p>Equipe:</p>
+
+<pre><code>public class Equipe extends DefaultEntity {
+....
+}
+</code></pre>
+
+<p>The both objects ID is <code>null</code>, debugging the function <code>equals</code>, i saw that none of the IF conditions is satisfied, and then it returns <code>true</code>.
+How could i fix that function?</p>

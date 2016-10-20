@@ -1,0 +1,239 @@
+<p>I have tried a lot for the code of how to display data from assets folder in android project but i am unable to do this. please help me to get out of this problem.</p>
+
+<p>Thanks for any help
+ EDIT:-<br>
+ My adapter class</p>
+
+<pre><code>    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.io.InputStream;
+    import java.io.OutputStream;
+
+    import android.content.Context;
+    import android.database.Cursor;
+    import android.database.SQLException;
+    import android.database.sqlite.SQLiteDatabase;
+    import android.database.sqlite.SQLiteException;
+    import android.database.sqlite.SQLiteOpenHelper;
+    import android.util.Log;
+
+    public class DBAdapter extends SQLiteOpenHelper{
+        private static String DB_PATH = "/data/data/com.example.mynwedb/databases/wbty";
+
+        private static String DB_NAME = "wbty";
+
+        private SQLiteDatabase myDataBase;
+
+        private final Context myContext;
+
+        public DBAdapter(Context context) 
+        {
+            super(context, DB_NAME, null, 1);
+            this.myContext = context;
+        }
+
+        public void createDataBase() throws IOException{
+            boolean dbExist = checkDataBase();
+
+            if(dbExist)
+            {
+                Log.i("DB....", "database available....");
+            }
+            else
+            {
+                this.getWritableDatabase();
+
+                try {
+
+                    copyDataBase();
+
+                } catch (IOException e) {
+
+                    throw new Error("Error copying database");
+
+                }
+
+                Log.i("DB..", "database created.....");
+            }   
+
+        }
+
+
+        public boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+
+            try{
+
+                String myPath = DB_PATH + DB_NAME;
+
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+            }catch(SQLiteException e){
+
+                Log.e("CheckDb","DB not found");
+                //database does't exist yet.
+
+                if(checkDB != null){
+
+                    checkDB.close();
+
+                }
+            }
+            finally
+            {
+                if(checkDB != null){
+
+                    checkDB.close();
+
+                } 
+                this.close();
+            }
+            return checkDB != null ? true : false;
+
+        }
+
+
+
+
+        private void copyDataBase() throws IOException{
+
+            InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+            String outFileName = DB_PATH + DB_NAME;
+
+            OutputStream myOutput = new FileOutputStream(outFileName);
+            byte[] buffer = new byte[1024];
+
+            int length;
+
+            while ((length = myInput.read(buffer))>0){
+
+                myOutput.write(buffer, 0, length);
+
+            }
+
+            myOutput.flush();
+
+            myOutput.close();
+
+            myInput.close();
+
+        }
+
+        public SQLiteDatabase openDataBase() throws SQLException{
+
+            String myPath = DB_PATH + DB_NAME;
+
+            return myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+        }
+
+
+        @Override
+
+        public synchronized void close() {
+
+            if(myDataBase != null)
+
+                myDataBase.close();
+
+            super.close();
+
+        }
+
+        @Override
+
+        public void onCreate(SQLiteDatabase db) {
+
+        }
+
+        @Override
+
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+
+        }  
+
+
+        public void getData()
+        {
+            SQLiteDatabase myDB ;
+            Cursor cursor ;
+            try {
+
+                myDB=this.openDataBase();                   
+
+                cursor=myDB.rawQuery("SELECT * FROM descriptions",null);
+
+
+                if (cursor != null ) {
+                    if  (cursor.moveToFirst()) {
+                        do {
+
+                            // put your code to get data from cursor                      
+
+                        }while (cursor.moveToNext());
+                    }
+
+                }
+
+
+
+                if(cursor != null)
+                {
+                    myDB.close();
+                    cursor.close();
+                }                      
+            }catch(SQLException sqle){
+
+                throw sqle;
+
+            }
+
+
+        }
+    } 
+</code></pre>
+
+<p>And MyActivity class:-</p>
+
+<pre><code>import java.io.IOException;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.view.Menu;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        DBAdapter myDbHelper = new DBAdapter(MainActivity.this); 
+        try 
+        {
+            myDbHelper.createDataBase();
+        }catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        finally
+        {
+            myDbHelper.close();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+}
+</code></pre>
+
+<p>I have kept db file in assets folder.</p>

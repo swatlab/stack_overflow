@@ -1,0 +1,87 @@
+<p><br>
+I'm try to get images(path) from the <code>sqldatabase</code> and put the images to a <code>gridview</code>. 
+But I get often  an <code>OutOfMemoryError</code>.
+This is my Code:</p>
+
+<pre><code>public void dos(File myDir)
+{
+    Cursor test;
+    MyDB con = new MyDB(mContext);
+    test = con.selectImages();
+
+    List<String> array = new ArrayList<String>();
+    while(test.moveToNext()){
+        String uname = test.getString(2);
+        array.add(uname);
+    }
+
+
+    List<File> list = new ArrayList<File>();
+
+    for (int i = 0; i < array.size(); i++) {
+        list.add(new File(myDir + "/" + array.get(i)));
+    }
+
+    System.out.println(list);
+
+    for (File file : list) {
+        mThumbs.add(Drawable.createFromPath(file.getPath()));
+    }
+}
+
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(230, 310));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(0, 0, 0, 0);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageDrawable(mThumbs.toArray(new Drawable[list.size()])[position]);
+    return imageView;
+}
+</code></pre>
+
+<p>And this is the Error: <br>
+<code>
+10-12 10:56:43.820  19786-19786/de.treevo.app E/AndroidRuntime﹕ FATAL EXCEPTION: main
+    java.lang.OutOfMemoryError
+            at android.graphics.BitmapFactory.nativeDecodeStream(Native Method)
+            at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:530)
+            at android.graphics.BitmapFactory.decodeFile(BitmapFactory.java:303)
+            at android.graphics.BitmapFactory.decodeFile(BitmapFactory.java:329)
+            at android.graphics.drawable.Drawable.createFromPath(Drawable.java:916)
+            at de.treevo.app.ImageAdapter.dos(ImageAdapter.java:76)
+            at de.treevo.app.main_list.onCreate(main_list.java:75)
+            at android.app.Activity.performCreate(Activity.java:5133)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2293)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2389)
+            at android.app.ActivityThread.access$600(ActivityThread.java:153)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1269)
+            at android.os.Handler.dispatchMessage(Handler.java:99)
+            at android.os.Looper.loop(Looper.java:137)
+            at android.app.ActivityThread.main(ActivityThread.java:5289)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:525)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:739)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:555)
+            at dalvik.system.NativeStart.main(Native Method)</code></p>
+
+<p>My Code in main_list.java:</p>
+
+<pre><code>ImageAdapter image = new ImageAdapter(this);
+image.dos(filedir)
+
+GridView gridview = (GridView) findViewById(R.id.gridview);
+gridview.setAdapter(image);
+</code></pre>
+
+<p>My Question: What can i do that it just work without any outofmemory Error. My Test Device is a Nexus 7 from Google.</p>
+
+<p>Edit:
+Thanks for the reply meredrica. That explains a lot when every image is kept in memory. 
+My new Question: What else could id do loag image names from the database and put them in a gridview?</p>

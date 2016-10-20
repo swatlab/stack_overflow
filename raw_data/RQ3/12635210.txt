@@ -1,0 +1,223 @@
+<p>actually i am attempting to create a bar-chart.But i am getting the x and y axis values from the web service by consuming it.</p>
+
+<p>There is no problem on getting the values from the web service, but i have only doubts on passing those values to the bar-chart for creating a bar graph.</p>
+
+<p>Because,after getting run of my emulator,i am providing the proper inputs,if i try to invoke the "Invoke" button,its just showing only the blank screen..But i need to draw a bar-chart.How to do this?</p>
+
+<p>Suggestions please.....</p>
+
+<p>thanks for your precious time!..</p>
+
+<p><strong>PLEASE FIND MY SOURCES FOR REFERENCE</strong></p>
+
+<p><strong>Chart.java</strong></p>
+
+<pre><code>public class Chart extends Activity 
+{
+EditText edt1, edt2;
+TextView txtv1;
+Button btn;
+
+int orderNo = 0;
+int freightRate = 0;
+int marginPercent;
+
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+    edt1 = (EditText) findViewById(R.id.editText1);
+    edt2 = (EditText) findViewById(R.id.editText2);
+
+    btn = (Button) findViewById(R.id.button1);
+    btn.setOnClickListener(new View.OnClickListener() 
+    {
+
+        public void onClick(View v) 
+        {
+            getTMSChart(edt1.getText().toString(), edt2.getText().toString());
+
+            Intent intnt = new Intent(v.getContext(), BarGraphActivity.class);
+
+            intnt.putExtra("orderNo", orderNo); 
+            intnt.putExtra("freightRate", freightRate);
+            //intnt.putExtra("marginPercent", marginPercent);
+
+            startActivity(intnt);
+        }
+    });
+}
+
+public void getTMSChart(String FromDate, String ToDate)
+{
+    System.setProperty("http.keepAlive", "false");
+    SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+
+    envelope.dotNet = true;
+
+    String METHOD = "GetTMSChart";
+    String NAMESPACE = "http://tempuri.org/";
+    String SOAP_ACTION = "http://tempuri.org/GetTMSChart";
+    String URL = "http://54.251.60.177/TMSOrdersService/TMSDetails.asmx";
+
+    SoapObject request = new SoapObject(NAMESPACE, METHOD);
+
+    request.addProperty("FromDate", FromDate);
+    request.addProperty("ToDate", ToDate);
+
+    envelope.setOutputSoapObject(request);
+
+    HttpTransportSE androidHttpTransport = new HttpTransportSE(URL);
+
+    try 
+    {
+        androidHttpTransport.call(SOAP_ACTION, envelope);
+        SoapObject result = (SoapObject) envelope.bodyIn;
+        SoapObject root = (SoapObject) ((SoapObject) (result).getProperty(0)).getProperty("NewDataSet");
+        int tablesCount = root.getPropertyCount();
+
+for (int i = 0; i < tablesCount; i++) 
+{
+    SoapObject table = (SoapObject) root.getProperty(i);
+    int propertyCount = table.getPropertyCount();
+
+    for (int j = 0; j < propertyCount; j++) 
+    {
+    // String ord = table.getPropertyAsString("");
+
+orderNo = Integer.parseInt(table.getPropertyAsString("Order_No"));
+freightRate = Integer.parseInt(table.getPropertyAsString("Freight_Rate"));
+//marginPercent = Integer.parseInt(table.getPropertyAsString("Margin_Percent"));
+
+Log.i("Order Number Check : ", ""+orderNo);
+                Log.i("Freight Rate Check : ", ""+freightRate);
+
+            }
+        }
+    } catch (Exception e) 
+      {
+        }
+}}
+</code></pre>
+
+<p><strong>BarGraphACtivity.java</strong></p>
+
+<pre><code> public class BarGraphActivity extends Chart 
+ {
+
+int[] x_axis;
+int[] y_axis;
+
+public void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main1);
+
+    x_axis = new int[1];
+    y_axis = new int[1];
+
+    x_axis[0] = getIntent().getIntExtra("orderNo", 0);
+    y_axis[0] = getIntent().getIntExtra("freightRate", 0);
+
+    DrawGraph();
+}
+
+public void DrawGraph() 
+{
+
+    String[] titles = new String[] { " Barcharts", "" };
+
+    List<int[]> values = new ArrayList<int[]>();
+    values.add(x_axis);
+    values.add(y_axis);
+
+    int[] colors = new int[] { Color.WHITE, Color.BLACK };
+
+    XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+    renderer.setOrientation(Orientation.HORIZONTAL);
+
+setChartSettings(renderer, "some texts", " ", " ", 0, x_axis, 0, y_axis, Color.GRAY, Color.LTGRAY);
+    renderer.setXLabels(1);
+
+    renderer.addXTextLabel(2, "orderNo");
+    renderer.addYTextLabel(2, "freight");
+
+    renderer.setPanEnabled(true, false);
+
+    int length = renderer.getSeriesRendererCount();
+    for (int i = 0; i < length; i++) 
+    {
+SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+seriesRenderer.setDisplayChartValues(true);
+    }
+
+ChartFactory.getBarChartIntent(this, buildBarDataset(titles, values), renderer, Type.DEFAULT);
+}
+
+public XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+{
+ // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+    XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+    renderer.setAxisTitleTextSize(15);
+    renderer.setChartTitleTextSize(20);
+    renderer.setLabelsTextSize(15);
+    renderer.setLegendTextSize(15);
+
+    int length = colors.length;
+    for (int i = 0; i < length; i++) 
+    {
+        SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+        r.setColor(colors[i]);
+        renderer.addSeriesRenderer(r);
+    }
+
+    return renderer;
+}
+
+public void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle, String yTitle,
+int xMin, int[] x_axis, int yMin, int[] y_axis, int axesColor, int labelsColor) 
+{
+    // sets lots of default values for this renderer
+
+    renderer.setChartTitle(title);
+
+    renderer.setXTitle(xTitle);
+    renderer.setYTitle(yTitle);
+
+    renderer.setXAxisMin(xMin);
+
+    renderer.setYAxisMin(yMin);
+    renderer.setAxesColor(axesColor);
+    renderer.setLabelsColor(labelsColor);
+
+    renderer.setApplyBackgroundColor(true);
+    renderer.setBackgroundColor(Color.GRAY);
+}
+
+public XYMultipleSeriesDataset buildBarDataset(String[] titles, List<int[]> values) 
+{
+    // adds the axis titles and values into the dataset
+
+    XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+    int length = titles.length;
+
+    for (int i = 0; i < length; i++) 
+    {
+        CategorySeries series = new CategorySeries(titles[i]);
+        int[] v = values.get(i);
+        int seriesLength = v.length;
+
+        for (int k = 0; k < seriesLength; k++) 
+        {
+            series.add(v[k]);
+        }
+        dataset.addSeries(series.toXYSeries());
+    }
+    return dataset;
+}
+}
+</code></pre>

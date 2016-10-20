@@ -1,0 +1,15 @@
+<p>My problem is i can't get infinite stream with <code>Retrofit</code>. After i get credentials for initial poll() request - i do initial poll() request. Each poll() request responds in 25 sec if there is no change, or earlier if there are any changes - returning changed_data[]. Each response contains <code>timestamp</code> data needed for next poll request - i should do new poll() request after each poll() response. Here is my code:</p>
+
+<pre><code>getServerApi().getLongPollServer() 
+  .flatMap(longPollServer -> getLongPollServerApi(longPollServer.getServer()).poll("a_check", Config.LONG_POLLING_SERVER_TIMEOUT, 2, longPollServer.getKey(), longPollServer.getTs(), "") 
+   .take(1) 
+   .flatMap(longPollEnvelope -> getLongPollServerApi(longPollServer.getServer()).poll("a_check", Config.LONG_POLLING_SERVER_TIMEOUT, 2, longPollServer.getKey(), longPollEnvelope.getTs(), ""))) 
+   .retry()
+   .subscribe(longPollEnvelope1 -> {
+   processUpdates(longPollEnvelope1.getUpdates());
+});
+</code></pre>
+
+<p>I'm new to RxJava, maybe i don't understand something, but i can't get infinite stream. I get 3 calls, then onNext and onComplete. </p>
+
+<p>P.S. Maybe there is a better solution to implement long-polling on Android?</p>

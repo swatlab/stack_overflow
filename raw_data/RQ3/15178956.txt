@@ -1,0 +1,340 @@
+<p>I'm trying to pull my data from my SQLite DB and display it in a listview, this is what I have so far but it only puts the first record in the listview.
+I think the "while (mCursor.moveToNext()){" bit needs changing but not sure how. The original code put each record in a textview on a new line each time. </p>
+
+<pre><code>    if (mCursor == null){
+        mCursor.close();
+        Log.w("cursor", "null cursor");
+    }       
+
+        mCursor.moveToFirst();
+    String[] s = null;
+
+
+    while (mCursor.moveToNext()){
+
+        s = new String[] { foodNameColumn, proteinColumn, fatColumn, carbsColumn };
+
+        mCursor.moveToNext();
+    }
+
+
+    SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, 
+            R.layout.aa_four_column,
+            mCursor, 
+            s, 
+            new int[] { R.id.txtCol1, R.id.txtCol2, R.id.txtCol3, R.id.txtCol4 }, 0);
+
+    lvDB.setAdapter(adapter);
+</code></pre>
+
+<p><strong>Update:</strong></p>
+
+<p>I've changed it so only this code is in the onCreate method, but the same thing happens, one item displayed when there are multiple things in the DB.</p>
+
+<pre><code>            mCursor = dataBase.select("SELECT * FROM " + TABLE_NAME);
+
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, 
+                    R.layout.aa_four_column,
+                    mCursor, 
+                    new String[] { foodNameColumn, proteinColumn, fatColumn, carbsColumn }, 
+                    new int[] { R.id.txtCol1, R.id.txtCol2, R.id.txtCol3, R.id.txtCol4 }, 0);
+
+        lvDB.setAdapter(adapter);
+
+aa_column_four.xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal" >
+
+    <TextView
+        android:id="@+id/txtCol1"
+        android:layout_width="181dp"
+        android:layout_height="wrap_content"
+        android:text="Column 1 text will end up here!" />
+
+    <TextView
+        android:id="@+id/txtCol2"
+        android:layout_width="63dp"
+        android:layout_height="wrap_content"
+        android:text="Column 2 text will end up here!" />
+
+    <TextView
+        android:id="@+id/txtCol3"
+        android:layout_width="96dp"
+        android:layout_height="wrap_content"
+        android:text="Column 3 text will end up here!" />
+
+    <TextView
+        android:id="@+id/txtCol4"
+        android:layout_width="104dp"
+        android:layout_height="wrap_content"
+        android:text="Column 4 text will end up here!" />
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>DatabaseManager Class</strong></p>
+
+<pre><code>    public class DataBaseManager extends SQLiteOpenHelper {
+
+    //the MAIN package of your project
+    private static String DB_PATH = "/data/data/com.example.activities/databases/";
+
+    //the name of your database
+    private static String DB_NAME = "DB_Nutrition";
+
+    private static SQLiteDatabase mDataBase;
+
+    private static DataBaseManager sInstance = null;
+    // database version   
+    private static final int DATABASE_VERSION = 1;
+
+    /**
+     * Constructor Takes and keeps a reference of the passed context in order to
+     * access to the application assets and resources.
+     */
+    DataBaseManager() {
+        super(ApplicationContextProvider.getContext(), DB_NAME, null, DATABASE_VERSION);
+
+        try {
+            createDataBase();
+            openDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Singleton for DataBase
+     *
+     * @return singleton instance
+     */
+    public static DataBaseManager instance() {
+
+        if (sInstance == null) {
+            sInstance = new DataBaseManager();
+        }
+        return sInstance;
+    }
+
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own
+     * database.
+     *
+     * @throws java.io.IOException io exception
+     */
+    private void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+            // do nothing - database already exist
+        } else {
+
+            // By calling this method an empty database will be created into
+            // the default system path
+            // of your application so we are gonna be able to overwrite that
+            // database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each
+     * time you open the application.
+     *
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            // database doesn't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created
+     * empty database in the system folder, from where it can be accessed and
+     * handled. This is done by transfering bytestream.
+     *
+     * @throws java.io.IOException io exception
+     */
+    public void copyDataBase() throws IOException {
+
+        // Open your local db as the input stream
+        InputStream myInput = ApplicationContextProvider.getContext().getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    private void openDataBase() throws SQLException {
+
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        mDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+    }
+
+    /**
+     * Select method
+     *
+     * @param query select query
+     * @return - Cursor with the results
+     * @throws android.database.SQLException sql exception
+     */
+    public Cursor select(String query) throws SQLException {
+        return mDataBase.rawQuery(query, null);
+    }
+
+    /**
+     * Insert method
+     *
+     * @param table  - name of the table
+     * @param values values to insert
+     * @throws android.database.SQLException sql exception
+     */
+    public void insert(String table, ContentValues values) throws SQLException {
+        mDataBase.insert(table, null, values);
+    }
+
+    /**
+     * Delete method
+     *
+     * @param table - table name
+     * @param where WHERE clause, if pass null, all the rows will be deleted
+     * @throws android.database.SQLException sql exception
+     */
+    public void delete(String table, String where) throws SQLException {
+
+        mDataBase.delete(table, where, null);
+
+    }
+
+    /**
+     * Update method
+     *
+     * @param table  - table name
+     * @param values - values to update
+     * @param where  - WHERE clause, if pass null, all rows will be updated
+     */
+    public void update(String table, ContentValues values, String where) {
+
+        mDataBase.update(table, values, where, null);
+
+    }
+
+    /**
+     * Let you make a raw query
+     *
+     * @param command - the sql comand you want to run
+     */
+    public void sqlCommand(String command) {
+        mDataBase.execSQL(command);
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if (mDataBase != null)
+            mDataBase.close();
+
+        super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+}
+</code></pre>
+
+<p><strong>Error</strong></p>
+
+<pre><code>03-03 15:42:13.894: E/SQLiteLog(9809): (14) cannot open file at line 30176 of [00bb9c9ce4]
+03-03 15:42:13.894: E/SQLiteLog(9809): (14) os_unix.c:30176: (2) open(/data/data/com.example.activities/databases/DB_Nutrition) - 
+03-03 15:42:13.904: E/SQLiteDatabase(9809): Failed to open database '/data/data/com.example.activities/databases/DB_Nutrition'.
+03-03 15:42:13.904: E/SQLiteDatabase(9809): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.example.db_food.DataBaseManager.checkDataBase(DataBaseManager.java:228)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.example.db_food.DataBaseManager.createDataBase(DataBaseManager.java:193)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.example.db_food.DataBaseManager.<init>(DataBaseManager.java:163)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.example.db_food.DataBaseManager.instance(DataBaseManager.java:179)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.example.db_food.MyActivity.onCreate(MyActivity.java:63)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.Activity.performCreate(Activity.java:5104)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.os.Handler.dispatchMessage(Handler.java:99)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.os.Looper.loop(Looper.java:137)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at android.app.ActivityThread.main(ActivityThread.java:5041)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at java.lang.reflect.Method.invokeNative(Native Method)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at java.lang.reflect.Method.invoke(Method.java:511)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+03-03 15:42:13.904: E/SQLiteDatabase(9809):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

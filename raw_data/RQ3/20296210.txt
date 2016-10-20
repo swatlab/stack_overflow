@@ -1,0 +1,357 @@
+<p>I'm trying to upgrade database.<br/></p>
+
+<p>In onUpgrade function, <br/><br/>
+1. extract favourite data from favourite table of database lower version;<br/>
+2. save favourite data as query in "files/temp_favourite" (as file);<br>
+3. delete database lower version;<br/>
+4. insert database higher version from asset folder;<br/>
+5. read favourite data as query from "files/temp_favourite" (as file) and database.execSQL(query) in favourite table of database higher version;<br/></p>
+
+<p>I achieved 1,2,3. I got errors from 4 and can't proceed to 5.<br/><br/>
+Main Error: java.lang.IllegalStateException: getDatabase called recursively<br/><br/>
+Here is Logcat:<br/></p>
+
+<pre><code>11-30 09:50:45.610: D/gralloc_goldfish(16127): Emulator without GPU emulation detected.
+11-30 09:51:03.950: D/dalvikvm(16127): GC_FOR_ALLOC freed 164K, 8% free 3058K/3292K, paused 129ms, total 193ms
+11-30 09:51:03.960: I/dalvikvm-heap(16127): Grow heap (frag case) to 3.656MB for 635812-byte allocation
+11-30 09:51:04.280: D/dalvikvm(16127): GC_FOR_ALLOC freed 10K, 7% free 3669K/3916K, paused 167ms, total 167ms
+11-30 09:51:04.390: I/Choreographer(16127): Skipped 238 frames!  The application may be doing too much work on its main thread.
+11-30 09:51:04.890: I/Choreographer(16127): Skipped 110 frames!  The application may be doing too much work on its main thread.
+11-30 09:51:06.460: W/InputEventReceiver(16127): Attempted to finish an input event but the input event receiver has already been disposed.
+11-30 09:51:20.830: I/createDatabase-dbExist:(16252): Database exists.
+11-30 09:51:20.930: I/Databse Upgrade(16252): oldVersion=1,newVersion=2
+11-30 09:51:20.930: I/Version(16252): higher version is found.
+11-30 09:51:20.970: I/File(16252): favourite query file exprted.
+11-30 09:51:20.970: I/File(16252): old database file deleted.
+11-30 09:51:20.970: E/SQLiteLog(16252): (14) cannot open file at line 30191 of [00bb9c9ce4]
+11-30 09:51:20.970: E/SQLiteLog(16252): (14) os_unix.c:30191: (2) open(/data/data/com.example.databaseupgrade/databases/Open3905Book) - 
+11-30 09:51:20.990: E/SQLiteDatabase(16252): Failed to open database '/data/data/com.example.databaseupgrade/databases/Open3905Book'.
+11-30 09:51:20.990: E/SQLiteDatabase(16252): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.example.databaseupgrade.util.DatabaseManager.checkDatabase(DatabaseManager.java:98)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.example.databaseupgrade.util.DatabaseManager.createDataBase(DatabaseManager.java:137)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.example.databaseupgrade.util.DatabaseManager.onUpgrade(DatabaseManager.java:69)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:257)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:164)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.example.databaseupgrade.impl.FavouriteServiceImpl.getFavourite(FavouriteServiceImpl.java:40)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.example.databaseupgrade.MainActivity.onCreate(MainActivity.java:37)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.Activity.performCreate(Activity.java:5243)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2140)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2226)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.ActivityThread.access$700(ActivityThread.java:135)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1397)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.os.Handler.dispatchMessage(Handler.java:102)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.os.Looper.loop(Looper.java:137)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at android.app.ActivityThread.main(ActivityThread.java:4998)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at java.lang.reflect.Method.invokeNative(Native Method)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at java.lang.reflect.Method.invoke(Method.java:515)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:777)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:593)
+11-30 09:51:20.990: E/SQLiteDatabase(16252):    at dalvik.system.NativeStart.main(Native Method)
+11-30 09:51:20.990: W/System.err(16252): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+11-30 09:51:20.990: W/System.err(16252):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+11-30 09:51:20.990: W/System.err(16252):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+11-30 09:51:21.000: W/System.err(16252):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+11-30 09:51:21.000: W/System.err(16252):    at com.example.databaseupgrade.util.DatabaseManager.checkDatabase(DatabaseManager.java:98)
+11-30 09:51:21.000: W/System.err(16252):    at com.example.databaseupgrade.util.DatabaseManager.createDataBase(DatabaseManager.java:137)
+11-30 09:51:21.000: W/System.err(16252):    at com.example.databaseupgrade.util.DatabaseManager.onUpgrade(DatabaseManager.java:69)
+11-30 09:51:21.010: W/System.err(16252):    at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:257)
+11-30 09:51:21.010: W/System.err(16252):    at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:164)
+11-30 09:51:21.010: W/System.err(16252):    at com.example.databaseupgrade.impl.FavouriteServiceImpl.getFavourite(FavouriteServiceImpl.java:40)
+11-30 09:51:21.010: W/System.err(16252):    at com.example.databaseupgrade.MainActivity.onCreate(MainActivity.java:37)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.Activity.performCreate(Activity.java:5243)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2140)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2226)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.ActivityThread.access$700(ActivityThread.java:135)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1397)
+11-30 09:51:21.010: W/System.err(16252):    at android.os.Handler.dispatchMessage(Handler.java:102)
+11-30 09:51:21.010: W/System.err(16252):    at android.os.Looper.loop(Looper.java:137)
+11-30 09:51:21.010: W/System.err(16252):    at android.app.ActivityThread.main(ActivityThread.java:4998)
+11-30 09:51:21.010: W/System.err(16252):    at java.lang.reflect.Method.invokeNative(Native Method)
+11-30 09:51:21.010: W/System.err(16252):    at java.lang.reflect.Method.invoke(Method.java:515)
+11-30 09:51:21.010: W/System.err(16252):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:777)
+11-30 09:51:21.010: W/System.err(16252):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:593)
+11-30 09:51:21.010: W/System.err(16252):    at dalvik.system.NativeStart.main(Native Method)
+11-30 09:51:21.050: D/AndroidRuntime(16252): Shutting down VM
+11-30 09:51:21.050: W/dalvikvm(16252): threadid=1: thread exiting with uncaught exception (group=0xb3a36b90)
+11-30 09:51:21.070: E/AndroidRuntime(16252): FATAL EXCEPTION: main
+11-30 09:51:21.070: E/AndroidRuntime(16252): Process: com.example.databaseupgrade, PID: 16252
+11-30 09:51:21.070: E/AndroidRuntime(16252): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.databaseupgrade/com.example.databaseupgrade.MainActivity}: java.lang.IllegalStateException: getDatabase called recursively
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2176)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2226)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.ActivityThread.access$700(ActivityThread.java:135)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1397)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.os.Handler.dispatchMessage(Handler.java:102)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.os.Looper.loop(Looper.java:137)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.ActivityThread.main(ActivityThread.java:4998)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at java.lang.reflect.Method.invokeNative(Native Method)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at java.lang.reflect.Method.invoke(Method.java:515)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:777)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:593)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at dalvik.system.NativeStart.main(Native Method)
+11-30 09:51:21.070: E/AndroidRuntime(16252): Caused by: java.lang.IllegalStateException: getDatabase called recursively
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:204)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.database.sqlite.SQLiteOpenHelper.getReadableDatabase(SQLiteOpenHelper.java:188)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at com.example.databaseupgrade.util.DatabaseManager.createDataBase(DatabaseManager.java:143)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at com.example.databaseupgrade.util.DatabaseManager.onUpgrade(DatabaseManager.java:69)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:257)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:164)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at com.example.databaseupgrade.impl.FavouriteServiceImpl.getFavourite(FavouriteServiceImpl.java:40)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at com.example.databaseupgrade.MainActivity.onCreate(MainActivity.java:37)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.Activity.performCreate(Activity.java:5243)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2140)
+11-30 09:51:21.070: E/AndroidRuntime(16252):    ... 11 more
+</code></pre>
+
+<p>Here is DatabaseManager.java:</p>
+
+<pre><code>package com.example.databaseupgrade.util;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.text.DateFormatSymbols;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
+
+import com.example.databaseupgrade.doa.FavouriteService;
+import com.example.databaseupgrade.domain.Favourite;
+import com.example.databaseupgrade.impl.FavouriteServiceImpl;
+
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class DatabaseManager extends SQLiteOpenHelper {
+    private static final String DATABASE_PATH = "/data/data/com.example.databaseupgrade/databases/";
+    private static final String DATABASE_NAME = "Open3905Book";
+    private static final String CACHE_NAME="temp_favourite";
+    private static final int DATABASE_VERSION = 2;
+    private static final int SPLIT_NUMBER = 6;
+    private final Context context;
+
+    public DatabaseManager(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase database) {
+        Log.i("onCreate:", "true");
+        try {
+            createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.i("Databse Upgrade", "oldVersion=" + oldVersion + ",newVersion="
+                + newVersion);
+        if (newVersion > oldVersion) {
+            Log.i("Version", "higher version is found.");
+
+            exportFavourite(db);
+            Log.i("File","favourite query file exprted.");
+
+            File file=new File(DATABASE_PATH+DATABASE_NAME);
+            file.delete();
+
+            Log.i("File", "old database file deleted.");
+
+            try {
+                createDataBase();
+                Log.i("Database", "created new database.");
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+//          try {
+//              importFavourite(db);
+//              Log.i("File", "favourite query file imported.");
+//          } catch (SQLiteException e) {
+//              // TODO Auto-generated catch block
+//              e.printStackTrace();
+//          } catch (IOException e) {
+//              // TODO Auto-generated catch block
+//              e.printStackTrace();
+//          }
+        } else {
+            Log.i("Version", "lower version is found.");
+        }
+
+    }
+
+    public boolean checkDatabase() {
+
+        SQLiteDatabase checkDB = null;
+        try {
+            String fullPath = DATABASE_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(fullPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+    private void copyDataBase() throws IOException {
+        File DBFile = new File(DATABASE_PATH, DATABASE_NAME);
+        AssetManager am = context.getAssets();
+        OutputStream os = new FileOutputStream(DBFile);
+        DBFile.createNewFile();
+        byte[] b = new byte[1024];
+        int i, r;
+        String[] Files = am.list("");
+        Arrays.sort(Files);
+        for (i = 1; i < SPLIT_NUMBER + 1; i++) {
+            String fn = String.format("%d.bible", i);
+            if (Arrays.binarySearch(Files, fn) < 0)
+                break;
+            InputStream is = am.open(fn);
+            while ((r = is.read(b)) != -1)
+                os.write(b, 0, r);
+            is.close();
+        }
+        os.close();
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDatabase();
+        if (dbExist) {
+            // do nothing - database already exist
+            Log.i("createDatabase-dbExist:", "Database exists.");
+
+        } else {
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+                Log.i("createDatabase-copyDatabase:", "Copying database.");
+            } catch (IOException e) {
+                Log.w("Error-createDatabase-copyDatabase:",
+                        "Error copying database");
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+
+    private void exportFavourite(SQLiteDatabase db) throws SQLiteException {
+        String sql = "SELECT * FROM favourite ORDER BY id DESC";
+        Cursor cursor = db.rawQuery(sql, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String scripture=cursor.getString(1);
+                int bible_id=Integer.parseInt(cursor.getString(2));
+                String query="INSERT INTO favourite(scripture,bible_id,datetime) VALUES(\""+scripture+"\","+bible_id+",\""+getDateAndTime()+"\");";
+                try {
+                    setQuerytoFile(query);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            } while (cursor.moveToNext());
+        }
+    }
+
+    private void importFavourite(SQLiteDatabase db)throws SQLiteException, IOException{
+        String sql=getQueryfromFile();
+        db.execSQL(sql);
+    }
+    public void setQuerytoFile(String str) throws IOException {
+        FileOutputStream outputStream;
+        try {
+          outputStream = context.openFileOutput(CACHE_NAME, Context.MODE_APPEND);
+          outputStream.write(str.getBytes());
+          outputStream.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+    }
+
+    public String getQueryfromFile() throws IOException{
+        FileInputStream inputStream;
+        String line = null;
+        try{
+            inputStream=context.openFileInput(CACHE_NAME);
+            InputStreamReader isr=new InputStreamReader(inputStream);
+            BufferedReader buffer=new BufferedReader(isr);
+            StringBuilder sb=new StringBuilder();
+            while((line=buffer.readLine())!=null){
+                sb.append(line);
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return line;
+    }
+
+    public String getDateAndTime(){
+        Calendar c = Calendar.getInstance();
+        String str=c.get(Calendar.HOUR)+":"+c.get(Calendar.MINUTE)+" ";
+        if(c.get(Calendar.AM_PM)==0){
+            str+="AM ";
+        }else{
+            str+="PM ";
+        }
+        str+=c.get(Calendar.DATE);
+
+        String month="";
+        int num=c.get(Calendar.MONTH);
+        DateFormatSymbols dfs = new DateFormatSymbols();
+        String[] months = dfs.getMonths();
+        if (num >= 0 && num <= 11 ) {
+               month = months[num];
+        }
+        str+=month+" "+c.get(Calendar.YEAR);
+        return str;
+    }
+
+}
+</code></pre>
+
+<p>What's the solution to achieve 4 OR 4 and 5?</p>

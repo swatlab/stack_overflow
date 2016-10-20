@@ -1,0 +1,375 @@
+<p>I'm working on AutoCompleteTextView and my end result for my autocompletetextview should be like this <a href="https://lh3.ggpht.com/W89eqMvqowxOi0jG4Z_we86NNy3lVzatqRILC6zdmboXkaAP3QRVcdht1ulkf0BvR3Ev" rel="nofollow">link</a> (From and To)
+but i have one error at <code>setText</code>. it showed me this</p>
+
+<blockquote>
+  <p>The method setText(String) is undefined for the type String</p>
+</blockquote>
+
+<p>I don't know what is wrong with it. the error is at FindMePlace.java please help me. </p>
+
+<p><strong>AutoCompleteDBAdapter.java</strong></p>
+
+<pre><code>import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class AutoCompleteDbAdapter {
+
+    private static final int DATABASE_VERSION = 1;
+    private static final String DB_PATH = "data/data/com.example.ukmlocationsearching/databases/";
+    private static final String DATABASE_NAME = "AcademicLocation";
+    private static final String TABLE_NAME = "UKMRoute";
+
+    private static final String KEY_ROUTEID = "ID_route";
+    private static final String KEY_FROMLOCATION = "FromLocation";
+    private static final String KEY_TODESTINATION = "ToDestination";
+    private static final String KEY_ROUTE1 = "Route1";
+    private static final String KEY_ROUTE2 = "Route2";
+
+    private DatabaseHelper mDbHelper;
+    private SQLiteDatabase mDb;
+    private final Activity mActivity;
+
+    // private final Context myContext;
+
+    private class DatabaseHelper extends SQLiteOpenHelper {
+
+        DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        }
+
+        public void createDataBase() throws IOException {
+            boolean dbExist = checkDataBase();
+
+            if (dbExist) {
+                // do nothing - database already exist
+            } else {
+                // By calling this method and empty database will be created
+                // into the default system path
+                // of your application so we are gonna be able to overwrite that
+                // database with our database.
+                this.getReadableDatabase();
+
+                try {
+                    copyDataBase();
+
+                } catch (IOException e) {
+                    throw new Error("Error copying database");
+
+                }
+            }
+        }
+
+        private boolean checkDataBase() {
+            SQLiteDatabase checkDB = null;
+
+            try {
+                String myPath = DB_PATH + DATABASE_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                        SQLiteDatabase.OPEN_READONLY);
+
+            } catch (SQLiteException e) {
+                // database does't exist yet.
+            }
+
+            if (checkDB != null) {
+                checkDB.close();
+            }
+            return checkDB != null ? true : false;
+        }
+
+        private void copyDataBase() throws IOException {
+
+            // Open your local db as the input stream
+            InputStream myInput = mActivity.getAssets().open(DATABASE_NAME);
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DATABASE_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            // transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+
+            // Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+
+        }
+
+        public void openDataBase() throws SQLException {
+            // Open the database
+            String myPath = DB_PATH + DATABASE_NAME;
+            mDb = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        }
+
+        @Override
+        public synchronized void close() {
+
+            if (mDb != null)
+                mDb.close();
+
+            super.close();
+
+        }
+
+        // Creating Tables
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+
+        }
+
+        // Upgrading database
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        }
+
+    }
+
+    public AutoCompleteDbAdapter(Activity activity) {
+        this.mActivity = activity;
+
+    }
+
+    public AutoCompleteDbAdapter open() throws SQLException {
+        mDbHelper = this.new DatabaseHelper(mActivity);
+        mDb = mDbHelper.getWritableDatabase();
+        return this;
+    }
+
+    /**
+     * Closes the database.
+     */
+    public void close() {
+        if (mDbHelper != null){
+        mDbHelper.close();
+        }
+    }
+//-------------------------------------------------------------------------------------
+
+    /**
+     * Return a Cursor that returns all states (and their state capitals) where
+     * the state name begins with the given constraint string.
+     * 
+     * @param constraint
+     *            Specifies the first letters of the states to be listed. If
+     *            null, all rows are returned.
+     * @return Cursor managed and positioned to the first state, if found
+     * @throws SQLException
+     *             if query fails
+     */
+    public Cursor getMatchingFromLocation(String constraint) throws SQLException {
+
+        String queryString = "SELECT * FROM " + TABLE_NAME;
+
+        if (constraint != null) {
+            // Query for any rows where the state name begins with the
+            // string specified in constraint.
+            //
+            // NOTE:
+            // If wildcards are to be used in a rawQuery, they must appear
+            // in the query parameters, and not in the query string proper.
+            // See http://code.google.com/p/android/issues/detail?id=3153
+            constraint = constraint.trim() + "%";
+            queryString += " WHERE FromLocation LIKE ?";
+        }
+        String params[] = { constraint };
+
+        if (constraint == null) {
+            // If no parameters are used in the query,
+            // the params arg must be null.
+            params = null;
+        }
+        try {
+            Cursor cursor = mDb.rawQuery(queryString, params);
+            if (cursor != null) {
+                this.mActivity.startManagingCursor(cursor);
+                cursor.moveToFirst();
+                return cursor;
+            }
+        } catch (SQLException e) {
+            Log.e("AutoCompleteDbAdapter", e.toString());
+            throw e;
+        }
+
+        return null;
+    }
+
+    /**
+     * Populates the database with data on states and state capitals.
+     * 
+     * @param db
+     *            The database to be populated; must have the appropriate table
+     *            ("state") and columns ("state" and "values") already set up.
+     */
+    // Adding new Poi
+    public void addUkmRoute(UkmRoute Ukmroute) {
+        //SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_ROUTEID, Ukmroute.getID()); // ID
+        values.put(KEY_FROMLOCATION, Ukmroute.getFromLocation()); //    from
+        values.put(KEY_TODESTINATION, Ukmroute.getToDestination()); // to
+        values.put(KEY_ROUTE1, Ukmroute.getRoute1()); // route1
+        values.put(KEY_ROUTE2, Ukmroute.getRoute2()); //  route2
+
+        // Inserting Row
+        mDb.insert(DATABASE_NAME, null, values);
+        mDb.close(); // Closing database connection
+    }
+
+}
+</code></pre>
+
+<p><strong>FindMePlace.java</strong></p>
+
+<pre><code>package com.example.series1;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.content.Context;
+import android.database.Cursor;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.CursorAdapter;
+import android.widget.TextView;
+
+public class FindMePlace extends Activity {
+
+    private AutoCompleteDbAdapter mDbHelper;
+    private AutoCompleteTextView fromLocation, toDestination;
+    Button search;
+
+    class ItemAutoTextAdapter extends CursorAdapter implements
+            android.widget.AdapterView.OnItemClickListener {
+
+        private AutoCompleteDbAdapter mDbHelper;
+
+        public ItemAutoTextAdapter(AutoCompleteDbAdapter dbHelper) {
+            // Call the CursorAdapter constructor with a null Cursor.
+            super(FindMePlace.this, null);
+            mDbHelper = dbHelper;
+        }
+//------------------------------------------------------------------------------------
+        @Override
+        public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
+            if (getFilterQueryProvider() != null) {
+                return getFilterQueryProvider().runQuery(constraint);
+            }
+
+            Cursor cursor = mDbHelper
+                    .getMatchingFromLocation((constraint != null ? constraint
+                            .toString() : null));
+
+            return cursor;
+        }
+
+        @Override
+        public String convertToString(Cursor cursor) {
+            //ubah name table name
+            final int columnIndex = cursor.getColumnIndexOrThrow("FromLocation");
+            final String str = cursor.getString(columnIndex);
+            return str;
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+            /*final String text = convertToString(cursor);
+            ((TextView) view).setText(text);*/
+            final int fromColumnIndex = cursor.getColumnIndexOrThrow("FromLocation");
+            final int toColumnIndex = cursor.getColumnIndexOrThrow("ToDestination");
+            TextView text1 = (TextView) view.findViewById(R.id.text1);
+            text1.setText(cursor.getString(fromColumnIndex));
+            TextView text2 = (TextView) view.findViewById(R.id.text1);
+            text2.setText(cursor.getString(toColumnIndex));
+        }
+
+        @Override
+        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            final LayoutInflater inflater = LayoutInflater.from(context);
+            //final View view = inflater.inflate(android.R.layout.simple_dropdown_item_1line, parent, false);
+            final View view = inflater.inflate(R.layout.list_item, parent, false);
+            return view;
+        }
+//-------------------------------------------------------------------------------------------
+        @Override
+        public void onItemClick(AdapterView<?> listView, View view,
+                int position, long id) {
+            // Get the cursor, positioned to the corresponding row in the result
+            // set
+            Cursor cursor = (Cursor) listView.getItemAtPosition(position);
+
+            // Get the state's capital from this row in the database.
+             //**kene ubah*************capital nama database
+            String fromLocation = cursor.getString(cursor.getColumnIndexOrThrow("FromLocation"));
+            String toDestination = cursor.getString(cursor.getColumnIndexOrThrow("ToDestination"));
+
+            // Update the parent class's TextView
+            //mStateCapitalView.setText(fromLocation);
+            fromLocation.setText("");
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.find_me_place);
+        AutoCompleteDbAdapter dbHelper = new AutoCompleteDbAdapter(this);
+        dbHelper.open();
+
+        fromLocation = (AutoCompleteTextView) findViewById(R.id.locationTxt);
+        toDestination = (AutoCompleteTextView) findViewById(R.id.destinationTxt);
+        search = (Button) findViewById(R.id.button1);
+
+         ItemAutoTextAdapter adapter = this.new ItemAutoTextAdapter(dbHelper);
+         fromLocation.setAdapter(adapter);
+         fromLocation.setOnItemClickListener(adapter);
+         toDestination.setAdapter(adapter);
+         toDestination.setOnItemClickListener(adapter);
+
+         /*AutoCompleteTextView fromLocation = (AutoCompleteTextView) findViewById(R.id.locationTxt);
+         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, R.layout.country_list, COUNTRIES);
+         fromLocation.setAdapter(arrayAdapter); */
+
+         search.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                setResult(RESULT_OK);
+                finish();
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.find_me_place, menu);
+        return true;
+    }
+
+}
+</code></pre>

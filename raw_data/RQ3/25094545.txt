@@ -1,0 +1,180 @@
+<p>I am new in android.Now i am developing one location based alarm .But in this one i need to take latitudes and longitudes continuously when the user is moving and also the app will be in off mode.I got many codes but all these are working when the app is on.I gave the code below.</p>
+
+<h2><strong>Service class</strong></h2>
+
+<pre><code>public class LocationLoggerService extends Service {
+    public static final String BROADCAST_ACTION = "Hello World";
+    private static final int TWO_MINUTES = 1000 * 60 * 2;
+    public LocationManager locationManager;
+    public MyLocationListener listener;
+    public Location previousBestLocation = null;
+
+    Intent intent;
+    int counter = 0;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        intent = new Intent(BROADCAST_ACTION);      
+    }
+
+    @Override
+    public void onStart(Intent intent, int startId) {      
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        listener = new MyLocationListener();        
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, listener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    protected boolean isBetterLocation(Location location, Location currentBestLocation) {
+        if (currentBestLocation == null) {
+            // A new location is always better than no location
+            return true;
+        }
+
+        // Check whether the new location fix is newer or older
+        long timeDelta = location.getTime() - currentBestLocation.getTime();
+        boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+        boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+        boolean isNewer = timeDelta > 0;
+
+        // If it's been more than two minutes since the current location, use the new location
+        // because the user has likely moved
+        if (isSignificantlyNewer) {
+            return true;
+        // If the new location is more than two minutes older, it must be worse
+        } else if (isSignificantlyOlder) {
+            return false;
+        }
+
+        // Check whether the new location fix is more or less accurate
+        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+        boolean isLessAccurate = accuracyDelta > 0;
+        boolean isMoreAccurate = accuracyDelta < 0;
+        boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+        // Check if the old and new location are from the same provider
+        boolean isFromSameProvider = isSameProvider(location.getProvider(),
+                currentBestLocation.getProvider());
+
+        // Determine location quality using a combination of timeliness and accuracy
+        if (isMoreAccurate) {
+            return true;
+        } else if (isNewer && !isLessAccurate) {
+            return true;
+        } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
+            return true;
+        }
+        return false;
+    }
+
+    /** Checks whether two providers are the same */
+    private boolean isSameProvider(String provider1, String provider2) {
+        if (provider1 == null) {
+          return provider2 == null;
+        }
+        return provider1.equals(provider2);
+    }
+
+    @Override
+    public void onDestroy() {       
+       // handler.removeCallbacks(sendUpdatesToUI);     
+        super.onDestroy();
+        Log.v("STOP_SERVICE", "DONE");
+        locationManager.removeUpdates(listener);        
+    }   
+
+    public static Thread performOnBackgroundThread(final Runnable runnable) {
+        final Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    runnable.run();
+                } finally {
+
+                }
+            }
+        };
+        t.start();
+        return t;
+    }
+
+
+    public class MyLocationListener implements LocationListener
+    {
+
+        public void onLocationChanged(final Location loc)
+        {
+            Log.i("**************************************", "Location changed");
+            if(isBetterLocation(loc, previousBestLocation)) {
+                loc.getLatitude();
+                loc.getLongitude();             
+                intent.putExtra("Latitude", loc.getLatitude());
+                intent.putExtra("Longitude", loc.getLongitude());     
+                intent.putExtra("Provider", loc.getProvider());      
+                System.out.println("location"+loc.getLatitude());
+                sendBroadcast(intent);          
+                /*final Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());         
+                String Text = "";
+                try {
+                    List<Address> addresses = geocoder.getFromLocation(loc.getLatitude(), loc.getLongitude(), 1);                
+                    Text = "My current location is: "+addresses.get(0).getAddressLine(0); 
+
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    Text = "My current location is: " +"Latitude = " + loc.getLatitude() + ", Longitude = " + loc.getLongitude();  
+                }
+                */
+                //Toast.makeText( getApplicationContext(), "Location polled to server", Toast.LENGTH_SHORT).show();
+            }                               
+        }
+
+        public void onProviderDisabled(String provider)
+        {
+            Toast.makeText( getApplicationContext(), "Gps Disabled", Toast.LENGTH_SHORT ).show();
+        }
+
+
+        public void onProviderEnabled(String provider)
+        {
+            Toast.makeText( getApplicationContext(), "Gps Enabled", Toast.LENGTH_SHORT).show();
+        }
+
+
+        public void onStatusChanged(String provider, int status, Bundle extras)
+        {
+
+        }
+
+    }
+    }
+</code></pre>
+
+<p><strong>Activity code</strong></p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        ComponentName comp = new ComponentName(getPackageName(), LocationLoggerService.class.getName());
+        ComponentName service = startService(new Intent().setComponent(comp));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+}
+</code></pre>

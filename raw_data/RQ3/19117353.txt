@@ -1,0 +1,57 @@
+<p>Using the library slidingmenu and actionbarsherlock i try to write the code to make clickable the icon in the actionbar but i get an error with crash. This is the code of toggle:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        menu.toggle();
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>The logcat says:</p>
+
+<pre><code>10-01 15:18:00.134: E/AndroidRuntime(27038): FATAL EXCEPTION: main
+10-01 15:18:00.134: E/AndroidRuntime(27038): java.lang.NullPointerException
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.db.batt.MainActivity.onOptionsItemSelected(MainActivity.java:512)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.support.v4.app.Watson.onMenuItemSelected(Watson.java:118)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.actionbarsherlock.ActionBarSherlock.callbackOptionsItemSelected(ActionBarSherlock.java:604)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.actionbarsherlock.internal.ActionBarSherlockNative.dispatchOptionsItemSelected(ActionBarSherlockNative.java:92)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.actionbarsherlock.app.SherlockFragmentActivity.onMenuItemSelected(SherlockFragmentActivity.java:204)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.android.internal.widget.ActionBarView$3.onClick(ActionBarView.java:171)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.view.View.performClick(View.java:4247)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.view.View$PerformClick.run(View.java:17733)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.os.Handler.handleCallback(Handler.java:730)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.os.Handler.dispatchMessage(Handler.java:92)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.os.Looper.loop(Looper.java:137)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at android.app.ActivityThread.main(ActivityThread.java:5323)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at java.lang.reflect.Method.invokeNative(Native Method)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at java.lang.reflect.Method.invoke(Method.java:525)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:743)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:559)
+10-01 15:18:00.134: E/AndroidRuntime(27038):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>How can i solve?</p>
+
+<p>EDIT:
+The slidingmenu in my onCreate</p>
+
+<pre><code>SlidingMenu menu;
+        menu = new SlidingMenu(this);
+        menu.setMode(SlidingMenu.LEFT);
+        menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+        menu.setShadowWidth(50);
+        menu.setFadeDegree(0.30f);
+        menu.setSlidingEnabled(true);
+        menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
+        menu.setBehindWidth(420);
+        menu.setMenu(R.layout.menu_frame);
+        //getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+</code></pre>
+
+<p>so <code>menu</code> is declared not?</p>

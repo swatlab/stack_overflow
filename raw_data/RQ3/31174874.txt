@@ -1,0 +1,147 @@
+<p>In AppCompatActivity , I can add the code <code>protected void onResume()</code> to launch some function when UI is shown or restored.</p>
+
+<p>Now I created a Tabbed Activity, I add the code <code>protected void onResume()</code> to PlaceholderFragmentOld class , and I hope the system do someting when the UI cleanup_delete_fragment_old is shown, but the system crash and return the following error.</p>
+
+<pre><code>android.support.v4.app.SuperNotCalledException: Fragment PlaceholderFragmentOld{40e55078 #0 id=0x7f0f0070 android:switcher:2131689584:0} did not call through to super.onResume()
+</code></pre>
+
+<p><strong>PlaceholderFragmentOld.java</strong></p>
+
+<pre><code>public class PlaceholderFragmentOld extends Fragment {
+
+    private AdView adView;
+    private SMSRange mSmsRange;
+
+    private View mView;
+    private Context mContext;
+    private Spinner spinnerRanger;
+    private CheckBox chIsWriteLog;
+
+    public PlaceholderFragmentOld() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,  Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.cleanup_delete_fragment_old, container, false);
+
+        mView=rootView;
+        mContext=rootView.getContext();
+
+
+        return rootView;
+    }
+
+
+    @Override
+    protected void onResume() {
+       DoSometing();
+    }
+}
+</code></pre>
+
+<p><strong>CleanupDelete.java</strong></p>
+
+<pre><code>public class CleanupDelete extends ActionBarActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.cleanup_delete);
+
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            Fragment fragment;
+            switch(position){
+                case 0:
+                    fragment = new PlaceholderFragmentOld();
+                    break;
+                case 1:
+                    fragment = new PlaceholderFragmentReduce();
+                    break;
+                case 2:
+                    fragment = new PlaceholderFragmentTrim();
+                    break;
+                case 3:
+                    fragment = new PlaceholderFragmentPerson();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid section number");
+            }
+
+            return fragment;
+        }
+
+
+
+        @Override
+        public int getCount() {
+            return 4;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.Tab_Old);
+                case 1:
+                    return getString(R.string.Tab_Reduce);
+                case 2:
+                    return getString(R.string.Tab_Trim);
+                case 3:
+                    return getString(R.string.Tab_Person);
+            }
+            return null;
+        }
+    }
+
+
+
+}
+</code></pre>

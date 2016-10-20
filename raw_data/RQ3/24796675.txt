@@ -1,0 +1,217 @@
+<p>I have a view pager like this,</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements TabListener {
+
+/**
+ * The {@link android.support.v4.view.PagerAdapter} that will provide
+ * fragments for each of the sections. We use a {@link FragmentPagerAdapter}
+ * derivative, which will keep every loaded fragment in memory. If this
+ * becomes too memory intensive, it may be best to switch to a
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+ */
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+/**
+ * The {@link ViewPager} that will host the section contents.
+ */
+ViewPager mViewPager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(
+            getSupportFragmentManager());
+
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    actionBar.setDisplayUseLogoEnabled(false);
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setDisplayShowHomeEnabled(false);
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+    mViewPager.setOffscreenPageLimit(2);
+
+    mViewPager
+            .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    actionBar.setSelectedNavigationItem(position);
+                }
+            });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        // Create a tab with text corresponding to the page title defined by
+        // the adapter. Also specify this Activity object, which implements
+        // the TabListener interface, as the callback (listener) for when
+        // this tab is selected.
+        actionBar.addTab(actionBar.newTab()
+                .setText(mSectionsPagerAdapter.getPageTitle(i))
+                .setTabListener(this));
+    }
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class
+        // below).
+        if (position == 0)
+            return Fragment1.newInstance();
+        else
+            return Fragment2.newInstance();
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages.
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.title_section1).toUpperCase(l);
+        case 1:
+            return getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+
+@Override
+public void onTabReselected(Tab arg0, FragmentTransaction arg1) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onTabSelected(Tab arg0, FragmentTransaction arg1) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onTabUnselected(Tab arg0, FragmentTransaction arg1) {
+    // TODO Auto-generated method stub
+
+}
+
+}
+</code></pre>
+
+<p>And <code>Fragment1</code> is</p>
+
+<pre><code>public class Fragment1 extends Fragment {
+
+private EditText et1;
+
+/**
+ * Returns a new instance of this fragment for the given section number.
+ */
+public static Fragment1 newInstance() {
+    Fragment1 fragment = new Fragment1();
+    return fragment;
+}
+
+public Fragment1() {
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.fragment1, container,
+            false);
+    return rootView;
+}
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onActivityCreated(savedInstanceState);
+    et1 = (EditText) getView().findViewById(R.id.text1);
+}
+
+}
+</code></pre>
+
+<p>And <code>Fragmet2</code> is</p>
+
+<pre><code>public class Fragment2 extends Fragment {
+
+private Button btnGetValues;
+/**
+ * Returns a new instance of this fragment for the given section number.
+ */
+public static Fragment2 newInstance() {
+    Fragment2 fragment = new Fragment2();
+    return fragment;
+}
+
+public Fragment2() {
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.fragment2, container,
+            false);
+    return rootView;
+}
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onActivityCreated(savedInstanceState);
+    btnGetValues = (Button) getView().findViewById(R.id.button1);
+    btnGetValues.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+            // Here I want to get the value of edittext which is in fragment1.
+        }
+    });
+}
+
+}
+</code></pre>
+
+<p>As you see, I want to get the value of <code>EdiText</code> which is in <code>Fragment</code> on  <code>Button</code> click event, Button is in <code>Fragment2</code>. I have googled lot, But I can't find any answer, Any help will be highly appreciable. </p>

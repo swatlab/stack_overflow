@@ -1,0 +1,380 @@
+<p>I'm having some weird, inconsistent behaviour regarding the physical menu button in my application. </p>
+
+<p>The following may or may not be helpful:
+I have an app which changes its UI dependent on the device + screen size + orientation. On tablets in a landscape orientation, I use an activity with 2 fragments viewed simultaneously (contacts list + the chat of the selected contact). On phones, and on the tablet in portrait orientation, I instead use 2 separate activities; one for the contacts list and one for the chat. </p>
+
+<p>I mention this because of the following weird behaviour that I am observing: the physical menu button on my devices is unresponsive in my app on both the phone, and on the tablets portrait orientation. When the tablet is in landscape orientation, the physical button does work as expected (which is show the overflow menu of my action bar). The menu button works correctly outside of my app.</p>
+
+<p>I originally thought the issue was with my phone's version of android, but given that I'm also seeing the problem with the tablet in the portrait orientation, I'm not sure where the problem might lie. I did not hardcode any code for the physical menu button, so it shouldn't be a case of some functionality not being appropriately replicated for the single-pane view of the phone and portrait-oriented tablet.</p>
+
+<p>Any ideas or answers would be greatly appreciated!
+Thanks</p>
+
+<p>EDIT: Added requested code.</p>
+
+<p><strong>The portrait orientation activity:</strong> </p>
+
+<pre><code>package com.h.r.android.tcip;
+
+import android.content.ComponentName;
+import android.content.ContentUris;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+import com.h.r.android.tctip.ConversationFragment.Builder;
+import com.h.r.android.tctip.data.TacMessage;
+import com.h.r.android.tctip.db.AddressmessageSchema;
+import com.h.r.android.tctip.settings.PreferencesHelper;
+
+public class ConversationActivity extends LoggedInTCActivity {
+
+    @SuppressWarnings("unused")
+    private final String TAG = ConversationActivity.class.getSimpleName();
+    /**
+     * Projection for address database query results.
+     */
+    protected static final String[] ADDRESS_PROJECTION = new String[] {
+            AddressmessageSchema.UID, AddressmessageSchema.HANDLE };
+
+    /**
+     * The TCService running in the background doing the send/receive work.
+     */
+    protected TCService mService;
+
+    /**
+     * Handler used for the partner handle cursor.
+     */
+    protected final Handler mHandler = new Handler();
+
+    /**
+     * Used to track partner handle changes.
+     */
+    protected ContentObserver mHandleObserver = new ContentObserver(mHandler) {
+        /*
+         * (non-Javadoc)
+         * 
+         * @see android.database.ContentObserver#onChange(boolean)
+         */
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+
+            getSupportActionBar().setTitle(getPartnerHandle());
+        }
+    };
+
+    /**
+     * The actual partner ID, from the intent.
+     */
+    static long mPartnerId;
+
+    /**
+     * The connection binding us to the Service. We're using this to
+     * indicate to Android the dependency between this Activity and the running
+     * Service.
+     */
+    protected final ServiceConnection mConnection = new ServiceConnection() {
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * android.content.ServiceConnection#onServiceDisconnected(android.content
+         * .ComponentName)
+         */
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * android.content.ServiceConnection#onServiceConnected(android.content
+         * .ComponentName, android.os.IBinder)
+         */
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = ((TCService.TCServiceBinder) service)
+                    .getService();
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setTheme(PreferencesHelper.getThemeId(this));
+
+        ConversationFragment frag = new ConversationFragment.Builder(
+                getIntent().getExtras()).build();
+
+
+        setContentView(R.layout.tc_conv);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        /*
+        if (savedInstanceState != null)
+        {
+            mPartnerId = savedInstanceState.getLong("mPartnerId", mPartnerId);
+        }
+        else{
+        */
+        // The Fragment's partnerId
+        mPartnerId = frag.getPartnerId();           
+        //}
+
+
+        getSupportActionBar()
+                .setTitle(
+                        mPartnerId == 0 ? getString(R.string.tc_all_users_chat)
+                                : getPartnerHandle());
+
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.conversation, frag).commit();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        startService(new Intent(this, TCService.class));
+        //startService(new Intent(this, DiscoveryService.class));
+
+        // bind to the service to disable notifications while this is up
+        bindService(new Intent(this, TCService.class), mConnection, 0);
+
+        if (mPartnerId != 0) {
+            Uri handleUri = ContentUris.withAppendedId(TacMessage.ADDRESS_URI,
+                    mPartnerId);
+            getContentResolver().registerContentObserver(handleUri, true,
+                    mHandleObserver);
+            mHandleObserver.onChange(true);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.support.v4.app.FragmentActivity#onPause()
+     */
+    @Override
+    protected void onPause() {
+        if (mService != null) {
+            unbindService(mConnection);
+        }
+
+        if (mPartnerId != 0) {
+            getContentResolver().unregisterContentObserver(mHandleObserver);
+        }
+
+        super.onPause();
+    }
+
+    /**
+     * Get the partner handle to show in the action bar.
+     * 
+     * @return
+     */
+    protected String getPartnerHandle() {
+        // Generic default in case something goes wrong.
+        String partnerHandle = getString(R.string.t_c_app_name);
+
+        Cursor c = null;
+        try {
+            String selection = AddressmessageSchema.UID + " = ?";
+            String[] selectionArguments = { "" + mPartnerId };
+            c = getContentResolver().query(TacMessage.ADDRESS_URI,
+                    ADDRESS_PROJECTION, selection, selectionArguments, null);
+            if (c != null && c.moveToFirst()) {
+                partnerHandle = c.getString(c
+                        .getColumnIndex(AddressmessageSchema.HANDLE));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+
+        return partnerHandle;
+    }
+
+    /*
+     * Can be called from screen orientation change or keyboard hidden. This is
+     * being used to prevent the Activity from being destroyed or rebuilt so
+     * that during zip and image conversion activities, we don't end up killing
+     * the app by rotating the screen and such.
+     * 
+     * (non-Javadoc)
+     * 
+     * @see
+     * android.support.v4.app.FragmentActivity#onConfigurationChanged(android
+     * .content.res.Configuration)
+     */
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
+        {
+            //Builder.CONTACT_UID = getString((int) mPartnerId);
+            Log.d("gabe", "the config is changing in convo activity" + mPartnerId);
+            //finish();
+
+        }
+        // Pass in the orientation of sensor so that we keep receiving these
+        // calls.
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+    }
+
+    public void onDestroy(Bundle savedInstanceState)
+    {
+        Log.d("gabe", "the conver activity is being destroyed" + mPartnerId);
+
+    }
+    public void onSaveInstance(Bundle savedInstanceState)
+    {
+        Log.d("gabe", "the con act is c saving instance");
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // TODO Auto-generated method stub
+        getSupportMenuInflater().inflate(R.menu.chat_only_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    /*
+     * Add the up (ancestral) navigation.
+     * 
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.actionbarsherlock.app.SherlockFragmentActivity#onOptionsItemSelected
+     * (android.view.MenuItem)
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            // Ancestral navigation (Home/Up button on Action Bar)
+            Intent parentActivityIntent = new Intent(this,
+                    TCActivity.class);
+            // See the ancestral navigation docs about synthesizing a back
+            // stack, if we ever have need for more back steps than the
+            // TCActivity class.
+            // http://developer.android.com/training/implementing-navigation/ancestral.html
+            parentActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(parentActivityIntent);
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onContextItemSelected(android.view.MenuItem item) {
+        // TODO Auto-generated method stub
+        Fragment fragment = (Fragment) getSupportFragmentManager().findFragmentById(R.id.conversation);
+        if( null != fragment ) {
+            fragment.onContextItemSelected(item);
+        }
+        return super.onContextItemSelected(item);
+    }
+}
+</code></pre>
+
+<p><strong>The xml for the portrait activity, probably not what you wanted</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/conversation"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>chat only xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <group
+        android:id="@+id/group_alert_checked"
+        android:checkableBehavior="all" >
+        <item
+            android:id="@+id/menu_alert"
+            android:checked="false"
+            android:icon="?attr/buttonface_alert_unchecked"
+            android:showAsAction="always"
+            android:title="@string/menu_set_alert_message_mode"/>
+    </group>
+
+    <item
+        android:id="@+id/menu_attach_existing_picture"
+        android:icon="?attr/buttonface_existing_picture"
+        android:showAsAction="always"
+        android:title="@string/menu_attach_existing_picture">
+    </item>
+    <item
+        android:id="@+id/menu_attach_new_picture"
+        android:icon="?attr/buttonface_new_picture"
+        android:showAsAction="always"
+        android:title="@string/menu_attach_new_picture">
+    </item>
+    <item
+        android:id="@+id/menu_attach_file"
+        android:icon="?attr/buttonface_attach_file"
+        android:showAsAction="always"
+        android:title="@string/menu_attach_file">
+    </item>
+    <item
+        android:icon="?attr/buttonface_overflow"
+        android:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/menu_add"
+                android:showAsAction="ifRoom"
+                android:title="@string/menu_new_contact">
+            </item>  
+            <item
+                android:id="@+id/menu_clear_conversation"
+                android:showAsAction="ifRoom"
+                android:title="@string/menu_clear_conversation">
+            </item>
+            <item
+                android:id="@+id/menu_save_conversation"
+                android:showAsAction="ifRoom"
+                android:title="@string/menu_save_conversation">
+            </item>
+            <item
+                android:id="@+id/menu_logout"
+                android:showAsAction="ifRoom"
+                android:title="@string/logout"/>
+        </menu>
+    </item>
+
+</menu>
+</code></pre>
+
+<p>I also have the code for the fragment and the fragments xml, which might also be useful to you, but the fragment code is very large. I recognize that the xml for the activity isn't very helpful as is without the rest though. Let me know what else would help and I'll figure out a better way of sharing. </p>

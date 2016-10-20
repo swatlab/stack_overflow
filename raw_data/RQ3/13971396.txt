@@ -1,0 +1,170 @@
+<p>I am stuck with a problem since 1 week. I have made a custom list view. The items are add in the list view on a button click. All the items are display normally in the list view. But after 10 seconds when the device light is switched off and swipe the screen, the items in the <code>ListView</code> disappear. My list view in xml:</p>
+
+<pre><code><ListView
+    android:id="@+id/lvEditItem"
+    android:layout_width="fill_parent"
+    android:layout_height="100dip"
+    android:overScrollMode="never"
+    android:layout_below="@+id/tvSelectToEdit"
+    android:cacheColorHint="@android:color/transparent"
+    android:paddingRight="10dip"
+    android:scrollbars="none" >
+</ListView>
+</code></pre>
+
+<p>My activity file is :-</p>
+
+<pre><code>ListView mView;
+mView=(ListView)findViewById(R.id.lvEditItem);
+mView.setDivider(null);
+mView.setOnItemClickListener(new OnItemClickListener() {
+
+private View lastSelectedView = null;
+
+public void clearSelection()
+{
+    if(lastSelectedView != null)
+       lastSelectedView.setBackgroundDrawable(getResources().getDrawable(android.R.color.transparent));
+}
+
+
+@Override
+public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+   clearSelection();
+   lastSelectedView = view;
+   view.setBackgroundResource(R.color.lightGreen);
+
+   String items=arrayList.get(position).toString();
+   String s[]=items.split("~");
+
+   System.out.println("value of Array>>>>>>>=="+s.length);
+
+   tvGender.setVisibility(View.VISIBLE);
+
+   tvCategory.setVisibility(View.VISIBLE);
+
+   tvSubCategory.setVisibility(View.VISIBLE);
+
+   tvStyle.setVisibility(View.VISIBLE);
+
+   tvSize.setVisibility(View.VISIBLE);
+
+   tvColor.setVisibility(View.VISIBLE);
+
+   tvGender.setText(s[0]);
+   GenderData.gender=s[0];
+   tvGender.setTypeface(face);
+
+   tvCategory.setText(s[1]);
+   CategoryData.category=s[1];
+   tvCategory.setTypeface(face);
+
+   tvSubCategory.setText(s[2]);
+   SubCategoryData.subCategory=s[2];
+   tvSubCategory.setTypeface(face);
+
+   brand.setText(s[3]);
+
+   tvStyle.setText(s[4]);
+   StyleData.style=s[4];
+   tvStyle.setTypeface(face);
+
+   tvSize.setText(s[5]);
+   SizeData.size=s[5];
+   tvSize.setTypeface(face);
+
+   tvColor.setText(s[6]);
+   ColorData.color=s[6];
+   tvColor.setTypeface(face);
+
+   String as=s[7].replace("$", "");
+   price.setText(as);
+
+   originalRetailer.setText(s[8]);
+
+   originalLink.setText(s[9]);
+});
+</code></pre>
+
+<p>and My Adapter class is:-</p>
+
+<pre><code>public class CustomEditListAdapter extends BaseAdapter{
+
+private LayoutInflater mInflater;
+ArrayList<String> mArrayList;
+ArrayList<String> mshowItemsOnListView;
+Typeface face;
+public CustomEditListAdapter(Context context,ArrayList<String> mArrayList,ArrayList<String> mshowItemsOnListView ) {
+    mInflater = LayoutInflater.from(context);
+    this.mArrayList=mArrayList;
+    this.mshowItemsOnListView=mshowItemsOnListView;
+    face=Typeface.createFromAsset(context.getAssets(), "tahoma.ttf");
+     System.out.println("Final ArrayList which has to be post>>>"+mArrayList.toString());
+}
+
+@Override
+public int getCount() {
+   return ConcatData.mSet.size();
+}
+
+@Override
+public Object getItem(int arg0) {
+   return mshowItemsOnListView.get(arg0);
+}
+
+@Override
+public long getItemId(int position) {
+   return position;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+   ViewHolder holder;
+
+
+   if (convertView == null) {
+      convertView = mInflater.inflate(R.layout.custom_select_item_view, null);
+      holder = new ViewHolder();
+      holder.txtName = (TextView) convertView.findViewById(R.id.textView1);
+      holder.txtName.setTypeface(face);
+
+      convertView.setTag(holder);
+   }
+   else {
+      holder = (ViewHolder) convertView.getTag();
+   }
+
+   // holder.txtName.setText(mArrayList.get(position));
+   holder.txtName.setText(mshowItemsOnListView.get(position));
+   return convertView;
+}
+
+static class ViewHolder {
+   TextView txtName;
+}
+}
+</code></pre>
+
+<p>The custom_select_item_view.xml is :</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+ <ImageView 
+         android:id="@+id/ivArrow"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:src="@drawable/list_arrow_my_item_box"
+         android:layout_alignParentLeft="true"
+         android:layout_alignTop="@+id/textView1"
+         android:padding="5dip"
+         />
+</code></pre>
+
+<p>
+    </p>
+
+<p>Thanks in advance!!</p>

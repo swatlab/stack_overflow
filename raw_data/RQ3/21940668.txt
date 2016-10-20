@@ -1,0 +1,46 @@
+<p>I have a <code>FragmentPagerAdapter</code> where I override its <code>setPrimaryItem()</code>:</p>
+
+<pre><code>@Override
+public void setPrimaryItem(ViewGroup container, int position,
+        Object object) {
+    super.setPrimaryItem(container, position, object);
+
+    ...
+}
+</code></pre>
+
+<p>The NPE is occurring inside the <code>super()</code>. Here is the code from the support library:</p>
+
+<pre><code>@Override
+public void setPrimaryItem(ViewGroup container, int position, Object object) {
+    Fragment fragment = (Fragment)object;
+    if (fragment != mCurrentPrimaryItem) {
+        if (mCurrentPrimaryItem != null) {
+            mCurrentPrimaryItem.setMenuVisibility(false);
+            mCurrentPrimaryItem.setUserVisibleHint(false);
+        }
+        if (fragment != null) {
+            fragment.setMenuVisibility(true);
+            fragment.setUserVisibleHint(true);
+        }
+        mCurrentPrimaryItem = fragment;
+    }
+}
+</code></pre>
+
+<p>In the cases where the exception occurs, <code>fragment</code> is not null so the method <code>setUserVisibleHint(true)</code> gets called. This method is as follows:</p>
+
+<pre><code>public void setUserVisibleHint(boolean isVisibleToUser) {
+    if (!mUserVisibleHint && isVisibleToUser && mState < STARTED) {
+        mFragmentManager.performPendingDeferredStart(this);
+    }
+    mUserVisibleHint = isVisibleToUser;
+    mDeferStart = !isVisibleToUser;
+}
+</code></pre>
+
+<p>This code gets inside the <code>if</code> but <code>mFragmentManager</code> is null and the NPE occurs. This is not happening on the phones I'm testing but I'm getting bug reports with the problem. I'm instantiating my fragments using a <code>newInstance()</code> method where I just call <code>new Fragment()</code> and set the arguments in a <code>Bundle()</code>.</p>
+
+<p>I noticed in the <code>Fragment</code> source code that <code>mFragmentManager</code> is null until   <code>instantiate(FragmentActivity activity, Fragment parent)</code> is called but I can't call this method directly, it seems, as my fragments are not yet attached to the activity.</p>
+
+<p>Any ideas?</p>

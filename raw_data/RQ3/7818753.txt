@@ -1,0 +1,26 @@
+<p>Is there any faster alternative to Gallery widget in Android, because Gallery is so slow and lagging, i tryed to use view holder to reuse views, but without result. i used classic method</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+
+
+        ViewHolder holder;
+         if (convertView == null) {
+                convertView = mInflater.inflate(R.layout.image, null);
+
+                // Creates a ViewHolder and store references to the two children views
+                // we want to bind data to.
+                holder = new ViewHolder();
+
+                holder.icon = (ImageView) convertView.findViewById(R.id.ImageView01);
+
+                convertView.setTag(holder);
+         } else {
+                // Get the ViewHolder back to get fast access to the TextView
+                // and the ImageView.
+                holder = (ViewHolder) convertView.getTag();
+            }
+         holder.icon.setImageDrawable(getPicture(items[position]));
+         return convertView;
+
+         }
+</code></pre>

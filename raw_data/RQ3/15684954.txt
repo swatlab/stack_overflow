@@ -1,0 +1,96 @@
+<p>I am trying to optimize photo gallery in my app and I came across Universal Image Loader. However, all attempts to implement it into my application have failed. 
+Here's 2 classes from my current application: the activity class:</p>
+
+<pre><code>public class Galerija extends Activity {
+
+ArrayList<RSSItem> lista = new ArrayList<RSSItem>();
+ArrayList<String> lst_slika = new ArrayList<String>();
+RSSItem tempItem = new RSSItem();
+ImageAdapter adapter;
+
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_galerija);
+
+    try 
+    {
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+        SAXParser sp = spf.newSAXParser();
+        XMLReader myReader = sp.getXMLReader();
+
+        URL url = new URL("http://erdut.gausstesting.info/generateXML/galerija.php");
+
+        XMLHandler myXMLHandler = new XMLHandler();
+        myReader.setContentHandler(myXMLHandler);
+        myReader.parse(new InputSource(url.openStream()));
+        lista = myXMLHandler.getRss_lista();
+        lst_slika = lista.get(0).getImages();
+
+    } catch (Exception e) {
+        System.out.println(e);
+    }
+
+    adapter = new ImageAdapter(this, lst_slika);
+    GridView gridview = (GridView) findViewById(R.id.gridview);
+    gridview.setAdapter(adapter);
+
+    gridview.setOnItemClickListener(new OnItemClickListener() {
+
+        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                long arg3) {
+            // TODO Auto-generated method stub
+
+        }
+    });
+
+} }
+</code></pre>
+
+<p>And here is the adapter class:</p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+private ArrayList<String> lista;
+
+
+public ImageAdapter(Context c, ArrayList<String> lista) {
+    mContext = c;
+    this.lista = lista;
+
+}
+
+public int getCount() {
+    return lista.size();
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+
+        imageView.setLayoutParams(new GridView.LayoutParams(150, 150));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(0, 0, 0, 0);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    new ImageDownloadTask(imageView).execute(lista.get(position));
+
+    return imageView;
+}}
+</code></pre>
+
+<p>I want to modify these class by using Universal Image Loader (or any other method to cache my images), because currently my photo gallery activity crashes due to Out of Memory error.</p>

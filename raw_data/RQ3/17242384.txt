@@ -1,0 +1,376 @@
+<p>I dont know why my own database has failed to open. I already included it inside the folder assets and followed the steps on this website</p>
+
+<p><a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">using your own sqlite database in android applications</a></p>
+
+<p>I've been working on this for many days; unfortunately, I'm still newbie with android. Can someone help me figure out what is going wrong?</p>
+
+<p>DatabaseHandler.java</p>
+
+<pre><code>package com.example.awesome;
+
+/*
+ * DatabaseHandler.java
+ * Version 11
+ * Add sorting list
+ */
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+//import android.util.Log;
+
+public class DatabaseHandler extends SQLiteOpenHelper {
+
+    // All Static variables
+    // Database Version
+    private static final int DATABASE_VERSION = 1;
+    private static String DB_PATH = "data/data/com.example.awesome/databases/";
+    private static String DB_NAME = "AcademicLocation";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+
+    // All tables name
+    private static final String TABLE_UKMLOCATION = "UKM_Location";
+
+    // All Table Columns names
+    private static final String KEY_ID = "_id";
+    private static final String KEY_NAME = "Name";
+    private static final String KEY_ALAMAT = "Alamat";  
+    private static final String KEY_NOTEL = "No_tel";
+    private static final String KEY_FAX = "Fax";
+    private static final String KEY_EMAIL = "Email";
+    private static final String KEY_TRANSPORT = "Transport";
+    private static final String KEY_LANDMARK = "Landmark";
+    private static final String KEY_WEBSITE = "Website";
+    private static final String KEY_CATEGORY = "Category";
+
+    public DatabaseHandler(Context context) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
+        this.myContext = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException { 
+        boolean dbExist = checkDataBase();
+
+        if(dbExist) {
+            //do nothing - database already exist
+        }
+        else {
+                    this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+
+            }
+        }
+    }
+
+       private boolean checkDataBase(){ 
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+            //database does't exist yet. 
+        }
+
+        if(checkDB != null){ 
+            checkDB.close(); 
+        } 
+        return checkDB != null ? true : false;
+    }
+
+       private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }  
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    // Creating Tables
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    // Upgrading database
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    /**
+     * All CRUD(Create, Read, Update, Delete) Operations
+     */
+
+    /*
+     * --------------------------------------------------------
+     * UKM_Location
+     * --------------------------------------------------------
+     */
+
+    // Adding new Poi
+    public void addUkmLocation(UkmLocation UKM_Location) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_ID, UKM_Location.getID()); // ID
+        values.put(KEY_NAME, UKM_Location.getName()); //    Name
+        values.put(KEY_ALAMAT, UKM_Location.getAlamat()); // Addr
+        values.put(KEY_NOTEL, UKM_Location.getNotel()); // Phone
+        values.put(KEY_FAX, UKM_Location.getFax()); //  Fax
+        values.put(KEY_EMAIL, UKM_Location.getEmail()); // Emel
+        values.put(KEY_TRANSPORT, UKM_Location.getTransport()); // Transport
+        values.put(KEY_LANDMARK, UKM_Location.getLandmark()); // Landmark
+        values.put(KEY_WEBSITE, UKM_Location.getWebsite()); // Website
+        values.put(KEY_CATEGORY, UKM_Location.getCategory()); // Category
+
+        // Inserting Row
+        db.insert(TABLE_UKMLOCATION, null, values);
+        db.close(); // Closing database connection
+    }
+
+    // Getting single Poi
+    public UkmLocation getUkmLocation(String _id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_UKMLOCATION, 
+                new String[] { KEY_ID, KEY_NAME, KEY_ALAMAT,KEY_NOTEL, KEY_FAX, KEY_EMAIL, KEY_TRANSPORT, 
+                KEY_LANDMARK,KEY_WEBSITE, KEY_CATEGORY }, 
+                KEY_ID + "=?", 
+                new String[] { String.valueOf( _id) }, null, null, null, null);
+
+        if (cursor != null)
+            cursor.moveToFirst();
+
+        UkmLocation poi = new UkmLocation(cursor.getString(0), 
+                cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),
+                cursor.getString(5), cursor.getString(6), cursor.getString(7), cursor.getString(8),
+                cursor.getString(9));
+
+        // return poi
+        return poi;
+    }
+
+    // Getting single Poi by Category
+    public UkmLocation getUkmLocationByCategory(String Category) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_UKMLOCATION, 
+                new String[] { KEY_ID, KEY_NAME, KEY_ALAMAT,KEY_NOTEL, KEY_FAX, KEY_EMAIL, KEY_TRANSPORT, 
+                KEY_LANDMARK,KEY_WEBSITE, KEY_CATEGORY }, 
+                KEY_CATEGORY + "=?", 
+                new String[] { String.valueOf( Category) }, null, null, null, null);
+
+        if (cursor != null)
+            cursor.moveToFirst();
+
+        UkmLocation poi = new UkmLocation(cursor.getString(0), 
+                cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),
+                cursor.getString(5), cursor.getString(6), cursor.getString(7), cursor.getString(8),
+                cursor.getString(9));
+
+        // return poi
+        return poi;
+    }
+
+    // Getting single Poi by name
+    public UkmLocation getUkmLocationByName(String Name) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_UKMLOCATION, 
+                new String[] { KEY_ID, KEY_NAME, KEY_ALAMAT,KEY_NOTEL, KEY_FAX, KEY_EMAIL, KEY_TRANSPORT, 
+                KEY_LANDMARK,KEY_WEBSITE, KEY_CATEGORY },
+                KEY_NAME + "=?", 
+                new String[] { String.valueOf(Name) }, null, null, null, null);
+        if (cursor != null)
+            cursor.moveToFirst();
+
+        UkmLocation poi = new UkmLocation(cursor.getString(0), 
+                cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),
+                cursor.getString(5), cursor.getString(6), cursor.getString(7), cursor.getString(8),
+                cursor.getString(9));
+        // return poi
+        return poi;
+    }   
+
+    // Getting all Poi
+    public List<UkmLocation> getAllPoi() {
+        List<UkmLocation> locationList = new ArrayList<UkmLocation>();
+        //Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_UKMLOCATION;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        //looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                UkmLocation poi = new UkmLocation();
+                poi.setID(cursor.getString(0));
+                poi.setName(cursor.getString(1));
+                poi.setAlamat(cursor.getString(2));
+                poi.setNotel(cursor.getString(3));
+                poi.setFax(cursor.getString(4));
+                poi.setEmail(cursor.getString(5));
+                poi.setTransport(cursor.getString(6));
+                poi.setLandmark(cursor.getString(7));
+                poi.setWebsite(cursor.getString(8));
+                poi.setCategory(cursor.getString(9));
+                //Adding poi to list
+                locationList.add(poi);
+
+            } while (cursor.moveToNext());
+        }
+
+        //sorting list
+        Collections.sort(locationList,new Comparator<UkmLocation>() {
+            public int compare(UkmLocation poi, UkmLocation otherPoi) {
+                return poi.getName().compareTo(otherPoi.getName());
+            }
+        });
+
+        // return Poi list
+        db.close();
+        return locationList;
+    }
+
+    //----
+    // Getting all Kategori
+        public List<UkmLocation> getCategoryFaculty() {
+            List<UkmLocation> kategoriList = new ArrayList<UkmLocation>();
+            //Select All Query
+            String selectQuery = "SELECT * FROM " + TABLE_UKMLOCATION + " WHERE " + 
+                    KEY_CATEGORY + "= 'Faculty'"; 
+
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
+
+            //looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    UkmLocation kategori = new UkmLocation();
+                    kategori.setID(cursor.getString(0));
+                    kategori.setName(cursor.getString(1));
+                    kategori.setAlamat(cursor.getString(2));
+                    kategori.setNotel(cursor.getString(3));
+                    kategori.setFax(cursor.getString(4));
+                    kategori.setEmail(cursor.getString(5));
+                    kategori.setTransport(cursor.getString(6));
+                    kategori.setLandmark(cursor.getString(7));
+                    kategori.setWebsite(cursor.getString(8));
+                    kategori.setCategory(cursor.getString(9));
+                    //Adding kategori to list
+                    kategoriList.add(kategori);
+
+                } while (cursor.moveToNext());
+            }
+
+            // return Kategori list
+            return kategoriList;
+        }
+
+    //----
+    // Updating single Poi
+    public int updatePoi(UkmLocation UKM_Location) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_NAME, UKM_Location.getName()); // Poi Name
+        values.put(KEY_ALAMAT, UKM_Location.getAlamat()); // Poi Addr
+        values.put(KEY_NOTEL, UKM_Location.getNotel()); // Phone
+        values.put(KEY_FAX, UKM_Location.getFax()); //  Fax
+        values.put(KEY_EMAIL, UKM_Location.getEmail()); // Emel
+        values.put(KEY_TRANSPORT, UKM_Location.getTransport()); // Transport
+        values.put(KEY_LANDMARK, UKM_Location.getLandmark()); // Landmark
+        values.put(KEY_WEBSITE, UKM_Location.getWebsite()); // Website
+        values.put(KEY_CATEGORY, UKM_Location.getCategory()); // Category
+
+        // updating row
+        return db.update(TABLE_UKMLOCATION, values, KEY_ID + " = ?", 
+                new String[] { String.valueOf(UKM_Location.getID()) });
+    }
+
+    // Deleting single Poi
+    public void deletePoi(UkmLocation UKM_Location) {
+        SQLiteDatabase db= this.getWritableDatabase();
+        db.delete(TABLE_UKMLOCATION, KEY_ID + " =?", 
+                new String[] { String.valueOf(UKM_Location.getID()) });
+        db.close();
+    }   
+
+    // Getting Poi Count
+    public int getUkmLocationCount() {
+        String countQuery = "SELECT * FROM " + TABLE_UKMLOCATION;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+    //  cursor.close();
+
+        // return count
+        return cursor.getCount();
+    }   
+
+    // Delete all Poi
+    public void deleteAllPoi(){
+        SQLiteDatabase db= this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_UKMLOCATION);
+        db.close();
+    }
+
+    }
+</code></pre>

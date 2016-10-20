@@ -1,0 +1,452 @@
+<p>I have made a <code>recyclerview</code> in my app.</p>
+
+<p><strong>The problem is that I'm getting the following error: <code>java.lang.IllegalStateException: RecyclerView has no LayoutManager</code> even when I've defined it.</strong></p>
+
+<p><strong>Here's <code>ListContentAAR.java</code> file's code</strong>:</p>
+
+<pre><code>class ListContentAAR {
+    String picTag;
+
+    ListContentAAR( String picTag) {
+        this.picTag = picTag;
+    }
+
+}
+</code></pre>
+
+<p><strong>Here's <code>RVAdapterAAR.java</code> file's code</strong>:</p>
+
+<pre><code>public class RVAdapterAAR extends RecyclerView.Adapter<RVAdapterAAR.PersonViewHolder> {
+
+    public static class PersonViewHolder extends RecyclerView.ViewHolder {
+
+        CardView cardView;
+        TextView pic;
+
+        PersonViewHolder(View itemView) {
+            super(itemView);
+            cardView = (CardView) itemView.findViewById(R.id.card_accept_request);
+            homelessPic = (TextView) itemView.findViewById(R.id.pic_tag);
+        }
+
+    }
+
+    List<ListContentAAR> listContentAARs;
+
+    RVAdapterAAR(List<ListContentAAR> listContentAARs) {
+        this.listContentAARs = listContentAARs;
+    }
+
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+    }
+
+    public PersonViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.fragment_accept_a_request, viewGroup, false);
+        PersonViewHolder personViewHolder = new PersonViewHolder(view);
+        return personViewHolder;
+    }
+
+    public void onBindViewHolder (PersonViewHolder personViewHolder, int i) {
+        personViewHolder.pic.setText(listContentAARs.get(i).homelessPicTag);
+    }
+
+    public int getItemCount() {
+        return listContentAARs.size();
+    }
+
+}
+</code></pre>
+
+<p><strong>Here's <code>AcceptARequest.java</code> file's code</strong>:</p>
+
+<pre><code>public class AcceptARequest extends Fragment {
+    // TODO: Rename parameter arguments, choose names that match
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
+
+    // TODO: Rename and change types of parameters
+    private String mParam1;
+    private String mParam2;
+
+    private OnFragmentInteractionListener mListener;
+
+    private List<ListContentAAR> listContentAARs;
+    private RecyclerView recyclerView;
+
+    public AcceptARequest() {
+        // Required empty public constructor
+    }
+
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param param1 Parameter 1.
+     * @param param2 Parameter 2.
+     * @return A new instance of fragment AcceptARequest.
+     */
+    // TODO: Rename and change types and number of parameters
+    public static AcceptARequest newInstance(String param1, String param2) {
+        AcceptARequest fragment = new AcceptARequest();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, param1);
+        args.putString(ARG_PARAM2, param2);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam2 = getArguments().getString(ARG_PARAM2);
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+
+        View rootView = inflater.inflate(R.layout.fragment_accept_a_request, container, false);
+
+        RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.accept_request_list);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setHasFixedSize(true);
+
+        initializeData();
+        initializeAdapter();
+
+        return rootView;
+    }
+
+    private void initializeData(){
+        listContentAARs = new ArrayList<>();
+        listContentAARs.add(new ListContentAAR("Emma Wilson"));
+    }
+
+    private void initializeAdapter(){
+        RVAdapterAAR adapter = new RVAdapterAAR(listContentAARs);
+        recyclerView.setAdapter(adapter);
+    }
+
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(uri);
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+        void onFragmentInteraction(Uri uri);
+    }
+}
+</code></pre>
+
+<p><strong>Here's <code>fragment_accept_a_request.xml</code> file's code</strong>:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                tools:context="com.abc.xyz.AcceptARequest">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/accept_request_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <android.support.v7.widget.CardView
+            android:id="@+id/card_accept_request"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/card_accept_request"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true"
+            app:contentPadding="10dp">
+
+            <!--<ImageView
+                android:id="@+id/pic_accept"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/pic_dimen_accept"
+                android:layout_gravity="center_horizontal|center_vertical"
+                android:layout_alignParentTop="true"/> -->
+
+            <TextView
+                android:id="@+id/pic_tag"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/pic_dimen_accept"
+                android:text="@string/image_view_tag_accept"
+                android:gravity="center_horizontal|center_vertical"/>
+
+        </android.support.v7.widget.CardView>
+
+    </android.support.v7.widget.RecyclerView>
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>Here's <code>MainActivity.java</code> file's code</strong>:</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    public SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    private ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Typeface typeFace = Typeface.createFromAsset(getAssets(),"fonts/Pacifico.ttf");
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        TextView mTitle = (TextView) toolbar.findViewById(R.id.toolbar_title);
+        mTitle.setTypeface(typeFace);
+        toolbar.setTitle(mTitle.getText().toString());
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(mViewPager);
+
+        /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });*/
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(settingsIntent);
+        } else if (id == R.id.action_profile) {
+            Intent profileIntent = new Intent(MainActivity.this, ProfileActivity.class);
+            startActivity(profileIntent);
+        } else if (id == R.id.action_send_feedback) {
+            Intent sendFeedbackIntent = new Intent(MainActivity.this, SendFeedback.class);
+            startActivity(sendFeedbackIntent);
+        } else if (id == R.id.action_help) {
+            Intent helpIntent = new Intent(MainActivity.this, HelpActivity.class);
+            startActivity(helpIntent);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        protected Context mContext;
+
+        public SectionsPagerAdapter(Context context, FragmentManager fm) {
+            super(fm);
+            mContext = context;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            // return MainActivity.PlaceholderFragment.newInstance(position + 1);
+
+            switch (position) {
+                case 0:
+                    return new AcceptARequest();
+                case 1:
+                    return new PostARequest();
+                default:
+                    return new AcceptARequest(); // return AcceptARequest() actually
+            }
+        }
+
+        @Override
+        public int getCount() {
+            // Show 2 total pages.
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return "Accept A Request";
+                case 1:
+                    return "Post A Request";
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+            return rootView;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>Here's the <code>stacktrace</code></strong>:</p>
+
+<pre><code>FATAL EXCEPTION: main
+                                                                               java.lang.IllegalStateException: RecyclerView has no LayoutManager
+                                                                                   at android.support.v7.widget.RecyclerView.generateLayoutParams(RecyclerView.java:3182)
+                                                                                   at android.view.LayoutInflater.rInflate(LayoutInflater.java:748)
+                                                                                   at android.view.LayoutInflater.rInflate(LayoutInflater.java:749)
+                                                                                   at android.view.LayoutInflater.inflate(LayoutInflater.java:489)
+                                                                                   at android.view.LayoutInflater.inflate(LayoutInflater.java:396)
+                                                                                   at com.humanehelper.humanehelper.AcceptARequest.onCreateView(AcceptARequest.java:75)
+                                                                                   at android.support.v4.app.Fragment.performCreateView(Fragment.java:1962)
+                                                                                   at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1067)
+                                                                                   at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1248)
+                                                                                   at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:738)
+                                                                                   at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1613)
+                                                                                   at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:570)
+                                                                                   at android.support.v4.app.FragmentPagerAdapter.finishUpdate(FragmentPagerAdapter.java:141)
+                                                                                   at android.support.v4.view.ViewPager.populate(ViewPager.java:1106)
+                                                                                   at android.support.v4.view.ViewPager.populate(ViewPager.java:952)
+                                                                                   at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1474)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4814)
+                                                                                   at android.support.design.widget.CoordinatorLayout.onMeasureChild(CoordinatorLayout.java:610)
+                                                                                   at android.support.design.widget.CoordinatorLayout.onMeasure(CoordinatorLayout.java:677)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4814)
+                                                                                   at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+                                                                                   at android.support.v7.widget.ContentFrameLayout.onMeasure(ContentFrameLayout.java:135)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4814)
+                                                                                   at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1390)
+                                                                                   at android.widget.LinearLayout.measureVertical(LinearLayout.java:681)
+                                                                                   at android.widget.LinearLayout.onMeasure(LinearLayout.java:574)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4814)
+                                                                                   at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4814)
+                                                                                   at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1390)
+                                                                                   at android.widget.LinearLayout.measureVertical(LinearLayout.java:681)
+                                                                                   at android.widget.LinearLayout.onMeasure(LinearLayout.java:574)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4814)
+                                                                                   at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+                                                                                   at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2148)
+                                                                                   at android.view.View.measure(View.java:15172)
+                                                                                   at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1848)
+                                                                                   at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1100)
+                                                                                   at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1273)
+                                                                                   at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:998)
+                                                                                   at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:4212)
+                                                                                   at android.view.Choreographer$CallbackRecord.run(Choreographer.java:725)
+                                                                                   at android.view.Choreographer.doCallbacks(Choreographer.java:555)
+                                                                                   at android.view.Choreographer.doFrame(Choreographer.java:525)
+                                                                                   at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:711)
+                                                                                   at android.os.Handler.handleCallback(Handler.java:615)
+                                                                                   at android.os.Handler.dispatchMessage(Handler.java:92)
+                                                                                   at android.os.Looper.loop(Looper.java:137)
+                                                                                   at android.app.ActivityThread.main(ActivityThread.java:4745)
+                                                                                   at java.lang.reflect.Method.invokeNative(Native Method)
+                                                                                   at java.lang.reflect.Method.invoke(Method.java:511)
+                                                                                at com
+</code></pre>
+
+<p>As I'm a beginner, I'm unable to figure out why am I getting the following error.</p>
+
+<p>Please let me know.</p>
+
+<p>Thanks in advance.</p>

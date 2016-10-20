@@ -1,0 +1,70 @@
+<p>I have 4 lines of code to download an Bitmap,</p>
+
+<pre><code>URL u = new URL(webaddress);
+
+InputStream in = null;
+
+in = u.openStream();
+
+icon = BitmapFactory.decodeStream(in);
+</code></pre>
+
+<p>I'm planning on changing the last line to do something similar to this <a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html" rel="nofollow">tutorial</a> where I only load into memory an image of set size to reduce memory usage. However i don't want this to involve another server call/download so I'm curious which of the four lines above actually downloads the data from the source?</p>
+
+<p>Im going to be changing the last line of code to the last two functions in the tutorial mentioned above so could do with knowing if its going to mean downloading more or less data, (I'm trying to only download a small image from one that could be for example 5 megapixels)</p>
+
+<p>Apologies if this is simple / the wrong way to think about it im not very experienced with data streams. </p>
+
+<hr>
+
+<p><strong>EDIT</strong></p>
+
+<p>im using these two functions to replace the last line of code above:
+calling: </p>
+
+<pre><code>image = decodeSampledBitmapFromStram(in, 300,300);
+</code></pre>
+
+<p>Image quality is not a priority, will this mean more data downloaded?</p>
+
+<pre><code>private static int calculateInSampleSize(BitmapFactory.Options options,
+            int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and
+            // width
+            final int heightRatio = Math.round((float) height
+                    / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will
+            // guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+
+    private Bitmap decodeSampledBitmapFromStream(InputStream in, int reqWidth, int reqHeight) {
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        Rect padding = new Rect();
+        BitmapFactory.decodeStream(in, padding, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+
+        return BitmapFactory.decodeStream(in, padding, options);
+    }
+</code></pre>

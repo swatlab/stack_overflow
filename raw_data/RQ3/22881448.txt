@@ -1,0 +1,356 @@
+<p>I have the following simple Spring Boot code. Why my JPARepositoryImpl code - JpaCustomerRepository is not called (I know by adding print statement..)?</p>
+
+<p>I had @ComponentScan added in the main and controller. Please advise.</p>
+
+<p>Thanks,</p>
+
+<pre><code>    @Entity
+    public class Customer implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        @Id
+        @GeneratedValue
+        private Long id;
+
+        @Column(nullable = false)
+        private String product;
+
+        @Column(nullable = false)
+        private String charge;
+
+        protected Customer() {
+        }
+
+        public Customer(String product) {
+            this.product = product;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public String getProduct() {
+            return this.product;
+        }
+
+
+        public String getCharge() {
+            return this.charge;
+        }}
+
+
+    public interface CustomerRepository extends Repository<Customer, Long> {
+
+            List<Customer> findAll();
+
+        }
+
+        @Repository
+        class JpaCustomerRepository implements CustomerRepository {
+
+            @PersistenceContext
+            private EntityManager em;
+
+            @Override
+            public List<Customer> findAll() {
+                TypedQuery<Customer> query = em.createQuery("select c from Customer c",
+                        Customer.class);
+
+                return query.getResultList();
+            }
+
+
+        }
+
+@Configuration
+@ComponentScan
+@EnableAutoConfiguration
+public class SampleDataJpaApplication {
+
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(SampleDataJpaApplication.class, args);
+    }
+
+}
+@Controller
+@ComponentScan
+@RequestMapping("/customers")
+public class SampleController {
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    public SampleController(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
+    }
+
+    @RequestMapping("/list")
+    public String list(Model model) {
+        model.addAttribute("customers", this.customerRepository.findAll());
+        return "customers/list";
+    }
+
+
+}
+</code></pre>
+
+<p>But sample code (JpaCustomerRepository)  from book Spring Data did get called. What's the catch? </p>
+
+<pre><code>@MappedSuperclass
+public class AbstractEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    /**
+     * Returns the identifier of the entity.
+     * 
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /* 
+     * (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+
+        if (this == obj) {
+            return true;
+        }
+
+        if (this.id == null || obj == null || !(this.getClass().equals(obj.getClass()))) {
+            return false;
+        }
+
+        AbstractEntity that = (AbstractEntity) obj;
+
+        return this.id.equals(that.getId());
+    }
+
+    /* 
+     * (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        return id == null ? 0 : id.hashCode();
+    }
+}
+    @Entity
+    public class Customer extends AbstractEntity {
+
+        private String firstname, lastname;
+
+        @Column(unique = true)
+        private EmailAddress emailAddress;
+
+        @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+        @JoinColumn(name = "customer_id")
+        private Set<Address> addresses = new HashSet<Address>();
+
+        /**
+         * Creates a new {@link Customer} from the given firstname and lastname.
+         * 
+         * @param firstname must not be {@literal null} or empty.
+         * @param lastname must not be {@literal null} or empty.
+         */
+        public Customer(String firstname, String lastname) {
+
+            Assert.hasText(firstname);
+            Assert.hasText(lastname);
+
+            this.firstname = firstname;
+            this.lastname = lastname;
+        }
+
+        protected Customer() {
+
+        }
+
+        /**
+         * Adds the given {@link Address} to the {@link Customer}.
+         * 
+         * @param address must not be {@literal null}.
+         */
+        public void add(Address address) {
+
+            Assert.notNull(address);
+            this.addresses.add(address);
+        }
+
+        /**
+         * Returns the firstname of the {@link Customer}.
+         * 
+         * @return
+         */
+        public String getFirstname() {
+            return firstname;
+        }
+
+        /**
+         * Returns the lastname of the {@link Customer}.
+         * 
+         * @return
+         */
+        public String getLastname() {
+            return lastname;
+        }
+
+        /**
+         * Sets the lastname of the {@link Customer}.
+         * 
+         * @param lastname
+         */
+        public void setLastname(String lastname) {
+            this.lastname = lastname;
+        }
+
+        /**
+         * Returns the {@link EmailAddress} of the {@link Customer}.
+         * 
+         * @return
+         */
+        public EmailAddress getEmailAddress() {
+            return emailAddress;
+        }
+
+        /**
+         * Sets the {@link Customer}'s {@link EmailAddress}.
+         * 
+         * @param emailAddress must not be {@literal null}.
+         */
+        public void setEmailAddress(EmailAddress emailAddress) {
+            this.emailAddress = emailAddress;
+        }
+
+        /**
+         * Return the {@link Customer}'s addresses.
+         * 
+         * @return
+         */
+        public Set<Address> getAddresses() {
+            return Collections.unmodifiableSet(addresses);
+        }
+    }
+    public interface CustomerRepository extends Repository<Customer, Long> {
+
+        /**
+         * Returns the {@link Customer} with the given identifier.
+         * 
+         * @param id the id to search for.
+         * @return
+         */
+        Customer findOne(Long id);
+
+        /**
+         * Saves the given {@link Customer}.
+         * 
+         * @param customer the {@link Customer} to search for.
+         * @return
+         */
+        Customer save(Customer customer);
+
+        /**
+         * Returns the customer with the given {@link EmailAddress}.
+         * 
+         * @param emailAddress the {@link EmailAddress} to search for.
+         * @return
+         */
+        Customer findByEmailAddress(EmailAddress emailAddress);
+    }
+    @Repository
+    class JpaCustomerRepository implements CustomerRepository {
+
+        @PersistenceContext
+        private EntityManager em;
+
+        /* 
+         * (non-Javadoc)
+         * @see com.oreilly.springdata.jpa.core.CustomerRepository#findOne(java.lang.Long)
+         */
+        @Override
+        public Customer findOne(Long id) {
+            return em.find(Customer.class, id);
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see com.oreilly.springdata.jpa.core.CustomerRepository#save(com.oreilly.springdata.jpa.core.Customer)
+         */
+        public Customer save(Customer customer) {
+            if (customer.getId() == null) {
+                em.persist(customer);
+                return customer;
+            } else {
+                return em.merge(customer);
+            }
+        }
+
+        /* 
+         * (non-Javadoc)
+         * @see com.oreilly.springdata.jpa.core.CustomerRepository#findByEmailAddress(com.oreilly.springdata.jpa.core.EmailAddress)
+         */
+        @Override
+        public Customer findByEmailAddress(EmailAddress emailAddress) {
+            TypedQuery<Customer> query = em.createQuery("select c from Customer c where c.emailAddress = :email",
+                    Customer.class);
+            query.setParameter("email", emailAddress);
+
+            return query.getSingleResult();
+        }
+    }
+</code></pre>
+
+<p>Original code test method,</p>
+
+<pre><code>@ContextConfiguration(classes = PlainJpaConfig.class)
+public class JpaCustomerRepositoryIntegrationTest extends AbstractIntegrationTest {
+
+    @Autowired
+    CustomerRepository repository;
+
+    @Test
+    public void insertsNewCustomerCorrectly() {
+
+        Customer customer = new Customer("Alicia", "Keys");
+        customer = repository.save(customer);
+
+        assertThat(customer.getId(), is(notNullValue()));
+    }
+
+    @Test
+    public void updatesCustomerCorrectly() {
+
+        Customer dave = repository.findByFirstname("Dave");
+        assertThat(dave, is(notNullValue()));
+
+        dave.setLastname("Miller");
+        dave = repository.save(dave);
+
+        Customer reference = repository.findByFirstname(dave.getFirstname());
+        assertThat(reference.getLastname(), is(dave.getLastname()));
+    }
+}
+</code></pre>
+
+<p>My main method code, </p>
+
+<pre><code>@Configuration
+@ComponentScan
+@EnableAutoConfiguration
+@ContextConfiguration(classes = PlainJpaConfig.class)
+public class SampleDataJpaApplication {
+
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(SampleDataJpaApplication.class, args);
+    }
+
+}
+</code></pre>
+
+<p>I have extra @EnableAutoConfiguration which the original code doesn't have? Could this be the reason? But without @EnableAutoConfiguration, I can't start Spring Boot Container.</p>

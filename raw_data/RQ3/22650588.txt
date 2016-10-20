@@ -1,0 +1,86 @@
+<p>I am implementing tabs:</p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+
+    @Override
+    public Fragment getItem(int position) {
+        Fragment fragment = null;
+        switch (position) {
+            case 0: {
+                fragment = new Fragment1();
+                break;
+            }
+            case 1: {
+                fragment = new Fragment2();
+                break;
+            }
+        }
+
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return "Fragment1";
+        case 1:
+            return "Fragment2";
+        }
+        return null;
+    }       
+}
+</code></pre>
+
+<p>Activity:</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main_layout);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        Tab tab = actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i));
+        tab.setTabListener(this);
+        actionBar.addTab(tab, i == 0); // Select first tab
+    }
+</code></pre>
+
+<p>What I am finding is that each view is created up front, i.e. the view is created before its tab is selected.  Is there a way to delay creation of tabs that have not been selected?</p>

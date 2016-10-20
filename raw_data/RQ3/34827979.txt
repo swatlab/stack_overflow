@@ -1,0 +1,116 @@
+<p>I am using search widget as auto completed in my home screen. Auto Complete functionally is working fine but when I select any suggestion app is crashing with weird NullPointerException. I spent enough time on googling about it but could not find any clue. I am pasting the code below.</p>
+
+<pre><code> @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        Log.e("Conversion", "OnceateOption menu started");
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu, menu);
+
+        // Get the SearchView and set the searchable configuration
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
+
+       // This is sets our icon as search icon on title bar
+       ImageView searchHintIcon = (ImageView) findViewById(searchView,
+              "android:id/search_button");
+       searchHintIcon.setImageResource(R.drawable.searchicon);
+
+        // Set the hint text color
+        int id = searchView.getContext().getResources().getIdentifier("android:id/search_src_text", null, null);
+        AutoCompleteTextView searchTextView = (AutoCompleteTextView) searchView.findViewById(id);
+        searchTextView.setTextColor(Color.BLACK);
+
+
+        // Set hint in search widget
+        searchView.setQueryHint("Enter Conversion");
+
+        Log.e("Conversion", "Before setting auto suggestions");
+        // Set the auto suggestions
+        ArrayList<String> list = new ArrayList<String>(Arrays.asList(suggestionList));
+        AutoSuggestionAdapter autoSuggestionAdapter = new AutoSuggestionAdapter(this,
+              R.layout.autosuggestion_layout, list);
+        //ArrayAdapter<String> autoSuggestionAdapter = new ArrayAdapter<String>(this,
+          //      android.R.layout.simple_dropdown_item_1line, suggestionList);
+        ((AutoCompleteTextView) searchTextView).setAdapter(autoSuggestionAdapter);
+        ((AutoCompleteTextView) searchTextView).setThreshold(3);
+        // Assumes current activity is the searchable activity
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setIconifiedByDefault(true); // Do not iconify the widget; expand it by default
+        Log.e("Conversion", "Autosuggestions set");
+
+        return true;
+    }
+</code></pre>
+
+<p>Menu item is</p>
+
+<pre><code><item
+        android:id="@+id/menu_search"
+        android:icon="@drawable/searchicon"
+        android:title="@string/action_search"
+        android:showAsAction="always"
+        android:actionViewClass="android.widget.SearchView"
+        />
+</code></pre>
+
+<p>and the exception from log is:</p>
+
+<pre><code>01-16 19:47:22.550 17995-17995/? E/AndroidRuntime: java.lang.NullPointerException
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.SearchView.launchSuggestion(SearchView.java:1387)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.SearchView.onItemClicked(SearchView.java:1303)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.SearchView.access$1800(SearchView.java:92)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.SearchView$9.onItemClick(SearchView.java:1327)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AutoCompleteTextView.performCompletion(AutoCompleteTextView.java:931)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AutoCompleteTextView.access$400(AutoCompleteTextView.java:98)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AutoCompleteTextView$DropDownItemClickListener.onItemClick(AutoCompleteTextView.java:1235)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AdapterView.performItemClick(AdapterView.java:298)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AbsListView.performItemClick(AbsListView.java:1150)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.ListView.performItemClick(ListView.java:4397)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AbsListView$PerformClick.run(AbsListView.java:2985)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.widget.AbsListView$1.run(AbsListView.java:3671)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.os.Handler.handleCallback(Handler.java:615)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.os.Handler.dispatchMessage(Handler.java:92)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.os.Looper.loop(Looper.java:155)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at android.app.ActivityThread.main(ActivityThread.java:5520)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at java.lang.reflect.Method.invokeNative(Native Method)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at java.lang.reflect.Method.invoke(Method.java:511)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1058)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:825)
+01-16 19:47:22.550 17995-17995/? E/AndroidRuntime:     at dalvik.system.NativeStart.main(Native Method)
+01-16 19:47:22.560 399-4972/? E/EmbeddedLogger: App crashed! Process: com.example.app.myapplication
+</code></pre>
+
+<p>But there is no possibility of getting NullPointer when I checked android class code.</p>
+
+<pre><code>private Intent createIntent(String action, Uri data, String extraData, String query,
+        int actionKey, String actionMsg) {
+    // Now build the Intent
+    Intent intent = new Intent(action);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    // We need CLEAR_TOP to avoid reusing an old task that has other activities
+    // on top of the one we want. We don't want to do this in in-app search though,
+    // as it can be destructive to the activity stack.
+    if (data != null) {
+        intent.setData(data);
+    }
+    intent.putExtra(SearchManager.USER_QUERY, mUserQuery);
+    if (query != null) {
+        intent.putExtra(SearchManager.QUERY, query);
+    }
+    if (extraData != null) { /**** LINE NUMBER 1387 NULL POINTER IN THIS LINE ******************/
+        intent.putExtra(SearchManager.EXTRA_DATA_KEY, extraData);
+    }
+    if (mAppSearchData != null) {
+        intent.putExtra(SearchManager.APP_DATA, mAppSearchData);
+    }
+    if (actionKey != KeyEvent.KEYCODE_UNKNOWN) {
+        intent.putExtra(SearchManager.ACTION_KEY, actionKey);
+        intent.putExtra(SearchManager.ACTION_MSG, actionMsg);
+    }
+    intent.setComponent(mSearchable.getSearchActivity());
+    return intent;
+}
+</code></pre>
+
+<p>Any thoughts??</p>

@@ -1,0 +1,190 @@
+<p>So created views by using gridview. I have one layout that includes image view. When views on gridview clicked, I want to activate same layout but with the clicked image in layout. However, I got errors.</p>
+
+<p>Here is my layout</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent" >
+
+<Button
+    android:id="@+id/button2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBaseline="@+id/button1"
+    android:layout_alignBottom="@+id/button1"
+    android:layout_alignParentRight="true"
+    android:text="Hints" />
+
+<ImageView
+    android:id="@+id/imageView1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/button1"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="92dp"
+    android:src="@drawable/adese" />
+
+<Button
+    android:id="@+id/button1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="69dp"
+    android:text="Get Hint" />
+
+<Button
+    android:id="@+id/button3"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/imageView1"
+    android:layout_alignParentLeft="true"
+    android:text="Back" />
+
+<EditText
+    android:id="@+id/editText1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/imageView1"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="32dp"
+    android:ems="10" >
+
+    <requestFocus />
+</EditText>
+
+</RelativeLayout>
+</code></pre>
+
+<p>Here is my java</p>
+
+<pre><code>package com.example.turkishlogoquiz;
+
+import android.os.Bundle;
+import android.provider.MediaStore.Images;
+import android.app.Activity;
+import android.view.Menu;
+import android.view.View;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+
+import android.widget.*;
+import android.widget.AdapterView.OnItemClickListener;
+
+public class LogoSelectionActivity extends Activity {
+
+ImageView view;
+Drawable image; 
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_list_logos);
+
+    view = (ImageView)findViewById(R.id.imageView1);
+
+    GridView gridview = (GridView) findViewById(R.id.gridview);
+    gridview.setAdapter(new ImageAdapter(this));
+
+    gridview.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v, int position, long     id) {
+
+            v = (ImageView)v;
+            image=v.getResources().getDrawable(v.getId());
+            view.setImageDrawable(image);
+            Intent intent = new Intent(LogoSelectionActivity.this,     LogoActivity.class);
+            startActivity(intent);
+        }
+    });
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.activity_main, menu);
+    return true;
+}
+
+}
+</code></pre>
+
+<p>And here is my Image Adapter code</p>
+
+<pre><code>package com.example.turkishlogoquiz;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(200, 200));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        R.drawable.adese, R.drawable.birvar,
+        R.drawable.agaoglu, R.drawable.akinsoft,
+        R.drawable.afra,
+
+};
+}
+</code></pre>
+
+<p>If anyone help me I am very grateful.</p>
+
+<p>Here is my error messages</p>
+
+<pre><code>03-02 22:16:03.524: E/AndroidRuntime(32407): FATAL EXCEPTION: main
+03-02 22:16:03.524: E/AndroidRuntime(32407): android.content.res.Resources$NotFoundException: Resource ID #0xffffffff
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.content.res.Resources.getValue(Resources.java:1026)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.content.res.Resources.getDrawable(Resources.java:671)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at com.example.turkishlogoquiz.LogoSelectionActivity$1.onItemClick(LogoSelectionActivity.java:35)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.widget.AdapterView.performItemClick(AdapterView.java:298)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.widget.AbsListView.performItemClick(AbsListView.java:1283)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.widget.AbsListView$PerformClick.run(AbsListView.java:3074)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.widget.AbsListView$1.run(AbsListView.java:4147)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.os.Handler.handleCallback(Handler.java:615)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.os.Handler.dispatchMessage(Handler.java:92)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.os.Looper.loop(Looper.java:137)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at android.app.ActivityThread.main(ActivityThread.java:4898)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at java.lang.reflect.Method.invokeNative(Native Method)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at java.lang.reflect.Method.invoke(Method.java:511)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1008)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:775)
+03-02 22:16:03.524: E/AndroidRuntime(32407):    at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

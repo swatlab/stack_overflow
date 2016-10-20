@@ -1,0 +1,361 @@
+<p>I've read everyone else's questions and answers and I can't seem to find an answer for mine, so I'm going to post my main.java activity page and my android manifest file and if you see something that I am doing wrong please let me know. Remember, that eclipse shows no errors; when I try to run this through the emulator is when it doesn't go through, and the error of unable to instantiate activity component on the main activity shows on my log cat. Thank you!</p>
+
+<p>1) main.java:</p>
+
+<pre><code>package com.arthur.sos;
+
+
+import android.support.v4.app.Fragment;
+import java.util.HashMap;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
+
+import com.arthur.sos.R;
+
+
+public class Main extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap<String,Object> mapTabInfo = new HashMap<String,Object>();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+         private String tag;
+         @SuppressWarnings("rawtypes")
+        private Class clss;
+         private Bundle args;
+         private android.support.v4.app.Fragment fragment;
+         TabInfo(String tag, @SuppressWarnings("rawtypes") Class clazz, Bundle args) {
+             this.tag = tag;
+             this.clss = clazz;
+             this.args = args;
+         }
+
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+
+        /**
+         * @param context
+         */
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+
+        /** 
+         * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+         */
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+
+    }
+    /** 
+     * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+     */
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Step 1: Inflate layout
+        setContentView(R.layout.tabs_layout);
+        // Step 2: Setup TabHost
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); //set the tab as per the saved state
+        }
+    }
+
+    /** 
+     * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+     */
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); //save the tab selected
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Step 2: Setup TabHost
+     */
+    private void initialiseTabHost(Bundle args) {
+        mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        //This tab is for Vendor Maps, please note .setIndicator is purposely left blank. 
+        Main.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab1").setIndicator("",getResources().getDrawable(R.drawable.map)), ( tabInfo = new TabInfo("Tab1", vendormaps.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        //This tab is for Reviews, please note .setIndicator is purposely left blank. 
+        Main.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab2").setIndicator("",getResources().getDrawable(R.drawable.reviews)), ( tabInfo = new TabInfo("Tab2", reviews.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        //This tab is for Settings, please note .setIndicator is purposely left blank. 
+        Main.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab3").setIndicator("",getResources().getDrawable(R.drawable.settings)), ( tabInfo = new TabInfo("Tab3", settings.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        //This tab is for My Account, please note .setIndicator is purposely left blank. 
+        Main.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab4").setIndicator("",getResources().getDrawable(R.drawable.myaccount)), ( tabInfo = new TabInfo("Tab4", myaccount.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+
+        // Default to first tab
+        this.onTabChanged("Tab1");
+        //
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    /**
+     * @param activity
+     * @param tabHost
+     * @param tabSpec
+     * @param clss
+     * @param args
+     */
+    private static void addTab(Main activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        // Attach a Tab view factory to the spec
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+
+        tabHost.addTab(tabSpec);
+    }
+
+    /** (non-Javadoc)
+     * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+     */
+    public void onTabChanged(String tag) {
+        TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+}
+</code></pre>
+
+<p>2) Android Manifest.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.arthur.sos"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="11"
+        android:targetSdkVersion="17"/>
+
+    <permission
+    android:name="com.arthur.sos.permission.MAPS_RECEIVE"
+    android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.arthur.sos.permission.MAPS_RECEIVE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/rmcsos"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.arthur.sos.Main"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    <meta-data
+       android:name="com.google.android.maps.v2.API_KEY"
+       android:value="certificate area" />
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>3) Activity_Main.xml:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".Main" >
+
+
+</RelativeLayout>
+</code></pre>
+
+<p>4) where the google maps are located first the XML file, vendormaps.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <selector>
+    <!-- When selected -->
+    <item android:drawable="@drawable/map"
+          android:state_selected="true" />
+    <!-- When not selected -->
+    <item android:drawable="@drawable/map_inactive"/>
+</selector>
+    <fragment
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        class="com.google.android.gms.maps.MapFragment" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>5) Now the activity, vendormaps.java: </p>
+
+<pre><code>package com.arthur.sos;
+
+import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+//import android.app.Activity;
+import android.view.Menu;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import com.arthur.sos.R;
+
+
+
+
+public class vendormaps extends FragmentActivity {
+      static final LatLng Whittier = new LatLng(33.9417909, -117.9861795);
+     // static final LatLng KIEL = new LatLng(53.551, 9.993);
+      private GoogleMap map;
+
+      @Override
+      protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
+            .getMap();
+
+
+        @SuppressWarnings("unused")
+        Marker W1 = map.addMarker(new MarkerOptions().position(Whittier).title("Whittier").snippet("Re/Max").icon(BitmapDescriptorFactory.
+                fromResource(R.drawable.rmcsos)));
+
+
+       // Marker kiel = map.addMarker(new MarkerOptions()
+            //.title("Kiel")
+            //.snippet("Kiel is cool")
+           // .icon(BitmapDescriptorFactory
+             //   .fromResource(R.drawable.ic_launcher)));
+
+        // Move the camera instantly to hamburg with a zoom of 15.
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(Whittier, 15));
+
+        // Zoom in, animating the camera.
+        map.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);
+      }
+
+      @Override
+      public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+      }
+
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        if (container == null) {
+
+            return null;
+        }
+        return (LinearLayout)inflater.inflate(R.layout.vendormaps, container, false);
+    }
+
+
+
+
+}
+</code></pre>
+
+<p>6) Now the logcat errors: </p>
+
+<pre><code>05-16 06:43:15.068: E/AndroidRuntime(2064): FATAL EXCEPTION: main
+05-16 06:43:15.068: E/AndroidRuntime(2064): java.lang.RuntimeException: Unable to instantiate activity ComponentInfo{com.arthur.sos/com.arthur.sos.Main}: java.lang.ClassNotFoundException: com.arthur.sos.Main
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1879)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1980)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.ActivityThread.access$600(ActivityThread.java:122)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1146)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.os.Handler.dispatchMessage(Handler.java:99)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.os.Looper.loop(Looper.java:137)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.ActivityThread.main(ActivityThread.java:4340)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at java.lang.reflect.Method.invokeNative(Native Method)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at java.lang.reflect.Method.invoke(Method.java:511)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at dalvik.system.NativeStart.main(Native Method)
+05-16 06:43:15.068: E/AndroidRuntime(2064): Caused by: java.lang.ClassNotFoundException: com.arthur.sos.Main
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:61)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at java.lang.ClassLoader.loadClass(ClassLoader.java:501)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at java.lang.ClassLoader.loadClass(ClassLoader.java:461)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.Instrumentation.newActivity(Instrumentation.java:1023)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1870)
+05-16 06:43:15.068: E/AndroidRuntime(2064):     ... 11 more
+</code></pre>

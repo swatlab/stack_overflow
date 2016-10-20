@@ -1,0 +1,153 @@
+<p>I have an sqlite file in the assets folder. I'm using a database manager class that has been referenced thousands of times in other stack overflow posts: <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<pre><code>private void copyDatabase() throws IOException {
+        // Open your local db as the input stream
+        InputStream myInput = context.getAssets().open( DB_NAME );
+</code></pre>
+
+<p>The problem is the open() method (or getAssets?) that keeps throwing an IOException. My path and file names:</p>
+
+<pre><code>private static final String DB_NAME = "attractioninfo";
+private static final String DB_PATH = "/data/data/seattle.tourists/";
+</code></pre>
+
+<p>Another related question I have is about the path. I've checked the files on my testing phone (samsung galaxy sII) but I don't see a /data/data/mypackagename/... anywhere. Where exactly is this in internal storage? I am using Android 2.2.</p>
+
+<p>EDIT: I did more testing and I've also found that on first install (this means that there is no database file on the phones internal storage yet, it needs to be copied there) this line doesn't work either (I get an SQLiteException)</p>
+
+<pre><code>private boolean checkDatabase() {
+    SQLiteDatabase checkDB = null;
+
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase( myPath, null, SQLiteDatabase.OPEN_READONLY );
+</code></pre>
+
+<p>FULL CODE:</p>
+
+<pre><code>package seattle.tourists;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+    private static final String DB_NAME = "attractioninfo";
+    private static final String DB_PATH = "/data/data/seattle.tourists/databases/";
+    private static final int DB_VERSION = 1;
+    private static final String TABLE_NAME = "ExtraInfo";
+
+    private SQLiteDatabase db;
+    private final Context context;
+
+    /**
+     * Constructor
+     * @param context application context
+     */
+    public DatabaseHelper( Context context ) {
+        super( context, DB_NAME, null, DB_VERSION );
+        this.context = context;
+    }
+
+    /**
+     * Creates empty database on system and rewrites it with existing database
+     * @throws IOException
+     */
+    public void createDatabase() throws IOException {
+        boolean dbExist = checkDatabase();
+
+        if ( dbExist ) {
+            // do nothing, the database already exists;
+        }
+        else {
+            this.getReadableDatabase();
+
+            try {
+                copyDatabase();
+            }
+            catch ( IOException e ) {
+                throw new Error( "Error copying database" );
+            }
+        }
+    }
+
+    /**
+     * Check to see if a database exists
+     * @return true if database exists, false otherwise;
+     */
+    private boolean checkDatabase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase( myPath, null, SQLiteDatabase.OPEN_READONLY );
+        }
+        catch ( SQLiteException e ) {
+            int x = 5;
+        }
+
+        if ( checkDB != null )
+            checkDB.close();
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copes database from assets-folder to system folder, where it can be
+     * accessed and handled. This is done by transferring byte-stream.
+     * @throws IOException
+     */
+    private void copyDatabase() throws IOException {
+        // Open your local db as the input stream
+        AssetManager assets = context.getAssets();
+        InputStream myInput = assets.open( DB_NAME );
+
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream( outFileName );
+
+        // transfer bytes from the inputfile to the outputfile
+        byte [] buffer = new byte[ 1024 ];
+        int length;
+        while ( ( length = myInput.read( buffer ) ) > 0 )
+            myOutput.write( buffer, 0, length );
+
+        // close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public SQLiteDatabase openDataBase() throws SQLException {
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        return db = SQLiteDatabase.openDatabase( myPath, null, SQLiteDatabase.OPEN_READONLY );
+    }
+
+    public synchronized void close() {
+        if ( db != null )
+            db.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // do nothing
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // do nothing
+    }
+}
+</code></pre>

@@ -1,0 +1,82 @@
+<p>I have a main activity that has 2 tabs that are created in it (im using the android studio viewpager tabs example as a base). I also have a sample maps activity that I would like to put inside of the 2nd tab. I am not too sure how to do this, and was looking for some guidance.</p>
+
+<p>So here is the SectionsPagerAdapter that is inside of the main activity, and I believe this is where I am supposed to do so, but do I call an intent to launch the activity that creates the map fragment, or is there a way to do this directly?</p>
+
+<pre><code>    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        //so here?
+        return PlaceholderFragment.newInstance(position + 1);
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_upcoming).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_map).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>
+
+<p>and here is the MapView.java:</p>
+
+<pre><code>public class MapView extends ActionBarActivity {
+
+    private GoogleMap map;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_map_view);
+        setUpMapIfNeeded();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setUpMapIfNeeded();
+    }
+
+    private void setUpMapIfNeeded() {
+        if (map == null) {
+            map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+                    .getMap();
+            if (map != null) {
+                setUpMap();
+            }
+        }
+    }
+
+    private void setUpMap() {
+        //map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+    }
+}
+</code></pre>
+
+<p>and lastly here is the xml for the fragment for the map</p>
+
+<pre><code><fragment xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/map"
+android:name="com.google.android.gms.maps.SupportMapFragment"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".MapsView" />
+</code></pre>
+
+<p>I think this is all you will need, but I can add other parts if need be. Thanks</p>

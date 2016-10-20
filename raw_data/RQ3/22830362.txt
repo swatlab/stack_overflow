@@ -1,0 +1,617 @@
+<p>THIS IS THE ACTIVITY THAT IS SUPPOSE TO SHOW THE CONTACT INFORMATION. AS YOU CAN SEE, THIS ACTIVITY WILL SHOW CONTACTS BASIC INFO LIKE NAME, CELLPHONE, ETC. IT ALSO HAS TO SHOW THE LIST OF ADDRESSES OF THE RESPECTIVE CONTACT.</p>
+
+<pre><code>public class ViewContactActivity extends Activity 
+{
+private TextView name;
+private TextView cellphone;
+private TextView displayCellphone;
+private TextView workphone;
+private TextView displayWorkphone;
+private TextView email;
+private TextView displayEmail;
+
+private ListView listView;
+
+private Contact contact;
+private ArrayList<Address> addressList;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_view_contact);
+
+    this.name = (TextView) findViewById(R.id.nameTextView);
+    this.cellphone = (TextView) findViewById(R.id.cellViewTextView);
+    this.displayCellphone = (TextView) findViewById(R.id.cellDisplayTextView);
+    this.workphone = (TextView) findViewById(R.id.workViewTextView);
+    this.displayWorkphone = (TextView) findViewById(R.id.workDisplayTextView);
+    this.email = (TextView) findViewById(R.id.emailViewTextView);
+    this.displayEmail = (TextView) findViewById(R.id.emailDisplayTextView);
+
+    this.listView = (ListView) findViewById(R.id.addressListView);
+
+    Intent i = getIntent();
+    contact = (Contact) i.getSerializableExtra("Contact");
+
+    this.name.setText(contact.getFirstName() + " " + contact.getLastName());
+    this.displayCellphone.setText(contact.getCellPhone());
+    this.displayWorkphone.setText(contact.getWorkPhone());
+    this.displayEmail.setText(contact.getEmail());
+}
+
+protected void onResume()
+{
+    super.onResume();
+    this.addressList = contact.getAddresses();
+    populateList();
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) 
+{
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.view_contact, menu);
+    return true;
+}
+
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+    switch (item.getItemId()) 
+    {
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+    }
+
+    return onOptionsItemSelected(item);
+}
+
+private void populateList() {
+    ArrayAdapter<Address> adapter = new AddressListAdapter();
+    listView.setAdapter(adapter);
+}
+
+ private class AddressListAdapter extends ArrayAdapter<Address> {
+        public AddressListAdapter() {
+            super (ViewContactActivity.this, R.layout.address_listview_item, addressList);
+        }
+
+        @Override
+        public View getView(int position, View view, ViewGroup parent) {
+            if (view == null)
+                view = getLayoutInflater().inflate(R.layout.address_listview_item, parent, false);
+
+            Address address = addressList.get(position);
+
+
+            TextView addressName = (TextView) findViewById(R.id.addressNameTextView);
+            addressName.setText(address.getAddressName());
+            TextView addressStreet = (TextView) findViewById(R.id.streetDisplayTextView);
+            addressStreet.setText(address.getAddressStreet());
+            TextView addressNumber = (TextView) findViewById(R.id.numberDisplayTextView);
+            addressNumber.setText(address.getAddressNumber());
+            TextView addressCity = (TextView) findViewById(R.id.cityDisplayTextView);
+            addressCity.setText(address.getAddressCity());
+            TextView addressState = (TextView) findViewById(R.id.stateDisplayTextView);
+            addressState.setText(address.getAddressState());
+            TextView addressZip = (TextView) findViewById(R.id.zipDisplayTextView);
+            addressZip.setText(address.getAddressZip());
+
+            return view;
+        }
+    }
+
+}
+</code></pre>
+
+<p>THIS IS THE MAIN ACTIVITY. IT MAKES AN INTENT TO START ViewContactActivity WHEN THE USER CLICKS ON A CONTACT.</p>
+
+<pre><code>public class MainActivity extends Activity 
+{
+private ListView listView;
+ShowFieldsNewContactActivity activity  = new ShowFieldsNewContactActivity();
+public static ContactsManager cManager = new ContactsManager();
+private Object[] Contacts;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    this.listView = (ListView) findViewById(R.id.contactListView);
+}
+
+protected void onResume()
+{
+    super.onResume();
+    Contacts = cManager.getContactListObj();
+
+    this.listView.setOnItemClickListener(new OnItemClickListener()
+    {
+
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                long arg3) {
+            Intent intent = new Intent(MainActivity.this, ViewContactActivity.class);
+            intent.putExtra("Contact", (Contact) Contacts[arg2]);
+            startActivity(intent);
+        }
+
+    });
+
+    populateList();
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) 
+{
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item)
+{
+    switch(item.getItemId())
+    {
+        case R.id.add_contact:
+            Intent intent = new Intent(MainActivity.this, ShowFieldsNewContactActivity.class);
+            startActivity(intent);
+            //adapter.notifyDataSetChanged();
+
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}
+
+private void populateList() {
+    ArrayAdapter<Object> adapter = new ContactListAdapter();
+    listView.setAdapter(adapter);
+}
+
+ private class ContactListAdapter extends ArrayAdapter<Object> {
+        public ContactListAdapter() {
+            super (MainActivity.this, R.layout.listview_item,  Contacts);
+        }
+
+        @Override
+        public View getView(int position, View view, ViewGroup parent) {
+            if (view == null)
+                view = getLayoutInflater().inflate(R.layout.listview_item, parent, false);
+
+            Contact currentContact = (Contact) Contacts[position];
+
+            TextView name = (TextView) view.findViewById(R.id.contactName);
+            name.setText(currentContact.getFirstName() + " " + currentContact.getLastName());
+            TextView phone = (TextView) view.findViewById(R.id.phoneNumber);
+            phone.setText(currentContact.getCellPhone());
+            TextView email = (TextView) view.findViewById(R.id.emailAddress);
+            email.setText(currentContact.getEmail());
+
+            return view;
+        }
+    }
+
+}
+</code></pre>
+
+<p>CONTACT ACTIVITY</p>
+
+<pre><code>@SuppressWarnings("serial")
+public class Contact implements Comparable<Contact>, Serializable
+{
+private String firstName;
+private String lastName;
+private String cellPhone;
+private String workPhone;
+private String email;
+
+private ArrayList<Address> addresses;
+
+public Contact(String firstName, String lastName, String cellPhone, String workPhone, String email)
+{
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.cellPhone = cellPhone;
+    this.workPhone = workPhone;
+    this.email = email;
+    this.addresses = new ArrayList<Address>();
+
+}
+
+public String getFirstName() 
+{
+    return firstName;
+}
+
+public void setFirstName(String firstName) 
+{
+    this.firstName = firstName;
+}
+
+public String getLastName() 
+{
+    return lastName;
+}
+
+public void setLastName(String lastName) 
+{
+    this.lastName = lastName;
+}
+
+public String getCellPhone() 
+{
+    return cellPhone;
+}
+
+public void setCellPhone(String cellPhone) 
+{
+    this.cellPhone = cellPhone;
+}
+
+public String getWorkPhone() 
+{
+    return workPhone;
+}
+
+public void setWorkPhone(String workPhone) 
+{
+    this.workPhone = workPhone;
+}
+
+public String getEmail() 
+{
+    return email;
+}
+
+public void setEmail(String email) 
+{
+    this.email = email;
+}
+
+public void addAddress(Address address1)
+{
+    this.addresses.add(address1);
+}
+
+public ArrayList<Address> getAddresses()
+{
+    return this.addresses;
+}
+
+@Override
+public int compareTo(Contact another) {
+    // TODO Auto-generated method stub
+    return 0;
+}
+
+}
+</code></pre>
+
+<p>ADD ADDRESS ACTIVITY</p>
+
+<pre><code>public class AddAdressActivity extends Activity
+{
+private TextView addressName;
+private TextView addressStreet;
+private TextView addressNumber;
+private TextView addressCity;
+private TextView addressState;
+private TextView addressZip;
+
+private EditText addressNameEditText;
+private EditText addressStreetEditText;
+private EditText addressNumberEditText;
+private EditText addressCityEditText;
+private EditText addressStateEditText;
+private EditText addressZipEditText;
+
+public static Contact contact;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_add_adress);
+
+    this.addressName = (TextView) findViewById(R.id.adressNameTextView);
+    this.addressStreet = (TextView) findViewById(R.id.streetTextView);
+    this.addressNumber = (TextView) findViewById(R.id.numberTextView);
+    this.addressCity = (TextView) findViewById(R.id.cityTextView);
+    this.addressState = (TextView) findViewById(R.id.stateTextView);
+    this.addressZip = (TextView) findViewById(R.id.zipTextView);
+
+    this.addressNameEditText = (EditText) findViewById(R.id.adreesNameEditText);
+    this.addressStreetEditText = (EditText) findViewById(R.id.streetEditText);
+    this.addressNumberEditText = (EditText) findViewById(R.id.numberEditText);
+    this.addressCityEditText = (EditText) findViewById(R.id.cityEditText);
+    this.addressStateEditText = (EditText) findViewById(R.id.stateEditText);
+    this.addressZipEditText = (EditText) findViewById(R.id.zipEditText);
+
+    Intent i = getIntent();
+    contact = (Contact) i.getSerializableExtra("Contact");
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) 
+{
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.add_adress, menu);
+    return true;
+}
+
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+    switch (item.getItemId()) 
+    {
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+
+        case R.id.save_contact:
+            Address address = new Address(this.addressNameEditText.getText().toString(), this.addressStreetEditText.getText().toString(),
+                    this.addressNumberEditText.getText().toString(), this.addressCity.getText().toString(), this.addressStateEditText
+                    .getText().toString(), this.addressZipEditText.getText().toString());
+            MainActivity.cManager.addContact(contact);
+            contact.addAddress(address);
+            finish();
+            return true;
+
+    }
+    return super.onOptionsItemSelected(item);
+}
+
+}
+</code></pre>
+
+<p>THIS IS THE XML FILE FOR THE VIEW CONTACT ACTIVITY</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:paddingBottom="@dimen/activity_vertical_margin"
+android:paddingLeft="@dimen/activity_horizontal_margin"
+android:paddingRight="@dimen/activity_horizontal_margin"
+android:paddingTop="@dimen/activity_vertical_margin"
+tools:context=".ViewContactActivity" >
+
+<TextView
+    android:id="@+id/nameTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="16dp"
+    android:text="Large Text"
+    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+<TextView
+    android:id="@+id/cellViewTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/nameTextView"
+    android:layout_marginLeft="16dp"
+    android:layout_marginTop="23dp"
+    android:text="@string/cell_phone" />
+
+<TextView
+    android:id="@+id/workViewTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/cellViewTextView"
+    android:layout_below="@+id/cellViewTextView"
+    android:layout_marginTop="16dp"
+    android:text="@string/work_phone" />
+
+<TextView
+    android:id="@+id/emailViewTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/workViewTextView"
+    android:layout_below="@+id/workViewTextView"
+    android:layout_marginTop="14dp"
+    android:text="@string/email" />
+
+<TextView
+    android:id="@+id/workDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@+id/workViewTextView"
+    android:layout_alignLeft="@+id/cellDisplayTextView"
+    android:text="TextView" />
+
+<TextView
+    android:id="@+id/cellDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBaseline="@+id/cellViewTextView"
+    android:layout_alignBottom="@+id/cellViewTextView"
+    android:layout_alignLeft="@+id/nameTextView"
+    android:layout_marginLeft="63dp"
+    android:text="TextView" />
+
+<TextView
+    android:id="@+id/emailDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBaseline="@+id/emailViewTextView"
+    android:layout_alignBottom="@+id/emailViewTextView"
+    android:layout_alignLeft="@+id/workDisplayTextView"
+    android:text="TextView" />
+
+<ListView
+    android:id="@+id/addressListView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentRight="true"
+    android:layout_below="@+id/emailViewTextView"
+    android:layout_marginTop="16dp" >
+</ListView>
+
+</RelativeLayout>
+</code></pre>
+
+<p>THIS IS THE XML FOR HOW THE ADDRESS WILL LOOK AS A LIST VIEW ITEM</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical" >
+
+<TextView
+    android:id="@+id/addressNameTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:layout_marginLeft="15dp"
+    android:layout_marginTop="16dp"
+    android:text="Medium Text"
+    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+<TextView
+    android:id="@+id/addressStreetTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/addressNameTextView"
+    android:layout_below="@+id/addressNameTextView"
+    android:layout_marginTop="16dp"
+    android:text="@string/street_text_view" />
+
+<TextView
+    android:id="@+id/addressNumberTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/addressStreetTextView"
+    android:layout_below="@+id/addressStreetTextView"
+    android:layout_marginTop="17dp"
+    android:text="@string/addres_number_text_view" />
+
+<TextView
+    android:id="@+id/addressStateTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/addressCityTextView"
+    android:layout_below="@+id/addressCityTextView"
+    android:layout_marginTop="14dp"
+    android:text="@string/state_text_view" />
+
+<TextView
+    android:id="@+id/addressZipTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/addressStateTextView"
+    android:layout_below="@+id/addressStateTextView"
+    android:layout_marginTop="14dp"
+    android:text="@string/zip_code_text_view" />
+
+<TextView
+    android:id="@+id/addressCityTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/addressNumberTextView"
+    android:layout_below="@+id/addressNumberTextView"
+    android:layout_marginTop="15dp"
+    android:text="@string/city_text_view" />
+
+<TextView
+    android:id="@+id/stateDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@+id/addressStateTextView"
+    android:layout_alignRight="@+id/cityDisplayTextView"
+    android:text="TextView" />
+
+<TextView
+    android:id="@+id/zipDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@+id/addressZipTextView"
+    android:layout_alignLeft="@+id/stateDisplayTextView"
+    android:text="TextView" />
+
+<TextView
+    android:id="@+id/cityDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/addressStateTextView"
+    android:layout_alignLeft="@+id/numberDisplayTextView"
+    android:text="TextView" />
+
+<TextView
+    android:id="@+id/streetDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/addressNumberTextView"
+    android:layout_marginLeft="29dp"
+    android:layout_toRightOf="@+id/addressNameTextView"
+    android:text="TextView" />
+
+<TextView
+    android:id="@+id/numberDisplayTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/addressCityTextView"
+    android:layout_alignLeft="@+id/streetDisplayTextView"
+    android:text="TextView" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>AND FINALLY THIS IS WHAT IS GIVING ME THE LOGCAT</p>
+
+<pre><code>04-03 02:27:03.566: E/AndroidRuntime(1930): FATAL EXCEPTION: main
+04-03 02:27:03.566: E/AndroidRuntime(1930): Process: com.example.contactlist, PID: 1930
+04-03 02:27:03.566: E/AndroidRuntime(1930): java.lang.NullPointerException
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at             edu.uprm.ece.icom4035.activities.ViewContactActivity$AddressListAdapter.getView(ViewContactA    ctivity.java:112)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at          android.widget.AbsListView.obtainView(AbsListView.java:2263)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at     android.widget.ListView.measureHeightOfChildren(ListView.java:1263)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.widget.ListView.onMeasure(ListView.java:1175)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.View.measure(View.java:16497)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.widget.RelativeLayout.measureChild(RelativeLayout.java:689)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.widget.RelativeLayout.onMeasure(RelativeLayout.java:473)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.View.measure(View.java:16497)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.View.measure(View.java:16497)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at com.android.internal.widget.ActionBarOverlayLayout.onMeasure(ActionBarOverlayLayout.java:327     )
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.View.measure(View.java:16497)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:5125)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.widget.FrameLayout.onMeasure(FrameLayout.java:310)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2291)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.View.measure(View.java:16497)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:1916)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:1113)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1295)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1000)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5670)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.Choreographer$CallbackRecord.run(Choreographer.java:761)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.Choreographer.doCallbacks(Choreographer.java:574)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.Choreographer.doFrame(Choreographer.java:544)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:747)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.os.Handler.handleCallback(Handler.java:733)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.os.Handler.dispatchMessage(Handler.java:95)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.os.Looper.loop(Looper.java:136)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at   java.lang.reflect.Method.invokeNative(Native Method)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+04-03 02:27:03.566: E/AndroidRuntime(1930):     at dalvik.system.NativeStart.main(Native       Method)
+</code></pre>
+
+<p>I HAVE TRIED TO FIX THE PROBLEM, BUT I DON'T KNOW MUCH ABOUT THE MEASURE HEIGHT MESSAGE THAT THE LOG CAT IS GIVING TO ME. </p>
+
+<p>THANKS IN ADVANCE</p>

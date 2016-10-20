@@ -1,0 +1,80 @@
+<p>I am currently working with Java 6, i cannot update. I cannot use Java Web Start or turn this desktop application into an applet. With that said, I am left with copying the new updated jar file from a share folder and pasting it into the users folder. I not a professional coder, I orignally code in Perl but for the past 6 months been working with Java. So you may see some issues, feel free to point them out. I love learning. </p>
+
+<p>I have implemented the two JVM sessions just fine (i think). I am, however running into the following issue: </p>
+
+<pre><code>Exception in thread "main" java.lang.NoClassDefFoundError:
+</code></pre>
+
+<p>I receive this error when the new Manifest version does not match the originally launched Manifest version. Once I kill the session (because it hangs after that error), and relaunch, it does detect the update and runs fine. Of course I cannot have the user go through that process. </p>
+
+<p>This is how I am launching the second JVM once I have found that the versions do not match. I use this from the first application: </p>
+
+<pre><code>                JOptionPane.showMessageDialog(null,
+                    "Your version is outdated. I will try to update. Hold tight...", // Message
+                    "Update Notice.", // Title
+                    JOptionPane.INFORMATION_MESSAGE);
+                startSecondJVM();
+                <ClassName>.MainWindow.dispose();
+                System.exit(0);
+</code></pre>
+
+<p>Seems like it is not reaching the "System.exit(0)" portion. Do I need to implement threading or something? </p>
+
+<p>This is the method its calling: </p>
+
+<pre><code>public static void startSecondJVM() throws Exception {
+    String separator = System.getProperty("file.separator");
+    String javapath = System.getProperty("java.home");
+    //String javapath = "C:\\Program Files\\Java\\jre7\\";
+    String fullJavaPath = javapath + "bin" + separator + "java";
+    System.out.println("Java Path: " + fullJavaPath);
+    ProcessBuilder processBuilder = 
+                new ProcessBuilder(fullJavaPath, "-jar", 
+                    updatePath); //  AnotherClassWithMainMethod.class.getName()
+    Process process = processBuilder.start();
+    process.waitFor();
+}
+</code></pre>
+
+<p>Once the second jar file that's in charge of updating launches. I have this in the main method of that file (with other code excluded of course): </p>
+
+<pre><code> try {
+      Thread.sleep(3000);
+      FileCopy.copyFile(FileCopy.source, dest);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+</code></pre>
+
+<p>The method its using is this: </p>
+
+<pre><code>public static void copyFile(File sourceFile, File destFile) throws IOException {
+      if(!destFile.exists()) {
+          destFile.createNewFile();
+      }
+
+      FileChannel source = null;
+      FileChannel destination = null;
+
+      try {
+          source = new FileInputStream(sourceFile).getChannel();
+          destination = new FileOutputStream(destFile).getChannel();
+          destination.transferFrom(source, 0, source.size());
+
+
+
+      if(source != null) {
+        source.close();
+      }
+      if(destination != null) {
+          destination.close();
+      }
+
+       } catch (FileNotFoundException e ) {
+         e.printStackTrace();
+       }
+
+    } // End of copy file
+</code></pre>
+
+<p>So to recap. The file copying process seems to work fine. The original application does not seem to completely quit though. After the copying process is complete, it proceeds to open. That is where I am running into the error. So my question is How can i completely kill the first application while i update with the second java app.  </p>

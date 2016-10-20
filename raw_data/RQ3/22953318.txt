@@ -1,0 +1,303 @@
+<p>below find all my code and xml. My problem is that the spinner (in code spinner1) is null for some reason I can't determine and I get no errors other than the app failing to run. Any help would be appreciated!</p>
+
+<p>activity_main.xml:</p>
+
+<pre><code><android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".MainActivity" />
+</code></pre>
+
+<p>MainActivity.java:</p>
+
+<pre><code>package com.example.passwordplayground;
+
+import java.util.Locale;
+
+import com.example.MyApplication.EncryptionSpinner;
+import com.example.MyApplication.MyApplication;
+
+import android.app.ActionBar;
+import android.app.Activity;
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.NavUtils;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends FragmentActivity implements
+        ActionBar.TabListener {
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        Spinner spinner1 = (Spinner) findViewById(R.id.encryptionSpin);
+        if (spinner1 == null)
+            System.out.println("Spinner1 is null");
+        else
+            System.out.println("Funcion is null");
+        spinner1.setOnItemSelectedListener(new EncryptionSpinner());
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            Fragment fragment = new DummySectionFragment();
+            Bundle args = new Bundle();
+            args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public int getCount() {
+            // Show 4 total pages.
+            return 4;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            case 2:
+                return getString(R.string.title_section3).toUpperCase(l);
+            case 3:
+                return ("Practicality").toUpperCase();
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A dummy fragment representing a section of the app, but that simply
+     * displays dummy text.
+     */
+    public static class DummySectionFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        public static final String ARG_SECTION_NUMBER = "section_number";
+
+        public DummySectionFragment() {
+        }
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = null;
+            if (getArguments().getInt(ARG_SECTION_NUMBER)==1) {
+                rootView = inflater.inflate(R.layout.encryption,container, false);
+            }
+            else if (getArguments().getInt(ARG_SECTION_NUMBER)==2) {
+                rootView = inflater.inflate(R.layout.fragment_main_dummy,
+                        container, false);
+                TextView dummyTextView = (TextView) rootView
+                        .findViewById(R.id.section_label);
+                dummyTextView.setText("I'm second!");
+            }
+            else if (getArguments().getInt(ARG_SECTION_NUMBER)==3) {
+                //dummyTextView.setText("I'm third");
+            }
+            else if (getArguments().getInt(ARG_SECTION_NUMBER)==4) {
+                //dummyTextView.setText("I'm fourth and last!");
+            }
+            return rootView;
+        }
+    }
+
+}
+</code></pre>
+
+<p>encryption.xml:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android1="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity$Encryption" >
+
+    <Spinner
+        android1:id="@+id/encryptionSpin"
+        android1:layout_width="fill_parent"
+        android1:layout_height="wrap_content"
+        android1:layout_alignParentTop="true"
+        android1:layout_centerHorizontal="true"
+        android1:layout_marginTop="14dp"
+        android1:background="@color/orange"
+        android1:entries="@array/cryptArray" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>EncryptionSpinner.java:</p>
+
+<pre><code>package com.example.MyApplication;
+
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemSelectedListener;
+
+public class EncryptionSpinner implements OnItemSelectedListener {
+
+    public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+        // An item was selected. You can retrieve the selected item using
+        // parent.getItemAtPosition(pos)
+        Toast toast = Toast.makeText(MyApplication.getAppContext(), parent.getItemAtPosition(pos).toString(), Toast.LENGTH_LONG);
+        toast.show();
+        System.out.println(parent.getItemAtPosition(pos).toString());
+    }
+
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
+    }
+}
+</code></pre>
+
+<p>Logcat Error:</p>
+
+<pre><code>04-09 01:16:28.637: I/System.out(1440): Spinner1 is null
+04-09 01:16:28.657: D/AndroidRuntime(1440): Shutting down VM
+04-09 01:16:28.657: W/dalvikvm(1440): threadid=1: thread exiting with uncaught exception (group=0x414c4700)
+04-09 01:16:28.692: E/AndroidRuntime(1440): FATAL EXCEPTION: main
+04-09 01:16:28.692: E/AndroidRuntime(1440): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.passwordplayground/com.example.passwordplayground.MainActivity}: java.lang.NullPointerException
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2211)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2261)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1256)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.os.Handler.dispatchMessage(Handler.java:99)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.os.Looper.loop(Looper.java:137)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.ActivityThread.main(ActivityThread.java:5103)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at java.lang.reflect.Method.invoke(Method.java:525)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:737)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at dalvik.system.NativeStart.main(Native Method)
+04-09 01:16:28.692: E/AndroidRuntime(1440): Caused by: java.lang.NullPointerException
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at com.example.passwordplayground.MainActivity.onCreate(MainActivity.java:65)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.Activity.performCreate(Activity.java:5133)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2175)
+04-09 01:16:28.692: E/AndroidRuntime(1440):     ... 11 more
+</code></pre>
+
+<p>Layouts' Gui:
+<img src="http://i.stack.imgur.com/qIW65.png" alt="layouta_main vs encryption"></p>

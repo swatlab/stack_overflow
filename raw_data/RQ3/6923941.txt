@@ -1,0 +1,80 @@
+<p>I want to increase the height of a row in listview when it is clicked (match parent to be specific) but the height of other rows should not get affected only the clicked one should expand.</p>
+
+<p>This is what I have done after modification of code. Now I want that on click of an item the list should start referring to another XML to show the rows differently</p>
+
+<pre><code>public class ExpandableListActivity extends ListActivity 
+{
+
+Context context;
+int selectedPosition = 0;
+
+
+String [] mTitles;
+String [] mDialogues; 
+
+@Override
+public void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+
+    mTitles = getResources().getStringArray(R.array.state_name);
+    mDialogues = getResources().getStringArray(R.array.capital_name);
+    // Use our own list adapter
+    setListAdapter(new ListAdapter(this));
+}
+
+
+@Override
+protected void onListItemClick(ListView l, View v, int position, long id) 
+{    
+
+}
+
+
+private class ListAdapter extends BaseAdapter {
+    public ListAdapter(Context context)
+    {
+
+    }
+
+
+
+    public int getCount() {
+        return mTitles.length;
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+         ViewHolder holder;
+         LayoutInflater inflater = ((Activity) context).getLayoutInflater();
+         if(convertView == null) {
+                holder = new ViewHolder();
+                convertView = inflater.inflate(R.layout.listlayout, parent, false);
+
+                holder.text = (TextView)convertView.findViewById(R.id.textView1);
+                convertView.setTag(holder);
+            } 
+
+         else 
+         {
+             holder = (ViewHolder) convertView.getTag(); 
+         }
+         holder.text.setText(mTitles[position]);
+
+         return convertView;
+    }
+}
+}
+   class ViewHolder { 
+    TextView text; 
+    }
+</code></pre>

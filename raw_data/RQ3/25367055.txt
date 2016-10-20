@@ -1,0 +1,159 @@
+<p>Today I have a problem with my existing sql statement. I want need to use it with TomEE (Tomcat+Java EE) and written in criteria down.</p>
+
+<p>I have these selects in my sql:</p>
+
+<pre><code>SELECT
+ dest.zc_zip as zip,
+ dest.zc_location_name as locname,
+ ACOS(
+        SIN(RADIANS(src.zc_lat)) * SIN(RADIANS(dest.zc_lat)) 
+        + COS(RADIANS(src.zc_lat)) * COS(RADIANS(dest.zc_lat))
+        * COS(RADIANS(src.zc_lon) - RADIANS(dest.zc_lon))
+    ) * 6371 as distance
+</code></pre>
+
+<p>What i did?
+For the first 2 select was it no problem, but the last one, i don't know how i can realize it:</p>
+
+<pre><code>@PersistenceUnit(unitName="umkreissuche-jpa")
+private EntityManagerFactory emf = null;
+private EntityManager em = null;
+..
+em = emf.createEntityManager();
+// getting criteria builder
+CriteriaBuilder cb = em.getCriteriaBuilder();
+// setting ZCCoordinate model as main profile
+CriteriaQuery<ZCCoordinate> cq = cb.createQuery(ZCCoordinate.class);
+// setting from
+Root<ZCCoordinate> dest = cq.from(ZCCoordinate.class);
+// setting inner join
+Join<ZCCoordinate, ZCCoordinate> src = dest.join("zcId", JoinType.INNER);
+// setting selects
+cq.multiselect(dest.get("zcZip").alias("zip"), dest.get("zcLocationName").alias("locname"), ???);
+</code></pre>
+
+<p>Here is my ZCCoordinate model:</p>
+
+<pre><code>package de.circlesearch.model;
+
+import java.io.Serializable;
+
+import javax.persistence.*;
+
+
+/**
+ * The persistent class for the zc_coordinates database table.
+ * 
+ */
+@Entity
+@Table(name="zc_coordinates")
+@NamedQuery(name="ZCCoordinate.findAll", query="SELECT z FROM ZCCoordinate z")
+public class ZCCoordinate implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
+    @Column(name="zc_id", unique=true, nullable=false)
+    private int zcId;
+
+    @Column(name="zc_lat", nullable=false)
+    private double zcLat;
+
+    @Column(name="zc_loc_id", nullable=false)
+    private int zcLocId;
+
+    @Column(name="zc_location_name", nullable=false, length=255)
+    private String zcLocationName;
+
+    @Column(name="zc_lon", nullable=false)
+    private double zcLon;
+
+    @Column(name="zc_zip", nullable=false, length=10)
+    private String zcZip;
+
+    public ZCCoordinate() {
+    }
+
+    public int getZcId() {
+        return this.zcId;
+    }
+
+    public void setZcId(int zcId) {
+        this.zcId = zcId;
+    }
+
+    public double getZcLat() {
+        return this.zcLat;
+    }
+
+    public void setZcLat(double zcLat) {
+        this.zcLat = zcLat;
+    }
+
+    public int getZcLocId() {
+        return this.zcLocId;
+    }
+
+    public void setZcLocId(int zcLocId) {
+        this.zcLocId = zcLocId;
+    }
+
+    public String getZcLocationName() {
+        return this.zcLocationName;
+    }
+
+    public void setZcLocationName(String zcLocationName) {
+        this.zcLocationName = zcLocationName;
+    }
+
+    public double getZcLon() {
+        return this.zcLon;
+    }
+
+    public void setZcLon(double zcLon) {
+        this.zcLon = zcLon;
+    }
+
+    public String getZcZip() {
+        return this.zcZip;
+    }
+
+    public void setZcZip(String zcZip) {
+        this.zcZip = zcZip;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + zcId;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof ZCCoordinate)) {
+            return false;
+        }
+        ZCCoordinate other = (ZCCoordinate) obj;
+        if (zcId != other.zcId) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "ZCCoordinate [zcId=" + zcId + ", zcLat=" + zcLat + ", zcLocId="
+                + zcLocId + ", zcLocationName=" + zcLocationName + ", zcLon="
+                + zcLon + ", zcZip=" + zcZip + "]";
+    }
+
+}
+</code></pre>

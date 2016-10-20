@@ -1,0 +1,74 @@
+<p>In my activity i have to show some images. I used gridview in my activity and each row should shows 4 images (width of each image is 25% of screen). i need to reduce the height of image in same size with width.</p>
+
+<p>So, in my UI i have a gridview and my imageAdapter arranges picture into screen. this is the code of adapter:</p>
+
+<pre><code>public class ContestantsPhotoAdapter extends BaseAdapter {
+
+    private LayoutInflater myInflater;
+    private Bitmap[] bitmapList;
+
+
+    public ContestantsPhotoAdapter(Context c) {
+        myInflater = LayoutInflater.from(c);
+    }
+
+    public void setData(Bitmap[] bmImages){ 
+        bitmapList = bmImages;  
+
+        Log.i("ContestantsPhotoAdapter", "Images passed to the adapter.");
+    }
+
+    @Override
+    public int getCount() {
+        return bitmapList.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return position;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent){
+        ViewHolder holder;
+
+        if (convertView == null) {
+            convertView = myInflater.inflate(R.layout.grid_contestantsphoto, null);
+            holder = new ViewHolder();
+            holder.ivIcon = (ImageView) convertView.findViewById(R.id.imvContestantsPhoto_icon);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.ivIcon.setImageBitmap(bitmapList[position]);
+
+        return convertView;
+    }   
+
+    static class ViewHolder {
+        ImageView ivIcon;
+    }
+}
+</code></pre>
+
+<p>grid_contestantsphoto.xml is:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<ImageView
+    xmlns:android                   = "http://schemas.android.com/apk/res/android"
+    android:id                      = "@+id/imvContestantsPhoto_icon"
+    android:layout_width            = "wrap_content"
+    android:layout_height           = "100dip"
+    android:contentDescription      = "@string/menu_contentdescription" />
+</code></pre>
+
+<p>My problem is when i change <code>android:layout_height = "100dip"</code> it doesn't take effect and always the height is same as before.</p>
+
+<p>Please tell me how to reduce the size. Thank you.</p>

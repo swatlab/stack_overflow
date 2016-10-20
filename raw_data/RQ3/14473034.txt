@@ -1,0 +1,511 @@
+<p>I have to tabs, both containing listviews. I am parsing data and putting them into listview through lazy loading. I was succefull in doing that. However I am face an issue. After loading data into listview of tab1, when I go to tab2 and come back to tab1, all the data in the listview of tab1 gets erased.Same is the case with tab 2 as well. However the data is still there in the array, using which I populated the list view. Could any one please take a look at it. Thanks.</p>
+
+<p>Fragmentactivity class: used to create and display tabs:</p>
+
+<pre><code>package com.example.abe;
+
+import java.util.HashMap;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
+
+public class TabsFragmentActivity extends FragmentActivity implements
+        TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, TabsFragmentActivity.TabInfo>();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+        private String tag;
+        private Class<?> clss;
+        private Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String tag, Class<?> clazz, Bundle args) {
+            this.tag = tag;
+            this.clss = clazz;
+            this.args = args;
+        }
+
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+
+    }
+
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.tabs_layout);
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); // set
+                                                                                // the
+                                                                                // tab
+                                                                                // as
+                                                                                // per
+                                                                                // the
+                                                                                // saved
+                                                                                // state
+        }
+    }
+
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); // save the tab
+                                                                // selected
+        super.onSaveInstanceState(outState);
+    }
+
+    private void initialiseTabHost(Bundle args) {
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab1").setIndicator("ST"), (tabInfo = new TabInfo(
+                "Tab1", Tab1Fragment.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab2").setIndicator("CSI"),
+                (tabInfo = new TabInfo("Tab2", Tab2Fragment.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        this.onTabChanged("Tab1");
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    private static void addTab(TabsFragmentActivity activity, TabHost tabHost,
+            TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+        tabInfo.fragment = activity.getSupportFragmentManager()
+                .findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager()
+                    .beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+        tabHost.addTab(tabSpec);
+    }
+
+    public void onTabChanged(String tag) {
+        TabInfo newTab = this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager()
+                    .beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+}
+</code></pre>
+
+<p>Tab1 fragment class- Contains listview:</p>
+
+<pre><code>package com.example.abe;
+
+import java.util.ArrayList;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.ListFragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
+
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+public class Tab1Fragment extends ListFragment {
+    ListView lv;
+    Activity act = this.getActivity();
+    Context ct = this.getActivity();
+    XMLGettersSetters data;
+    boolean loadingMore = false;
+    String abc[] = new String[50];
+    static int count = 0;
+    final int itemsPerPage = 10;
+    static ArrayList<String> myListItems = new ArrayList<String>();
+    ArrayList<String> myListItems2;
+    ArrayAdapter<String> adapter;
+    ArrayAdapter<String> adapter1;
+
+    static int size = 0;
+    int position = 0;
+    int top = 0;
+    static String android_array1[];
+    ArrayList<String> myListItems3;
+
+    String parsed[] = new String[MainActivity.Sarray1.length];
+
+    @SuppressWarnings("unused")
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        if (container == null) {
+            return null;
+        }
+        myListItems2 = new ArrayList<String>();
+        adapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                android.R.layout.simple_list_item_1, myListItems);
+        View root = inflater.inflate(R.layout.tab_frag1_layout, container,
+                false);
+        lv = (ListView) root.findViewById(android.R.id.list);
+        lv.setAdapter(adapter);
+        parsed = MainActivity.Sarray1;
+        for (int j = 0; j < parsed.length; j++) {
+            System.out.println("sax" + parsed[j].toString());
+        }
+
+        // android_array1=SAXParserActivity.Sarray1;
+        // for (int i=0 ; i < android_array1.length ; i++)
+        // {
+        // System.out.println("a"+android_array1[i].toString());
+        // }
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        myListItems = new ArrayList<String>();
+        int cnt = lv.getCount();
+        // if(cnt < 10)
+        // {
+        // adapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+        // android.R.layout.simple_list_item_1, myListItems);
+        // lv.setAdapter(adapter);
+        // }
+        System.out.println("lv count" + " " + cnt);
+        System.out.println("view count" + " " + count);
+        // if(cnt!=count)
+        // {
+        // adapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+        // android.R.layout.simple_list_item_1, myListItems);
+        // }
+
+        View footerView = ((LayoutInflater) this.getActivity()
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(
+                R.layout.listfooter, null, false);
+        lv.addFooterView(footerView);
+        lv.setAdapter(adapter);
+        // this.setListAdapter(adapter);
+        for (int i = 0; i < 50; i++) {
+            abc[i] = "ab" + i;
+        }
+        this.getListView().setOnScrollListener(new OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem,
+                    int visibleItemCount, int totalItemCount) {
+                System.out.println(abc.length);
+                System.out.println(count);
+                System.out.println("First" + firstVisibleItem);
+                System.out.println("Vis" + visibleItemCount);
+                position = firstVisibleItem;
+                View v = lv.getChildAt(0);
+                top = (v == null) ? 0 : v.getTop();
+                int lastInScreen = firstVisibleItem + visibleItemCount;
+                System.out.println("Last" + lastInScreen);
+                System.out.println("Total" + totalItemCount);
+                if ((lastInScreen == totalItemCount) && !(loadingMore)) {
+                    if (count < size) {
+                        try {
+                            Thread thread = new Thread(null, loadMoreListItems);
+                            thread.start();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+                    else {
+                        Toast.makeText(getActivity().getApplicationContext(),
+                                "DATA =)", Toast.LENGTH_LONG).show();
+
+                    }
+                }
+            }
+        });
+        try {
+            Thread thread = new Thread(null, loadMoreListItems);
+            thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Runnable loadMoreListItems = new Runnable() {
+        @Override
+        public void run() {
+            loadingMore = true;
+            myListItems3 = new ArrayList<String>();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+            size = parsed.length;
+            for (int i = 0; i < itemsPerPage; i++) {
+                if (count < size) {
+                    myListItems3.add(parsed[count].toString());
+                    myListItems.add(myListItems3.get(i));
+                    count = count + 1;
+                } else {
+                    break;
+                }
+            }
+            Log.i("a", "b");
+            try {
+                getActivity().runOnUiThread(returnRes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.i("a", "b");
+        }
+    };
+    private Runnable returnRes = new Runnable() {
+        @Override
+        public void run() {
+            if (myListItems3 != null && myListItems3.size() > 0) {
+                for (int j = 0; j < myListItems3.size(); j++) {
+                    adapter.add(myListItems3.get(j));
+
+                    adapter1.add(myListItems3.get(j));
+
+                }
+            }
+            // setListAdapter(adapter);
+            Log.i("a", "b");
+            adapter.notifyDataSetChanged();
+            // lv.setSelection(position);
+            // lv.setSelectionFromTop(position, top);
+            Log.i("a", "b");
+            getActivity().setTitle(
+                    "Neverending List with "
+                            + String.valueOf(adapter.getCount()) + " items");
+            loadingMore = false;
+
+        }
+    };
+}
+</code></pre>
+
+<p>Tab2 fragment class- Also contains listview:</p>
+
+<pre><code>/**
+* 
+*/
+package com.example.abe;
+
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.Toast;
+import android.widget.AbsListView.OnScrollListener;
+
+/**
+* @author mwho
+* 
+*/
+public class Tab2Fragment extends ListFragment {
+    ListView lv;
+    Activity act = this.getActivity();
+    Context ct = this.getActivity();
+    XMLGettersSetters data;
+    boolean loadingMore = false;
+    String abc[] = new String[50];
+    static int count = 0;
+    final int itemsPerPage = 10;
+    static ArrayList<String> myListItems = new ArrayList<String>();
+    ArrayList<String> myListItems2;
+    ArrayAdapter<String> adapter;
+    static int size = 0;
+    int position = 0;
+    int top = 0;
+    ArrayList<String> myListItems3;
+    String parsed[] = new String[MainActivity.Sarray2.length];
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        if (container == null) {
+
+            return null;
+        }
+
+        myListItems2 = new ArrayList<String>();
+        adapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                android.R.layout.simple_list_item_1, myListItems2);
+        View root = inflater.inflate(R.layout.tab_frag1_layout, container,
+                false);
+        lv = (ListView) root.findViewById(android.R.id.list);
+        lv.setAdapter(adapter);
+        parsed = MainActivity.Sarray2;
+        for (int j = 0; j < parsed.length; j++) {
+            System.out.println("sax" + parsed[j].toString());
+        }
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        myListItems = new ArrayList<String>();
+        View footerView = ((LayoutInflater) this.getActivity()
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(
+                R.layout.listfooter, null, false);
+        this.getListView().addFooterView(footerView);
+        this.setListAdapter(adapter);
+        for (int i = 0; i < 50; i++) {
+            abc[i] = "ab" + i;
+        }
+        this.getListView().setOnScrollListener(new OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem,
+                    int visibleItemCount, int totalItemCount) {
+                System.out.println(abc.length);
+                System.out.println(count);
+                System.out.println("First" + firstVisibleItem);
+                System.out.println("Vis" + visibleItemCount);
+                position = firstVisibleItem;
+                View v = lv.getChildAt(0);
+                top = (v == null) ? 0 : v.getTop();
+                int lastInScreen = firstVisibleItem + visibleItemCount;
+                System.out.println("Last" + lastInScreen);
+                System.out.println("Total" + totalItemCount);
+                if ((lastInScreen == totalItemCount) && !(loadingMore)) {
+                    if (count < size) {
+                        try {
+                            Thread thread = new Thread(null, loadMoreListItems);
+                            thread.start();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+                    else {
+                        Toast.makeText(getActivity().getApplicationContext(),
+                                "DATA =)", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+        try {
+            Thread thread = new Thread(null, loadMoreListItems);
+            thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Runnable loadMoreListItems = new Runnable() {
+        @Override
+        public void run() {
+            loadingMore = true;
+            myListItems3 = new ArrayList<String>();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+            size = parsed.length;
+            for (int i = 0; i < itemsPerPage; i++) {
+                if (count < size) {
+                    myListItems3.add(parsed[count].toString());
+                    myListItems.add(myListItems3.get(i));
+                    count = count + 1;
+                } else {
+                    break;
+                }
+            }
+            Log.i("a", "b");
+            try {
+                getActivity().runOnUiThread(returnRes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.i("a", "b");
+        }
+    };
+    private Runnable returnRes = new Runnable() {
+        @Override
+        public void run() {
+            if (myListItems3 != null && myListItems3.size() > 0) {
+                for (int i = 0; i < myListItems3.size(); i++)
+                    adapter.add(myListItems3.get(i));
+            }
+            setListAdapter(adapter);
+            Log.i("a", "b");
+            adapter.notifyDataSetChanged();
+            // lv.setSelection(position);
+            lv.setSelectionFromTop(position, top);
+            Log.i("a", "b");
+            getActivity().setTitle(
+                    "Neverending List with "
+                            + String.valueOf(adapter.getCount()) + " items");
+            loadingMore = false;
+        }
+    };
+
+}
+</code></pre>

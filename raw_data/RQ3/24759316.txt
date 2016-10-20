@@ -1,0 +1,201 @@
+<p>i follow this <a href="http://www.edumobile.org/android/android-programming-tutorials/learn-how-to-create-listview-from-sqlite-database-in-android-development/" rel="nofollow">example</a></p>
+
+<p>it works fine, but as i modified the inserting methode, i got NullpointerException in this line:</p>
+
+<pre><code>return DB.insert(tableName, null, initialValues);
+</code></pre>
+
+<p>tableName is assigned and initialValues also. i don't know why i got NullpointerException.</p>
+
+<p>my code:</p>
+
+<pre><code>public class MainActivity extends ListActivity {
+
+    private ArrayList<String> results = new ArrayList<String>();
+    private String tableName = DBHelper.tableName;
+    private SQLiteDatabase newDB;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //setContentView(R.layout.activity_main);
+
+        InsertTheData();
+        openAndQueryDatabase(); 
+        displayResultList();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void displayResultList() {
+        TextView tView = new TextView(this);
+        tView.setText("This data is retrieved from the database and only 4 " +
+                "of the results are displayed");
+        getListView().addHeaderView(tView);
+
+        setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, results));
+        getListView().setTextFilterEnabled(true);
+
+    }
+
+    private void InsertTheData()
+    {
+        try {
+            DBHelper dbHelper = new DBHelper(this.getApplicationContext()); 
+            newDB = dbHelper.getWritableDatabase();
+            dbHelper.insertSomeItmes();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            Log.e(getClass().getSimpleName(), "Could not Insert data");
+        }
+         finally {
+            if (newDB != null) 
+                newDB.execSQL("DELETE FROM " + tableName);
+                newDB.close();
+         }
+    }
+
+
+    private void openAndQueryDatabase() {
+        try {
+            DBHelper dbHelper = new DBHelper(this.getApplicationContext());
+            newDB = dbHelper.getWritableDatabase();
+            Cursor c = newDB.rawQuery("SELECT FirstName, Age FROM " +
+                    tableName +
+                    " where Age > 10 LIMIT 4", null);
+
+            if (c != null ) {
+                if  (c.moveToFirst()) {
+                    do {
+                        String firstName = c.getString(c.getColumnIndex("FirstName"));
+                        int age = c.getInt(c.getColumnIndex("Age"));
+                        results.add("Name: " + firstName + ",Age: " + age);
+                    }while (c.moveToNext());
+                } 
+            }           
+        } catch (SQLiteException se ) {
+            Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+        } finally {
+            if (newDB != null) 
+                newDB.execSQL("DELETE FROM " + tableName);
+                newDB.close();
+        }
+
+    }
+}
+</code></pre>
+
+<p>and DbHelper class:</p>
+
+<pre><code>public class DBHelper extends SQLiteOpenHelper {
+
+    public SQLiteDatabase DB;
+    public String DBPath;
+    public static String DBName = "sample";
+    public static final int version = '1';
+    public static Context currentContext;
+    public static String tableName = "Resource";
+
+    public static final String KEY_LastName = "LastName";
+    public static final String KEY_FirstName = "FirstName";
+    public static final String KEY_Country = "Country";
+    public static final String KEY_Age = "Age"; 
+
+    private static final String TAG = "Create_The_DB";
+
+    private static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " +
+            tableName + " ( "+ KEY_LastName + " VARCHAR, "+ KEY_FirstName +"  VARCHAR," + KEY_Country + "  VARCHAR,"+ KEY_Age +"  INT(3))";
+
+    public DBHelper(Context context) {
+        //super(context, name, factory, version);
+        // TODO Auto-generated constructor stub
+
+        super(context, DBName, null, version);
+        currentContext = context;
+        DBPath = "/data/data/" + context.getPackageName() + "/databases";
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+      // TODO Auto-generated method stub
+      Log.w(TAG, TABLE_CREATE);
+      boolean dbExists = checkDbExists();       
+      if (dbExists) {
+        // do nothing
+      } else {
+        DB = currentContext.openOrCreateDatabase(DBName, 0, null);
+        DB.execSQL(TABLE_CREATE);
+    }
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+         Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+                 + newVersion + ", which will destroy all old data");
+               db.execSQL("DROP TABLE IF EXISTS " + TABLE_CREATE);
+               onCreate(db);
+
+    }
+
+    private boolean checkDbExists() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DBPath + DBName;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+            // database does't exist yet.
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    public long createItmes(String LeLastName, String LeFirstName, String LeCountry, int LeAge) {
+
+              ContentValues initialValues = new ContentValues();
+              initialValues.put(KEY_LastName, LeLastName);
+              initialValues.put(KEY_FirstName, LeFirstName);
+              initialValues.put(KEY_Country, LeCountry);
+              initialValues.put(KEY_Age, LeAge);
+
+              return DB.insert(tableName, null, initialValues);
+             }
+
+    public void insertSomeItmes() {
+
+        createItmes("AFG","Afghanistan","Asia",5);
+        createItmes("ALB","Albania","Europe",9);
+        createItmes("DZA","Algeria","Africa",52);   
+        createItmes("AND","Andorra","Europe",55);
+        createItmes("AGO","Angola","Africa",63);
+        createItmes("AIA","Anguilla","North America",75);
+
+         }  
+}
+</code></pre>

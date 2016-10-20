@@ -1,0 +1,304 @@
+<p>In my application I am using an existing database in assests folder named DTUFoodie. While opening the database I am facing error: </p>
+
+<pre><code>08-27 19:36:46.930    5838-5838/com.brainbreaker.dtufoodie E/SQLiteDatabase﹕ Failed to open database '/data/data/com.brainbreaker.dtufoodie/databases/DTUFoodie.db'.
+</code></pre>
+
+<p>I have tried solutions of every question related to this, still not able to find the problem.
+Here is the code of my Database Helper Class.</p>
+
+<p><strong>FoodieDatabase.java</strong></p>
+
+<pre><code>public class FoodieDatabase extends SQLiteAssetHelper {
+
+    private static String DB_PATH = "/data/data/com.brainbreaker.dtufoodie/databases/";
+    public String DATABASE_CREATE = "create table "
+            + TableData.TableInfo.TABLE_NAME + "("
+            + TableData.TableInfo.COLUMN_ID + " INTEGER primary key ,"
+            + TableData.TableInfo.COLUMN_hostel + " TEXT not null,"
+            + TableData.TableInfo.COLUMN_weekday + " TEXT not null,"
+            + TableData.TableInfo.COLUMN_category + " TEXT not null,"
+            + TableData.TableInfo.COLUMN_food + " TEXT not null,"
+            + TableData.TableInfo.COLUMN_rate + " TEXT not null" + ")";
+
+
+    private static final int DATABASE_VERSION = 1;
+    private SQLiteDatabase dtufoodie;
+    Context mycontext;
+    private static String DB_NAME = TableData.TableInfo.DATABASE_NAME;
+
+    // Database creation sql statement
+    public FoodieDatabase(Context context) {
+        super(context, TableData.TableInfo.DATABASE_NAME, null, DATABASE_VERSION);
+        this.mycontext = context;
+        Log.w("FoodieDatabase", "Database Created");
+    }
+
+//    @Override
+//    public void onCreate(SQLiteDatabase database) {
+//        database.execSQL(DATABASE_CREATE);
+//        Log.w(FoodieDatabase.class.getName(),
+//                " Table " + TableData.TableInfo.TABLE_NAME + " Successfully created. "
+//        );
+//    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    public void insertvalues(FoodieDatabase fdb, Integer id, String hostel,
+                             String weekday, String category, String food, String rate) {
+        SQLiteDatabase sdb = fdb.getWritableDatabase();
+
+        ContentValues cv = new ContentValues();
+        cv.put(TableData.TableInfo.COLUMN_ID, id);
+        cv.put(TableData.TableInfo.COLUMN_hostel, hostel);
+        cv.put(TableData.TableInfo.COLUMN_weekday, weekday);
+        cv.put(TableData.TableInfo.COLUMN_category, category);
+        cv.put(TableData.TableInfo.COLUMN_food, food);
+        cv.put(TableData.TableInfo.COLUMN_rate, rate);
+
+        sdb.insert(TableData.TableInfo.TABLE_NAME, null, cv);
+    }
+
+    public Cursor retrievevalues(FoodieDatabase fdb) {
+
+        SQLiteDatabase sq = fdb.getReadableDatabase();
+        String[] columns = {TableData.TableInfo.COLUMN_ID,
+                TableData.TableInfo.COLUMN_hostel,
+                TableData.TableInfo.COLUMN_weekday,
+                TableData.TableInfo.COLUMN_category,
+                TableData.TableInfo.COLUMN_food,
+                TableData.TableInfo.COLUMN_rate};
+        Cursor CR = sq.query(TableData.TableInfo.TABLE_NAME, columns, null, null, null, null, null);
+        return CR;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     */
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+            //do nothing - database already exist
+        } else {
+
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     *
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            //database does't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     */
+    private void copyDataBase() throws IOException {
+
+        //Open your local db as the input stream
+        InputStream myInput = mycontext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        dtufoodie = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if (dtufoodie != null)
+            dtufoodie.close();
+
+        super.close();
+
+    }
+
+}
+</code></pre>
+
+<p><strong>UsingActivity.java</strong> </p>
+
+<pre><code>public class Home extends Activity {
+    Context context= this;
+    String food;
+    String hostelname;
+    String category;
+    String rate;
+    String weekday;
+
+
+    private Toolbar toolbar;
+    private DrawerView drawer;
+    private ActionBarDrawerToggle drawerToggle;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home);
+        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        drawer = (DrawerView) findViewById(R.id.drawer);
+        setSupportActionBar(toolbar);
+
+        // Database Operations
+        // FoodieDatabase fdb = new FoodieDatabase(this);
+        FoodieDatabase myDbHelper = new FoodieDatabase(this);
+        try {
+            myDbHelper.createDataBase();
+        }
+        catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+        try {
+            myDbHelper.openDataBase();
+        }
+        catch(SQLException sqle){
+            throw new Error("SQLException: "+sqle);
+        }
+        Cursor CR = myDbHelper.retrievevalues(myDbHelper);
+        CR.moveToFirst();
+
+        do {
+            hostelname = "ABH";
+            category = CR.getString(1);
+            food = CR.getString(2);
+            weekday = CR.getString(3);
+            rate = CR.getString(4);
+            Toast.makeText(Home.this, category, Toast.LENGTH_SHORT).show();
+            Toast.makeText(Home.this, weekday, Toast.LENGTH_SHORT).show();
+
+        }
+        while(CR.moveToNext());
+}}
+</code></pre>
+
+<p>Here is the logcat:</p>
+
+<pre><code>08-27 19:36:46.926    5838-5838/com.brainbreaker.dtufoodie W/FoodieDatabase﹕ Database Created
+08-27 19:36:46.927    5838-5838/com.brainbreaker.dtufoodie E/SQLiteLog﹕ (14) cannot open file at line 30191 of [00bb9c9ce4]
+08-27 19:36:46.927    5838-5838/com.brainbreaker.dtufoodie E/SQLiteLog﹕ (14) os_unix.c:30191: (2) open(/data/data/com.brainbreaker.dtufoodie/databases/DTUFoodie.db) -
+08-27 19:36:46.930    5838-5838/com.brainbreaker.dtufoodie E/SQLiteDatabase﹕ Failed to open database '/data/data/com.brainbreaker.dtufoodie/databases/DTUFoodie.db'.
+    android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+            at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+            at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+            at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+            at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+            at com.brainbreaker.dtufoodie.database.FoodieDatabase.checkDataBase(FoodieDatabase.java:128)
+            at com.brainbreaker.dtufoodie.database.FoodieDatabase.createDataBase(FoodieDatabase.java:94)
+            at com.brainbreaker.dtufoodie.Home.onCreate(Home.java:78)
+            at android.app.Activity.performCreate(Activity.java:5248)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1110)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2162)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2257)
+            at android.app.ActivityThread.access$800(ActivityThread.java:139)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5086)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+            at dalvik.system.NativeStart.main(Native Method)
+08-27 19:36:46.930    5838-5838/com.brainbreaker.dtufoodie W/SQLiteAssetHelper﹕ copying database from assets...
+08-27 19:36:46.933    5838-5838/com.brainbreaker.dtufoodie E/SQLiteAssetHelper﹕ Couldn't open DTUFoodie.db for writing (will try read-only):
+    com.readystatesoftware.sqliteasset.SQLiteAssetHelper$SQLiteAssetException: Missing databases/DTUFoodie.db file (or .zip, .gz archive) in assets, or target folder not writable
+            at android.content.res.AssetManager.openAsset(Native Method)
+            at android.content.res.AssetManager.open(AssetManager.java:316)
+            at android.content.res.AssetManager.open(AssetManager.java:290)
+            at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.copyDatabaseFromAssets(SQLiteAssetHelper.java:436)
+            at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.createOrOpenDatabase(SQLiteAssetHelper.java:400)
+            at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.getWritableDatabase(SQLiteAssetHelper.java:176)
+            at com.readystatesoftware.sqliteasset.SQLiteAssetHelper.getReadableDatabase(SQLiteAssetHelper.java:254)
+            at com.brainbreaker.dtufoodie.database.FoodieDatabase.createDataBase(FoodieDatabase.java:102)
+            at com.brainbreaker.dtufoodie.Home.onCreate(Home.java:78)
+            at android.app.Activity.performCreate(Activity.java:5248)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1110)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2162)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2257)
+            at android.app.ActivityThread.access$800(ActivityThread.java:139)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5086)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+            at dalvik.system.NativeStart.main(Native Method)
+08-27 19:36:46.933    5838-5838/com.brainbreaker.dtufoodie E/SQLiteLog﹕ (14) cannot open file at line 30191 of [00bb9c9ce4]
+08-27 19:36:46.933    5838-5838/com.brainbreaker.dtufoodie E/SQLiteLog﹕ (14) os_unix.c:30191: (2) open(/data/data/com.brainbreaker.dtufoodie/databases/DTUFoodie.db) -
+08-27 19:36:46.936    5838-5838/com.brainbreaker.dtufoodie E/SQLiteDatabase﹕ Failed to open database '/data/data/com.brainbreaker.dtufoodie/databases/DTUFoodie.db'.
+</code></pre>
+
+<p>Any help is appreciated. Thanks in advance.</p>

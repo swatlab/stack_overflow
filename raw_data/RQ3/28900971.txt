@@ -1,0 +1,513 @@
+<p>I am currently trying to make a settings page for a student finance app, and whenever the user opens the settings page their settings are loaded from the database using a php script hosted online. </p>
+
+<p>This works fine, but when I execute another Async task when they click to save their settings to the database, I get the same JSON response as I got from my first AsyncTask. </p>
+
+<p>Each task calls a different PHP script so it is not a problem with interference between the two of them (I believe), but I am at a loss as to why I am not getting the correct response from my PHP code.</p>
+
+<p>Java file with the AsyncTasks:</p>
+
+<pre><code>package com.samjackson.scholardollars;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.EditTextPreference;
+import android.preference.ListPreference;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    JSONParser jsonParser = new JSONParser();
+    private static final String SETTINGS_URL = "http://appinterface-scholardollars.c9.io/getusersettings.php";
+    private static final String UPDATE_SETTINGS_URL = "http://appinterface-scholardollars.c9.io/updateusersettings.php";
+    private static final String TAG_SUCCESS = "success";
+    private static final String TAG_MESSAGE = "message";
+    private static final String TAG_BUDGET = "Budget";
+    private static final String TAG_FREQUENCY = "Frequency";
+    private static final String TAG_DISPLAY_NAME = "DisplayName";
+    ProgressDialog pDialog;
+    static int Budget;
+    static String BudgetFrequency;
+    static String DisplayName;
+    static String postDisplayName, postBudgetFrequency, postBudget;
+    EditTextPreference displayName, budget;
+    ListPreference frequency;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.settings);
+        SharedPreferences sp = getPreferenceScreen().getSharedPreferences();
+        sp.registerOnSharedPreferenceChangeListener(this);
+        displayName = (EditTextPreference)findPreference("displayName_preference");
+        frequency = (ListPreference)findPreference("frequency_preference");
+        budget = (EditTextPreference)findPreference("budgetAmount_preference");
+        getUserSettings();
+
+    }
+
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Preference pref = findPreference(key);
+
+        if(key.equals("displayName_preference")){
+            EditTextPreference displayPersonName = (EditTextPreference) pref;
+            pref.setSummary(displayPersonName.getText());
+            postDisplayName = displayPersonName.getText();
+        }else if(key.equals("frequency_preference"))
+        {
+            ListPreference lp = (ListPreference) pref;
+            pref.setSummary(lp.getEntry());
+            postBudgetFrequency = lp.getEntry().toString();
+        }else if(key.equals("budgetAmount_preference")){
+            EditTextPreference etp = (EditTextPreference) pref;
+            pref.setSummary(etp.getText());
+            postBudget = etp.getText();
+        }
+    }
+
+    private void updateSettings(){
+        System.out.println("updating settings");
+        class AttemptSettingsUpdate extends AsyncTask<String, String, String> {
+
+            @Override
+            protected void onPreExecute(){
+                super.onPreExecute();
+                pDialog = new ProgressDialog(SettingsActivity.this);
+                pDialog.setMessage("Updating settings...");
+                pDialog.setIndeterminate(false);
+                pDialog.setCancelable(true);
+                pDialog.show();
+
+            }
+
+            @Override
+            protected String doInBackground(String... args){
+                System.out.println("starting background task");
+                int success;
+                System.out.println("ID = "+ Integer.toString(LoginActivity.getUID())+" - Budget = "+postBudget+" - Frequency: " + postBudgetFrequency + " - Display Name: "+postDisplayName);
+                try{
+                    List<NameValuePair> params = new ArrayList<NameValuePair>();
+                    params.add(new BasicNameValuePair("budget", postBudget));
+                    params.add(new BasicNameValuePair("frequency", postBudgetFrequency));
+                    params.add(new BasicNameValuePair("display name", postDisplayName));
+                    params.add(new BasicNameValuePair("ID", Integer.toString(LoginActivity.getUID())));
+
+                    Log.d("Request!", "Starting at url: " + UPDATE_SETTINGS_URL);
+
+                    JSONObject jsonNewSettings = jsonParser.makeHttpRequest(UPDATE_SETTINGS_URL, "POST", params);
+
+                    System.out.println(jsonNewSettings);
+
+                    success = jsonNewSettings.getInt(TAG_SUCCESS);
+                    if(success==1){
+                        Log.d("Changed settings!", jsonNewSettings.toString());
+
+
+                        Intent intent = new Intent(SettingsActivity.this, MainActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(intent);
+                        finish();
+                    }else{
+                        return jsonNewSettings.getString(TAG_MESSAGE);
+                    }
+
+
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
+                return null;
+            }
+            protected void onPostExecute(String message){
+                pDialog.dismiss();
+                if(message != null){
+                    Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            }
+
+        }
+
+        new AttemptSettingsUpdate().execute();
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_settings, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }else if(id == R.id.action_save){
+            updateSettings();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /*public static class Prefs1Fragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState){
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.settings);
+        }
+
+    }*/
+
+    public void getUserSettings(){
+
+        class AttemptSettings extends AsyncTask<String, String, String> {
+
+            @Override
+            protected void onPreExecute(){
+                super.onPreExecute();
+                pDialog = new ProgressDialog(SettingsActivity.this);
+                pDialog.setMessage("Loading settings from database...");
+                pDialog.setIndeterminate(false);
+                pDialog.setCancelable(true);
+                pDialog.show();
+
+            }
+
+            @Override
+            protected String doInBackground(String... args){
+                System.out.println("doing background task (settings)");
+                int success;
+                int UID = LoginActivity.getUID();
+                System.out.println("UID >>>> "+UID);
+                try{
+                    List<NameValuePair> params = new ArrayList<NameValuePair>();
+                    params.add(new BasicNameValuePair("ID", Integer.toString(UID)));
+
+                    Log.d("Request!", "Starting");
+
+                    JSONObject json = jsonParser.makeHttpRequest(
+                            SETTINGS_URL, "POST", params);
+
+                    success = json.getInt(TAG_SUCCESS);
+                    if(success==1){
+                        Log.d("Successfully accessed user settings!", json.toString());
+
+                        Budget = json.getInt(TAG_BUDGET);
+                        BudgetFrequency = json.getString(TAG_FREQUENCY);
+                        DisplayName = json.getString(TAG_DISPLAY_NAME);
+
+                        System.out.println("Budget: " + Budget + " - Budget Frequency: " + BudgetFrequency + " - Display Name: " + DisplayName);
+
+                        return json.getString(TAG_MESSAGE);
+                    }else{
+                        return json.getString(TAG_MESSAGE);
+                    }
+
+
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
+                return null;
+            }
+            protected void onPostExecute(String message){
+                pDialog.dismiss();
+                displayName.setSummary(DisplayName);
+                frequency.setSummary(BudgetFrequency);
+                budget.setSummary(Integer.toString(Budget));
+                if(message != null){
+                    Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            }
+
+        }
+
+        new AttemptSettings().execute();
+    }
+}
+</code></pre>
+
+<p>JSONParser.java: </p>
+
+<pre><code>package com.samjackson.scholardollars;
+
+import android.util.Log;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+public class JSONParser {
+    static InputStream is = null;
+    static JSONObject jsonObj ;
+    static String json = "";
+
+    // default no argument constructor for jsonpaser class
+    public JSONParser() {
+
+    }
+
+
+    public JSONObject getJSONFromUrl(final String url) {
+
+        // Making HTTP request
+        try {
+
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpPost httpPost = new HttpPost(url);
+
+            // Executing POST request & storing the response from server  locally.
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+
+            HttpEntity httpEntity = httpResponse.getEntity();
+
+            is = httpEntity.getContent();
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+
+
+            // Create a BufferedReader
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    is, "iso-8859-1"), 8);
+            // Declaring string builder
+            StringBuilder str = new StringBuilder();
+            //  string to store the JSON object.
+            String strLine = null;
+
+            // Building while we have string !equal null.
+            while ((strLine = reader.readLine()) != null) {
+                str.append(strLine + "\n");
+            }
+
+            // Close inputstream.
+            is.close();
+            // string builder data conversion  to string.
+            json = str.toString();
+        } catch (Exception e) {
+            Log.e("Error", " something wrong with converting result " + e.toString());
+        }
+
+        // Try block used for pasrseing String to a json object
+        try {
+            jsonObj = new JSONObject(json);
+        } catch (JSONException e) {
+            Log.e("json Parsering", "" + e.toString());
+        }
+
+        // Returning json Object.
+        return jsonObj;
+
+    }
+
+
+
+    public JSONObject makeHttpRequest(String url, String method,
+                                      List<NameValuePair> params) {
+
+        // Make HTTP request
+        try {
+
+            // checking request method
+            if(method == "POST"){
+
+                // now defaultHttpClient object
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                HttpPost httpPost = new HttpPost(url);
+                httpPost.setEntity(new UrlEncodedFormEntity(params));
+
+                HttpResponse httpResponse = httpClient.execute(httpPost);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                is = httpEntity.getContent();
+
+            }else if(method == "GET"){
+                // request method is GET
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                String paramString = URLEncodedUtils.format(params, "utf-8");
+                url += "?" + paramString;
+                HttpGet httpGet = new HttpGet(url);
+
+                HttpResponse httpResponse = httpClient.execute(httpGet);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                is = httpEntity.getContent();
+            }
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    is, "iso-8859-1"), 8);
+            StringBuilder str = new StringBuilder();
+            String strLine = null;
+            while ((strLine = reader.readLine()) != null) {
+                str.append(strLine + "\n");
+            }
+            is.close();
+            json = str.toString();
+        } catch (Exception e) {
+
+        }
+
+        // now will try to parse the string into JSON object
+        try {
+            jsonObj = new JSONObject(json);
+        } catch (JSONException e) {
+
+        }
+
+
+        return jsonObj;
+
+    }
+
+}
+</code></pre>
+
+<p>updateusersettings.php:</p>
+
+<pre><code><?php
+
+$servername = "xxxxx";
+$username = "xxxxx";
+$password = "xxxxxx";
+$dbname = "users";
+$id = $_POST['ID'];
+settype($id, "Integer");
+$budget = $_POST['budget'];
+settype($budget, "Integer");
+$frequency = $_POST['frequency'];
+$displayName = $_POST['display name'];
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+// Check connection
+if ($conn->connect_error) {
+    $response["success"] = 0;
+    $response["message"] = "Connection error";
+    die(json_encode($response));
+} 
+
+if(!empty($_POST)){
+    $sql = "UPDATE `UserSettings` SET `Budget`='$budget',`BudgetFrequency`='$frequency',`DisplayName`='$displayName' WHERE `ID` = '$id'";
+    $result = $conn->query($sql);
+    $testResult = "SELECT `ID`, `Budget`, `BudgetFrequency`, `DisplayName` FROM `UserSettings` WHERE `ID` = '$id'";
+    $result2 = $conn->query($testResult);
+    if($result2->num_rows > 0){
+        while($row = $result2->fetch_assoc()){
+            if($row["Budget"] = $budget AND $row["BudgetFrequency"] = $frequency AND $row["DisplayName"] = $displayName){
+                $response["success"] = 1;
+                $response["message"] = "Settings updated!";
+                die(json_encode($response));
+            }else{
+                $response["success"] = 0;
+                $response["message"] = "Settings do not match after update";
+                die(json_encode($response));
+            }
+        }
+    }else{
+        $response["success"] = 0;
+        $response["message"] = "Second query returned no results";
+        die(json_encode($response));
+    }
+
+}else{
+    $response["success"] = 0;
+    $response["message"] = "No data provided";
+    die(json_encode($response));
+}
+
+?>
+</code></pre>
+
+<p>getusersettings.php:</p>
+
+<pre><code><?php
+
+$servername = "xxxxx";
+$username = "xxxxx";
+$password = "xxxxx";
+$dbname = "users";
+$id = $_POST['ID'];
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+} 
+
+if(!empty($_POST)){
+    settype($id, "Integer");
+    $sql = "SELECT `Budget`, `BudgetFrequency`, `DisplayName` FROM `UserSettings` WHERE `ID` = '$id'";
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+    // output data of each row
+        while($row = $result->fetch_assoc()) {
+            $response["message"] =  "Budget " . $row["Budget"]. " - Frequency " . $row["BudgetFrequency"]. " - Display Name: " . $row["DisplayName"];
+            $response["Budget"] = $row["Budget"];
+            $response["Frequency"] = $row["BudgetFrequency"];
+            $response["DisplayName"] = $row["DisplayName"];
+            $response["success"] = 1;
+            die(json_encode($response));
+        }
+    } else {
+        $response["message"] = "Returned no results";
+        $response["success"] = 0;
+        die(json_encode($response));
+    }
+}else{
+    $response["message"] = "No ID provided, error in yer code sam - check that ID is referenced from LoginActivity properly.";
+    $response["success"] = 0;
+    die(json_encode($response));
+}
+
+
+?>
+</code></pre>

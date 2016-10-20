@@ -1,0 +1,217 @@
+<p>this is my first question on stackoverflow so don´t judge: :D 
+I am creating a simple android app which is about physics (don´t ask why because I don´t know the answer). So I have created 3 Activites. The Main layout is composed such that there are 2 buttons. One is to get to the activity where there are 3 Newton laws of motion and the other is to get to the activity where there are laws of thermodynamics. Now I have managed to switch from Main activity to Newton activity (I watched a tutorial on youtube) but when I tried to do the same thing with thermodynamics (the code is completely the same) but when I click the button (thermodynamics button) the app crashes. Here is the code:</p>
+
+<p><strong>MainActivity</strong></p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    else if (id == R.id.action_exit){
+        finish();
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+public void onGetNewtonLaw(View view)
+{
+    Intent getNewtonLawIntent = new Intent(this, NewtonScreen.class);
+
+    final int result = 1;
+
+    startActivityForResult(getNewtonLawIntent,result);
+}
+
+public void onGetThermodynamicsLaw(View view)
+{
+    Intent getThermodynamicsLawIntent = new Intent(this, ThermodynamicsScreen.class);
+
+    final int result = 1;
+
+    startActivityForResult(getThermodynamicsLawIntent,result);
+
+}
+
+}
+</code></pre>
+
+<p><strong>ThermodynamicsScreen Activity</strong></p>
+
+<pre><code>public class ThermodynamicsScreen extends Activity {
+
+ private Button thermodynamicsLawOneButton,  thermodynamicsLawTwoButton,thermodynamicsLawThreeButton;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.thermodynamics_layout);
+
+    thermodynamicsLawOneButton = (Button) findViewById(R.id.thermodynamics_law_1_button);
+    thermodynamicsLawTwoButton = (Button) findViewById(R.id.thermodynamics_law_2_button);
+    thermodynamicsLawThreeButton = (Button) findViewById(R.id.thermodynamics_law_3_button);
+}
+
+public  void onClickThermodynamicsLawOne(View view)
+{
+    Toast.makeText(this, "Energy can neither be created nor destroyed; it can only be transferred or changed from one form to another.\n\n ΔE=q+w ",Toast.LENGTH_LONG).show();
+}
+public void onClickThermodynamicsLawTwo(View view)
+{
+    Toast.makeText(this, "The entropy of the world only increases and never decreases.", Toast.LENGTH_LONG).show();
+}
+public void onClickThermodynamicsLawThree(View view)
+{
+    Toast.makeText(this, "that the entropy of a system approaches a constant value as the temperature approaches absolute zero.", Toast.LENGTH_LONG).show();
+}
+public void onClickBackToMainMenu (View view)
+{
+    Intent mainMenu = new Intent();
+
+    setResult(RESULT_OK, mainMenu);
+
+    finish();
+}
+
+}
+</code></pre>
+
+<p><strong>NewtonScreen Activity</strong></p>
+
+<pre><code>public class NewtonScreen extends Activity
+{
+
+
+private Button theAnswerButton, theHintButton, theSuckButton;
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.newton_layout);
+
+    theAnswerButton = (Button) findViewById(R.id.answer_button);
+    theHintButton = (Button) findViewById(R.id.hint_button);
+    theSuckButton = (Button)findViewById(R.id.suck_at_physics_button);
+
+}
+
+public void onClickTheAnswerButton(View view)
+{
+
+    Toast.makeText(this,
+            "An object at rest will remain at rest unless acted on by an unbalanced force. " +
+                    "An object in motion continues in motion with the same speed and in the same direction" +
+                    " unless acted upon by an unbalanced force.",
+            Toast.LENGTH_LONG).show();
+
+}
+
+public  void onClickTheHintButton(View view)
+{
+    Toast.makeText(this, "F = m*a",Toast.LENGTH_SHORT).show();
+}
+
+public  void onClickTheSuckPhysicsButton(View view)
+{
+    Toast.makeText(this, "For every action there is an equal and opposite re-action.", Toast.LENGTH_LONG).show();
+}
+
+public void onClickBackToMainMenu (View view)
+{
+    Intent mainMenu = new Intent();
+
+    setResult(RESULT_OK, mainMenu);
+
+    finish();
+}
+
+}
+</code></pre>
+
+<p>E/AndroidRuntime﹕ FATAL EXCEPTION: main</p>
+
+<p><strong>Log (everything that was red)</strong></p>
+
+<pre><code>       Process: com.example.android.newtonsfirstlawofmotion, PID: 8432
+       java.lang.IllegalStateException: Could not execute method of the activity
+        at android.view.View$1.onClick(View.java:3827)
+        at android.view.View.performClick(View.java:4442)
+        at android.view.View$PerformClick.run(View.java:18473)
+        at android.os.Handler.handleCallback(Handler.java:733)
+        at android.os.Handler.dispatchMessage(Handler.java:95)
+        at android.os.Looper.loop(Looper.java:136)
+        at android.app.ActivityThread.main(ActivityThread.java:5105)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:792)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:608)
+        at dalvik.system.NativeStart.main(Native Method)
+ Caused by: java.lang.reflect.InvocationTargetException
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at android.view.View$1.onClick(View.java:3822)
+</code></pre>
+
+<p>            </p>
+
+<pre><code>at android.view.View.performClick(View.java:4442)
+            at android.view.View$PerformClick.run(View.java:18473)
+            at android.os.Handler.handleCallback(Handler.java:733)
+            at android.os.Handler.dispatchMessage(Handler.java:95)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5105)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:792)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:608)
+            at dalvik.system.NativeStart.main(Native Method)
+     Caused by: android.content.ActivityNotFoundException: Unable to find explicit activity class {com.example.android.newtonsfirstlawofmotion/com.example.android.newtonsfirstlawofmotion.ThermodynamicsScreen}; have you declared this activity in your AndroidManifest.xml?
+            at android.app.Instrumentation.checkStartActivityResult(Instrumentation.java:1628)
+            at android.app.Instrumentation.execStartActivity(Instrumentation.java:1424)
+            at android.app.Activity.startActivityForResult(Activity.java:3468)
+            at android.app.Activity.startActivityForResult(Activity.java:3429)
+            at android.support.v4.app.FragmentActivity.startActivityForResult(FragmentActivity.java:748)
+            at com.example.android.newtonsfirstlawofmotion.MainActivity.onGetThermodynamicsLaw(MainActivity.java:63)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at android.view.View$1.onClick(View.java:3822)
+            at android.view.View.performClick(View.java:4442)
+            at android.view.View$PerformClick.run(View.java:18473)
+            at android.os.Handler.handleCallback(Handler.java:733)
+            at android.os.Handler.dispatchMessage(Handler.java:95)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5105)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:792)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:608)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>Thanks for your response in advance! :)</p>

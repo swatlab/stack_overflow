@@ -1,0 +1,576 @@
+<p>I have an app that saves its options in a text file called options.txt
+I also save more data in a file called cards.txt
+In onCreate it checks for both files, and if cards.txt does not exist it creates it and same for options.txt, but it will write the default options into it automaticly.
+The problem is, when I read options.txt to get the options, it returns null
+However, I use the same reading technique for cards.txt and it works
+I dont know if its the way i write the file or the way i read it
+What have I done?</p>
+
+<p>readCards() is reading cards.txt, readColor() is reading options.txt</p>
+
+<p>Code:</p>
+
+<pre><code>    package com.example.auticards;
+
+    import java.io.File;
+    import java.io.FileInputStream;
+    import java.io.FileNotFoundException;
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.util.ArrayList;
+
+    import android.annotation.TargetApi;
+    import android.app.Activity;
+    import android.content.Context;
+    import android.content.Intent;
+    import android.graphics.Color;
+    import android.graphics.Point;
+    import android.os.Build;
+    import android.os.Bundle;
+    import android.os.Handler;
+    import android.view.Display;
+    import android.view.MotionEvent;
+    import android.view.View;
+    import android.view.ViewGroup.LayoutParams;
+    import android.widget.FrameLayout;
+    import android.widget.TextView;
+
+    import com.example.auticards.util.SystemUiHider;
+
+public class MainActivity extends Activity {
+
+
+    TextView boldText;
+    View menu;
+    View indicator;
+    View scroll;
+    View card_time_out;
+    boolean menuvis = false;
+    FrameLayout mainView;
+    View controlsView;
+    Display display;
+    Point size = new Point();
+    boolean change = true;
+    int count = 0;
+    int scrollSize;
+    int position = 0;
+    FileOutputStream fos;
+    FileInputStream fis;
+    ArrayList<String> cards = new ArrayList<String>();
+
+    private static boolean AUTO_HIDE = true;
+
+
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+
+    private static final boolean TOGGLE_ON_CLICK = true;
+
+
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+
+
+    private SystemUiHider mSystemUiHider;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_main);
+
+        controlsView  = findViewById(R.id.fullscreen_content_controls);
+        boldText = (TextView) findViewById(R.id.fullscreen_content);
+        menu = findViewById(R.id.menu);
+        indicator = findViewById(R.id.indicator);
+        display  = getWindowManager().getDefaultDisplay();
+        display.getSize(size);
+        scroll = findViewById(R.id.scroll);
+        mainView = (FrameLayout) findViewById(R.id.mainLayout);
+
+        checkFile("cards.txt");
+        checkFile("options.txt", "color:red sound:true");
+
+        mainView.setBackgroundColor(colorConvert(readColor()));
+
+        cards.add("I Need Time Out");
+        cards.add("Toilet");
+        cards.add("Help Me");
+        cards.add("I Need Attention");
+        cards.add("Look at this!");
+
+        refresh();
+
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, boldText,
+                HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider
+                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+
+                    int mControlsHeight = 0;
+                    int mShortAnimTime = 0;
+
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                    public void onVisibilityChange(boolean visible) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+
+                            if (mControlsHeight == 0) {
+                                mControlsHeight = controlsView.getHeight();
+                            }
+                            if (mShortAnimTime == 0) {
+                                mShortAnimTime = getResources().getInteger(
+                                        android.R.integer.config_shortAnimTime);
+                            }
+                            controlsView
+                                    .animate()
+                                    .translationY(visible ? 0 : mControlsHeight)
+                                    .setDuration(mShortAnimTime);
+                        } else {
+
+
+
+                            controlsView.setVisibility(visible ? View.VISIBLE
+                                    : View.GONE);
+                        }
+
+                        if (visible && AUTO_HIDE) {
+
+                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                        }
+                    }
+                });
+
+
+        boldText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (change) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+                }
+            }
+        });
+
+
+        findViewById(R.id.cards).setOnTouchListener(
+                mDelayHideTouchListener);
+        findViewById(R.id.options).setOnTouchListener(
+                mDelayHideTouchListener);
+        findViewById(R.id.exit).setOnTouchListener(
+                mDelayHideTouchListener);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+
+        delayedHide(100);
+    }
+
+
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    Handler mHideHandler = new Handler();
+    Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
+
+
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    public void showMenu (View v) {
+
+        refresh();
+        scrollSize = display.getWidth() / cards.size();
+        LayoutParams params = indicator.getLayoutParams();
+        params.width = scrollSize;
+        indicator.setLayoutParams(params);
+
+        if (menuvis) {
+
+            AUTO_HIDE = true;
+            change = true;
+            menu.setVisibility(View.GONE);
+            controlsView.setVisibility(View.VISIBLE);
+            delayedHide(0);
+            menuvis = false;
+
+        } else {
+
+            AUTO_HIDE = false;
+            mSystemUiHider.show();
+            change = false;
+            mHideHandler.removeCallbacks(mHideRunnable);
+
+            menu.setVisibility(View.VISIBLE);
+            boldText.setText(cards.get(0));
+            controlsView.setVisibility(View.GONE);
+            menuvis = true;
+
+        }
+
+    }
+
+    public void exit (View v) {
+
+        finish();
+
+    }
+
+    public void nextCard (View v) {
+
+        count ++;
+
+        if (count >= cards.size()) {
+
+            count = 0;
+            indicator.setX(0);
+
+        } else {
+
+            indicator.setX(indicator.getX() + scrollSize);
+
+        }
+
+        boldText.setText(cards.get(count));
+
+    }
+
+    public void prevCard (View v) {
+
+        count --;
+
+        if (count < 0) {
+
+            count = cards.size() - 1;
+            indicator.setX(display.getWidth() - scrollSize);
+
+        } else {
+
+            indicator.setX(indicator.getX() - scrollSize);
+
+        }
+
+        boldText.setText(cards.get(count));
+
+    }
+
+    public void write (String text, String filename) {
+
+        try {
+
+            fos = openFileOutput(filename, Context.MODE_PRIVATE);
+            fos.write(text.getBytes());
+            fos.close();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+
+    }
+
+    public String[] readCards () {
+
+        String peices = null;
+        ArrayList<String> puzzle = new ArrayList<String>();
+        String holder = "";
+
+        System.out.println("Read: Test1");
+
+        try {
+
+            fis = openFileInput("cards.txt");
+
+            byte[] buffer = new byte[fis.available()];
+            int check;
+
+            while ((check = fis.read(buffer)) != -1) {
+
+                if (check == 0) {
+
+                    break;
+
+                }
+
+                peices = new String(buffer);
+
+            }
+
+            fis.close();
+
+            char[] chars = peices.toCharArray();
+
+            for (char c : chars) {
+
+                if (c != '^') {
+
+                    holder += c;
+
+                } else {
+
+                    puzzle.add(holder);
+
+                    holder = "";
+
+
+                }
+
+            }
+
+        } catch (IOException e) {
+
+            System.err.println("Couldn't find cards.txt!");
+            e.printStackTrace();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+
+        String[] result = new String[puzzle.size()];
+
+        int count = 0;
+
+        for (String i : puzzle) {
+
+            result[count] = i;
+
+            count ++;
+
+        }
+
+        return result;
+
+    }
+
+    public void startOptions (View v) {
+
+        Intent in = new Intent(this, OptionsActivity.class);
+        startActivity(in);
+
+    }
+
+    public void refresh () {
+
+        String[] customCards = readCards();
+
+        for (String i : customCards) {
+
+            if (!cards.contains(i)) {
+
+                cards.add(i);
+
+            }
+
+        }
+
+    }
+
+    public boolean checkFile (String filename) {
+
+        boolean madeNew = true;
+        File f = new File(getFilesDir(),filename);
+
+        if (!f.exists()) {
+
+            try {
+
+                madeNew = false;
+                f.delete();
+                f.createNewFile();
+
+            } catch (IOException e) {
+
+                System.err.println("Error while creating file");
+                e.printStackTrace();
+            }
+
+        }
+
+        return madeNew;
+
+    }
+
+    public boolean checkFile (String filename, String defaultText) {
+
+        boolean madeNew = true;
+        File f = new File(getFilesDir(),filename);
+
+        //if (!f.exists()) {
+
+            try {
+
+                madeNew = false;
+                f.delete();
+                f.createNewFile();
+                write(filename, defaultText);
+                System.out.println("Made new file options " + f.exists());
+                System.out.println(read("cards.txt"));
+
+            } catch (IOException e) {
+
+                System.err.println("Error while creating file");
+                e.printStackTrace();
+            }
+
+        //}
+
+        return madeNew;
+
+    }
+
+    public String read (String fileName) {
+
+        String peices = null;
+
+        try {
+
+            fis = openFileInput(fileName);
+            byte[] buffer = new byte[fis.available()];
+
+            int check;
+
+            while ((check = fis.read(buffer)) != -1) {
+
+                if (check == 0) {
+
+                    break;
+
+                }
+
+                peices = new String(buffer);
+                System.out.println("WOAH");
+                System.out.println(peices);
+
+            }
+
+            fis.close();
+
+        } catch (Exception e) {
+
+            System.out.println("ERROOROR");
+            e.printStackTrace();
+
+        }
+
+        return peices;
+
+    }
+
+    public String readColor () {
+
+        String peices = null;
+        String color = null;
+
+        try {
+
+            fis = openFileInput("options.txt");
+            byte[] buffer = new byte[fis.available()];
+
+            int check;
+
+            while ((check = fis.read(buffer)) != -1) {
+
+                if (check == 0) {
+
+                    break;
+
+                }
+
+                peices = new String(buffer);
+                System.out.println("WOAH");
+                System.out.println(peices);
+
+            }
+
+            System.out.println("DSABDSAK " + peices);
+
+            fis.close();
+
+            peices = peices.replace("color:", "");
+            peices = peices.replace("sound:", "");
+            peices = peices.replace("true", "");
+            peices = peices.replace("false:", "");
+            peices = peices.replace(" ", "");
+
+            if (peices.equals("red")) {
+
+                color = "#aa3322";
+                //#992211
+
+            } else if (peices.equals("blue")) {
+
+                color = "#2233aa";
+                //#992211
+
+            } else if (peices.equals("green")) {
+
+                color = "#22aa33";
+                //#992211
+
+            } else if (peices.equals("yellow")) {
+
+                color = "#ffff00";
+                //#992211
+
+            } else if (peices.equals("purple")) {
+
+                color = "#fb00ff";
+                //#992211
+
+            } else if (peices.equals("brown")) {
+
+                color = "#8b6407";
+                //#992211
+
+            } else if (peices.equals("orange")) {
+
+                color = "##ff9e00";
+                //#992211
+
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+
+        return color;
+
+    }
+
+    public int colorConvert(String colorStr) {
+
+        return Color.rgb(
+                Integer.valueOf( colorStr.substring( 1, 3 ), 16 ),
+                Integer.valueOf( colorStr.substring( 3, 5 ), 16 ),
+                Integer.valueOf( colorStr.substring( 5, 7 ), 16 ) );
+
+    }
+
+}
+</code></pre>

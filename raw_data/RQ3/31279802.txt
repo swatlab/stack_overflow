@@ -1,0 +1,182 @@
+<p>How can I get the current fragment from a tab with swipe view and modify it's layout from my MainActivity? It's that possibile?</p>
+
+<p>Below the application UI, I need to modify the background of each fragment and add on top a new ImageView at run time when a new entry is inserted.</p>
+
+<p><img src="http://i.stack.imgur.com/dQ7il.png" alt="enter image description here">    </p>
+
+<p>MainActivity</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+        private ViewPager mViewPager;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
+
+            // Set up the action bar.
+            final ActionBar actionBar = getSupportActionBar();
+            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+            // Create the adapter that will return a fragment for each of the three
+            // primary sections of the activity.
+            SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+            // Set up the ViewPager with the sections adapter.
+            mViewPager = (ViewPager) findViewById(R.id.pager);
+            mViewPager.setAdapter(mSectionsPagerAdapter);
+
+            // When swiping between different sections, select the corresponding
+            // tab. We can also use ActionBar.Tab#select() to do this if we have
+            // a reference to the Tab.
+            mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    actionBar.setSelectedNavigationItem(position);
+                }
+            });
+
+            // For each of the sections in the app, add a tab to the action bar.
+            for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+                // Create a tab with text corresponding to the page title defined by
+                // the adapter. Also specify this Activity object, which implements
+                // the TabListener interface, as the callback (listener) for when
+                // this tab is selected.
+                actionBar.addTab(
+                        actionBar.newTab()
+                                .setText(mSectionsPagerAdapter.getPageTitle(i))
+                                .setTabListener(this));
+            }
+        }
+
+
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.menu_main, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+            int id = item.getItemId();
+
+            switch (id) {
+                case R.id.action_menu_settings:
+                    openSettings();
+                    break;
+                default:
+                    openSettings();
+                    break;
+            }
+
+            return super.onOptionsItemSelected(item);
+        }
+
+        @Override
+        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+            // When the given tab is selected, switch to the corresponding page in
+            // the ViewPager.
+            mViewPager.setCurrentItem(tab.getPosition());
+        }
+
+        @Override
+        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        }
+
+        @Override
+        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        }
+
+        public void openSettings() {
+            startActivity(new Intent(this, SettingsActivity.class));
+        }
+    }
+</code></pre>
+
+<p>FragmentPagerAdapter</p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+public static String FIRST_SECTION_TITLE = "Today";
+public static String SECOND_SECTION_TITLE = "Week";
+public static String THIRD_SECTION_TITLE = "Month";
+
+public SectionsPagerAdapter(FragmentManager fm) {
+    super(fm);
+}
+
+@Override
+public Fragment getItem(int position) {
+    // getItem is called to instantiate the fragment for the given page.
+    Fragment fragment;
+
+    switch (position) {
+        case 1:
+            fragment = WeekFragment.newInstance(position + 1);
+            break;
+        case 2:
+            fragment = MonthFragment.newInstance(position + 1);
+            break;
+        default:
+            fragment = TodayFragment.newInstance(position + 1);
+            break;
+    }
+
+    return fragment;
+}
+
+@Override
+public int getCount() {
+    return 3;
+}
+
+@Override
+public CharSequence getPageTitle(int position) {
+    Locale l = Locale.getDefault();
+    switch (position) {
+        case 0:
+            return FIRST_SECTION_TITLE;
+        case 1:
+            return SECOND_SECTION_TITLE;
+        case 2:
+            return THIRD_SECTION_TITLE;
+    }
+    return null;
+}
+</code></pre>
+
+<p>}</p>
+
+<p>Fragment (all 3 fragments are equal, just the xml layout changes)</p>
+
+<pre><code>public class MonthFragment extends Fragment {
+/**
+ * The fragment argument representing the section number for this
+ * fragment.
+ */
+private static final String ARG_SECTION_NUMBER = "section_number";
+
+/**
+ * Returns a new instance of this fragment for the given section
+ * number.
+ */
+public static MonthFragment newInstance(int sectionNumber) {
+    MonthFragment fragment = new MonthFragment();
+    Bundle args = new Bundle();
+    args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+    fragment.setArguments(args);
+    return fragment;
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+    View rootView = inflater.inflate(R.layout.fragment_month, container, false);;
+    return rootView;
+}
+</code></pre>
+
+<p>}</p>

@@ -1,0 +1,232 @@
+<p>I had standart navigation drawer, but now i'm trying to modify it, using toolbar.</p>
+
+<p>Earlier my code looked like:
+<strong>MainActivity.java</strong></p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    Log.v("MAIN", "CREATE");
+    initViews();
+    setListeners();
+
+    getFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
+        @Override
+        public void onBackStackChanged() {
+            shouldDisplayHomeUp();
+        }
+    });
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getFragmentManager().findFragmentById(R.id.navigation_drawer);
+    mTitle = getTitle();
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setUp(
+            R.id.navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+}
+</code></pre>
+
+<p><strong>NavigationDrawerFragment.java</strong></p>
+
+<pre><code>public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+    ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    ((MainActivity) getActivity()).getSupportActionBar().setHomeButtonEnabled(true);
+
+    mDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout,
+            ((MainActivity) getActivity()).getToolbar(),
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            if (!mUserLearnedDrawer) {
+                // The user manually opened the drawer; store this flag to prevent auto-showing
+                // the navigation drawer automatically in the future.
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+            }
+            if (mDrawerListView != null) {
+
+            }
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerSlide(View drawerView, float slideOffset) {
+            super.onDrawerSlide(drawerView, slideOffset);
+        }
+    };
+
+    // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+    // per the navigation drawer design guidelines.
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+
+    mDrawerToggle.setDrawerIndicatorEnabled(true);
+
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+</code></pre>
+
+<p>Now i modified my code:
+<strong>MainActivity.java</strong></p>
+
+<pre><code> @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    mToolbar = (Toolbar) findViewById(R.id.toolbar);
+
+    if (mToolbar != null) {
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    initViews();
+    setListeners();
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getFragmentManager().findFragmentById(R.id.navigation_drawer);
+    mTitle = getTitle();
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setUp(
+            R.id.navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+
+
+    shouldDisplayHomeUp();
+
+    getFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
+        @Override
+        public void onBackStackChanged() {
+            mBackCount++;
+            shouldDisplayHomeUp();
+        }
+    });
+}
+</code></pre>
+
+<p><strong>NavigationDrawerFragment.java</strong></p>
+
+<pre><code>public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+    mDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout,
+            ((MainActivity) getActivity()).getToolbar(),
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            if (!mUserLearnedDrawer) {
+                // The user manually opened the drawer; store this flag to prevent auto-showing
+                // the navigation drawer automatically in the future.
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+            }
+            if (mDrawerListView != null) {
+
+            }
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerSlide(View drawerView, float slideOffset) {
+            super.onDrawerSlide(drawerView, slideOffset);
+        }
+    };
+
+    // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+    // per the navigation drawer design guidelines.
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+
+    mDrawerToggle.setDrawerIndicatorEnabled(true);
+
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+</code></pre>
+
+<p>And <strong>shouldDisplayHomeUp</strong> function:</p>
+
+<pre><code>public void shouldDisplayHomeUp (){
+    boolean canBack = getFragmentManager().getBackStackEntryCount() > 0;
+    mNavigationDrawerFragment.getDrawerToggle().setDrawerIndicatorEnabled(!canBack);
+}
+</code></pre>
+
+<p>But the back arrow is not shown</p>
+
+<p>I tried call </p>
+
+<pre><code>getSupportActionBar().setDisplayHomeAsUpEnabled(canBack);
+getSupportActionBar().setHomeButtonEnabled(canBack);
+</code></pre>
+
+<p>So the back arrow appers but clicking on it has no effect</p>

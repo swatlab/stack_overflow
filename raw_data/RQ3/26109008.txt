@@ -1,0 +1,50 @@
+<p>I know questions like this one was already asked but I went through all the solutions I saw and non has worked.
+This is my adapter</p>
+
+<pre><code>class Adapter extends BaseAdapter {
+    Activity context;
+    public Adapter(Activity context) {
+        this.context = context;
+    }
+
+
+    @Override
+    public int getCount() {
+        return Constants.CHARACTERS_NAMES.length;
+    }
+
+    @Override
+    public Object getItem(int i) {
+        return null;
+    }
+
+    @Override
+    public long getItemId(int i) {
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        ViewHolder holder;
+            if (convertView == null) {
+                convertView = context.getLayoutInflater().inflate(R.layout.list_charecter_item, null);
+                holder = new ViewHolder();
+                holder.PlayerName = (TextView) convertView.findViewById(R.id.name);
+                holder.PlayerName.setText(Constants.CHARACTERS_NAMES[position]);
+                convertView.setTag(holder);
+
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+        return convertView;
+    }
+    private class ViewHolder {
+        TextView PlayerName;
+    }
+}
+</code></pre>
+
+<p>This is a standard adapter but when I debug it with my listview Instead of getting All my 7 items which are in Constants.CHARACTERS_NAMES I get the 4 first items right, but the I get the first item twice and then the second item.</p>
+
+<p>Please help.</p>

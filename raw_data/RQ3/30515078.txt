@@ -1,0 +1,329 @@
+<p>I followed a tutorial to set a navigation drawer and it worked in my main activity. Now I tried to move it to almost every other activity creating a BaseActivity, but after making changes, navigation drawer icon is inactive, and does nothing when pressed.</p>
+
+<p>MainActivity code:</p>
+
+<pre><code>public class MainActivity extends BaseActivity {
+
+    private WebView mWebView;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout mDrawerLayout;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // DrawerLayout
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+                R.string.drawer_open,
+                R.string.drawer_close) {
+
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
+            }
+        };
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        mWebView = (WebView) findViewById(R.id.activity_main_webview);
+
+        // Enable Javascript
+        WebSettings webSettings = mWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        //Hide the semy cirle at th bottom of the action bar when the user slides to the top
+        mWebView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+        mWebView.getSettings().setLoadWithOverviewMode(true);
+        mWebView.getSettings().setUseWideViewPort(true);
+        //mainWebView.setWebViewClient(new WebViewClient());
+        mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                view.stopLoading();  // may not be needed
+                switch (Locale.getDefault().toString()) {
+                    case "es_ES":
+                        view.loadUrl("file:///android_asset/www/errorPage.forMainActivity.es_ES.HTML");
+                        break;
+                    default:
+                        view.loadUrl("file:///android_asset/www/errorPage.forMainActivity.en_US.HTML");
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                //sendRegistrationIdToBackend();
+                //getCookies();
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.contains("CommentsPopUp")) {
+                    Intent a = new Intent(MainActivity.this, CommentsPopUpActivity.class);
+                    startActivity(a);
+                } else if (url.contains("postPopUp")) {
+                    Intent b = new Intent(MainActivity.this, PostPopUpActivity.class);
+                    startActivity(b);
+                } else if (url.contains("ProfilePicPopUp")) {
+                    Intent c = new Intent(MainActivity.this, ProfilePicPopUpActivity.class);
+                    startActivity(c);
+                } else if (url.contains("PostPicPopUp")) {
+                    Intent c = new Intent(MainActivity.this, PostPicsPopUpActivity.class);
+                    startActivity(c);
+                } else if (url.contains("reloadIndex")) {
+                    mWebView.loadUrl("http://192.168.0.6/udazz/2.0/2.1/android/2.0/");
+                } else if (Uri.parse(url).getHost().length() == 0) {
+                    return false;
+                } else {                // Otherwise, give the default behavior (open in browser)
+                    mWebView.loadUrl(url);
+                }
+                return true;
+            }
+        });
+
+        mWebView.loadUrl("http://192.168.0.6/udazz/2.0/2.1/android/2.0/");
+
+        // Stop local links and redirects from opening in browser instead of WebView
+       // mWebView.setWebViewClient(new MyAppWebViewClient());
+
+    }
+
+    @Override
+    public void onBackPressed(){
+        super.onBackPressed();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+          return super.onOptionsItemSelected(item);
+    }
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+    }
+
+    public void getCookies() {
+        CookieManager cookieManager = CookieManager.getInstance();
+        String cookies = cookieManager.getCookie("http://192.168.0.6/");
+        //Log.i("UdazzT", cookies);
+    }
+}
+</code></pre>
+
+<p>BaseActivity code:</p>
+
+<pre><code>public class BaseActivity extends AppCompatActivity {
+
+    ListView mDrawerList;
+    RelativeLayout mDrawerPane;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout mDrawerLayout;
+
+    ArrayList<NavItem> mNavItems = new ArrayList<NavItem>();
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_base);
+        mNavItems.add(new NavItem(getResources().getString(R.string.myPosts), "", R.mipmap.ic_action_home));
+        mNavItems.add(new NavItem(getResources().getString(R.string.myFriends), "", R.mipmap.ic_action_about));
+        mNavItems.add(new NavItem(getResources().getString(R.string.findFriends), "", R.mipmap.ic_action_about));
+        mNavItems.add(new NavItem(getResources().getString(R.string.profileInfo), "", R.mipmap.ic_action_about));
+        mNavItems.add(new NavItem(getResources().getString(R.string.profilePic), "", R.mipmap.ic_action_about));
+        mNavItems.add(new NavItem(getResources().getString(R.string.notifications), "", R.mipmap.ic_action_settings));
+        mNavItems.add(new NavItem(getResources().getString(R.string.contact), "", R.mipmap.ic_action_settings));
+        mNavItems.add(new NavItem(getResources().getString(R.string.logOut), "", R.mipmap.ic_action_about));
+
+        // DrawerLayout
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+
+        // Populate the Navigtion Drawer with options
+        mDrawerPane = (RelativeLayout) findViewById(R.id.drawerPane);
+        mDrawerList = (ListView) findViewById(R.id.navList);
+        DrawerListAdapter adapter = new DrawerListAdapter(this, mNavItems);
+        mDrawerList.setAdapter(adapter);
+
+        // Drawer Item click listeners
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItemFromDrawer(position);
+            }
+        });
+
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+                R.string.drawer_open,
+                R.string.drawer_close) {
+
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
+            }
+        };
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_base, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Pass the event to ActionBarDrawerToggle
+        // If it returns true, then it has handled
+        // the nav drawer indicator touch event
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed(){
+        if(mDrawerLayout.isDrawerOpen(Gravity.LEFT)){ //replace this with actual function which returns if the drawer is open
+            mDrawerLayout.closeDrawer(Gravity.LEFT);     // replace this with actual function which closes drawer
+        }
+        else{
+            super.onBackPressed();
+        }
+    }
+    /*
+    * Called when a particular item from the navigation drawer
+    * is selected.
+    * */
+    private void selectItemFromDrawer(int position) {
+        switch (position) {
+            case 0:
+                Intent a = new Intent(this, MyPostsActivity.class);
+                startActivity(a);
+                break;
+            case 1:
+                Intent b = new Intent(this, MyFriendsActivity.class);
+                startActivity(b);
+                break;
+            case 2:
+                Intent c = new Intent(this, FindFriendsActivity.class);
+                startActivity(c);
+                break;
+            case 3:
+                Intent d = new Intent(this, MyProfileInfoActivity.class);
+                startActivity(d);
+                break;
+            case 5:
+                Intent f = new Intent(this, MyNotificationsActivity.class);
+                startActivity(f);
+                break;
+            case 6:
+                Intent g = new Intent(this, ContactActivity.class);
+                startActivity(g);
+                break;
+            case 7:
+                //mWebView.loadUrl("http://192.168.0.6/udazz/2.0/2.1/android/2.0/signOut.php");
+                break;
+        }
+
+        mDrawerList.setItemChecked(position, true);
+        //setTitle(mNavItems.get(position).mTitle);
+
+        // Close the drawer
+        mDrawerLayout.closeDrawer(mDrawerPane);
+    }
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+}
+class NavItem {
+    String mTitle;
+    String mSubtitle;
+    int mIcon;
+
+    public NavItem(String title, String subtitle, int icon) {
+        mTitle = title;
+        mSubtitle = subtitle;
+        mIcon = icon;
+    }
+}
+class DrawerListAdapter extends BaseAdapter {
+
+    Context mContext;
+    ArrayList<NavItem> mNavItems;
+
+    public DrawerListAdapter(Context context, ArrayList<NavItem> navItems) {
+        mContext = context;
+        mNavItems = navItems;
+    }
+
+    @Override
+    public int getCount() {
+        return mNavItems.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return mNavItems.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View view;
+
+        if (convertView == null) {
+            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            view = inflater.inflate(R.layout.drawer_item, null);
+        }
+        else {
+            view = convertView;
+        }
+
+        TextView titleView = (TextView) view.findViewById(R.id.title);
+        TextView subtitleView = (TextView) view.findViewById(R.id.subTitle);
+        ImageView iconView = (ImageView) view.findViewById(R.id.icon);
+
+        titleView.setText(mNavItems.get(position).mTitle);
+        subtitleView.setText(mNavItems.get(position).mSubtitle);
+        iconView.setImageResource(mNavItems.get(position).mIcon);
+
+        return view;
+    }
+}
+</code></pre>

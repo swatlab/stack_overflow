@@ -1,0 +1,98 @@
+<p>I am currently working on a project displaying the mobiles and its price. 
+My project contains two gridviews. First gridview displaying the list of mobile brands with text(brand names) and image. When we click on the content in the first gridview, second gridview is shown with a list of mob images and price of a specific brand. 
+My project is running successfully but i have used so many adapter classes for the same. My question is, Is it possible to use one adapter class with more than one image arrays to display the images of different mob brands.</p>
+
+<p>The current adapter classes of mine is as given below:</p>
+
+<p>Adapter class of iphone mob</p>
+
+<pre><code>public class ImageAdapter1 extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter1(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+          R.drawable.iphone1, R.drawable.iphone2,
+          R.drawable.iphone3, R.drawable.iphone4,
+          R.drawable.iphone5, R.drawable.iphone6
+    };
+} 
+</code></pre>
+
+<p>Adapter class of samsung</p>
+
+<pre><code>public class ImageAdapter2 extends BaseAdapter {
+    private Context mContext;
+
+    public ImageAdapter2(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+            R.drawable.samsung1, R.drawable.samsung2,
+            R.drawable.samsung3, R.drawable.samsung4
+    };
+}
+</code></pre>
+
+<p>I have tried so many ways to use only one adapter class and tried to use an if statement in the getView() of the adapter class. But it didn't work :( I am trying and searching different ways to make it done. If you got a solution for the same, please feel free to post it here. </p>

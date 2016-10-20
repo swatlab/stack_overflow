@@ -1,0 +1,161 @@
+<p>I'm new to sqlite database browser, I have done on retrieving information coming from the database, but I don't know how to insert a data using edittext. And one more thing, I don't know why my database work upon running, but when I look on data/data/packagename/databases/ there is nothing.  Please bear with me.</p>
+
+<p>DBHelper.java</p>
+
+<pre><code> public class DBHelper extends SQLiteOpenHelper {  
+
+ private static String DB_NAME = "trialeleventh"; 
+
+ private static int DB_Version = 2;
+ private SQLiteDatabase db;  
+ private final Context context;  
+ private String DB_PATH = "/data/data/packagename/databases/";  
+
+ public DBHelper(Context context) {  
+  super(context, DB_NAME, null, DB_Version);  
+  this.context = context;  
+ // DB_PATH = "/data/data/" + context.getPackageName() + "/" + "databases/";  
+ }  
+
+ public void createDataBase() throws IOException {  
+
+          boolean dbExist = checkDataBase();  
+          if (dbExist) {  
+         try {  
+           copyDataBase();  
+          } catch (IOException e) {  
+           throw new Error("Error copying database");  
+          }  
+          } else {  
+         SQLiteDatabase db = this.getWritableDatabase();
+         if (db.isOpen()){
+             db.close();
+             try {  
+               copyDataBase();  
+              } catch (IOException e) {  
+               throw new Error("Error copying database");  
+              }  
+         } else {
+         try {  
+           copyDataBase();  
+          } catch (IOException e) {  
+           throw new Error("Error copying database");  
+          }  
+         }
+          }
+          }  
+
+ private boolean checkDataBase() {  
+  File dbFile = new File(DB_PATH + DB_NAME);  
+  return dbFile.exists();  
+ }  
+
+ private void copyDataBase() throws IOException {  
+
+  InputStream myInput = context.getAssets().open(DB_NAME);  
+  String outFileName = DB_PATH + DB_NAME;  
+  OutputStream myOutput = new FileOutputStream(outFileName);  
+  byte[] buffer = new byte[1024];  
+  int length;  
+  while ((length = myInput.read(buffer)) > 0) {  
+   myOutput.write(buffer, 0, length);  
+  }  
+
+  // Close the streams  
+  myOutput.flush();  
+  myOutput.close();  
+  myInput.close();  
+
+ }  
+ public void openDataBase() throws SQLException{
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+
+ public Cursor getData() {  
+  String myPath = DB_PATH + DB_NAME;  
+  db = SQLiteDatabase.openDatabase(myPath, null,  
+    SQLiteDatabase.OPEN_READWRITE);  
+  onUpgrade(db, DB_Version, 2);
+  Cursor c = db.rawQuery("SELECT * FROM studcomm", null);  
+    return c;  
+ }  
+
+ @Override  
+ public void onCreate(SQLiteDatabase arg0) {  
+  // TODO Auto-generated method stub  
+ }  
+
+ @Override  
+ public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {  
+  // TODO Auto-generated method stub  
+    Log.d ("onUpgrade first log", Integer.toString(db.getVersion()));
+
+    if (oldVersion == 1) {
+
+        DB_Version = 2;
+        db.setVersion(2);
+        Log.d ("onUpgrade second log", Integer.toString(db.getVersion()));
+
+    }
+
+    else {
+        Log.d("onUpgrade", "else-clause: Already upgraded!");
+ }  
+ }
+
+}
+</code></pre>
+
+<p>Here is my code in retrieving. </p>
+
+<pre><code> public class DataListView extends Activity{  
+ DBHelper dbhelper;  
+ protected ListAdapter adapter;
+ @Override  
+public void onCreate(Bundle savedInstanceState) {  
+super.onCreate(savedInstanceState);  
+setContentView(R.layout.mainact);    
+String[] from = new String[] { "_id", "comm" };  
+int[] to = new int[] { R.id.TextView1, R.id.TextView2};  
+
+ dbhelper = new DBHelper(this);  
+ try {  
+  dbhelper.createDataBase();  
+ } catch (IOException e) {  
+// TODO Auto-generated catch block  
+ e.printStackTrace();  
+}  
+
+Cursor c = dbhelper.getData();  
+
+ adapter = new SimpleCursorAdapter(getApplicationContext(), R.layout.list, c, from, to);  
+
+ListView list = (ListView) findViewById(R.id.ListView1);  
+
+list.setAdapter(adapter);  
+
+
+ Button button = (Button) findViewById(R.id.insert);
+button.setOnClickListener(new OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+
+            Intent i = new Intent(DataListView.this, Insert.class);
+            startActivity(i);
+
+
+    }
+
+
+
+     });
+ }
+
+ }
+</code></pre>
+
+<p>I don't have any code for the Insert.java. I don't even know what will I code. Please help me. Thanks.</p>

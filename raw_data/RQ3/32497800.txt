@@ -1,0 +1,371 @@
+<p>I have implemented the material design navigation drawer.  However when selecting a new activity the navigation drawer doesn't close smoothly.  (I have tried various solutions and suggestions here on SO, but nothing actually helps me)</p>
+
+<p>So I am hoping someone has found a solution to this?</p>
+
+<p>Here is my MainActivity.class:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity
+    implements NavigationDrawerCallbacks {
+
+private NavigationDrawerFragment mNavigationDrawerFragment;
+private Toolbar mToolbar;
+private boolean doubleBackToExitPressedOnce;
+private ProgressDialog pd = null;
+private Object data = null;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    mToolbar = (Toolbar) findViewById(R.id.toolbar_actionbar);
+    setSupportActionBar(mToolbar);
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getFragmentManager().findFragmentById(R.id.fragment_drawer);
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setup(R.id.fragment_drawer, (DrawerLayout) findViewById(R.id.drawer), mToolbar);
+    // populate the navigation drawer
+    mNavigationDrawerFragment.setUserData("WELCOME", "", BitmapFactory.decodeResource(getResources(), R.drawable.ic_avatar));
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+    // update the main content by replacing fragments
+    Fragment fragment = null;
+    switch (position) {
+        case 0:
+            fragment = new FragmentHome();
+            break;
+        case 1:
+            fragment = new FragmentSecondActivity();
+            break;
+        case 2:
+            fragment = new FragmentThirdActivity();
+            break;
+                    default:
+            break;
+    }
+
+    if (fragment != null) {
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction()
+                .replace(R.id.container, fragment).commit();
+    }
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    if (!mNavigationDrawerFragment.isDrawerOpen()) {
+        // Only show items in the action bar relevant to this screen
+        // if the drawer is not showing. Otherwise, let the drawer
+        // decide what to show in the action bar.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+    return super.onCreateOptionsMenu(menu);
+}
+
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+public void onBackPressed() {
+    if (doubleBackToExitPressedOnce) {
+        super.onBackPressed();
+
+    }
+
+    this.doubleBackToExitPressedOnce = true;
+    Toast.makeText(this, "Please press BACK again to exit", Toast.LENGTH_SHORT).show();
+
+    new Handler().postDelayed(new Runnable() {
+
+        @Override
+        public void run() {
+            doubleBackToExitPressedOnce=false;
+        }
+    }, 2000);
+}
+}
+</code></pre>
+
+<p>NavigationDrawerFragment:</p>
+
+<pre><code>public class NavigationDrawerFragment extends Fragment implements NavigationDrawerCallbacks {
+
+private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+private NavigationDrawerCallbacks mCallbacks; 
+private ActionBarDrawerToggle mActionBarDrawerToggle;
+
+private DrawerLayout mDrawerLayout;
+private RecyclerView mDrawerList;
+private View mFragmentContainerView;
+
+private int mCurrentSelectedPosition = 0;
+private boolean mFromSavedInstanceState;
+private boolean mUserLearnedDrawer;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+    if (savedInstanceState != null) {
+        mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+        mFromSavedInstanceState = true;
+    }
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                         Bundle savedInstanceState) {
+    View view = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+    mDrawerList = (RecyclerView) view.findViewById(R.id.drawerList);
+    LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+    layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+    mDrawerList.setLayoutManager(layoutManager);
+    mDrawerList.setHasFixedSize(true);
+
+
+    final List<NavigationItem> navigationItems = getMenu();
+    NavigationDrawerAdapter adapter = new NavigationDrawerAdapter(navigationItems);
+    adapter.setNavigationDrawerCallbacks(this);
+    mDrawerList.setAdapter(adapter);
+    selectItem(mCurrentSelectedPosition);
+    return view;
+}
+
+public boolean isDrawerOpen() {
+    return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+}
+
+public ActionBarDrawerToggle getActionBarDrawerToggle() {
+    return mActionBarDrawerToggle;
+}
+
+public DrawerLayout getDrawerLayout() {
+    return mDrawerLayout;
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+    selectItem(position);
+}
+
+public List<NavigationItem> getMenu() {
+    List<NavigationItem> items = new ArrayList<NavigationItem>();
+    items.add(new NavigationItem("Home", getResources().getDrawable(R.drawable.ic_home)));
+    items.add(new NavigationItem("Second Activity", getResources().getDrawable(R.drawable.ic_icon)));
+    items.add(new NavigationItem("Third Activity", getResources().getDrawable(R.drawable.ic_icon)));
+
+
+
+    return items;
+}
+
+public void setup(int fragmentId, DrawerLayout drawerLayout, Toolbar toolbar) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    mDrawerLayout.setStatusBarBackgroundColor(getResources().getColor(R.color.myPrimaryDarkColor));
+
+    mActionBarDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) return;
+
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) return;
+            if (!mUserLearnedDrawer) {
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+            }
+            getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+    };
+
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mActionBarDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
+}
+
+private void selectItem(int position) {
+    mCurrentSelectedPosition = position;
+    if (mDrawerLayout != null) {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+    if (mCallbacks != null) {
+        mCallbacks.onNavigationDrawerItemSelected(position);
+    }
+    ((NavigationDrawerAdapter) mDrawerList.getAdapter()).selectPosition(position);
+}
+
+public void openDrawer() {
+    mDrawerLayout.openDrawer(mFragmentContainerView);
+}
+
+public void closeDrawer() {
+    mDrawerLayout.closeDrawer(mFragmentContainerView);
+}
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        mCallbacks = (NavigationDrawerCallbacks) activity;
+    } catch (ClassCastException e) {
+        throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+    }
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    mCallbacks = null;
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    // Forward the new configuration the drawer toggle component.
+    mActionBarDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+public void setUserData(String user, String email, Bitmap avatar) {
+    ImageView avatarContainer = (ImageView) mFragmentContainerView.findViewById(R.id.imgAvatar);
+    ((TextView) mFragmentContainerView.findViewById(R.id.txtUserEmail)).setText(email);
+    ((TextView) mFragmentContainerView.findViewById(R.id.txtUsername)).setText(user);
+    avatarContainer.setImageDrawable(new RoundImage(avatar));
+}
+
+public View getGoogleDrawer() {
+    return mFragmentContainerView.findViewById(R.id.googleDrawer);
+}
+
+public static class RoundImage extends Drawable {
+    private final Bitmap mBitmap;
+    private final Paint mPaint;
+    private final RectF mRectF;
+    private final int mBitmapWidth;
+    private final int mBitmapHeight;
+
+    public RoundImage(Bitmap bitmap) {
+        mBitmap = bitmap;
+        mRectF = new RectF();
+        mPaint = new Paint();
+        mPaint.setAntiAlias(true);
+        mPaint.setDither(true);
+        final BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        mPaint.setShader(shader);
+
+        mBitmapWidth = mBitmap.getWidth();
+        mBitmapHeight = mBitmap.getHeight();
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        canvas.drawOval(mRectF, mPaint);
+    }
+
+    @Override
+    protected void onBoundsChange(Rect bounds) {
+        super.onBoundsChange(bounds);
+        mRectF.set(bounds);
+    }
+
+    @Override
+    public void setAlpha(int alpha) {
+        if (mPaint.getAlpha() != alpha) {
+            mPaint.setAlpha(alpha);
+            invalidateSelf();
+        }
+    }
+
+    @Override
+    public void setColorFilter(ColorFilter cf) {
+        mPaint.setColorFilter(cf);
+    }
+
+    @Override
+    public int getOpacity() {
+        return PixelFormat.TRANSLUCENT;
+    }
+
+    @Override
+    public int getIntrinsicWidth() {
+        return mBitmapWidth;
+    }
+
+    @Override
+    public int getIntrinsicHeight() {
+        return mBitmapHeight;
+    }
+
+    public void setAntiAlias(boolean aa) {
+        mPaint.setAntiAlias(aa);
+        invalidateSelf();
+    }
+
+    @Override
+    public void setFilterBitmap(boolean filter) {
+        mPaint.setFilterBitmap(filter);
+        invalidateSelf();
+    }
+
+    @Override
+    public void setDither(boolean dither) {
+        mPaint.setDither(dither);
+        invalidateSelf();
+    }
+
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+}
+}
+</code></pre>
+
+<p>What can I do to make closing the navigation drawer close smoothly?  At the moment it closes halfway then stops for a second then closes and the new activity is shown.</p>

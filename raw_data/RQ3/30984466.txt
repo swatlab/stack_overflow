@@ -1,0 +1,114 @@
+<p>I have two tables with foreign key references:</p>
+
+<pre><code>Comm TABLE:
+
++----+------------+
+| ID |    NAME    |
++----+------------+
+|  1 | comm name1 |
+|  2 | comm name2 |
+|  3 | comm name3 |
++----+------------+
+
+LOCATION TABLE: - COMM_ID FK to  Comm --> id
+
++---------+------+-----+
+| COMM_ID | FORM | TO  |
++---------+------+-----+
+|       1 | 720  | 721 |
+|       1 | 725  |     |
+|       1 |      | 766 |
+|       1 |      |     |
+|       2 | 766  | 225 |
+|       3 | 766  | 222 |
++---------+------+-----+
+</code></pre>
+
+<p>The problem is Hibernate returns my comm object
+with missing <code>location</code> in <code>SET<location></code> 
+All rows where there is no <code>FROM</code> <strong>and</strong> <code>TO</code> (like the last row with COMM_ID = 1 in table LOCATION) are missing. </p>
+
+<p>Otherwise (if only one of <code>FROM</code> or <code>TO</code>) the row is returned...
+why?</p>
+
+<p><code>Comm</code> objects:</p>
+
+<pre><code>@ElementCollection
+@CollectionTable(name="LOCATION",joinColumns=@JoinColumn(name="COMM_ID"))
+ public Set<LOCATION> getLocations(){
+    return locations;
+ }
+ public void setLocations(Set<LOCATION> locations){
+    this.locations=locations;
+ }
+</code></pre>
+
+<p><code>Location</code> class:</p>
+
+<pre><code>@Embeddable
+class Location implements java.io.Serializable {
+
+    private BigDecimal fromLocationId;
+    private BigDecimal toLocationId;
+
+    public Location() {
+    }
+
+    public Location(BigDecimal fromLocationId, BigDecimal toLocationId) {
+        this.fromLocationId = fromLocationId;
+        this.toLocationId = toLocationId;
+    }
+
+    @Column(name="FROM", nullable=true, precision=22, scale=0)
+    public BigDecimal getFromLocationId() {
+        return this.fromLocationId;
+    }
+
+    public void setFromLocationId(BigDecimal fromLocationId) {
+        this.fromLocationId = fromLocationId;
+    }
+
+    @Column(name="TO", nullable=true, precision=22, scale=0)
+    public BigDecimal getToLocationId() {
+        return this.toLocationId;
+    }
+
+    public void setToLocationId(BigDecimal toLocationId) {
+        this.toLocationId = toLocationId;
+    }
+
+    @Override
+    public int hashCode() {
+        return com.google.common.base.Objects.hashCode(fromLocationId, toLocationId);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final LOCATION  other = (LOCATION) obj;
+        return com.google.common.base.Objects.equal(this.fromLocationId, other.fromLocationId) && com.google.common.base.Objects.equal(this.toLocationId, other.toLocationId);
+    }
+}
+</code></pre>
+
+<p>I'm using Hibernate - 4.3.6</p>
+
+<p><strong>LOG:</strong></p>
+
+<pre><code>org.hibernate.SQL - 
+    select
+        locations0_.COMM_ID as COMM_ID1_2_0_,
+        locations0_.FROM as FROM2_8_0_,
+        locations0_.TO as TO4_8_0_
+    from
+        LOCATION  locations0_ 
+    where
+        locations0_.COMM_ID=1
+</code></pre>
+
+<p>I checked it in my DB and it's return the correct result.</p>

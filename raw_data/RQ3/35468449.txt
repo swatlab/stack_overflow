@@ -1,0 +1,29 @@
+<p>The scroll state of an item on a view pager is not getting saved and restored on android KitKat and older devices (I've tested API 15,17,19,22,23 at this point)</p>
+
+<p>The scroll view is in a fragment inside another fragment with a view pager.</p>
+
+<p>The view pager adapter is a <code>FragmentStatePagerAdapter</code></p>
+
+<p>When the pager adapter saves the state, it calls <code>android.support.v4.app.FragmentManager#saveFragmentInstanceState</code>.</p>
+
+<p>From there we end up in <code>android.support.v4.app.FragmentManagerImpl#saveFragmentViewState</code> but a call to <code>ScrollView#saveHierarchyState</code> doesn't add a saved state to the bundle like it does on newer devices. Specifically the newer devices add an instance of <code>android.widget.HorizontalScrollView.SavedState</code> (That's what the debugger says anyhow, the code suggests it would be a <code>android.widget.ScrollView.SavedState</code> whereas the older API devices add <code>android.view.AbsSavedState#EMPTY_STATE</code></p>
+
+<pre><code>void saveFragmentViewState(Fragment f) { //f is my fragment
+    if (f.mInnerView == null) {
+        return;
+    }
+    if (mStateArray == null) {
+        mStateArray = new SparseArray<Parcelable>();
+    } else {
+        mStateArray.clear();
+    }
+    // f.mInnerView is a ScrollView
+    f.mInnerView.saveHierarchyState(mStateArray); //should save state here 
+    if (mStateArray.size() > 0) {
+        f.mSavedViewState = mStateArray;
+        mStateArray = null;
+    }
+}
+</code></pre>
+
+<p>Further investigation of what should be happening lead me to <code>android.widget.ScrollView#onSaveInstanceState</code> which actually saves the scroll position into <code>android.widget.ScrollView.SavedState#scrollPosition</code></p>

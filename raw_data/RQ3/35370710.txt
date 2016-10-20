@@ -1,0 +1,118 @@
+<p>Hello I'm new to Android. So far so good. I'm working on my school app and I've developer navigation drawer which has a fragment called gallery. I wanted the images to be displayed in grid view. I've achieved that but now i want that when someone clicks on those images it should open separately with some text below. So please tell me how to achieve this. Below I'm posting the code segments</p>
+
+<p>fragment_gallery_grid</p>
+
+<pre><code> <?xml version="1.0" encoding="utf-8"?>
+    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/gridview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="2"
+        android:verticalSpacing="8dp"
+        android:horizontalSpacing="8dp">
+
+    </GridView>
+</code></pre>
+
+<p>Gallery Fragment</p>
+
+<pre><code>package com.androidbelieve.HIT_APP;
+
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+/**
+ * Created by Ratan on 7/29/2015.
+ */
+public class GalleryFragment extends Fragment {
+
+    private GridView gridView;
+    private ImageView imageView;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        View view = inflater.inflate(R.layout.fragment_gallery_grid, container,
+                false);
+        GridView gridView = (GridView) view.findViewById(R.id.gridview);
+        gridView.setAdapter(new GalleryAdapter(view.getContext()));
+
+        return view;
+    }
+}
+</code></pre>
+
+<p>Gallery Adapter</p>
+
+<pre><code>package com.androidbelieve.HIT_APP;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+/**
+ * Created by Akash on 2/12/2016.
+ */
+public class GalleryAdapter extends BaseAdapter {
+    private Context mContext;
+
+    public GalleryAdapter(Context c) {
+        mContext = c;
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return mThumbIds.length;
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        ImageView imageView;
+        if (convertView == null) { // if it's not recycled, initialize some
+            // attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(500, 500));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(80, 80, 80, 80);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {R.drawable.akash,
+            R.drawable.sonal, R.drawable.praveen,
+            R.drawable.pranoti, R.drawable.akash,
+            R.drawable.sonal, R.drawable.praveen,R.drawable.pranoti };
+}
+</code></pre>
+
+<p>These r the things i've made to work on gallery grid view using fragments. Please Help!!!</p>

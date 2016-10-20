@@ -1,0 +1,55 @@
+<p>*I am developing an Android application which triggers an alarm at certain time that the user selects. But the problem is this alarm is only triggered if the user sets it to a little amount of time from now. So it's like if the app is not running the alarm won't trigger. I already acquired a lock and also set the flags to keep the screen on. Sometimes when I set it to 15 minutes from now or something like that it works and then I try again and it doesn't. I also included the broadcast receiver in the manifest. Here's my schedule alarm code:</p>
+
+<pre><code>public void schedule(Activity activity){
+    Context context = activity.getApplicationContext();
+    AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+    Intent intent = new Intent(context, AlarmActivityBroadcastReceiver.class);
+    intent.putExtra("id", this.getId());
+    pendingIntent = PendingIntent.getBroadcast(context, 1234565666, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    alarmManager.setExact(AlarmManager.RTC_WAKEUP, this.getCalendarTime().getTimeInMillis(), pendingIntent);
+}
+</code></pre>
+
+<p>To get the calendarTime i use the following function where time is the string of the time the user entered:</p>
+
+<pre><code>private Calendar convertTimeStringToCalendar(){
+    String[] timeArray = this.time.split(":");
+    int minute = Integer.parseInt(timeArray[1]);
+    int hour = Integer.parseInt(timeArray[0]);
+
+    Calendar c = Calendar.getInstance();
+    c.setTimeInMillis(System.currentTimeMillis());
+
+    int nowHour = c.get(Calendar.HOUR_OF_DAY);
+    int nowMinute = c.get(Calendar.MINUTE);
+    if (hour < nowHour  || (hour == nowHour && minute <= nowMinute)) {
+        c.add(Calendar.DAY_OF_YEAR, 1);
+    }
+    c.set(Calendar.HOUR_OF_DAY, hour);
+    c.set(Calendar.MINUTE, minute);
+    c.set(Calendar.SECOND, 0);
+    c.set(Calendar.MILLISECOND, 0);
+    return c;
+}
+</code></pre>
+
+<p>And finally this is my broadcast receiver: </p>
+
+<pre><code>public class AlarmActivityBroadcastReceiver extends BroadcastReceiver {
+
+@Override
+public void onReceive(Context context, Intent intent) {
+
+    WakeLock.acquire(context);
+
+    Alarm alarm = DataBaseSQL.getAlarm(intent.getLongExtra("id", 0L));
+    Intent alarmActivityIntent = new Intent(context, AlarmActivity.class);
+    alarmActivityIntent.putExtra("id", alarm.getId());
+    alarmActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    alarmActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+    context.startActivity(alarmActivityIntent);
+}
+}
+</code></pre>
+
+<p>I would appreciate any help in what it could be the reason for the alarms triggering only sometimes. </p>

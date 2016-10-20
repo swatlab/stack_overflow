@@ -1,0 +1,158 @@
+<p>I'm new to Android Development and was trying to get a Settings menu to show up on my app.</p>
+
+<p>The XML file for Preferences is here:</p>
+
+<pre><code><?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+android:title="@string/settings">
+<SwitchPreference
+    android:title="Switch Preference"
+    android:key="switchpref"
+    android:switchTextOn="ON"
+    android:switchTextOff="OFF"
+    android:summary="Night Mode"
+    android:defaultValue="false"
+    android:disableDependentsState="false"
+    />
+
+ </PreferenceScreen>
+</code></pre>
+
+<p>The Main Class file is here, where I try to switch to the Settings Activity</p>
+
+<pre><code>package com.example.notepad;
+
+import java.util.zip.Inflater;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+
+public class HomeScreen extends Activity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_home_screen);
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.activity_home_screen, menu);
+    return true;
+}
+
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch(item.getItemId())
+    {
+    case R.id.menu_settings:
+         Intent intent = new Intent(HomeScreen.this,      PreferencesFragment.class);
+            startActivity(intent);
+            return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+    }
+
+}
+}
+</code></pre>
+
+<p>The Preferences Java file that displays the Settings menu is here</p>
+
+<pre><code>package com.example.notepad;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class PreferencesFragment extends Activity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    // TODO Auto-generated method stub
+    super.onCreate(savedInstanceState);
+    setContentView(R.xml.preferences);
+}
+
+}
+</code></pre>
+
+<p>I can't figure out why an error occurs. It only displays the generic "Unfortunately, the application has stopped" when I click on the Settings button</p>
+
+<p>The Log file is here</p>
+
+<pre><code>01-17 19:49:28.795: E/AndroidRuntime(756): FATAL EXCEPTION: main
+01-17 19:49:28.795: E/AndroidRuntime(756): java.lang.RuntimeException: Unable to start    activity ComponentInfo{com.example.notepad/com.example.notepad.PreferencesFragment}:  android.view.InflateException: Binary XML file line #2: Error inflating class  PreferenceScreen
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2059)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2084)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.ActivityThread.access$600(ActivityThread.java:130)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1195)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.os.Handler.dispatchMessage(Handler.java:99)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.os.Looper.loop(Looper.java:137)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.ActivityThread.main(ActivityThread.java:4745)
+ 01-17 19:49:28.795: E/AndroidRuntime(756):     at java.lang.reflect.Method.invokeNative(Native Method)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at java.lang.reflect.Method.invoke(Method.java:511)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at      com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:786)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at dalvik.system.NativeStart.main(Native Method)
+01-17 19:49:28.795: E/AndroidRuntime(756): Caused by: android.view.InflateException: Binary XML file line #2: Error inflating class PreferenceScreen
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:698)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.inflate(LayoutInflater.java:466)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.inflate(LayoutInflater.java:396)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.inflate(LayoutInflater.java:352)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at com.android.internal.policy.impl.PhoneWindow.setContentView(PhoneWindow.java:256)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.Activity.setContentView(Activity.java:1867)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at com.example.notepad.PreferencesFragment.onCreate(PreferencesFragment.java:12)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.Activity.performCreate(Activity.java:5008)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1079)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2023)
+01-17 19:49:28.795: E/AndroidRuntime(756):  ... 11 more
+01-17 19:49:28.795: E/AndroidRuntime(756): Caused by: java.lang.ClassNotFoundException: android.view.PreferenceScreen
+01-17 19:49:28.795: E/AndroidRuntime(756):  at dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:61)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at java.lang.ClassLoader.loadClass(ClassLoader.java:501)
+ 01-17 19:49:28.795: E/AndroidRuntime(756):     at java.lang.ClassLoader.loadClass(ClassLoader.java:461)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.createView(LayoutInflater.java:552)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.onCreateView(LayoutInflater.java:643)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at com.android.internal.policy.impl.PhoneLayoutInflater.onCreateView(PhoneLayoutInflater.java:66)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at android.view.LayoutInflater.onCreateView(LayoutInflater.java:660)
+01-17 19:49:28.795: E/AndroidRuntime(756):  at          android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:685)
+01-17 19:49:28.795: E/AndroidRuntime(756):  ... 20 more
+</code></pre>
+
+<p>EDIT - My AndroidManifest.xml file  :</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="com.example.notepad"
+android:versionCode="1"
+android:versionName="1.0"
+  >
+
+<uses-sdk
+    android:minSdkVersion="14"
+    android:targetSdkVersion="16" />
+
+<application
+    android:allowBackup="true"
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity
+        android:name="com.example.notepad.HomeScreen"
+        android:label="@string/app_name" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+     <activity
+        android:name=".PreferencesFragment" />
+</application>
+</code></pre>
+
+<p></p>

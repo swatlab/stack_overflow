@@ -1,0 +1,438 @@
+<p>I am new to android and I am creating a contact manager. I have worked out how to store the values from EditText fields into the database but I don't know how to store an image in the database. I was wondering if someone could help me with this. </p>
+
+<pre><code>package awad865.project.ContactManager1;
+
+
+
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
+import android.database.SQLException;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.Spinner;
+
+
+public class AddContact extends Activity {
+    //declare private fields
+    private EditText firstName;
+    private EditText lastName;
+    private EditText number;
+    private EditText address;
+    private EditText date;
+    private EditText email;
+    private Spinner numberSpinner;
+    private Spinner emailSpinner;
+    private Spinner addressSpinner;
+    private Spinner dateSpinner;
+    private DatabaseHandler databaseHandler;
+    private ImageButton addPic;
+    private final int IMAGE_SELECTION =1;
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add_contact);
+        //code that enables the title on the action bar
+        getActionBar().setDisplayShowTitleEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        databaseHandler = new DatabaseHandler(this);
+
+        //intialise private fields
+        firstName = (EditText)findViewById(R.id.edit_first_name);
+        lastName = (EditText)findViewById(R.id.edit_last_name);
+        number = (EditText)findViewById(R.id.edit_number);
+        address = (EditText)findViewById(R.id.edit_address);
+        date = (EditText)findViewById(R.id.edit_date);
+        email =(EditText)findViewById(R.id.edit_email);
+
+
+        //Spinner for the phone number field
+        numberSpinner = (Spinner) findViewById(R.id.contact_number_spinner);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.number_array, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        numberSpinner.setAdapter(adapter);
+
+
+        //Spinner for the email address field
+        emailSpinner = (Spinner) findViewById(R.id.contact_email_spinner);
+        adapter = ArrayAdapter.createFromResource(this, 
+                R.array.email_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        emailSpinner.setAdapter(adapter);
+
+        //Spinner for address field
+        addressSpinner = (Spinner) findViewById(R.id.contact_address_spinner);
+        adapter= ArrayAdapter.createFromResource(this,
+                R.array.address_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        addressSpinner.setAdapter(adapter);
+
+        //Spinner for date
+        dateSpinner = (Spinner) findViewById(R.id.contact_date_spinner);
+        adapter=ArrayAdapter.createFromResource(this, 
+                R.array.date_array, android.R.layout.simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dateSpinner.setAdapter(adapter);
+
+
+        addPic = (ImageButton) findViewById(R.id.addImage);
+        Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.contacts_photo);
+        addPic.setImageBitmap(bm);
+
+        addPic.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                Intent imageIntent = new Intent(Intent.ACTION_PICK);
+                imageIntent.setType("image/*");
+                startActivityForResult(imageIntent, IMAGE_SELECTION);
+
+            }
+        });
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent){
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+
+        switch(requestCode){
+        case IMAGE_SELECTION:
+            if(resultCode == RESULT_OK){
+                try{
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inScaled = true;
+                    final Uri imageURI = imageReturnedIntent.getData();
+                    final InputStream inStr = getContentResolver().openInputStream(imageURI);
+                    final Bitmap selectImg = BitmapFactory.decodeStream(inStr, null, options);
+                    addPic.setImageBitmap(selectImg);
+                }catch(FileNotFoundException ex){
+                    Log.e("File not found", "Selected image was not found", ex);
+                }
+            }
+        }
+
+    }
+
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.add_contact, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item){
+
+        switch(item.getItemId()){
+        //if the save button is pressed, then all the information is retrieved from the EditText fields
+        //and stored in the private fields and then a new contact object is created and added to the 
+        //database
+        case R.id.action_save:
+                    //WANT to save the image here
+            BitmapDrawable bmd = ((BitmapDrawable) addPic.getDrawable());
+            Bitmap photo = bmd.getBitmap();
+            Contact contact = new Contact(firstName.getText().toString(),lastName.getText().toString(),number.getText().toString(), numberSpinner.getSelectedItem().toString(), email.getText().toString(), emailSpinner.getSelectedItem().toString(), date.getText().toString(), dateSpinner.getSelectedItem().toString(), address.getText().toString(), addressSpinner.getSelectedItem().toString(), "false");
+            //add to database
+
+            try {
+                databaseHandler.openDataBase();
+                databaseHandler.addContact(contact);
+                databaseHandler.close();
+            } catch (SQLException sqle) {
+                throw sqle;
+            }
+            //go back to list of contacts
+            Intent intentMain = new Intent(getApplicationContext(),MainActivity.class);
+            intentMain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intentMain);
+            return true;
+
+            //if the cancel button is pressed on the action bar then the user is navigate to MainActivity
+        case R.id.action_cancel:
+            Intent intentCancel = new Intent(this,MainActivity.class);
+            intentCancel.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intentCancel);
+            return true;
+            //if the up button is pressed, then the user is taken back to the MainActivity
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+
+        default:
+            return super.onOptionsItemSelected(item);
+
+        }
+    }
+}
+</code></pre>
+
+<p>My DatabaseHandler class:</p>
+
+<pre><code>package awad865.project.ContactManager1;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Blob;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.util.ByteArrayBuffer;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+import android.util.Log;
+
+public class DatabaseHandler extends SQLiteOpenHelper {
+
+    //declaring contants
+    private static String DB_NAME = "ContactsDb";
+    private static final int DB_VERSION = 1;
+    private static String DB_PATH = "/data/data/awad865.project.ContactManager1/databases/";
+    private final Context myContext;
+    private SQLiteDatabase myDataBase;
+    private static final String TABLE_CONTACT = "Contact";
+    private static final String FIRST_NAME = "firstname";
+    private static final String LAST_NAME = "lastname";
+    private static final String NUMBER = "number";
+    private static final String NUMBER_TYPE = "numbertype";
+    private static final String EMAIL = "email";
+    private static final String EMAIL_TYPE = "emailtype";
+    private static final String DATE = "date";
+    private static final String DATE_TYPE = "datetype";
+    private static final String ADDRESS = "address";
+    private static final String ADDRESS_TYPE = "addresstype";
+    private static final String IMAGE = "image";
+    private static final String FAVOURITE = "favourite";
+
+
+    //the parent constructor is called
+    public DatabaseHandler(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+        this.myContext = context;
+    }
+    //method for creating the database
+    public void createDataBase() throws IOException{
+        boolean dbExist = checkDataBase();
+        if(dbExist){
+            //copyDataBase();
+        }else{
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+            //database does't exist yet.
+        }
+        if(checkDB != null){
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local database as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+        // Path to the just created empty database
+        String outFileName = DB_PATH + DB_NAME;
+        //Open the empty database as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+    //method for adding a contact to the database
+    public void addContact(Contact contact) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        //put all the appropriate edit text fields contact and store them in the database.
+        values.put(FIRST_NAME, contact.getFirstName()); 
+        values.put(LAST_NAME, contact.getLastName()); 
+        values.put(NUMBER, contact.getNumber()); 
+        values.put(NUMBER_TYPE, contact.getNumberType());
+        values.put(EMAIL, contact.getEmail()); 
+        values.put(EMAIL_TYPE, contact.getEmailType());
+        values.put(ADDRESS, contact.getAddress()); 
+        values.put(ADDRESS_TYPE, contact.getAddressType());
+        values.put(DATE, contact.getDate()); 
+        values.put(DATE_TYPE, contact.getDateType());
+        values.put(FAVOURITE, "false");
+        db.insert(TABLE_CONTACT, null, values);
+        db.close(); // Closing database connection
+    }
+
+    // Deleting single contact
+    public void deleteContact(String firstName, String lastName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_CONTACT,
+                FIRST_NAME + "=? AND " + LAST_NAME + "=?", 
+                new String[] {firstName, lastName});
+        db.close();
+    }
+
+    //this method is used for editing a contact
+    public int updateContact(Contact contact, String firstName, String lastName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        //we first find the existing contact, and overwrite the old
+        //values with the new values
+        values.put(FIRST_NAME, contact.getFirstName()); 
+        values.put(LAST_NAME, contact.getLastName());
+        values.put(NUMBER, contact.getNumber()); 
+        values.put(NUMBER_TYPE, contact.getNumberType());
+        values.put(EMAIL, contact.getEmail()); 
+        values.put(EMAIL_TYPE, contact.getEmailType());
+        values.put(ADDRESS, contact.getAddress()); 
+        values.put(ADDRESS_TYPE, contact.getAddressType());
+        values.put(DATE, contact.getDate()); 
+        values.put(DATE_TYPE, contact.getDateType());
+        values.put(FAVOURITE, contact.getFavourite());
+
+        // updating row
+        return db.update(TABLE_CONTACT, values, FIRST_NAME + "=? AND " + LAST_NAME + "=?",
+                new String[] {firstName, lastName});
+    }
+
+    public List<Contact> getFavouriteContacts() {
+        List<Contact> contactList = new ArrayList<Contact>();
+        String isFavourite = "true";
+        // Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACT + " WHERE " + FAVOURITE + "='" + isFavourite + "'";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                Contact contact = new Contact(cursor.getString(0),cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5),cursor.getString(6), cursor.getString(7), cursor.getString(8), cursor.getString(9), cursor.getString(11));
+                // Adding contact to list
+                contactList.add(contact);
+            } while (cursor.moveToNext());
+        }
+
+        return contactList;
+    }
+
+
+    public Contact getContact(String firstName, String lastName) {
+        List<Contact> contactList = new ArrayList<Contact>();
+        // Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACT + " WHERE " + FIRST_NAME + "='" + firstName + "' AND " + LAST_NAME + "='" + lastName + "'";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                Contact contact = new Contact(cursor.getString(0),cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5),cursor.getString(6), cursor.getString(7), cursor.getString(8), cursor.getString(9), cursor.getString(11));
+                // Adding contact to list
+                contactList.add(contact);
+            } while (cursor.moveToNext());
+        }
+
+        return contactList.get(0);
+    }
+
+
+
+
+    public List<Contact> getContacts(String order) {
+        List<Contact> contactList = new ArrayList<Contact>();
+        // Select All Query
+        //this bottom line is used to change the sorting order of the contact list
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACT +" ORDER BY " + order;
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                Contact contact = new Contact(cursor.getString(0),cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5),cursor.getString(6), cursor.getString(7), cursor.getString(8), cursor.getString(9), cursor.getString(11));
+                // Adding contact to list
+                contactList.add(contact);
+            } while (cursor.moveToNext());
+        }
+        return contactList;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>
+
+<p>Any help would be appreciated. Thanks in advance!</p>

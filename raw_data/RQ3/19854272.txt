@@ -1,0 +1,40 @@
+<p>I have Two Activities <code>MainActivity</code> And <code>SearchActivity</code>. The <code>SearchActivity</code> is Launched From <code>ActionBar</code> Search <code>View</code> Menu Item. but if i Come back to the <code>MainActivity</code> by clicking  Up Navigation Item the <code>MainActivity</code> state is lost how can i go back to Main Activity with out losing the state of <code>MainActivity</code> .</p>
+
+<p><strong>My Code: MainActivity</strong> </p>
+
+<pre><code>   @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // If the nav drawer is open, hide action items related to the content view
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerLinear );
+        menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+
+
+        SearchItem= menu.findItem(R.id.action_search);
+        SearchManager searchManager =
+                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+         SearchView searchView =
+                 (SearchView) SearchItem.getActionView();
+
+         searchView.setQueryRefinementEnabled(true);
+         searchView.setSubmitButtonEnabled(true);
+         searchView.setSearchableInfo(
+                 searchManager.getSearchableInfo(getComponentName()));
+  return super.onPrepareOptionsMenu(menu);
+    }
+</code></pre>
+
+<p><strong>My Code: SearchActivity</strong> </p>
+
+<pre><code>  @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+  default:
+                return super.onOptionsItemSelected(item);
+            }
+        }
+</code></pre>
+
+<p>How can i return from SearchActivity to MainActivity with out Recreating the MainActivity.</p>

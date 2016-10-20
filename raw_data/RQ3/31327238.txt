@@ -1,0 +1,306 @@
+<p>I am writing an Android application that queries a databse with 170,000 dictionary words. (It has 31 coulumns: _id, word, sortedWord, ;ength, and count_A, count_B, count_C, ... count_Z)</p>
+
+<p>Here is the code for my Dictionary Database helper</p>
+
+<pre><code>public class DictionaryDbHelper extends SQLiteOpenHelper {
+
+    private static final String TAG = "DataBaseHelper";
+    // The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.rabbitfighter.wordsleuth/databases/";
+    // Database name
+    private static String DB_NAME = "dictionary.db";
+
+    // Database, and context
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+
+    // Table name
+    public static final String TABLE_NAME = "dictionary";
+    // Table columns
+    public static final String UID = "_id";
+    // Word
+    public static final String COLUMN_NAME_WORD = "word";
+    // Length
+    public static final String COLUMN_NAME_WORD_LENGTH = "length";
+    // For all the letters, A-Z.
+    public static final String COLUMN_NAME_COUNT_A = "count_A";
+    public static final String COLUMN_NAME_COUNT_B = "count_B";
+    public static final String COLUMN_NAME_COUNT_C = "count_C";
+    public static final String COLUMN_NAME_COUNT_D = "count_D";
+    public static final String COLUMN_NAME_COUNT_E = "count_E";
+    public static final String COLUMN_NAME_COUNT_F = "count_F";
+    public static final String COLUMN_NAME_COUNT_G = "count_G";
+    public static final String COLUMN_NAME_COUNT_H = "count_H";
+    public static final String COLUMN_NAME_COUNT_I = "count_I";
+    public static final String COLUMN_NAME_COUNT_J = "count_J";
+    public static final String COLUMN_NAME_COUNT_K = "count_K";
+    public static final String COLUMN_NAME_COUNT_L = "count_L";
+    public static final String COLUMN_NAME_COUNT_M = "count_M";
+    public static final String COLUMN_NAME_COUNT_N = "count_N";
+    public static final String COLUMN_NAME_COUNT_O = "count_O";
+    public static final String COLUMN_NAME_COUNT_P = "count_P";
+    public static final String COLUMN_NAME_COUNT_Q = "count_Q";
+    public static final String COLUMN_NAME_COUNT_R = "count_R";
+    public static final String COLUMN_NAME_COUNT_S = "count_S";
+    public static final String COLUMN_NAME_COUNT_T = "count_T";
+    public static final String COLUMN_NAME_COUNT_U = "count_U";
+    public static final String COLUMN_NAME_COUNT_V = "count_V";
+    public static final String COLUMN_NAME_COUNT_W = "count_W";
+    public static final String COLUMN_NAME_COUNT_X = "count_X";
+    public static final String COLUMN_NAME_COUNT_Y = "count_Y";
+    public static final String COLUMN_NAME_COUNT_Z = "count_Z";
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DictionaryDbHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    /* ------------------------ */
+    /* --- Override Methods --- */
+    /* ------------------------ */
+
+    /**
+     * On creation
+     * @param db -  the database
+     */
+    public void onCreate(SQLiteDatabase db) {
+        //Nothing to do here
+    }
+
+    /**
+     * On upgrade
+     * @param db - the database
+     * @param oldVersion -  the old database version int
+     * @param newVersion -  the new database version int
+     */
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.i(TAG, "Database " + db + " version " + oldVersion + " upgraded to " + newVersion);
+    }
+
+    /**
+     * On downgrade
+     * @param db - the database
+     * @param oldVersion -  the old database version int
+     * @param newVersion -  the new database version int
+     */
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.i(TAG, "Database " + db + " version " + oldVersion + " downgraded to " + newVersion);
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+        if(checkDataBase()){
+            //do nothing - database already exist
+            Log.i(TAG, "Database already exists... Nothing to do.");
+        }else{
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+                Log.i(TAG, "Successfully copied database");
+            } catch (IOException e) {
+                Log.i(TAG, "Error copying");
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+            //database doesn't exist yet.
+            Log.i(TAG, "Database doesn't exist yet");
+        }
+        // Check for null db
+        if(checkDB != null){
+            checkDB.close();
+            Log.i(TAG, "Closed dict database");
+        }
+        // Return null or not null
+        return checkDB != null;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException {
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        //transfer bytes from the input file to the output file
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+        if(myDataBase != null) {
+            Log.i(TAG, "Closing dictionary database");
+            myDataBase.close();
+        }
+        super.close();
+    }
+
+    /* -------------------------- */
+    /* --- Database retrieval --- */
+    /* -------------------------- */
+
+    /**
+     * Get the Anagrams in the database
+     * @return the number of anagrams
+     */
+    public ArrayList<Result> getMatches(
+            // Params. Yeah, I know...
+            int count_A, int count_B, int count_C, int count_D, int count_E, int count_F,
+            int count_G, int count_H, int count_I, int count_J, int count_K, int count_L,
+            int count_M, int count_N, int count_O, int count_P, int count_Q, int count_R,
+            int count_S, int count_T, int count_U, int count_V, int count_W, int count_X,
+            int count_Y, int count_Z, int count_WILDCARDS
+    ) {
+        // Get the database helper to get access to everything...
+        SQLiteDatabase db = this.getWritableDatabase();
+        // List to hold matches
+        ArrayList<Result> resultList = new ArrayList<>();
+        // Here are the columns we care about in our search
+        String[] columns = {
+                UID,
+                COLUMN_NAME_WORD,
+                COLUMN_NAME_WORD_LENGTH,
+                COLUMN_NAME_COUNT_A,
+                COLUMN_NAME_COUNT_B,
+                COLUMN_NAME_COUNT_C,
+                COLUMN_NAME_COUNT_D,
+                COLUMN_NAME_COUNT_E,
+                COLUMN_NAME_COUNT_F,
+                COLUMN_NAME_COUNT_G,
+                COLUMN_NAME_COUNT_H,
+                COLUMN_NAME_COUNT_I,
+                COLUMN_NAME_COUNT_J,
+                COLUMN_NAME_COUNT_K,
+                COLUMN_NAME_COUNT_L,
+                COLUMN_NAME_COUNT_M,
+                COLUMN_NAME_COUNT_N,
+                COLUMN_NAME_COUNT_O,
+                COLUMN_NAME_COUNT_P,
+                COLUMN_NAME_COUNT_Q,
+                COLUMN_NAME_COUNT_R,
+                COLUMN_NAME_COUNT_S,
+                COLUMN_NAME_COUNT_T,
+                COLUMN_NAME_COUNT_U,
+                COLUMN_NAME_COUNT_V,
+                COLUMN_NAME_COUNT_W,
+                COLUMN_NAME_COUNT_X,
+                COLUMN_NAME_COUNT_Y,
+                COLUMN_NAME_COUNT_Z,
+        };
+        String[] selectionArgs = null;
+        // The selection (WHERE ...)
+        String selection =
+                COLUMN_NAME_COUNT_A +"<="+ count_A + " AND " +
+                COLUMN_NAME_COUNT_B +"<="+ count_B + " AND " +
+                COLUMN_NAME_COUNT_C +"<="+ count_C + " AND " +
+                COLUMN_NAME_COUNT_D +"<="+ count_D + " AND " +
+                COLUMN_NAME_COUNT_E +"<="+ count_E + " AND " +
+                COLUMN_NAME_COUNT_F +"<="+ count_F + " AND " +
+                COLUMN_NAME_COUNT_G +"<="+ count_G + " AND " +
+                COLUMN_NAME_COUNT_H +"<="+ count_H + " AND " +
+                COLUMN_NAME_COUNT_I +"<="+ count_I + " AND " +
+                COLUMN_NAME_COUNT_J +"<="+ count_J + " AND " +
+                COLUMN_NAME_COUNT_K +"<="+ count_K + " AND " +
+                COLUMN_NAME_COUNT_L +"<="+ count_L + " AND " +
+                COLUMN_NAME_COUNT_M +"<="+ count_M + " AND " +
+                COLUMN_NAME_COUNT_N +"<="+ count_N + " AND " +
+                COLUMN_NAME_COUNT_O +"<="+ count_O + " AND " +
+                COLUMN_NAME_COUNT_P +"<="+ count_P + " AND " +
+                COLUMN_NAME_COUNT_Q +"<="+ count_Q + " AND " +
+                COLUMN_NAME_COUNT_R +"<="+ count_R + " AND " +
+                COLUMN_NAME_COUNT_S +"<="+ count_S + " AND " +
+                COLUMN_NAME_COUNT_T +"<="+ count_T + " AND " +
+                COLUMN_NAME_COUNT_U +"<="+ count_U + " AND " +
+                COLUMN_NAME_COUNT_V +"<="+ count_V + " AND " +
+                COLUMN_NAME_COUNT_W +"<="+ count_W + " AND " +
+                COLUMN_NAME_COUNT_X +"<="+ count_X + " AND " +
+                COLUMN_NAME_COUNT_Y +"<="+ count_Y + " AND " +
+                COLUMN_NAME_COUNT_Z +"<="+ count_Z;
+        String groupBy = null;
+        String having = null;
+        String orderBy = null;
+        // Query the database
+        Cursor cursor = db.query(
+                TABLE_NAME, // Table name
+                columns,         // Columns
+                selection,       // Selection
+                selectionArgs,   // Selection arguments
+                groupBy,         // Group by...
+                having,          // having
+                orderBy          // Order by
+        );
+        while (cursor.moveToNext()) {
+            int columnResult = cursor.getColumnIndex(COLUMN_NAME_WORD);
+            // Add the result to the list to return
+            resultList.add(new Result(cursor.getString(columnResult)));
+        }
+        cursor.close();
+        // Return the list
+        return resultList;
+    }
+}//EOF
+</code></pre>
+
+<p>And here is where I query the Dictionary in another class:</p>
+
+<p>How can I query for wildcards given my current setup? I am new to sql, so any suggestions would be greatly appreciated... I am looking for a parameter for the WHERE clause to allow for up to 2 wildcards, each of which could be anything from A-Z. </p>
+
+<p>Here is an example of how i'm doing a lookup now, from my search service:</p>
+
+<pre><code>DictionaryDbHelper helper = DictionaryDbHelper(this);
+ArrayList<Result> matches = helper.getMatches(
+                                this.getQuery().getCount_A(), this.getQuery().getCount_B(),
+                                this.getQuery().getCount_C(), this.getQuery().getCount_D(),
+                                this.getQuery().getCount_E(), this.getQuery().getCount_F(),
+                                this.getQuery().getCount_G(), this.getQuery().getCount_H(),
+                                this.getQuery().getCount_I(), this.getQuery().getCount_J(),
+                                this.getQuery().getCount_K(), this.getQuery().getCount_L(),
+                                this.getQuery().getCount_M(), this.getQuery().getCount_N(),
+                                this.getQuery().getCount_O(), this.getQuery().getCount_P(),
+                                this.getQuery().getCount_Q(), this.getQuery().getCount_R(),
+                                this.getQuery().getCount_S(), this.getQuery().getCount_T(),
+                                this.getQuery().getCount_U(), this.getQuery().getCount_V(),
+                                this.getQuery().getCount_W(), this.getQuery().getCount_X(),
+                                this.getQuery().getCount_Y(), this.getQuery().getCount_Z(),0 // wildcards not in use yet
+                        )
+</code></pre>

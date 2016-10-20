@@ -1,0 +1,96 @@
+<p>I am using default camera intent to capture images in my activity. After that I store their path in in an array. At end of activity, I copy the images to my application folder. For some reason the images are not copying in full quality. Ex: If an image in the DCIM folder is 1.04 MB, then it is only a ~2KB in my application folder.</p>
+
+<p>I am using this code in my app. For calling camera intent: </p>
+
+<pre><code>Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+startActivityForResult(intent, 1);
+</code></pre>
+
+<p>In onActivity Result I am doing:</p>
+
+<pre><code>Bitmap photo = (Bitmap) data.getExtras().get("data");
+
+Uri tempUri = getImageUri(context, photo);
+
+imagePath = getRealPathFromURI(tempUri);
+
+imagesList.add(imagePath);
+</code></pre>
+
+<p>getImageUri() and getRealPathFromURI() methods are:</p>
+
+<pre><code>public Uri getImageUri(Context inContext, Bitmap inImage) {
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+    String path = Images.Media.insertImage(inContext.getContentResolver(),
+            inImage, "Title", null);
+    return Uri.parse(path);
+}
+
+public String getRealPathFromURI(Uri uri) {
+    Cursor cursor = context.getContentResolver().query(uri, null, null,
+            null, null);
+    cursor.moveToFirst();
+    int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+    return cursor.getString(idx);
+}
+</code></pre>
+
+<p>At end of my activity, I am using this method to copy images to my application folder:</p>
+
+<pre><code> for (int i = 0; i < noteImagesList.size(); i++) {
+
+        File fileimg = new File(noteImagesList.get(i));
+
+        File newImageFile = new File(parentfolderpath,
+                            i+"_newimage.jpg");
+                    newImageFile.createNewFile();
+
+        Bitmap myBitmap = BitmapFactory.decodeFile(fileimg
+                            .getAbsolutePath());
+
+        FileOutputStream fOut = new FileOutputStream(
+                            newImageFile);
+
+        myBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
+        fOut.flush();
+        fOut.close();
+
+        if (myBitmap != null) {
+
+        if (!myBitmap.isRecycled()) {
+            myBitmap.recycle();
+        }
+
+        myBitmap = null;
+        }
+
+
+    }
+</code></pre>
+
+<p>After copying, the image is loosing it's quality and size. Where the image in the DCIM folder is sharp and around ~1 MB, after copying it is blurred and around ~1KB.</p>
+
+<p>Could any one tell what I am missing while copying images?</p>
+
+<p><strong>Edit</strong></p>
+
+<p>above code works fine if i use it for images select from gallery but still no luck with camera images.</p>
+
+<p><strong>Edit 2</strong></p>
+
+<p>i have used this code also but same result.</p>
+
+<pre><code>public void copyFile(File src, File dst) throws IOException {
+    FileChannel inChannel = new FileInputStream(src).getChannel();
+    FileChannel outChannel = new FileOutputStream(dst).getChannel();
+    try {
+        inChannel.transferTo(0, inChannel.size(), outChannel);
+    } finally {
+        if (inChannel != null)
+            inChannel.close();
+        if (outChannel != null)
+            outChannel.close();
+    }
+}
+</code></pre>

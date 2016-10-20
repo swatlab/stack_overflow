@@ -1,0 +1,385 @@
+<p>i using ListView in fragment. I have one asynctask to download json data from remote server. I try refresh programmatically my displayed adapter/listview in onPostExecute function but it doesn't work for me. </p>
+
+<p>My main activity with three fragments, three listview, three adapter and one async task. </p>
+
+<pre><code>public class ContactsActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+    private static List<Item> BackList = new ArrayList<Item>();
+    private static List<Item> BackList2 = new ArrayList<Item>();
+    private static List<Item> BackList3 = new ArrayList<Item>();
+    private static ListView ListView;
+    private static Context activity;
+    public static String HASH;
+    private static final String[] timestamp = {"0"};
+    private static WeatherAdapter adapter;
+    private static int fragment;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.contacts);
+
+        Intent myIntent= getIntent();
+        HASH = myIntent.getStringExtra("HASH");
+        Log.d("Intent - contactActivity", HASH);
+
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+        (new PrefetchData()).execute();
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.contacts, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return PlaceholderFragment.newInstance(position + 1);
+        }
+
+        @Override
+        public int getCount() {
+            return 3;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            fragment = position;
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static class PlaceholderFragment extends Fragment {
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            int index = getArguments().getInt(ARG_SECTION_NUMBER);
+            fragment = index;
+
+            activity = getActivity();
+            ListView listview1 = (ListView) rootView.findViewById(R.id.listView);
+            switch(fragment){
+                case 1:
+                    adapter = new WeatherAdapter(activity,  R.layout.listview_item_row, BackList);
+                    listview1.setOnItemClickListener(new ListView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> a, View v, int i, long l) {
+                            Intent rozmowa = new Intent(getActivity(), Incotalk.class);
+                            rozmowa.putExtra("HASH", HASH);
+                            startActivity(rozmowa);
+                        }
+                    });
+                    break;
+                case 2:
+                    adapter = new WeatherAdapter(activity,  R.layout.listview_item_row2, BackList2);
+                    break;
+                case 3:
+                    adapter = new WeatherAdapter(activity,  R.layout.listview_item_row3, BackList3);
+                    break;
+            }
+
+            listview1.setAdapter(adapter);
+            ListView = listview1;
+
+
+            return rootView;
+        }
+    }
+
+
+
+    /**
+     * Async Task to make http call
+     */
+    private class PrefetchData extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // before making http calls
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            final String id = HASH;
+            final String url = "http://freshfrog.pl/projects/talk.php?user="+id+"&t=" +  timestamp[0];
+            Log.d("BBB","start");
+
+                try {
+                    String page = new Communicator().executeHttpGet(url);
+                    JSONObject jsonObject = new JSONObject(page);
+                    timestamp[0] = jsonObject.getString("t");
+
+
+                    HASH = jsonObject.getJSONObject("s").getString("hash");
+                    JSONArray oczekujacy = jsonObject.getJSONArray("m");
+
+
+                    // wiadomosci
+                    BackList.clear(); // czyści przed odświerzeniem
+                    BackList2.clear();
+                    BackList3.clear();
+
+
+                    for (int i=oczekujacy.length()-1; i>0; i--) {
+                        JSONObject actor = oczekujacy.getJSONObject(i);
+                        String message = actor.getString("m");
+                        String hash = actor.getString("n");
+                        String t = actor.getString("t");
+
+                        int l = BackList.size();
+                        Boolean jest = false;
+
+                        for(int j=0; j<l; j++){
+                            Item item = BackList.get(j);
+                            if(!item.isSection()){
+                                ContactItem contactItem= (ContactItem) item;
+                                if(  (contactItem.hash).equals(hash)  ){
+                                    jest = true;
+                                    break;
+                                }
+                            }
+                            //Log.d("bbb", BackList.get(j).hash);
+                        }
+
+                        if(!jest && !hash.equals(id))    BackList.add(
+                                new ContactItem(BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher),
+                                        message,
+                                        hash));
+                    }
+
+                    // znajomi
+                    BackList2.add(new SectionItem("Otrzymane zaproszenia"));
+                    oczekujacy = jsonObject.getJSONObject("f").getJSONObject("p").getJSONArray("sending");
+                    for (int i=0; i<oczekujacy.length(); i++) {
+                        JSONObject actor = oczekujacy.getJSONObject(i);
+                        String name = actor.getString("name");
+                        String hash = actor.getString("hash");
+                        String avatar = actor.getString("avatar");
+
+                        BackList2.add(new ContactItem(getBitmapFromURL(avatar) , name, hash)   );
+                    }
+
+
+
+                    // szukaj
+                    BackList3.add(new SectionItem("Znajomi"));
+                    Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,null,null, null);
+                    while (phones.moveToNext())
+                    {
+
+                        String name=    phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                        String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        BackList3.add(new ContactItem(
+                                BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher),
+                                name,
+                                phoneNumber)   );
+                    }
+
+
+                } catch (Exception e) {
+                    Log.d("BBB", e.toString());
+                }
+
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            /* gdy skończy */
+
+            adapter.notifyDataSetChanged();
+            ListView listview2 = (ListView) findViewById(R.id.listView);
+            listview2.invalidateViews();
+
+            //Toast.makeText(ContactsActivity.this, "coś przyszło", Toast.LENGTH_SHORT).show();
+
+            Log.d("BBB", "powinno sie odswieżyc");
+            new PrefetchData().execute();
+        }
+
+    }
+
+}
+</code></pre>
+
+<p>My custom adapter</p>
+
+<pre><code>public class WeatherAdapter extends ArrayAdapter<Item> {
+
+    Context context;
+    int layoutResourceId;
+    List<Item> data = null;
+    private LayoutInflater vi;
+
+    public WeatherAdapter(Context context, int layoutResourceId, List<Item> data) {
+        super(context, layoutResourceId, data);
+        this.layoutResourceId = layoutResourceId;
+        this.context = context;
+        this.data = data;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View row = convertView;
+        WeatherHolder holder = null;
+        SectionHolder holder2 = null;
+        LayoutInflater inflater = ((Activity)context).getLayoutInflater();
+        Item i = data.get(position);
+        if(row == null){
+            if(!i.isSection()){
+                row = inflater.inflate(layoutResourceId, parent, false);
+                holder = new WeatherHolder();
+                holder.imgIcon = (ImageView)row.findViewById(R.id.imgIcon);
+                holder.txtTitle = (TextView)row.findViewById(R.id.txtTitle);
+                row.setTag(holder);
+
+                ContactItem contactItem = (ContactItem)i;
+                holder.txtTitle.setText(contactItem.title);
+                holder.imgIcon.setImageBitmap(contactItem.icon);
+            }else{
+
+                row = inflater.inflate(R.layout.listview_header_row, parent, false);
+                holder2 = new SectionHolder();
+                holder2.txtTitle = (TextView)row.findViewById(R.id.txtTitle);
+                row.setTag(holder2);
+
+                SectionItem sectionItem = (SectionItem)i;
+                holder2.txtTitle.setText(sectionItem.title);
+            }
+        }
+        else
+        {
+
+            if(!i.isSection()){
+                //holder = (WeatherHolder)    row.getTag();
+            }else{
+                //holder2 = (SectionHolder)   row.getTag();
+            }
+
+        }
+
+
+        return row;
+    }
+
+    public void update(List<Item> newlist) {
+        Log.d("bbb","aktualizacja listview");
+        data.clear();
+        data.addAll(newlist);
+        this.notifyDataSetChanged();
+
+    }
+
+    @Override
+    public void notifyDataSetChanged() // Create this function in your adapter class
+    {
+        //notifySetDataChanged()
+        super.notifyDataSetChanged();
+    }
+
+    static class WeatherHolder
+    {
+        ImageView imgIcon;
+        TextView txtTitle;
+    }
+    static class SectionHolder
+    {
+        TextView txtTitle;
+    }
+
+}
+</code></pre>

@@ -1,0 +1,31 @@
+<p>I have an ActionBar in my Android app (API Level 14).
+There is a home button with my app icon. In MainActivity I write a short Text in an EditText View.
+When I navigate to PreferenceActivity the icon gets an arrow to signal me, I can navigate to home Activity (MainActivity).</p>
+
+<pre><code>  // PreferenceActivity-onCreate
+  ActionBar actionBar = getActionBar();
+  actionBar.setDisplayHomeAsUpEnabled(true);
+</code></pre>
+
+<p>I click on that app icon in ActionBar to return to MainActivity</p>
+
+<pre><code>// PreferenceActivity
+@Override
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+   switch (item.getItemId()) 
+   {
+     case android.R.id.home:
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        return true;
+     default:
+        return super.onOptionsItemSelected(item);
+   }
+}
+</code></pre>
+
+<p>Now my MainActivity was created again und the text in EditText is gone.
+I thought I can keep alive the MainActivity with die Intent.FLAG_ACTIVITY_CLEAR_TOP.
+I want to have a behaviour like i use my return button on device.</p>

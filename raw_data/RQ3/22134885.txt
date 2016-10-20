@@ -1,0 +1,166 @@
+<p>I'm having trouble with a library I got from the GitHub.
+The Library leads to round an image. The rounding part works very well, but the image resizing doesn't do as great as the rest. It differs from image to image and I'd like to make this work to resize any image to the size of my View on android. For example, if I call this with <code>android:layout_width="100dp"</code> , I'd like to the image to be resized that much.</p>
+
+<p>Thank you very much for your time.</p>
+
+<p>This is the library:</p>
+
+<pre><code>package com.roundimage.support;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.provider.MediaStore;
+import android.util.AttributeSet;
+import android.widget.ImageView;
+
+public class CircularImageView extends ImageView {
+
+    private int borderWidth = 3;
+    private int viewWidth;
+    private int viewHeight;
+    private Bitmap image;
+    private Paint paint;
+    private Paint paintBorder;
+    private BitmapShader shader;
+
+    public CircularImageView(Context context) {
+        super(context);
+        setup();
+    }
+
+    public CircularImageView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        setup();
+    }
+
+    public CircularImageView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        setup();
+    }
+
+    private void setup()
+    {
+        // init paint
+        paint = new Paint();
+        paint.setAntiAlias(true);
+
+        paintBorder = new Paint();
+        setBorderColor(Color.WHITE);
+        paintBorder.setAntiAlias(true);     
+    }
+
+    public void setBorderWidth(int borderWidth)
+    {
+        this.borderWidth = borderWidth;
+        this.invalidate();
+    }
+
+    public void setBorderColor(int borderColor)
+    {       
+        if(paintBorder != null)
+            paintBorder.setColor(borderColor);
+
+        this.invalidate();
+    }
+
+    private void loadBitmap()
+    {
+        BitmapDrawable bitmapDrawable = (BitmapDrawable) this.getDrawable();
+
+        if(bitmapDrawable != null)
+            image = bitmapDrawable.getBitmap();
+    }
+
+    @SuppressLint("DrawAllocation")
+    @Override
+    public void onDraw(Canvas canvas)
+    {
+        //load the bitmap
+        loadBitmap();
+
+        // init shader
+        if(image !=null)
+        {           
+            shader = new BitmapShader(Bitmap.createScaledBitmap(image, canvas.getWidth(), canvas.getHeight(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            paint.setShader(shader);
+            int circleCenter = viewWidth / 2;
+
+            // circleCenter is the x or y of the view's center
+            // radius is the radius in pixels of the cirle to be drawn
+            // paint contains the shader that will texture the shape
+            canvas.drawCircle(circleCenter + borderWidth, circleCenter + borderWidth, circleCenter + borderWidth, paintBorder);
+            canvas.drawCircle(circleCenter + borderWidth, circleCenter + borderWidth, circleCenter, paint);
+        }       
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+    {
+        int width = measureWidth(widthMeasureSpec);
+        int height = measureHeight(heightMeasureSpec, widthMeasureSpec);        
+
+        viewWidth = width - (borderWidth *2);
+        viewHeight = height - (borderWidth*2);
+
+        setMeasuredDimension(width, height);
+    }
+
+    private int measureWidth(int measureSpec)
+    {
+            int result = 0;
+            int specMode = MeasureSpec.getMode(measureSpec);
+            int specSize = MeasureSpec.getSize(measureSpec);
+
+            if (specMode == MeasureSpec.EXACTLY) {
+                // We were told how big to be
+                result = specSize;
+            } else {
+                // Measure the text
+                result = viewWidth;
+
+            }
+
+        return result;
+    }
+
+    private int measureHeight(int measureSpecHeight, int measureSpecWidth) {
+        int result = 0;
+        int specMode = MeasureSpec.getMode(measureSpecHeight);
+        int specSize = MeasureSpec.getSize(measureSpecHeight);
+
+        if (specMode == MeasureSpec.EXACTLY) {
+            // We were told how big to be
+            result = specSize;
+        } else {
+            // Measure the text (beware: ascent is a negative number)
+            result = viewHeight;           
+        }
+        return result;
+    }
+}
+</code></pre>
+
+<p>This is how I call it on XML:</p>
+
+<pre><code><com.roundimage.support.CircularImageView
+    android:id="@+id/item_pic"
+    android:layout_width="70dp"
+    android:layout_height="70dp"
+    android:src="@drawable/example_id" />
+</code></pre>
+
+<p>How this stays like:
+<img src="http://i.stack.imgur.com/YtL2g.png" alt="enter image description here"></p>
+
+<p>And how the image really is:
+<img src="http://i.stack.imgur.com/DSqMZ.jpg" alt="enter image description here"></p>
+
+<p>And for different images with different sizes, for different devices with diferent resolution, the image appear in a different way..</p>

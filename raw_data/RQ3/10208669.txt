@@ -1,0 +1,182 @@
+<p>I want to get value from XML in custom <code>ListView</code>. I have code for this I get the value in log but I could not get the value in custom <code>ListView</code> text. When I click on <code>ListView</code> item I want to get sub item of list I got this item in log but how can I set this value in custom <code>ListView</code>.</p>
+
+<p><strong>Activity Class</strong></p>
+
+<pre><code>import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.general.rssreader.RSSFeed;
+import com.general.rssreader.RSSItem;
+import com.general.rssreader.RSSReader;
+import com.general.rssreader.RSSReaderException;
+import com.iwillstudy.R;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
+
+public class SubCategoryList extends Activity {
+    private ArrayList<RSSItem> myList;
+    private ArrayList<SearchResults> SearchResults;
+
+    int Choice;
+    String str;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.sub_categorylist);
+        ListView lv1 = (ListView) findViewById(R.id.subcategoryList);
+        lv1.setOnItemClickListener(new OnItemClickListener() 
+        {
+            @Override
+            public void onItemClick(AdapterView<?> adapter, View view, int position, long id) 
+            {
+                Intent myIntent1 = new Intent(view.getContext(),ItemDescription.class);
+                myIntent1.putExtra("id", SearchResults.get(position).getId());
+                startActivity(myIntent1);
+            }
+        });
+        Bundle bundle = getIntent().getExtras();
+        Choice = bundle.getInt("id");
+
+        myList = new ArrayList<RSSItem>();
+        Iterator<RSSItem> it = myList.iterator();
+        lv1.setAdapter(new MyCustomBaseAdapter(this, myList));
+
+        PostTask postTask= new PostTask();
+        String[] urls = new String[1];
+        urls[0] = Integer.toString(Choice); 
+        postTask.execute(urls);
+    }
+
+
+    public void onAbout(View v) {
+        Toast.makeText(getApplicationContext(), "Action Bar", Toast.LENGTH_LONG)
+                .show();
+    }
+
+    public void onSearch(View v) {
+        startActivity(new Intent(getApplicationContext(), SearchActivity.class));
+    }
+
+    public void onHome(View v) {
+        return2Home(this);
+    }
+
+    public void return2Home(Context context) {
+        final Intent intent = new Intent(context, Category.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        context.startActivity(intent);
+    }
+
+    private class PostTask extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            RSSReader reader = new RSSReader();
+            String uri = "http://www.yourdesignerwear.com/index.php?main_page=rss_feed&feed=products&cPath=" + params[0];//"http://www.facebook.com/feeds/page.php?id=327269891691&format=rss20";
+            Log.i("uri  - ", uri );
+            try 
+            {
+                RSSFeed feed = reader.load(uri);
+                //TextView tv= (TextView)findViewById(R.id.texttitle);
+
+                List<RSSItem> myList = new ArrayList<RSSItem>(feed.getItems());
+                Iterator<RSSItem> it = myList.iterator();
+                while(it.hasNext()){
+                    RSSItem rssItem = it.next();
+                    str=rssItem.getTitle();
+                    Log.i("","-------------------------------------------------");
+                    Log.i("Title - ", rssItem.getTitle());
+                    //Log.i("Description - ", rssItem.getDescription());    
+                }
+            }
+            catch (RSSReaderException e) 
+            {
+                e.printStackTrace();
+            }
+            return uri;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            //dismissProgressBar();
+            //progress.dismiss();
+        }
+    }
+}
+</code></pre>
+
+<p><strong>Adapter class</strong></p>
+
+<pre><code>import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.view.ViewGroup;
+import java.util.ArrayList;
+
+import com.general.rssreader.RSSItem;
+
+import android.view.LayoutInflater;
+import android.content.Context;
+import android.view.View;
+
+public class MyCustomBaseAdapter extends BaseAdapter {
+
+    private static ArrayList<RSSItem> searchArrayList;
+    private LayoutInflater mInflater;
+
+    public MyCustomBaseAdapter(Context context, ArrayList<RSSItem> results) {
+        searchArrayList = results;
+        mInflater = LayoutInflater.from(context);
+    }
+
+    public int getCount() {
+        return searchArrayList.size();
+    }
+
+    public Object getItem(int position) {
+        return searchArrayList.get(position);
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) 
+    {
+        ViewHolder holder;
+
+        if (convertView == null) 
+        {
+            convertView = mInflater.inflate(R.layout.custom_row_items, null);
+            holder = new ViewHolder();
+
+            holder.txtName = (TextView) convertView.findViewById(R.id.ItemName);
+            convertView.setTag(holder);
+        }
+        else 
+        {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txtName.setText(searchArrayList.get(position).getTitle());
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView txtName;
+    }
+}
+</code></pre>

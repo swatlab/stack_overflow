@@ -1,0 +1,291 @@
+<p>So I have made a database to use in my Android app. What I am trying to do is simple, just read from my database and display the data in a TextView, here is the DataBaseHelper class</p>
+
+<pre><code>    package com.tix.activity;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DatabaseHelper extends SQLiteOpenHelper{
+    private static String DB_PATH = "/data/data/com.tix.activity/databases/";
+    private static String DB_NAME = "tix";
+    private SQLiteDatabase myDatabase;
+    private final Context myContext;
+
+    public DatabaseHelper (Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+public void createDataBase() throws IOException{
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+    }else{
+        this.getReadableDatabase();
+        try{
+            copyDataBase();
+        }catch (IOException e) {
+            throw new Error("Error copying Database");
+        }
+    }
+}
+
+private boolean checkDataBase() {
+    // TODO Auto-generated method stub
+    SQLiteDatabase checkDB = null;
+    try {
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }catch(SQLiteException e){
+
+    }
+    if(checkDB != null){
+        checkDB.close();
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException{
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    String outFileName = DB_PATH + DB_NAME;
+
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer,0,length);
+    }
+
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+
+public void openDataBase() throws SQLException{
+    String myPath = DB_PATH + DB_NAME;
+    myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close(){
+    if(myDatabase != null)
+        myDatabase.close();
+    super.close();
+
+}
+@Override
+public void onCreate(SQLiteDatabase db){
+
+}
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+
+public Cursor data(){
+    Cursor c;
+    c = myDatabase.query(DB_NAME,null,null,null,null,null,null);
+    return c;
+}
+}
+</code></pre>
+
+<p>And this is my MainActivity class</p>
+
+<pre><code>package com.tix.activity;
+
+import java.io.IOException;
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.database.Cursor;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class MainActivity extends Activity {
+Cursor cur;
+TextView tv;
+Button next, prev;
+DatabaseHelper dbh;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        tv = (TextView)findViewById(R.id.tv);
+        next = (Button)findViewById(R.id.nbtn);
+        prev = (Button)findViewById(R.id.pbtn);
+
+        dbh = new DatabaseHelper(this);
+
+        try {
+            dbh.createDataBase();
+        } catch (IOException e2) {
+            e2.printStackTrace();
+        }
+
+        dbh.openDataBase();
+        cur = dbh.data();
+        cur.moveToFirst();
+        tv.setText(cur.getString(1));
+
+        next.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                if(cur.isLast())
+                {
+                    cur.moveToFirst();
+                    tv.setText(""+cur.getString(1));
+                }
+                else
+                {
+                    cur.moveToNext();
+                    tv.setText(""+cur.getString(1));
+
+                }
+            }
+        });
+        prev.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+            if(cur.isFirst()){
+                cur.moveToLast();
+                tv.setText(""+cur.getString(1));
+            }
+            else
+            {
+                cur.moveToPrevious();
+                tv.setText(""+cur.getString(1));
+            }
+            }
+        });
+
+    }
+}
+</code></pre>
+
+<p>But, everytime I run the app in emulator it just crashes. But if I put in 
+            tv.setText(cur.getString(0));
+instead of
+            tv.setText(cur.getString(1));</p>
+
+<p>then I get textview to display 'en_US' (which I don't really want to display, probably its from locale) and upon pressing either of the buttons the app crashes. </p>
+
+<p>Here is the error that I get on LogCat,</p>
+
+<pre><code>07-03 16:37:45.120: E/CursorWindow(1912): Failed to read row 0, column 1 from a CursorWindow which has 1 rows, 1 columns.
+07-03 16:37:45.160: D/AndroidRuntime(1912): Shutting down VM
+07-03 16:37:45.160: W/dalvikvm(1912): threadid=1: thread exiting with uncaught exception (group=0x40a70930)
+07-03 16:37:45.180: E/AndroidRuntime(1912): FATAL EXCEPTION: main
+07-03 16:37:45.180: E/AndroidRuntime(1912): java.lang.IllegalStateException: Couldn't read row 0, col 1 from CursorWindow.  Make sure the Cursor is initialized correctly before accessing data from it.
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.database.CursorWindow.nativeGetString(Native Method)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.database.CursorWindow.getString(CursorWindow.java:434)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.database.AbstractWindowedCursor.getString(AbstractWindowedCursor.java:51)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at com.tix.activity.MainActivity$2.onClick(MainActivity.java:65)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.view.View.performClick(View.java:4202)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.view.View$PerformClick.run(View.java:17340)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.os.Handler.handleCallback(Handler.java:725)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.os.Handler.dispatchMessage(Handler.java:92)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.os.Looper.loop(Looper.java:137)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at android.app.ActivityThread.main(ActivityThread.java:5039)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at java.lang.reflect.Method.invokeNative(Native Method)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at java.lang.reflect.Method.invoke(Method.java:511)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+07-03 16:37:45.180: E/AndroidRuntime(1912):     at dalvik.system.NativeStart.main(Native Method)
+07-03 16:39:01.480: I/Process(1912): Sending signal. PID: 1912 SIG: 9
+07-03 16:39:30.201: W/Trace(1966): Unexpected value from nativeGetEnabledTags: 0
+07-03 16:39:30.201: W/Trace(1966): Unexpected value from nativeGetEnabledTags: 0
+07-03 16:39:30.631: W/Trace(1966): Unexpected value from nativeGetEnabledTags: 0
+07-03 16:39:30.631: W/Trace(1966): Unexpected value from nativeGetEnabledTags: 0
+07-03 16:39:31.522: E/CursorWindow(1966): Failed to read row 0, column 1 from a CursorWindow which has 1 rows, 1 columns.
+07-03 16:39:31.531: D/AndroidRuntime(1966): Shutting down VM
+07-03 16:39:31.531: W/dalvikvm(1966): threadid=1: thread exiting with uncaught exception (group=0x40a70930)
+07-03 16:39:31.582: E/AndroidRuntime(1966): FATAL EXCEPTION: main
+07-03 16:39:31.582: E/AndroidRuntime(1966): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.tix.activity/com.tix.activity.MainActivity}: java.lang.IllegalStateException: Couldn't read row 0, col 1 from CursorWindow.  Make sure the Cursor is initialized correctly before accessing data from it.
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.os.Handler.dispatchMessage(Handler.java:99)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.os.Looper.loop(Looper.java:137)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.ActivityThread.main(ActivityThread.java:5039)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at java.lang.reflect.Method.invokeNative(Native Method)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at java.lang.reflect.Method.invoke(Method.java:511)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at dalvik.system.NativeStart.main(Native Method)
+07-03 16:39:31.582: E/AndroidRuntime(1966): Caused by: java.lang.IllegalStateException: Couldn't read row 0, col 1 from CursorWindow.  Make sure the Cursor is initialized correctly before accessing data from it.
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.database.CursorWindow.nativeGetString(Native Method)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.database.CursorWindow.getString(CursorWindow.java:434)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.database.AbstractWindowedCursor.getString(AbstractWindowedCursor.java:51)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at com.tix.activity.MainActivity.onCreate(MainActivity.java:38)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.Activity.performCreate(Activity.java:5104)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+07-03 16:39:31.582: E/AndroidRuntime(1966):     ... 11 more
+</code></pre>
+
+<p>My xml is as follows, this doesn't matter, anyway,</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
+
+    <Button
+        android:id="@+id/pbtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="33dp"
+        android:layout_marginTop="48dp"
+        android:text="Back" />
+
+    <Button
+        android:id="@+id/nbtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/pbtn"
+        android:layout_alignBottom="@+id/pbtn"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="25dp"
+        android:text="Next" />
+
+    <TextView
+        android:id="@+id/tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/pbtn"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="141dp"
+        android:text="Large Text"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>I made the database using SQLite Database Browser, but it contains a table called android_metadata with locale (text) field with value as 'en_US' and the other table is 'tix' with primary field as '_id' and the other field as 'jokes'. That is all.</p>
+
+<p>Could anyone point out what is wrong? And how do I rectify it? I definitely need help with this, because this is my first shot at database :/</p>

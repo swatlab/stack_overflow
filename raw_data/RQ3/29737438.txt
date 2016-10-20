@@ -1,0 +1,100 @@
+<p>I have set up correctly the pref_general, values for it, and the code to run the intent:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        Intent intecao = new Intent(characterList.this, SettingsActivity.class);
+        startActivity(intecao);
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>So if I hit settings in the options pop-up it will open correctly in my phone/7" tablet, but for bigger tablets such as 9" or more it will give me a blank screen pop-up without nothing written on it, such as this:</p>
+
+<p><img src="http://i.stack.imgur.com/ZvsP2.png" alt="enter image description here"></p>
+
+<p>How can I fix this issue? what is the problem that makes this happen?</p>
+
+<p>Thanks in adavance.</p>
+
+<p>--- EDIT ---</p>
+
+<p>Here is my pref_general:</p>
+
+<pre><code><PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Made by Megafuji and Kintups"/>
+
+    <ListPreference
+        android:key="console1"
+        android:title="Console"
+        android:summary="Select your console"
+        android:defaultValue="1"
+        android:entries="@array/pref_example_list_titles"
+        android:entryValues="@array/pref_example_list_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <ListPreference
+        android:key="viewMode"
+        android:title="View Mode"
+        android:summary="Select your View Mode"
+        android:defaultValue="1"
+        android:entries="@array/pref_viewMode_list_titles"
+        android:entryValues="@array/pref_viewMode_list_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <ListPreference
+        android:key="charsize"
+        android:title="Icons Size"
+        android:summary="Select character screen size for text and icons."
+        android:defaultValue="1"
+        android:entries="@array/pref_character_size"
+        android:entryValues="@array/pref_character_size_value"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <ListPreference
+        android:key="tamanhoLetra"
+        android:title="Font Size"
+        android:summary="Select font size you want for move list."
+        android:defaultValue="1"
+        android:entries="@array/pref_font_size"
+        android:entryValues="@array/pref_font_size_value"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <CheckBoxPreference
+        android:key="screenDimming"
+        android:title="Disable screen dimming in this app"
+        android:summary="Disable screen locking/turning off."
+        android:defaultValue="false"
+        />
+
+    <CheckBoxPreference
+        android:key="frame"
+        android:title="Show Frame Date"
+        android:summary="Show Frame Data for All Moves "
+        android:defaultValue="false"
+        />
+
+    <CheckBoxPreference
+        android:key="damage"
+        android:title="Show Damage"
+        android:summary="Show Damage for All Moves "
+        android:defaultValue="false" />
+
+    <PreferenceCategory
+        android:title="Contact us: mkxmoves@gmail.com"/>
+</PreferenceScreen>
+</code></pre>

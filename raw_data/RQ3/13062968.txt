@@ -1,0 +1,301 @@
+<p>The logcat of my application is showing some IndexOutOfBound exception.Here i am trying to create a bar-chart in android using achartengine library.And i am getting the x-axis and y-axis values from the web service by consuming it,i am following SOAP method for consuming a web-service.Can any one let me know what mistake i am committing on my project?</p>
+
+<p>Suggestions please!..</p>
+
+<p><em><strong>Thanks for you precious time!..</em></strong></p>
+
+<p><strong>LOGCAT</strong></p>
+
+<pre><code>10-25 11:44:32.713: W/KeyCharacterMap(928): No keyboard for id 0
+10-25 11:44:32.723: W/KeyCharacterMap(928): Using default keymap: /system/usr/keychars/qwerty.kcm.bin
+10-25 11:44:40.383: D/AndroidRuntime(928): Shutting down VM
+10-25 11:44:40.383: W/dalvikvm(928): threadid=1: thread exiting with uncaught exception (group=0x4001d800)
+10-25 11:44:40.393: E/AndroidRuntime(928): FATAL EXCEPTION: main
+10-25 11:44:40.393: E/AndroidRuntime(928): java.lang.IndexOutOfBoundsException: Invalid index 0, size is 0
+10-25 11:44:40.393: E/AndroidRuntime(928):  at java.util.ArrayList.throwIndexOutOfBoundsException(ArrayList.java:257)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at java.util.ArrayList.get(ArrayList.java:311)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at com.example.barchart_test.Chart_MainActivity$1.onClick(Chart_MainActivity.java:43)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at android.view.View.performClick(View.java:2408)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at android.view.View$PerformClick.run(View.java:8816)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at android.os.Handler.handleCallback(Handler.java:587)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at android.os.Handler.dispatchMessage(Handler.java:92)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at android.os.Looper.loop(Looper.java:123)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at android.app.ActivityThread.main(ActivityThread.java:4627)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at java.lang.reflect.Method.invokeNative(Native Method)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at java.lang.reflect.Method.invoke(Method.java:521)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:868)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:626)
+10-25 11:44:40.393: E/AndroidRuntime(928):  at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p><em>Please find my sources for reference</em></p>
+
+<p><strong>Chart_MainActivity</strong></p>
+
+<pre><code>public class Chart_MainActivity extends Activity 
+{
+EditText edt1, edt2;
+// TextView txt_1;
+Button btn;
+ArrayList<String> result;
+
+@Override
+public void onCreate(Bundle savedInstanceState) 
+{
+super.onCreate(savedInstanceState);
+setContentView(R.layout.main);
+
+edt1 = (EditText) findViewById(R.id.edt1_date1);
+edt2 = (EditText) findViewById(R.id.edt_date2);
+btn = (Button) findViewById(R.id.button_invoke);
+
+result = new ArrayList<String>();
+
+btn.setOnClickListener(new View.OnClickListener() 
+{
+    public void onClick(View v) 
+    {
+        result.addAll(getTMSChart(edt1.getText().toString(), edt2.getText().toString()));
+
+        Intent in = new Intent(getApplicationContext(), NextActivity.class);
+        in.putExtra("gotonextpageX", result.get(0));
+        in.putExtra("gotonextpageY", result.get(1));
+
+        startActivity(in);
+    }
+});}
+
+private ArrayList<String> getTMSChart(String FromDate, String ToDate) 
+{
+
+// txt_1 = (TextView)findViewById(R.id.textView1);
+System.setProperty("http.keepAlive", "false");
+SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+
+envelope.dotNet = true;
+
+String NAMESPACE = "http://tempuri.org/";
+String URL = "http://54.251.60.177/TMSOrdersService/TMSDetails.asmx";
+String METHOD = "GetTMSChart";
+
+SoapObject request = new SoapObject(NAMESPACE, METHOD);
+request.addProperty("FromDate", FromDate);
+request.addProperty("ToDate", ToDate);
+
+envelope.setOutputSoapObject(request);
+HttpTransportSE androidHttpTransport = new HttpTransportSE(URL);
+
+String x = "", y = "";
+
+ArrayList<String> stringResult = new ArrayList<String>();
+
+try 
+{
+    androidHttpTransport.call(NAMESPACE + METHOD, envelope);
+    SoapObject result = (SoapObject) envelope.bodyIn;
+    SoapObject root = (SoapObject) ((SoapObject) (result).getProperty(0)).getProperty("NewDataSet");
+    int tablesCount = root.getPropertyCount();
+
+    for (int i = 0; i < tablesCount; i++) 
+    {
+        SoapObject table = (SoapObject) root.getProperty(i);
+        int propertyCount = table.getPropertyCount();
+
+        for (int j = 0; j < propertyCount; j++) 
+        {
+
+            stringResult.add(table.getPropertyAsString("Order_No").toString());
+            stringResult.add(table.getPropertyAsString("Freight_Rate").toString());
+
+        //  stringResult.add(table.getPropertyAsString("Margin_Percent").toString());
+
+        //  freightRate = Integer.parseInt(table.getPropertyAsString("Freight_Rate"));
+
+        }
+    }
+}
+catch (Exception e) 
+{}
+
+return stringResult;
+}
+}
+</code></pre>
+
+<p><strong>NextActivity</strong></p>
+
+<pre><code>public class NextActivity extends Activity 
+{
+double x,y;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main1);
+
+    Bundle extras = getIntent().getExtras();
+    if(extras != null)
+    {   
+        x = extras.getDouble("gotonextpageX");
+        y = extras.getDouble("gotonextpageY");
+    }
+    else
+    {}
+
+    final GraphicalView gv =createIntent();
+    RelativeLayout rl=(RelativeLayout)findViewById(R.id.rlt);
+    rl.addView(gv);
+}   
+
+public GraphicalView createIntent() 
+{
+
+    String[] titles = new String[] { "Orders profit"};
+
+    List<double[]> values = new ArrayList<double[]>();
+    values.add(new double[] { x });
+    values.add(new double[] { y });
+
+
+    int[] colors = new int[] { Color.parseColor("#77c4d3")};
+
+    XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+    renderer.setOrientation(Orientation.HORIZONTAL);
+
+    setChartSettings(renderer,"","","",0.5,12.5, 0, y, Color.GREEN, Color.GREEN);
+
+    renderer.setXLabels(1);
+    renderer.setYLabels(10);
+
+    renderer.setPanEnabled(true, false);
+    renderer.addXTextLabel(1, "x");
+
+    /*renderer.addXTextLabel(2, "Feb");
+    renderer.addXTextLabel(3, "Mar");
+    renderer.addXTextLabel(4, "Apr");
+    renderer.addXTextLabel(5, "May");
+    renderer.addXTextLabel(6, "Jun");*/
+
+
+    int length = renderer.getSeriesRendererCount();
+
+    for (int i = 0; i < length; i++) 
+    {
+        SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+        seriesRenderer.setDisplayChartValues(true);
+      }
+
+   final GraphicalView grfv = ChartFactory.getBarChartView(NextActivity.this, buildBarDataset(titles, values), renderer,Type.DEFAULT);
+   return grfv;
+   }
+
+   protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+   {
+
+       XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+       renderer.setAxisTitleTextSize(16);
+       renderer.setChartTitleTextSize(20);
+
+       renderer.setLabelsTextSize(15);
+       renderer.setLegendTextSize(15);
+
+       renderer.setBarSpacing(1);
+
+       renderer.setMarginsColor(Color.parseColor("#0E120E"));
+       renderer.setXLabelsColor(Color.WHITE);
+       renderer.setYLabelsColor(0,Color.WHITE);
+
+       renderer.setApplyBackgroundColor(true);
+       renderer.setBackgroundColor(Color.parseColor("#000000"));
+
+       int length = colors.length;
+
+       for (int i = 0; i < length; i++) 
+       {
+           SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+           r.setColor(colors[i]);
+           r.setChartValuesSpacing(-90);
+           r.setChartValuesSpacing(15);
+           renderer.addSeriesRenderer(r);
+           }
+          return renderer;
+         }
+
+   protected XYMultipleSeriesDataset buildBarDataset(String[] titles, List<double[]> values) 
+   {
+      XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+      int length = titles.length;
+
+   for (int i = 0; i < length; i++) 
+   {
+       CategorySeries series = new CategorySeries(titles[i]);
+       double[] v = values.get(i);
+       int seriesLength = v.length;
+
+       for (int k = 0; k < seriesLength; k++) 
+       {
+           series.add(v[k]);
+           }
+        dataset.addSeries(series.toXYSeries());
+        }
+
+   return dataset;
+  }
+
+ protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+ String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,int labelsColor) 
+ {
+
+     renderer.setChartTitle(title);
+     renderer.setYLabelsAlign(Align.RIGHT);
+
+     renderer.setXTitle(xTitle);
+     renderer.setYTitle(yTitle);
+
+     renderer.setXAxisMin(xMin);
+     renderer.setXAxisMax(xMax);
+     renderer.setYAxisMin(yMin);
+     renderer.setYAxisMax(yMax);
+
+     renderer.setMargins(new int[] { 10, 65, 10, 15 });
+
+     renderer.setAxesColor(axesColor);
+     renderer.setLabelsColor(labelsColor);
+  }
+}
+</code></pre>
+
+<p><strong>Manifest.xml</strong></p>
+
+<pre><code><manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="com.example.barchart_test"
+android:versionCode="1"
+android:versionName="1.0" >
+
+<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="8" android:maxSdkVersion="15"/>
+
+<application
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity   android:name=".Chart_MainActivity"
+                android:label="@string/title_activity_chart__main" >
+    <intent-filter>
+       <action android:name="android.intent.action.MAIN" />
+         <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+    </activity>
+
+    <activity   android:name=".NextActivity"
+                android:label="@string/title_activity_chart__main" >
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN1" />
+             <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+    </activity>
+
+</application>
+</manifest>
+</code></pre>

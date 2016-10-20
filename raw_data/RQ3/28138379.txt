@@ -1,0 +1,127 @@
+<p>Sorry for my English. As research, I want to try to use the spinner with baseAdapter. But I do not know why I spinner does not output anything. </p>
+
+<p>Its xml:
+<strong>student_list_questions.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ListView
+        android:id="@+id/listsQuestions"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp" >
+
+    </ListView>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>student_list.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="10dp"
+    android:orientation="vertical" 
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/s_textQuestions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="0.5"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:textColor="#7F8C8D"
+            android:textSize="16dp" />
+
+        <Spinner
+            android:id="@+id/s_spinner_rating"
+            android:layout_width="90dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical" />
+
+    </LinearLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p>And my Class:</p>
+
+<pre><code>    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.student_list_questions);
+
+Spinner sp = new Spinner(this);
+        SpinnerBaseAdapter adapter = new SpinnerBaseAdapter(this, new ArrayList<String>());
+        sp.setAdapter(adapter);
+
+//then code 
+}
+</code></pre>
+
+<p>And this spinner adapter:</p>
+
+<pre><code>public class SpinnerBaseAdapter extends BaseAdapter {
+
+    private List<String> numberList;
+    private LayoutInflater mInflater;
+
+    @SuppressWarnings("unchecked")
+    public SpinnerBaseAdapter(Context context, Object results) {
+        numberList = (List<String>) results;
+        numberList.add("1");
+        numberList.add("2");
+        numberList.add("3");
+        mInflater = LayoutInflater.from(context);
+    }
+
+    @Override
+    public int getCount() {
+        return numberList.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return numberList.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if(convertView == null) {
+            convertView = mInflater.inflate(R.layout.student_list, null);
+            holder = new ViewHolder();
+            holder.spinnerValue = (TextView) convertView.findViewById(R.id.s_spinner_rating);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.spinnerValue.setText(numberList.get(position));
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView spinnerValue;
+    }
+
+
+}
+</code></pre>

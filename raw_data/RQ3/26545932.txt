@@ -1,0 +1,283 @@
+<p>I am creating an application in which my application is taking images from sdcard and showing me the result in gridview. It works fine with png files but is giving problem with jpg and jpeg files my application crashes.
+Heres my code:</p>
+
+<pre><code>public class CustomGallery extends Activity {
+private int count;
+private Bitmap[] thumbnails;
+private boolean[] thumbnailsselection;
+private String[] arrPath;
+private ImageAdapter imageAdapter;
+ArrayList<String> f = new ArrayList<String>();// list of file paths
+File[] listFile;
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.gallery);
+    getFromSdcard();
+    GridView imagegrid = (GridView) findViewById(R.id.PhoneImageGrid);
+    imageAdapter = new ImageAdapter();
+    imagegrid.setAdapter(imageAdapter);
+
+    imagegrid.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v,
+                final int position, long id) {
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    CustomGallery.this);
+
+            alertDialogBuilder.setTitle(" decision");
+            alertDialogBuilder.setMessage("What would you like to do?");
+            // set positive button: Yes message
+            alertDialogBuilder.setPositiveButton("Hide Image",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            InputStream inStream = null;
+                            OutputStream outStream = null;
+                            File afile = new File(f.get(position));
+                            try {
+
+                                File bfile = new File(
+                                                              "/data/data/com.mati.testprivatefolder/cache/MyPrivateFolder2/"
+                                                + afile.getName());
+
+                                inStream = new FileInputStream(afile);
+                                outStream = new FileOutputStream(bfile);
+
+                                byte[] buffer = new byte[1024];
+
+                                int length;
+                                // copy the file content in bytes
+                                while ((length = inStream.read(buffer)) > 0) {
+
+                                    outStream.write(buffer, 0, length);
+
+                                }
+
+                                inStream.close();
+                                outStream.close();
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                Toast.makeText(getApplicationContext(),
+                                        "Not!", Toast.LENGTH_LONG).show();
+                            }
+
+                            if (afile.delete()) {
+                                Toast.makeText(getApplicationContext(),
+                                        "file deleted", Toast.LENGTH_LONG)
+                                        .show();
+                            } else {
+
+                                Toast.makeText(getApplicationContext(),
+                                        "file not deleted",
+                                        Toast.LENGTH_LONG).show();
+                            }
+
+                        }
+                    });
+            // set negative button: No message
+            alertDialogBuilder.setNegativeButton("Open Image",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            File afile = new File(f.get(position));
+                            String temp = afile.toString();
+                            Toast.makeText(getApplicationContext(),
+                                    f.get(position), Toast.LENGTH_LONG)
+                                    .show();
+                            Intent i = new Intent(getApplicationContext(),
+                                    FullImageActivity.class);
+                            // Pass image index
+                            i.putExtra("id", temp);
+                            startActivity(i);
+                        }
+                    });
+
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            // show alert
+            alertDialog.show();
+        }
+    });
+
+}
+
+public void getFromSdcard() {
+    Intent intent = getIntent();
+    Bundle b = intent.getExtras();
+    String temp = (String) b.get("id");
+    if (temp.equals("DCIM")) {
+        File fil = Environment.getExternalStorageDirectory();
+        File file = new File(fil.getAbsoluteFile() + "/DCIM/");
+        // File file = new File("sdcard/DCIM"); //For actual phone
+        // File file = new File("/storage/sdcard/DCIM");
+
+        if (file.isDirectory()) {
+            listFile = file.listFiles();
+
+            for (int i = 0; i < listFile.length; i++) {
+                if (listFile[i].isDirectory()) {
+                } else {
+                    f.add(listFile[i].getAbsolutePath());
+                }
+
+            }
+        }
+
+    } else {
+        File fil = Environment.getExternalStorageDirectory();
+        File file = new File(fil.getAbsoluteFile() + "/DCIM/" + temp);
+        // File file = new File("sdcard/DCIM"); //For actual phone
+        // File file = new File("/storage/sdcard/DCIM");
+
+        if (file.isDirectory()) {
+            listFile = file.listFiles();
+
+            for (int i = 0; i < listFile.length; i++) {
+                if (listFile[i].getName().endsWith(".png")
+                        || listFile[i].getName().endsWith(".jpg")
+                        || listFile[i].getName().endsWith(".jpeg")
+                        || listFile[i].getName().endsWith(".gif")) {
+                    f.add(listFile[i].getAbsolutePath());
+                }
+
+            }
+        }
+    }
+}
+
+public class ImageAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+
+    public ImageAdapter() {
+        mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public int getCount() {
+        return f.size();
+    }
+
+    public Object getItem(int position) {
+        return position;
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+
+            holder = new ViewHolder();
+            convertView = mInflater.inflate(R.layout.galleryitem, null);
+            holder.imageview = (ImageView) convertView
+                    .findViewById(R.id.thumbImage);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        Bitmap myBitmap = BitmapFactory.decodeFile(f.get(position));
+        holder.imageview.setImageBitmap(myBitmap);
+
+        return convertView;
+    }
+
+}
+
+class ViewHolder {
+    ImageView imageview;
+
+}
+
+}
+</code></pre>
+
+<p>Here is log of my code</p>
+
+<pre><code>10-24 06:04:08.745: E/AndroidRuntime(1150): FATAL EXCEPTION: main
+10-24 06:04:08.745: E/AndroidRuntime(1150): Process: com.mati.testprivatefolder, PID: 1150
+10-24 06:04:08.745: E/AndroidRuntime(1150): java.lang.OutOfMemoryError
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.graphics.BitmapFactory.nativeDecodeStream(Native Method)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.graphics.BitmapFactory.decodeStreamInternal(BitmapFactory.java:613)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:589)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.graphics.BitmapFactory.decodeFile(BitmapFactory.java:369)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.AbsListView.obtainView(AbsListView.java:2263)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.GridView.makeAndAddView(GridView.java:1345)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.GridView.makeRow(GridView.java:345)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.GridView.fillDown(GridView.java:287)
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.GridView.fillFromTop(GridView.java:421)
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.GridView.layoutChildren(GridView.java:1233)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.AbsListView.onLayout(AbsListView.java:2091)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.View.layout(View.java:14817)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewGroup.layout(ViewGroup.java:4631)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.View.layout(View.java:14817)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewGroup.layout(ViewGroup.java:4631)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at com.android.internal.widget.ActionBarOverlayLayout.onLayout(ActionBarOverlayLayout.java:374)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.View.layout(View.java:14817)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewGroup.layout(ViewGroup.java:4631)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.View.layout(View.java:14817)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewGroup.layout(ViewGroup.java:4631)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewRootImpl.performLayout(ViewRootImpl.java:1987)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1744)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1000)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5670)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.Choreographer$CallbackRecord.run(Choreographer.java:761)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.Choreographer.doCallbacks(Choreographer.java:574)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.Choreographer.doFrame(Choreographer.java:544)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:747)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.os.Handler.handleCallback(Handler.java:733)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.os.Handler.dispatchMessage(Handler.java:95)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.os.Looper.loop(Looper.java:136)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at java.lang.reflect.Method.invokeNative(Native Method)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at java.lang.reflect.Method.invoke(Method.java:515)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+
+10-24 06:04:08.745: E/AndroidRuntime(1150):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

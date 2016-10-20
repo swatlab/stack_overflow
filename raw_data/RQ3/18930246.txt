@@ -1,0 +1,179 @@
+<p>I am dealing first time with the SQLite development in android.
+Currenly, I have existing sqlite database and I want to copy-paste in asset folder and then read it.
+But I am facing the following problem:</p>
+
+<p>My Locat:</p>
+
+<pre><code>09-21 13:08:23.725: I/Database(11660): sqlite returned: error code = 14, msg = cannot open file at source line 25467
+09-21 13:08:23.784: E/Database(11660): sqlite3_open_v2("/data/data/YOUR_PACKAGE/databases/myDBName", &handle, 1, NULL) failed
+09-21 13:08:23.866: I/In createDataBase();IOException(11660): myDBName
+</code></pre>
+
+<p>I have search for it very much on google, got the solutions and update my code based on that but still facing the problem. I am not able to get where is the problem.</p>
+
+<p>My code is as below:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+private static String DB_PATH = "/data/data/com.example.androidtestapplication/databases/";
+
+private static String DB_NAME = "myDBName";
+
+private SQLiteDatabase myDataBase; 
+
+private final Context myContext;
+
+public DataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}   
+public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }
+    else{
+            this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } 
+            catch (IOException e) {
+
+            //throw new Error("Error copying database");
+            Log.i("In createDataBase();IOException",e.getMessage());
+
+        }
+    }
+
+}
+
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}
+}
+</code></pre>
+
+<p>MainActivity.java file is:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    DataBaseHelper myDbHelper = new DataBaseHelper(this);
+    myDbHelper = new DataBaseHelper(this);
+
+    try {
+        myDbHelper.createDataBase();
+    } 
+    catch (IOException ioe) {
+        //throw new Error("Unable to create database");
+        Log.i("In MainActivity:IOException",ioe.getMessage());
+    }
+
+    try {
+        myDbHelper.openDataBase();
+
+    }
+    catch(SQLException sqle){
+
+        //throw sqle;
+        Log.i("In MainActivity:SQLException",sqle.getMessage());
+
+    }
+}
+}
+</code></pre>
+
+<p>I had also added the following permission into the manifest file:</p>
+
+<pre><code><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+</code></pre>
+
+<p>I have follow this tutorial:
+<a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/</a></p>
+
+<p>Please let me know what I am missing here.</p>
+
+<p>Please help me...Thanks in advance...:)</p>

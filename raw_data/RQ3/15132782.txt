@@ -1,0 +1,558 @@
+<p>I need to implement two tab options.
+1)Top station 2)my station 
+I used fragment activity with tab host.
+I know actionbar should be used but according to psd I need to show tab option at bottom so I used tabhost as I do not know how to show actionbar at bottom of screen
+It is done.
+In my all fragment I am calling web service and parse json response and arrange response in lisview. 
+I have written serve side communication code within oncreaview of fragment.
+Problem I am facing is  when I swtich to my fragment activity from login activity fragment oncreateview is not being called so my listview doe s not appear.
+But when I changed tab then its start appearing.
+I put log and found that oncreatview of fragment is not beign called when activity is called.</p>
+
+<p>Here is code of fragmentActivity:
+Right Now I have used two fragment only.</p>
+
+<pre><code>    public class AwesomeActivityNew extends FragmentActivity implements
+        TabHost.OnTabChangeListener {
+    private TabHost mTabHost;
+
+    private HashMap mapTabInfo = new HashMap<String, TabInfo>();
+
+    private TabInfo mLastTab = null;
+
+    public class TabInfo {
+
+        private String tag;
+
+        private Class<?> clss;
+
+        private Bundle args;
+
+        private Fragment fragment;
+
+        TabInfo(String tag, Class<?> clazz, Bundle args) {
+
+            this.tag = tag;
+
+            this.clss = clazz;
+
+            this.args = args;
+
+        }
+
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+
+        /**
+         * 
+         * @param context
+         */
+
+        public TabFactory(Context context) {
+
+            mContext = context;
+
+        }
+
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+         */
+
+        public View createTabContent(String tag) {
+
+            View v = new View(mContext);
+
+            return v;
+
+        }
+
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.support.v.app.FragmentActivity#onCreate(android.os.Bundle)
+     */
+
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+
+        // Step : Inflate layout
+
+        setContentView(R.layout.maintab_new);
+
+        // Step : Setup TabHost
+
+        initialiseTabHost(savedInstanceState);
+
+        if (savedInstanceState != null) {
+
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); // set
+                                                                                // the
+                                                                                // tab
+                                                                                // as
+                                                                                // per
+                                                                                // the
+                                                                                // saved
+                                                                                // state
+
+        }
+
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.support.v.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+     */
+
+    protected void onSaveInstanceState(Bundle outState) {
+
+        outState.putString("tab", mTabHost.getCurrentTabTag()); // save the tab
+                                                                // selected
+
+        super.onSaveInstanceState(outState);
+
+    }
+
+    /**
+     * 
+     * Step : Setup TabHost
+     */
+
+    private void initialiseTabHost(Bundle args) {
+
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+
+        mTabHost.setup();
+
+        TabInfo tabInfo = null;
+
+        AwesomeActivityNew.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab2").setIndicator("Tab2 "),
+                (tabInfo = new TabInfo("Tab2", TopStation.class, args)));
+
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        AwesomeActivityNew.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab3").setIndicator("My station", getResources().getDrawable( R.drawable.star )),
+                (tabInfo = new TabInfo("Tab3", MyStation.class, args)));
+
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+
+        // Default to first tab
+
+        this.onTabChanged("Tab");
+
+        //
+
+        mTabHost.setOnTabChangedListener(this);
+
+    }
+
+    /**
+     * 
+     * @param activity
+     * 
+     * @param tabHost
+     * 
+     * @param tabSpec
+     * 
+     * @param clss
+     * 
+     * @param args
+     */
+
+    private static void addTab(AwesomeActivityNew activity, TabHost tabHost,
+            TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+
+        // Attach a Tab view factory to the spec
+
+        tabSpec.setContent(activity.new TabFactory(activity));
+
+        String tag = tabSpec.getTag();
+
+        // Check to see if we already have a fragment for this tab, probably
+
+        // from a previously saved state. If so, deactivate it, because our
+
+        // initial state is that a tab isn't shown.
+
+        tabInfo.fragment = activity.getSupportFragmentManager()
+                .findFragmentByTag(tag);
+
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+
+            FragmentTransaction ft = activity.getSupportFragmentManager()
+                    .beginTransaction();
+
+            ft.detach(tabInfo.fragment);
+
+            ft.commit();
+
+            activity.getSupportFragmentManager().executePendingTransactions();
+
+        }
+
+        tabHost.addTab(tabSpec);
+
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+     */
+
+    public void onTabChanged(String tag) {
+
+        TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+
+        if (mLastTab != newTab) {
+
+            FragmentTransaction ft = this.getSupportFragmentManager()
+                    .beginTransaction();
+
+            if (mLastTab != null) {
+
+                if (mLastTab.fragment != null) {
+
+                    ft.detach(mLastTab.fragment);
+
+                }
+
+            }
+
+            if (newTab != null) {
+
+                if (newTab.fragment == null) {
+
+                    newTab.fragment = Fragment.instantiate(this,
+
+                    newTab.clss.getName(), newTab.args);
+
+                    ft.add(android.R.id.tabcontent, newTab.fragment, newTab.tag);
+
+                } else {
+
+                    ft.attach(newTab.fragment);
+
+                }
+
+            }
+
+            mLastTab = newTab;
+
+            ft.commit();
+
+            this.getSupportFragmentManager().executePendingTransactions();
+
+        }
+
+
+    }
+}
+</code></pre>
+
+<p>Here is code of Fragment:</p>
+
+<pre><code>    public class TopStation extends Fragment {
+
+    boolean jsonloadflag = false;
+//  int count = 0;
+    int currentpage = 0;
+    ListView ls;
+    JSONArray jsonarray;
+    Downloader downloader;
+    JSONLoader jsonloader;
+    MyCustomadapter adp;
+    int totalpages = 0;
+    TextView page;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // HttpClient client = new DefaultHttpClient();
+        // HttpPost post = new
+        // HttpPost("http://eluminoustechnologies.net/webapp/services/toptenstations.php");
+
+
+    }
+    @Override
+    public void onAttach(Activity activity) {
+        // TODO Auto-generated method stub
+        super.onAttach(activity);
+        if (!jsonloadflag) {
+            jsonloader = new JSONLoader();
+            jsonloader.execute(getActivity().getString(
+                    R.string.web_root_service)
+                    + getActivity().getString(+R.string.TOPTEN_STATION_URL));
+        }
+        Log.e("onattach top station called","true");
+    }
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        // count = 0;
+        //Log.e("oncreate view top station called","true");
+        // Inflate the layout for this fragment
+        // return inflater.inflate(R.layout.afragment, container, false);
+        Log.e("inside top station oncrateview","true");
+        currentpage = 0;
+        View v = inflater.inflate(R.layout.top_station, container, false);
+        ls = (ListView) v.findViewById(R.id.listview_topstation);
+        page = (TextView) v.findViewById(R.id.textView2);
+        /*
+         * View v1 = inflater.inflate(R.layout.footer_mystation, null);
+         * ls.addFooterView(v1);
+         */
+        Button nextbtn = (Button) v.findViewById(R.id.btnnext);
+        Button previousbtn = (Button) v.findViewById(R.id.btnprevious);
+
+        new Downloader(currentpage).execute();
+        nextbtn.setClickable(false);
+        previousbtn.setClickable(false);
+        nextbtn.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                if (currentpage < totalpages) {
+                    new Downloader(currentpage).execute();
+                    currentpage += 1;
+                    page.setText("Page " + currentpage);
+                }
+            }
+        });
+        previousbtn.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                if (currentpage > 1) {
+                    new Downloader(currentpage).execute();
+                    currentpage -= 1;
+                    page.setText("Page " + currentpage);
+                }
+            }
+        });
+
+        return v;
+
+    }
+    @Override
+    public void onPause() {
+        // TODO Auto-generated method stub
+        super.onPause();
+
+    }
+
+    class MyCustomadapter extends BaseAdapter {
+
+        ArrayList<HashMap<String, String>> data;
+        ArrayList<HashMap<String, Bitmap>> images;
+
+        public MyCustomadapter(ArrayList<HashMap<String, String>> ls,
+                ArrayList<HashMap<String, Bitmap>> listbitmap) {
+
+            this.data = ls;
+            this.images = listbitmap;
+            // this.data=imagename;
+        }
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return images.size();
+        }
+
+        @Override
+        public Object getItem(int arg0) {
+            // TODO Auto-generated method stub
+            return data.get(arg0);
+        }
+
+        @Override
+        public long getItemId(int arg0) {
+            // TODO Auto-generated method stub
+            return arg0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            // TODO Auto-generated method stub
+        //  Log.e("inside getview " + count, "true");
+            View row;
+            LayoutInflater inflater = getActivity().getLayoutInflater();
+            row = inflater.inflate(R.layout.list_row, null, false);
+            // grid=inflater.inflate(R.layout.gridrow, null);
+            ImageView stationimg = (ImageView) row
+                    .findViewById(R.id.imageView1);
+            TextView stationname = (TextView) row.findViewById(R.id.textView1);
+            TextView description = (TextView) row.findViewById(R.id.textView2);
+            HashMap<String, String> map = data.get(position);
+            HashMap<String, Bitmap> imagemap = images.get(position);
+            stationname.setText(map.get("station_name"));
+            // Log.e("map data for desc", map.get("description"));
+            description.setText(map.get("description"));
+            if (imagemap.get("station_picture") != null)
+                stationimg.setImageBitmap(imagemap.get("station_picture"));
+            // stationimg.setBackgroundResource(dataimg[position]);
+
+            return (row);
+        }
+    }
+
+    private class Downloader extends AsyncTask<Void, Void, Void> {
+        int cpage = 0;
+        ProgressDialog dialog;
+        ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, Bitmap>> listbitmap = new ArrayList<HashMap<String, Bitmap>>();
+
+        public Downloader(int page) {
+            this.cpage = page;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+            dialog = new ProgressDialog(getActivity());
+            dialog.show();
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            // TODO Auto-generated method stub
+            super.onPostExecute(result);
+            adp = new MyCustomadapter(list, listbitmap);
+            ls.setAdapter(adp);
+            adp.notifyDataSetChanged();
+            Log.e("onPostExecute called", "true");
+            Log.e("size of data list", "" + list.size());
+            Log.e("size of data list", "" + listbitmap.size());
+            dialog.dismiss();
+
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            // TODO Auto-generated method stub
+            Log.e("do inbackground downloader of downloader called", "true");
+
+            if (jsonloadflag) {
+                for (int j = cpage * 4; j < cpage * 4 + 4
+                        && j < jsonarray.length(); j++) {
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    HashMap<String, Bitmap> imagemap = new HashMap<String, Bitmap>();
+                    JSONObject jsonobj;
+                    try {
+                        jsonobj = jsonarray.getJSONObject(j);
+
+                        String station_id = jsonobj.getString("station_id");
+                        String station_name = jsonobj.getString("station_name");
+                        String station_picture = jsonobj
+                                .getString("station_picture");
+                        String description = jsonobj.getString("description");
+                        map.put("station_id", station_id);
+                        map.put("station_name", station_name);
+                        // map.put("station_picture", station_picture);
+                        map.put("description", description);
+                        String imageurl = getActivity().getResources()
+                                .getString(R.string.web_root)
+                                + getActivity().getResources().getString(
+                                        R.string.station_image_path)
+                                + station_picture.replace(" ", "%20");
+
+                        try {
+                            URL url = new URL(imageurl);
+
+                            HttpURLConnection conn = (HttpURLConnection) url
+                                    .openConnection();
+
+                            conn.setDoInput(true);
+                            conn.connect();
+                            InputStream is = conn.getInputStream();
+
+                            Bitmap bmImg = BitmapFactory.decodeStream(is);
+                            if (bmImg != null)
+                                imagemap.put("station_picture", bmImg);
+                            else {
+                                Drawable myDrawable = getResources()
+                                        .getDrawable(R.drawable.ic_launcher);
+                                Bitmap defaultimg = ((BitmapDrawable) myDrawable)
+                                        .getBitmap();
+                                imagemap.put("station_picture", defaultimg);
+                            }
+
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+
+                        // Log.e("station_id",station_id);
+                        // Log.e("station_name", station_name);
+                        // Log.e("station_picture",station_picture);
+                        // Log.e("description", description);
+                        // Log.e("counter is",""+count);
+                        list.add(map);
+                        listbitmap.add(imagemap);
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            //  count += 5;
+            }
+            return null;
+        }
+    }
+
+    private class JSONLoader extends AsyncTask<String, Void, Void> {
+
+        JSONParser parser = new JSONParser();
+
+        @Override
+        protected void onPostExecute(Void result) {
+            // TODO Auto-generated method stub
+            super.onPostExecute(result);
+            if (jsonarray.length() > 0) {
+                page.setText("Page " + 1);
+                currentpage = 1;
+
+            }
+
+        }
+
+        @Override
+        protected Void doInBackground(String... params) {
+            // TODO Auto-generated method stub
+            Log.e("do in background of json loader called", "true");
+            if (!jsonloadflag) {
+                jsonarray = parser.getJSONarrayFromUrl(params[0]);
+                if (jsonarray.length() % 4 == 0)
+                    totalpages = jsonarray.length() / 4;
+                else
+                    totalpages = jsonarray.length() / 4 + 1;
+                // Log.e("url param", params[0]);
+                // Log.e("server side json", jsonarray.toString());
+                jsonloadflag = true;
+            }
+
+            return null;
+        }
+    }
+
+    }
+</code></pre>
+
+<p>Please help that How can I show myfragment with serve side data loaded when my fragment Activity starts which contains tab host and fragment.</p>

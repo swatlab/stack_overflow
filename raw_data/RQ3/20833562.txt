@@ -1,0 +1,51 @@
+<p>I have problem with onActivityResult() not being passed to fragment, I think there is problem with main activity for passing onActivityResult() to the fragment, and I got this warning, "Activity result fragment index out of range" and for this reason, I can not reload my nested fragments.</p>
+
+<p>My Aplication uses navigation drawer, and I have view pager in a fragment as one the menu, and so the view pager reloads nested fragments, and I want to reload the view pager so fragments inside view pager get the latest updates. I call startActivityForResult from fragment inside viewpager </p>
+
+<pre><code>    Intent i = new Intent(getActivity(), AddEditRecurring.class);
+                i.putExtra("isEditMode", true);
+                i.putExtra("itemID", itemID);
+                i.putExtra("name", name);
+                i.putExtra("type", type);
+                i.putExtra("catId", categoryID);
+                i.putExtra("repeat", startOn);
+                i.putExtra("price", String.valueOf(amount));
+
+                startActivityForResult(i, 1);
+</code></pre>
+
+<p>And call AddEditRecurring activity, and after user has done with this activity, the activity closed and send activity result to reload the viewpager. But in this case, activity fails to pass onActivityResult to fragment and I can not reload the view pager. </p>
+
+<p>EDIT :</p>
+
+<p>I browsed android support library and got this, </p>
+
+<pre><code> /**
+ * Dispatch incoming result to the correct fragment.
+ */
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    mFragments.noteStateNotSaved();
+    int index = requestCode>>16;
+    if (index != 0) {
+        index--;
+        if (mFragments.mActive == null || index < 0 || index >= mFragments.mActive.size()) {
+            Log.w(TAG, "Activity result fragment index out of range: 0x"
+                    + Integer.toHexString(requestCode));
+            return;
+        }
+        Fragment frag = mFragments.mActive.get(index);
+        if (frag == null) {
+            Log.w(TAG, "Activity result no fragment exists for index: 0x"
+                    + Integer.toHexString(requestCode));
+        } else {
+            frag.onActivityResult(requestCode&0xffff, resultCode, data);
+        }
+        return;
+    }
+
+    super.onActivityResult(requestCode, resultCode, data);
+}
+</code></pre>
+
+<p>Anyone knows what does it mean?</p>

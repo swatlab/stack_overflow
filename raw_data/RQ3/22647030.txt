@@ -1,0 +1,330 @@
+<p>I've created a new project with a <code>Navigation Drawer</code> and it works fine but my problem is I want to change the top <code>ActionBar</code> gravity from left to right.</p>
+
+<p>I want to change that icon on the left's gravity to the right
+Here is an example image from google play store:</p>
+
+<p><img src="http://i.stack.imgur.com/RVNDB.png" /></p>
+
+<p><em><strong></em>**<em>*</em>**<em>*</em>**</strong><em>EDIT</em><strong><em>*</em>**<em>*</em>**<em>*</em>****</strong></p>
+
+<p>NavigationDrawerFragment.java</p>
+
+<pre><code>public class NavigationDrawerFragment extends Fragment {
+
+private NavigationDrawerCallbacks mCallbacks;
+
+private ActionBarDrawerToggle mDrawerToggle;
+
+private DrawerLayout mDrawerLayout;
+private ListView mDrawerListView;
+private View mFragmentContainerView;
+
+private int mCurrentSelectedPosition = 0;
+private boolean mFromSavedInstanceState;
+private boolean mUserLearnedDrawer;
+
+public NavigationDrawerFragment() {
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+    if (savedInstanceState != null) {
+        mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+        mFromSavedInstanceState = true;
+    }
+
+    selectItem(mCurrentSelectedPosition);
+}
+
+@Override
+public void onActivityCreated (Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    setHasOptionsMenu(true);
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+    mDrawerListView = (ListView) inflater.inflate(
+            R.layout.fragment_navigation_drawer, container, false);
+    mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            selectItem(position);
+        }
+    });
+    mDrawerListView.setAdapter(new ArrayAdapter<String>(
+            getActionBar().getThemedContext(),
+            android.R.layout.simple_list_item_1,
+            android.R.id.text1,
+            new String[]{
+                    getString(R.string.title_section1),
+                    getString(R.string.title_section2),
+                    getString(R.string.title_section3),
+            }));
+    mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+    return mDrawerListView;
+}
+
+public boolean isDrawerOpen() {
+    return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+}
+
+
+public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setHomeButtonEnabled(true);
+
+    mDrawerToggle = new ActionBarDrawerToggle(
+            getActivity(),                   
+            mDrawerLayout,                  
+            R.drawable.ic_drawer,             
+            R.string.navigation_drawer_open,  
+            R.string.navigation_drawer_close  
+    ) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            if (!mUserLearnedDrawer) {
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).commit();
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+    };
+
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+private void selectItem(int position) {
+    mCurrentSelectedPosition = position;
+    if (mDrawerListView != null) {
+        mDrawerListView.setItemChecked(position, true);
+    }
+    if (mDrawerLayout != null) {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+    if (mCallbacks != null) {
+        mCallbacks.onNavigationDrawerItemSelected(position);
+    }
+}
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        mCallbacks = (NavigationDrawerCallbacks) activity;
+    } catch (ClassCastException e) {
+        throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+    }
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    mCallbacks = null;
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+@Override
+public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    if (mDrawerLayout != null && isDrawerOpen()) {
+        inflater.inflate(R.menu.global, menu);
+        showGlobalContextActionBar();
+    }
+    super.onCreateOptionsMenu(menu, inflater);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    if (item.getItemId() == R.id.action_example) {
+        Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+
+private void showGlobalContextActionBar() {
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    actionBar.setTitle(R.string.app_name);
+}
+
+private ActionBar getActionBar() {
+    return ((ActionBarActivity) getActivity()).getSupportActionBar();
+}
+
+public static interface NavigationDrawerCallbacks {
+
+    void onNavigationDrawerItemSelected(int position);
+}
+ }
+</code></pre>
+
+<p>MainActivity.java</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity
+    implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+
+private NavigationDrawerFragment mNavigationDrawerFragment;
+
+
+private CharSequence mTitle;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+    mTitle = getTitle();
+
+    // Set up the drawer.
+    mNavigationDrawerFragment.setUp(
+            R.id.navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+}
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+    // update the main content by replacing fragments
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    fragmentManager.beginTransaction()
+            .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
+            .commit();
+}
+
+public void onSectionAttached(int number) {
+    switch (number) {
+        case 1:
+            mTitle = getString(R.string.title_section1);
+            break;
+        case 2:
+            mTitle = getString(R.string.title_section2);
+            break;
+        case 3:
+            mTitle = getString(R.string.title_section3);
+            break;
+    }
+}
+
+public void restoreActionBar() {
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setTitle(mTitle);
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    if (!mNavigationDrawerFragment.isDrawerOpen()) {
+
+        getMenuInflater().inflate(R.menu.main, menu);
+        restoreActionBar();
+        return true;
+    }
+    return super.onCreateOptionsMenu(menu);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+
+    int id = item.getItemId();
+    if (id == R.id.action_settings) {
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+
+public static class PlaceholderFragment extends Fragment {
+
+    public static PlaceholderFragment newInstance(int sectionNumber) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+        textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        ((MainActivity) activity).onSectionAttached(
+                getArguments().getInt(ARG_SECTION_NUMBER));
+    }
+}
+
+ }
+</code></pre>

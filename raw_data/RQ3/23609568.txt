@@ -1,0 +1,259 @@
+<p>I have created simple image gallery which displays images stored in <code>res/drawable</code> folder , but the grid view is very laggy and slow. How can I optimized the gridview further more so that the movement is smooth.</p>
+
+<pre><code>  public class ImageGalleryActivity extends Activity {
+    String strCategoryName = null;
+    GridView gridView;
+    Utils utils;
+    private int columnWidth;
+
+    // private GridViewImageAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_image_gallery);
+
+        Intent intent;
+        intent = getIntent();
+        if (intent != null) {
+            strCategoryName = intent.getStringExtra("category");
+        }
+
+
+        gridView = (GridView) findViewById(R.id.gridView_cards);
+        utils = new Utils(this);
+
+        // Intializing Grid View
+        InitilizeGridLayout();
+        // gridView.setAdapter(new GridCustomAdapter(this));
+
+        // adapter = new GridViewImageAdapter(ImageGalleryActivity.this,
+        // defaultImages, columnWidth, this);
+
+        List<Item> items = new ArrayList<Item>();
+        if(strCategoryName.equals("test"))
+        {
+            items.add(new Item(R.drawable.i1));
+            items.add(new Item(R.drawable.i2));
+            items.add(new Item(R.drawable.i3));
+            items.add(new Item(R.drawable.i4));
+            items.add(new Item(R.drawable.i5));
+            items.add(new Item(R.drawable.i6));
+            items.add(new Item(R.drawable.i7));
+            items.add(new Item(R.drawable.i8));
+            items.add(new Item(R.drawable.i9));
+            items.add(new Item(R.drawable.i10));
+            items.add(new Item(R.drawable.i11));
+            items.add(new Item(R.drawable.i12));
+            items.add(new Item(R.drawable.i13));
+            items.add(new Item(R.drawable.i14));
+            items.add(new Item(R.drawable.i15));
+            items.add(new Item(R.drawable.i16));
+            items.add(new Item(R.drawable.i17));
+            items.add(new Item(R.drawable.i18));
+            items.add(new Item(R.drawable.i19));
+            items.add(new Item(R.drawable.i20));
+            items.add(new Item(R.drawable.i21));
+            items.add(new Item(R.drawable.i22));
+            items.add(new Item(R.drawable.i23));
+            items.add(new Item(R.drawable.i24));
+            items.add(new Item(R.drawable.i25));
+        }
+        else if(strCategoryName.equals("test")){
+            items.add(new Item(R.drawable.i1));
+            items.add(new Item(R.drawable.i2));
+            items.add(new Item(R.drawable.i3));
+            items.add(new Item(R.drawable.i4));
+            items.add(new Item(R.drawable.i5));
+            items.add(new Item(R.drawable.i6));
+            items.add(new Item(R.drawable.i7));
+            items.add(new Item(R.drawable.i8));
+            items.add(new Item(R.drawable.i9));
+            items.add(new Item(R.drawable.i10));
+            items.add(new Item(R.drawable.i11));
+            items.add(new Item(R.drawable.i12));
+            items.add(new Item(R.drawable.i13));
+            items.add(new Item(R.drawable.i14));
+            items.add(new Item(R.drawable.i15));
+            items.add(new Item(R.drawable.i16));
+            items.add(new Item(R.drawable.i17));
+            items.add(new Item(R.drawable.i18));
+
+        }else{
+            items.add(new Item(R.drawable.i1));
+            items.add(new Item(R.drawable.i2));
+            items.add(new Item(R.drawable.i3));
+            items.add(new Item(R.drawable.i4));
+            items.add(new Item(R.drawable.i5));
+            items.add(new Item(R.drawable.i6));
+            items.add(new Item(R.drawable.i7));
+            items.add(new Item(R.drawable.i8));
+            items.add(new Item(R.drawable.i9));
+            items.add(new Item(R.drawable.i10));
+            items.add(new Item(R.drawable.i11));
+            items.add(new Item(R.drawable.i12));
+            items.add(new Item(R.drawable.i13));
+            items.add(new Item(R.drawable.i14));
+            items.add(new Item(R.drawable.i15));
+            items.add(new Item(R.drawable.i16));
+            items.add(new Item(R.drawable.i17));
+            items.add(new Item(R.drawable.i18));
+        }
+
+
+
+        gridView.setAdapter(new MyAdapter(this, items, columnWidth, ImageGalleryActivity.this));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.image_gallery, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void InitilizeGridLayout() {
+
+        Resources r = getResources();
+        float padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                AppConstant.GRID_PADDING, r.getDisplayMetrics());
+        columnWidth = (int) ((utils.getScreenWidth() - ((AppConstant.NUM_OF_COLUMNS + 1) * padding)) / AppConstant.NUM_OF_COLUMNS);
+
+        gridView.setNumColumns(AppConstant.NUM_OF_COLUMNS);
+        gridView.setColumnWidth(columnWidth);
+        gridView.setStretchMode(GridView.NO_STRETCH);
+        gridView.setPadding((int) padding, (int) padding, (int) padding,
+                (int) padding);
+
+        gridView.setHorizontalSpacing((int) padding);
+        gridView.setVerticalSpacing((int) padding);
+    }
+
+}
+
+class MyAdapter extends BaseAdapter {
+    private List<Item> items;
+    private Context context;
+    int columnWidth;
+    Activity _activity;
+
+    public MyAdapter(Context context, List<Item> items, int columnWidth, Activity activity) {
+        this.context = context;
+        this.items = items;
+        this.columnWidth = columnWidth;
+        this._activity = activity;
+    }
+
+    @Override
+    public int getCount() {
+        return items.size();
+    }
+
+    @Override
+    public Object getItem(int i) {
+        return items.get(i);
+    }
+
+    @Override
+    public long getItemId(int i) {
+        return i;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = LayoutInflater.from(context).inflate(
+                    R.layout.frame_layout_square_image_view, null, false);
+
+            holder.picture = (ImageView) convertView.findViewById(R.id.picture);
+            convertView.setTag(holder);
+
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+        holder.picture.setImageBitmap((decodeImage(
+                items.get(position).drawableId, columnWidth)));
+         holder.picture.setOnClickListener(new OnImageClickListener(items.get(position).drawableId));
+        return convertView;
+    }
+    class OnImageClickListener implements OnClickListener {
+
+        int _drawableId;
+
+        // constructor
+        public OnImageClickListener(int drawableId) {
+            this._drawableId = drawableId;
+        }
+
+        @Override
+        public void onClick(View v) {
+            // on selecting grid view image
+            // launch full screen activity
+            Intent i = new Intent(_activity, ImageEditor.class);
+            i.putExtra("drawableId", _drawableId);
+            _activity.startActivity(i);
+        }
+
+    }
+
+    class ViewHolder {
+
+        ImageView picture;
+
+    }
+
+    public Bitmap decodeImage(int resourceId, int imageSize) {
+        try {
+            // Decode image size
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeResource(context.getResources(), resourceId, o);
+            // The new size we want to scale to
+            final int REQUIRED_SIZE = imageSize; // you are free to modify size
+                                                    // as your requirement
+
+            // Find the correct scale value. It should be the power of 2.
+            int scale = 1;
+            while (o.outWidth / scale / 2 >= REQUIRED_SIZE
+                    && o.outHeight / scale / 2 >= REQUIRED_SIZE)
+                scale *= 2;
+
+            // Decode with inSampleSize
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = scale;
+            return BitmapFactory.decodeResource(context.getResources(),
+                    resourceId, o2);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
+}
+
+class Item {
+
+    final int drawableId;
+
+    Item(int drawableId) {
+        this.drawableId = drawableId;
+    }
+
+}
+</code></pre>

@@ -1,0 +1,78 @@
+<p>I'm using Jack Wharton's ViewPagerIndicator and finding that when I have four tabs my Google map will reload after I visit the last tab and then the map tab.
+For example, with just HOME | MAP | SEARCH, I can tab to HOME and then MAP, or SEARCH and then MAP, and in either case the map displays without any loading. But with HOME | MAP | SEARCH | ABOUT, if I tab to ABOUT and then MAP, the entire map redraws. This is a huge memory leak.
+Here's my implementation of the PagerAdapter:</p>
+
+<pre><code>public class TabsPagerAdapter extends FragmentPagerAdapter {
+
+  private String[] titles = {"Home", "Map", "Search", "About"};
+
+  public TabsPagerAdapter(FragmentManager fm) {
+      super(fm);
+  }
+
+  @Override
+  public Fragment getItem(int index) {
+
+      switch (index) {
+          case 0:
+              return new HomeFragment();
+          case 1:
+              return new MapFragment();
+          case 2:
+              return new SearchListFragment();
+          case 3:
+              return new AboutFragment();
+      }
+
+      return null;
+  }
+
+  @Override
+  public int getCount() {
+      return titles.length;
+  }
+
+  @Override
+  public CharSequence getPageTitle(int position) {
+      return titles[position].toUpperCase();
+  }
+}
+</code></pre>
+
+<p>I've changed the order of the tabs but when there are four the last one will cause reloading if I go there before the map.</p>
+
+<p>The tab source, TabPagerIndicator.java has an interesting method that might be a candidate for redrawing the map. </p>
+
+<pre><code>    @Override
+public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+    final boolean lockedExpanded = widthMode == MeasureSpec.EXACTLY;
+    setFillViewport(lockedExpanded);
+
+    final int childCount = mTabLayout.getChildCount();
+    if (childCount > 1 && (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST)) {
+        if (childCount > 2) {
+            mMaxTabWidth = (int)(MeasureSpec.getSize(widthMeasureSpec) * 0.4f);
+        } else {
+            mMaxTabWidth = MeasureSpec.getSize(widthMeasureSpec) / 2;
+        }
+    } else {
+        mMaxTabWidth = -1;
+    }
+
+    final int oldWidth = getMeasuredWidth();
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    final int newWidth = getMeasuredWidth();
+
+    if (lockedExpanded && oldWidth != newWidth) {
+        // Recenter the tab display if we're at a new (scrollable) size.
+        setCurrentItem(mSelectedTabIndex);
+    }
+}
+</code></pre>
+
+<p>I'm unable to debug this however because Android Studio has issues locating the library.</p>
+
+<pre><code>Warning:Unable to find module with Gradle path ':libs/tabLibrary' (needed by module 'app'.)
+Linking to library 'libs/tabLibrary-unspecified' instead.
+</code></pre>

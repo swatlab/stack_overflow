@@ -1,0 +1,543 @@
+<p>i'm still learning about android developing, so i need little help about making this to work. Application is working, but onclicklistener on navigationDrawer list isn't working. </p>
+
+<p>Here's the code of mainActivity:</p>
+
+<pre><code>    package com.dusandimitrijevic.spisakzakupovinu;
+
+
+
+import java.util.ArrayList;
+
+import com.dusandimitrijevic.adapter.NavDrawerListAdapter;
+import com.dusandimitrijevic.fragments.FragmentMojSpisak;
+import com.dusandimitrijevic.fragments.FragmentProizvodi;
+import com.dusandimitrijevic.fragments.FragmentSearch;
+import com.dusandimitrijevic.model.NavDrawerItem;
+import com.tabs.dusandimitrijevic.SlidingTabLayout;
+
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+
+public class MainActivity extends ActionBarActivity {
+
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    // nav drawer title
+    private CharSequence mDrawerTitle;
+
+    // used to store app title
+    private CharSequence mTitle;
+
+    // slide menu items
+    private String[] navMenuTitles;
+    private TypedArray navMenuIcons;
+
+    private ArrayList<NavDrawerItem> navDrawerItems;
+    private NavDrawerListAdapter adapter;
+
+    private Toolbar toolbar;
+    private ViewPager mPager;
+    private SlidingTabLayout mTabs;
+    private static final int MOJ_SPISAK = 0;
+    private static final int PROIZVODI = 1;
+    private static final int PROIZVODI_PRETRAGA = 2;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // NavigationDrawer Title
+        mTitle = mDrawerTitle = getTitle();
+
+        // load slide menu items
+        navMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
+
+        // nav drawer icons from resources
+        navMenuIcons = getResources()
+                .obtainTypedArray(R.array.nav_drawer_icons);
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
+
+        navDrawerItems = new ArrayList<NavDrawerItem>();
+
+        // adding nav drawer items to array
+        // Spisak za kupovinu
+        navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons.getResourceId(0, -1)));
+        // Notifikacije
+        navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons.getResourceId(1, -1)));
+        // Sacuvan liste
+        navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons.getResourceId(2, -1)));
+        // Prodavnice, Will add a counter here
+        navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons.getResourceId(3, -1), true, "6"));
+        // Podesavanja
+        navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons.getResourceId(4, -1)));
+        // O nama, We  will add a counter here
+        navDrawerItems.add(new NavDrawerItem(navMenuTitles[5], navMenuIcons.getResourceId(5, -1)));
+
+        // Recycle the typed array
+        navMenuIcons.recycle();
+
+        // setting the nav drawer list adapter
+        adapter = new NavDrawerListAdapter(getApplicationContext(),
+                navDrawerItems);
+        mDrawerList.setAdapter(adapter); 
+
+        // ActionBarTitle
+            SpannableString s = new SpannableString("Spisak za kupovinu");
+            s.setSpan(new TypefaceSpan(this, "MyTypeface.otf"), 0, s.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // settings for toolbar         
+        toolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setIcon(R.drawable.ic_launcher);
+
+        // setting the actionBar title
+        getSupportActionBar().setTitle(s);
+
+        // enabling action bar app icon and behaving it as toggle button
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+                R.drawable.ic_drawer, //nav menu toggle icon
+                R.string.app_name
+                ){
+            public void onDrawerClosed(View view) {
+                getSupportActionBar().setTitle(mTitle);
+                // calling onPrepareOptionsMenu() to show action bar icons
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getSupportActionBar().setTitle(mDrawerTitle);
+                // calling onPrepareOptionsMenu() to hide action bar icons
+                invalidateOptionsMenu();
+            }
+
+        };
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+            if (savedInstanceState == null) {
+                // on first time display view for first nav item
+                displayView(0);
+        }
+
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerToggle.syncState();
+
+        //podešavanja za tabove
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        mTabs = (SlidingTabLayout) findViewById(R.id.tabs);
+        mTabs.setCustomTabView(R.layout.custom_tab_view, R.id.tabText);
+        mTabs.setDistributeEvenly(true);
+        mTabs.setBackgroundColor(getResources().getColor(R.color.primaryColor));
+        mTabs.setSelectedIndicatorColors(getResources().getColor(R.color.accentColor));
+        mTabs.setViewPager(mPager);
+
+
+    };
+
+    /**
+     * Slide menu item click listener
+     * */
+
+    private class SlideMenuClickListener implements
+    ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position,
+                long id) {
+            // display view for selected nav drawer item
+            displayView(position);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        // toggle nav drawer on selecting action bar app icon/title
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // TODO Auto-generated method stub
+
+        if(mDrawerLayout.isDrawerOpen(Gravity.LEFT)){
+            mDrawerLayout.closeDrawer(Gravity.LEFT);
+        }else{
+            super.onBackPressed();
+        }
+    }
+
+    /***
+     * Called when invalidateOptionsMenu() is triggered
+     */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // if nav drawer is opened, hide the action items
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        menu.findItem(R.id.action_settings).setVisible(!drawerOpen);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    private void displayView(int position) {
+        // update the main content by replacing fragments
+        Intent intent = null;
+        switch (position) {
+        case 0:
+            intent = new Intent(this, SubActivity.class);
+            break;
+        case 1:
+            intent = new Intent(this, SubActivity.class);
+            break;
+        case 2:
+            intent = new Intent(this, SubActivity.class);
+            break;
+        case 3:
+            intent = new Intent(this, SubActivity.class);
+            break;
+        case 4:
+            intent = new Intent(this, SubActivity.class);
+            break;
+        case 5:
+            intent = new Intent(this, SubActivity.class);
+            break;
+
+        default:
+            break;
+        }
+
+        if (intent != null) {
+
+            // update selected item and title, then close the drawer
+            mDrawerList.setItemChecked(position, true);
+            mDrawerList.setSelection(position);
+            setTitle(navMenuTitles[position]);
+            mDrawerLayout.closeDrawer(mDrawerList);
+        } 
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        mTitle = title;
+        getSupportActionBar().setTitle(mTitle);
+    }
+
+    /**
+     * When using the ActionBarDrawerToggle, you must call it during
+     * onPostCreate() and onConfigurationChanged()...
+     */
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggls
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    class MyPagerAdapter extends FragmentStatePagerAdapter{
+
+
+        int icons[] = {R.drawable.ic_action,R.drawable.ic_action_1, R.drawable.ic_actio_2 };
+        String[] tabs;
+
+
+        public MyPagerAdapter(FragmentManager fm) {
+            super(fm);
+            tabs=getResources().getStringArray(R.array.tabs);
+        }
+
+        @Override
+        public Fragment getItem(int num) {
+            Fragment fragment = null;
+            switch(num){
+                case MOJ_SPISAK:
+                    fragment = FragmentMojSpisak.newInstance("", "");
+                    break;
+                case PROIZVODI:
+                    fragment = FragmentProizvodi.newInstance("", "");
+                    break;
+                case PROIZVODI_PRETRAGA:
+                    fragment = FragmentSearch.newInstance("", "");
+                    break;          
+            }
+            return fragment;
+
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+
+
+            Drawable drawable = getDrawable(icons[position]);
+            drawable.setBounds(0, 0, 90, 90);
+            ImageSpan imageSpan = new ImageSpan(drawable);
+            SpannableString spannableString = new SpannableString(" ");
+            spannableString.setSpan(imageSpan, 0, spannableString.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return spannableString;
+        }
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return 3;
+        }       
+    }
+}
+</code></pre>
+
+<p>EDIT:</p>
+
+<p>This is the code of SubActivity:</p>
+
+<pre><code>    package com.dusandimitrijevic.spisakzakupovinu;
+
+import com.dusandimitrijevic.fragments.FragmentProizvodi;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
+
+public class SubActivity extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sub);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        String prosledjenNaslov = getIntent().getExtras().getString("naslov");
+        String prosledjenTekst = getIntent().getExtras().getString("tekst");
+        int prosledjenBroj = getIntent().getExtras().getInt("numero");
+
+        TextView naslov = (TextView) findViewById(R.id.textView1);
+        TextView tekst = (TextView) findViewById(R.id.textView2);
+        TextView broj = (TextView) findViewById(R.id.textView3);
+
+        naslov.setText(prosledjenNaslov);
+        tekst.setText(prosledjenTekst);
+        broj.setText(""+prosledjenBroj);
+
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.sub, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if(id == android.R.id.home){
+            NavUtils.navigateUpFromSameTask(this);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+</code></pre>
+
+<p>And this is the code of one Fragment:</p>
+
+<pre><code>    package com.dusandimitrijevic.fragments;
+
+import java.util.ArrayList;
+
+import com.dusandimitrijevic.spisakzakupovinu.DBHelper;
+import com.dusandimitrijevic.spisakzakupovinu.DodajProizvodListAdapter;
+import com.dusandimitrijevic.spisakzakupovinu.MainActivity;
+import com.dusandimitrijevic.spisakzakupovinu.R;
+
+import android.content.Intent;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.Toast;
+
+
+/**
+ * A simple {@link Fragment} subclass.
+ * Use the {@link FragmentMojSpisak#newInstance} factory method to
+ * create an instance of this fragment.
+ */
+public class FragmentMojSpisak extends Fragment {
+    // TODO: Rename parameter arguments, choose names that match
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
+
+    // TODO: Rename and change types of parameters
+    private String mParam1;
+    private String mParam2;
+
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param param1 Parameter 1.
+     * @param param2 Parameter 2.
+     * @return A new instance of fragment FragmentMojSpisak.
+     */
+    // TODO: Rename and change types and number of parameters
+    public static FragmentMojSpisak newInstance(String param1, String param2) {
+        FragmentMojSpisak fragment = new FragmentMojSpisak();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, param1);
+        args.putString(ARG_PARAM2, param2);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public FragmentMojSpisak() {
+        // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam2 = getArguments().getString(ARG_PARAM2);
+        }
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        View view = inflater.inflate(R.layout.fragment_moj_spisak, container, false);
+        final MediaPlayer buttonSound = MediaPlayer.create(getActivity(), R.raw.shopping_cart_crash_into_object);
+        final EditText unos = (EditText)view.findViewById(R.id.editText1);
+        final Button dodajDugme = (Button)view.findViewById(R.id.button1);
+        final ListView lv = (ListView)view.findViewById(R.id.listView1);
+        final DodajProizvodListAdapter dpl = new DodajProizvodListAdapter(getActivity());
+
+        dpl.addAll(DBHelper.getConnection(getActivity()).getAllProizvodi());
+
+        lv.setAdapter(dpl);
+
+        dodajDugme.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                buttonSound.start();
+                DBHelper.getConnection(getActivity())
+                .saveProizvod(unos.getText().toString());
+
+                ArrayList<String> allProizvodi = DBHelper.getConnection(getActivity()).getAllProizvodi();
+
+                dpl.addAll(allProizvodi);
+
+                unos.setText("");
+
+                Toast.makeText(getActivity(), "Proizvod je dodat", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+        return view;
+
+
+    }   
+
+}
+</code></pre>
+
+<p>}</p>

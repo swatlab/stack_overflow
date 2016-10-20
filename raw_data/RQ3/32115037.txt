@@ -1,0 +1,465 @@
+<p>So I have a Nested Expandable List View. I use a custom Expadable List View to implement the Second Level Expandable List View. The GroupView of the First Level is being implementing in the first adapter and the Second GroupView and its Children is being implementing in the Second adapter. Here is my code:</p>
+
+<p><strong>MainActivity:</strong></p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+private static DrawerLayout mDrawerLayout;
+private static ExpandableListView mExpandableListView;
+private ActionBarDrawerToggle mActionBarDrawerToggle;
+private ParentLevel mAdapter;
+private ArrayList<Items> firstLevel;
+private ArrayList<Items> SecondLevel;
+private Map<Items, List<Items>> mapList;
+private String[] NavigationDrawItemsFirstLevel;
+private String[] NavigationDrawItemsSecondLevel;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setTitle("Closed");// changing the title of the action bar with the name of the item
+    //navigation Drawer
+    mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+
+    //Expandable List View
+    mExpandableListView = (ExpandableListView)findViewById(R.id.list_slideMenu);
+    groupList();
+    ChildList();
+    /**
+     * changing the groupIndicator from left to right
+     */
+    mExpandableListView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+        @Override
+        public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                   int oldLeft, int oldTop, int oldRight, int oldBottom) {
+            mExpandableListView.removeOnLayoutChangeListener(this);
+            //getting the width of the Expandable List view
+            int width = mExpandableListView.getWidth();
+
+            if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                mExpandableListView.setIndicatorBounds(width - getDipsFromPixel(35), width
+                        - getDipsFromPixel(5));
+            } else {
+                mExpandableListView.setIndicatorBoundsRelative(width - getDipsFromPixel(35), width
+                        - getDipsFromPixel(5));
+            }
+        }
+    });
+
+    groupList();
+    ChildList();
+/*
+    for (Map.Entry<Items, List<Items>> entry : mapList.entrySet()) {
+        Log.d("bill","Key = " + entry.getKey().getTitle() + ", Value = " + entry.getValue());
+    }*/
+    // A new adapter
+    mAdapter = new ParentLevel(this, mapList, firstLevel);
+
+    //setting the adapter
+    mExpandableListView.setAdapter(mAdapter);
+    mAdapter.notifyDataSetChanged();
+
+    /**
+     * toggling the sliding menu
+     */
+    mActionBarDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+            R.string.Opened,   R.string.Closed) {
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            // calling onPrepareOptionsMenu() to hide action bar icons
+            getSupportActionBar().setTitle("Closed");
+            invalidateOptionsMenu();
+
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            //when openig the navigation drawer hide the keyboard
+            getSupportActionBar().setTitle("Opened");
+            invalidateOptionsMenu();
+        }
+    };
+
+    mActionBarDrawerToggle.setHomeAsUpIndicator(R.drawable.ic_drawer);
+    mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
+
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return super.onCreateOptionsMenu(menu);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+
+    // toggle nav drawer on selecting action bar app icon/title
+    if (mActionBarDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    switch (item.getItemId()){
+        case android.R.id.home:
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+    }
+}
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    // Sync the toggle state after onRestoreInstanceState has occurred.
+    mActionBarDrawerToggle.syncState();
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    // Pass any configuration change to the drawer toggles
+    mActionBarDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+/**
+ * Convert pixel to dip , help method for changing the menu indicator from left to right
+ */
+public int getDipsFromPixel(float pixels) {
+    // Get the screen's density scale
+    final float scale = getResources().getDisplayMetrics().density;
+    // Convert the dps to pixels, based on density scale
+    return (int) (pixels * scale + 0.5f);
+}
+
+/**
+ * populate group list
+ */
+public void groupList() {
+    NavigationDrawItemsFirstLevel = getResources().getStringArray(R.array.first_level);
+    firstLevel = new ArrayList<>();
+
+    for(int i = 0 ; i < NavigationDrawItemsFirstLevel.length; i ++) {
+        firstLevel.add(i, new Items(NavigationDrawItemsFirstLevel[i]));
+    }
+}
+/**
+ * populate Child list
+ */
+public void ChildList() {
+    mapList = new LinkedHashMap<Items, List<Items>>();
+
+    for(Items item : firstLevel){
+        if(item.getTitle().equals("3")){
+            SecondLevel = new ArrayList<>();
+            String NavigationDrawItems1_3 [] = getResources().getStringArray(R.array.Second_level_third_item);
+
+            for(int i = 0 ; i < NavigationDrawItems1_3.length ; i ++) {
+                SecondLevel.add(i, new Items(NavigationDrawItems1_3[i]));
+
+
+            }
+
+        } else if(item.getTitle().equals("5")) {
+            SecondLevel = new ArrayList<>();
+            String NavigationDrawItems1_5 [] = getResources().getStringArray(R.array.Second_level_fifth_item);
+
+            for(int i = 0 ; i < NavigationDrawItems1_5.length ; i ++) {
+                SecondLevel.add(i, new Items(NavigationDrawItems1_5[i]));
+            }
+        } else {
+            SecondLevel = new ArrayList<>();
+        }
+
+        if(SecondLevel != null)
+            mapList.put(item,SecondLevel);
+    }
+}
+
+@Override
+public boolean onPrepareOptionsMenu(Menu menu) {
+    // if nav drawer is opened, hide the action items
+    boolean drawerOpen = mDrawerLayout.isDrawerOpen(mExpandableListView);
+    //hiding the menu items of the action bar if the navigation drawer is open
+    if(mDrawerLayout!=null && drawerOpen)
+        menu.clear();
+
+    return super.onPrepareOptionsMenu(menu);
+}
+}
+</code></pre>
+
+<p><strong>The first Adapter ParentLevel with Inner Class CustomListView:</strong></p>
+
+<pre><code>public class ParentLevel extends BaseExpandableListAdapter {
+private ArrayList<Items> firstLevel;
+private Map<Items, List<Items>> mMapList;
+private Activity mContext;
+private List<Items> getChilds;
+
+public ParentLevel(Activity pContext,Map<Items,List<Items>> pMapList, ArrayList<Items> firstLevel) {
+    this.mContext = pContext;
+    this.mMapList = pMapList;
+    this.firstLevel = firstLevel;
+    getChilds = new ArrayList<>();
+}
+
+@Override
+public int getGroupCount() {
+    return firstLevel.size();
+}
+
+@Override
+public int getChildrenCount(int groupPosition) {
+    return mMapList.get(firstLevel.get(groupPosition)).size();
+}
+
+@Override
+public Object getGroup(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public Object getChild(int groupPosition, int childPosition) {
+    return mMapList.get(firstLevel.get(groupPosition)).get(childPosition);
+}
+
+@Override
+public long getGroupId(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public long getChildId(int groupPosition, int childPosition) {
+    return childPosition;
+}
+
+@Override
+public boolean hasStableIds() {
+    return false;
+}
+
+@Override
+public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+
+    if(convertView == null) {
+        LayoutInflater lLayoutInflater = (LayoutInflater) mContext.getSystemService(mContext.LAYOUT_INFLATER_SERVICE);
+        convertView = lLayoutInflater.inflate(R.layout.drawer_group_item, null);
+    }
+
+    TextView lTextView = (TextView)convertView.findViewById(R.id.title);
+    lTextView.setText(firstLevel.get(groupPosition).getTitle());
+
+    return convertView;
+}
+
+@Override
+public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+    mContext.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            getChilds.add((Items) getChild(groupPosition, childPosition));
+            notifyDataSetChanged();
+
+        }
+    });
+
+    final CustExpListView SecondLevelExpandableListView = new CustExpListView(mContext,groupPosition,childPosition);
+    final SecondLevelAdapter mAdapter = new SecondLevelAdapter(mContext, getChilds);
+    SecondLevelExpandableListView.setAdapter(mAdapter);
+    return SecondLevelExpandableListView;
+
+}
+
+@Override
+public boolean isChildSelectable(int groupPosition, int childPosition) {
+    return false;
+}
+/**
+ * custom Expandable List View
+ */
+public class CustExpListView extends ExpandableListView {
+    int intGroupPosition, intChildPosition, intGroupid;
+
+    public CustExpListView(Context context,int i, int j ){
+        super(context);
+        this.intGroupPosition = i;
+        this.intChildPosition = j;
+
+    }
+
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        widthMeasureSpec = MeasureSpec.makeMeasureSpec(960, MeasureSpec.AT_MOST);
+        heightMeasureSpec = MeasureSpec.makeMeasureSpec(600, MeasureSpec.AT_MOST);
+        super.onMeasure(widthMeasureSpec, intChildPosition);
+    }
+}
+}
+</code></pre>
+
+<p><strong>This is the second Adapter:</strong></p>
+
+<pre><code>public class SecondLevelAdapter extends BaseExpandableListAdapter {
+
+private List<Items> ThirdLevel;
+private Context mContext;
+private List<Items> SecondLevel;
+private Items key;
+private Map<Items,List<Items>> map;
+
+public SecondLevelAdapter(Context pContext,List<Items> plist) {
+
+    this.mContext = pContext;
+    this.SecondLevel = plist;
+    /**
+    for(int i = 0 ; i < SecondLevel.size(); i++) {
+        Log.d("bill","place: " + String.valueOf(i) + " price: " + SecondLevel.get(i).getTitle());
+    }
+  */
+    ThirdLevel = new ArrayList<>();
+
+    map = new HashMap<>();
+
+    for(Items item : SecondLevel){
+        if(item.getTitle().equals("3.2")){
+            ThirdLevel = new ArrayList<>();
+            String itemsTrirdLevel [] = mContext.getResources().getStringArray(R.array.Second_level_third_item);
+            for(int i = 0 ; i < itemsTrirdLevel.length ; i ++) {
+                ThirdLevel.add(i, new Items(itemsTrirdLevel[i]));
+            }
+        } else {
+            ThirdLevel = new ArrayList<>();
+        }
+
+        if(ThirdLevel != null)
+            map.put(item,ThirdLevel);
+    }
+
+}
+
+@Override
+public int getGroupCount() {
+    return SecondLevel.size();
+}
+
+@Override
+public int getChildrenCount(int groupPosition) {
+    return map.get(SecondLevel.get(groupPosition)).size();
+}
+
+@Override
+public Object getGroup(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public Object getChild(int groupPosition, int childPosition) {
+    return map.get(SecondLevel.get(groupPosition)).get(childPosition);
+}
+
+@Override
+public long getGroupId(int groupPosition) {
+    return groupPosition;
+}
+@Override
+public long getChildId(int groupPosition, int childPosition) {
+    return childPosition;
+}
+@Override
+public boolean hasStableIds() {
+    return true;
+}
+/**
+ * second level
+ */
+@Override
+public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+
+    if(convertView == null) {
+        LayoutInflater lLayoutInflater = (LayoutInflater) mContext.getSystemService(mContext.LAYOUT_INFLATER_SERVICE);
+        convertView = lLayoutInflater.inflate(R.layout.child_item, null);
+    }
+    TextView lTextView = (TextView)convertView.findViewById(R.id.title_fl);
+    lTextView.setText(SecondLevel.get(groupPosition).getTitle());
+
+    return convertView;
+
+}
+/**
+ * third level
+ */
+@Override
+public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+
+    final Items item = (Items)getChild(groupPosition,childPosition);
+
+    LayoutInflater lLayoutInflater = (LayoutInflater) mContext.getSystemService(mContext.LAYOUT_INFLATER_SERVICE);
+    if(convertView == null) {
+        convertView = lLayoutInflater.inflate(R.layout.second_level_child_item, null);
+    }
+
+    TextView lTextView = (TextView)convertView.findViewById(R.id.title_SL);
+    lTextView.setText(item.getTitle());
+
+    return convertView;
+}
+
+@Override
+public boolean isChildSelectable(int groupPosition, int childPosition) {
+    return true;
+}
+}
+</code></pre>
+
+<p><strong>This is the model:</strong></p>
+
+<pre><code>public class Items {
+public Items(String title) {
+    this.title = title;
+}
+
+public Items(Boolean hasChild) {
+    this.hasChild = hasChild;
+}
+
+public Items(String title, Boolean hasChild) {
+    this.title = title;
+    this.hasChild = hasChild;
+}
+
+public String getTitle() {
+    return title;
+}
+
+public void setTitle(String title) {
+    this.title = title;
+}
+
+public Boolean getHasChild() {
+    return hasChild;
+}
+
+public void setHasChild(Boolean hasChild) {
+    this.hasChild = hasChild;
+}
+
+private String title;
+private Boolean hasChild = false;
+}
+</code></pre>
+
+<p>Also i have 3 layouts that displays the Items of each level. The exception that i take is this:</p>
+
+<blockquote>
+  <p>Process: com.example.stonesoup.doublelevelexpandablelistview, PID: 2008
+      java.lang.IllegalStateException: The content of the adapter has changed but ListView did not receive a notification. Make sure the content of your adapter is not modified from a background thread, but only from the UI thread. Make sure your adapter calls notifyDataSetChanged() when its content changes. [in ListView(-1, class com.example.stonesoup.doublelevelexpandablelistview.ParentLevel$CustExpListView) with Adapter(class android.widget.ExpandableListConnector)]</p>
+</blockquote>
+
+<p>A little i have understand from my search is that the adapter must be notified about the changes of the dataset. The problem is that i don't know where the changes is being made. Also, despite the fact that i used everywhere notifyDataSetChanged i could not resolve the problem. Also i use runOnUiThread where ever i thought that changes is being made. </p>
+
+<p>Thank you for your time !!</p>

@@ -1,0 +1,30 @@
+<p>i' ve added a listener on an action bar' item , when i click it i switch to another activity. This works but when i perform this action i can notice that i  receive errors on my logcat, can someone explain me what's is happening?</p>
+
+<p>i change activities with this:</p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case 2:
+            // go to activity2
+            Intent intent = new Intent(this, Activity2.class);
+            // dispose the current activity while launching the next intent
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+</code></pre>
+
+<p>and my log cat shows:</p>
+
+<pre><code>08-16 11:12:58.523: E/WindowManager(6306): Activity  has leaked window com.android.internal.policy.impl.PhoneWindow$DecorView@42bc61e8 that was originally added here
+08-16 11:12:58.523: E/WindowManager(6306): android.view.WindowLeaked: Activity com.tweetmeetup.logic.main.MainActivity has leaked window com.android.internal.policy.impl.PhoneWindow$DecorView@42bc61e8 that was originally added here
+08-16 11:12:58.523: E/WindowManager(6306):  at android.view.ViewRootImpl.<init>(ViewRootImpl.java:397)
+08-16 11:12:58.523: E/WindowManager(6306):  at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:311)
+08-16 11:12:58.523: E/WindowManager(6306):  at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:224)
+08-16 11:12:58.523: E/WindowManager(6306):  at android.view.WindowManagerImpl$CompatModeWrapper.addView(WindowManagerImpl.java:149)
+08-16 11:12:58.523: E/WindowManager(6306):  at android.view.Window$LocalWindowManager.addView(Window.java:556)
+</code></pre>
+
+<p>thanks in advance.</p>

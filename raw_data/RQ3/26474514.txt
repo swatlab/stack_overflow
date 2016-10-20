@@ -1,0 +1,340 @@
+<p>I use the latest version of MongoDB database and the latest version of the official JAVA MongoDB driver.</p>
+
+<p>The dependencies that I use in my pom.xml:</p>
+
+<pre><code>    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+
+        ...
+
+        <jersey.container.version>2.13</jersey.container.version>
+        <jackson.version>2.4.3</jackson.version>
+        <genson.version>1.1</genson.version>        
+        <jongo.version>1.1</jongo.version>
+    </properties>
+
+  <dependencies>
+
+     ...
+
+    <dependency>
+        <groupId>org.glassfish.jersey.containers</groupId>
+        <artifactId>jersey-container-servlet</artifactId>
+        <version>${jersey.container.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-json-jackson</artifactId>
+        <version>${jersey.container.version}</version>
+    </dependency>
+
+    <!-- Required only when you are using JAX-RS Client -->
+    <dependency>
+        <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-client</artifactId>
+        <version>${jersey.container.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>javax.ws.rs</groupId>
+        <artifactId>javax.ws.rs-api</artifactId>
+        <version>2.0.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-multipart</artifactId>
+        <version>2.13</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.jongo</groupId>
+        <artifactId>jongo</artifactId>
+        <version>${jongo.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>mongo-java-driver</artifactId>
+        <version>2.12.3</version>
+    </dependency>
+  </dependencies>
+</code></pre>
+
+<p>My User POJO:</p>
+
+<pre><code>import com.google.common.base.MoreObjects;
+
+import java.util.Objects;
+
+import org.jongo.marshall.jackson.oid.Id;
+import org.jongo.marshall.jackson.oid.ObjectId;
+
+
+public class User {
+
+    @Id 
+    @ObjectId
+    private String _id;
+
+    private String firstName;
+
+    private String lastName;
+
+    private int age;
+
+    // Must have no-argument constructor
+    public User() {
+
+    }
+
+    public User(String _id, String firstName, String lastName, int age) {
+        this._id = _id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.age = age;
+    }
+
+    public String get_id() {
+        return _id;
+    }
+
+    public void set_id(String _id) {
+        this._id = _id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    @Override 
+    public int hashCode() {
+         return Objects.hash(_id, firstName, lastName, age);
+     }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        final User other = (User) obj;
+
+        return Objects.equals(_id, other._id) &&
+               Objects.equals(firstName, other.firstName) && 
+               Objects.equals(lastName, other.lastName) &&
+               Objects.equals(age, other.age);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                         .add("firstName", firstName)
+                         .add("lastName", lastName)
+                         .add("age", age)
+                         .add("_id", _id)
+                         .toString();
+    }
+}
+</code></pre>
+
+<p>My web service:</p>
+
+<pre><code>import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import com.hive5.dao.UsersDAO;
+import com.hive5.enums.CustomHttpResponse;
+import com.hive5.pojo.User;
+
+@Path("/v1")
+public class V1_Users {
+
+    @GET
+    @Path("/users/{firstName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUser(@PathParam("firstName") String firstName) {
+        if (firstName != null && !firstName.trim().isEmpty()) {
+            Response response = UsersDAO.getUser(firstName);
+            return response;
+        } else {
+            return Response
+                    .status(CustomHttpResponse.REQUEST_NOT_ACCEPTABLE
+                            .getStatusCode())
+                    .entity(CustomHttpResponse.REQUEST_NOT_ACCEPTABLE
+                            .getStatusMessage()).build();
+        }
+    }
+
+    ...
+
+}
+</code></pre>
+
+<p>My DAO:</p>
+
+<pre><code>import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.core.Response;
+
+import org.apache.log4j.Logger;
+import org.bson.types.ObjectId;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hive5.enums.CustomHttpResponse;
+import com.hive5.pojo.User;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoException;
+
+public class UsersDAO {
+
+    ...
+
+    public static Response getUser(String firstName) {
+        DB db = MONGO_CLIENT.getDB(DATABASE_NAME);
+        DBCollection collection = db.getCollection("users");
+        BasicDBObject whereQuery = new BasicDBObject();
+        whereQuery.put("firstName", firstName);
+
+        DBCursor cursor = null;
+        DBObject dbObject = null;
+        User user = null;
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        CustomHttpResponse customHttpResponse = CustomHttpResponse.OK;
+
+        try {
+            cursor = collection.find(whereQuery).limit(1);
+            if (cursor.count() > 0) {
+                dbObject = cursor.next();
+                user = mapper.readValue(dbObject.toString(), User.class);
+            } else {
+                // User Not Found
+                customHttpResponse = CustomHttpResponse.NOT_FOUND_CUSTOM;
+                customHttpResponse
+                        .formatStatusMessagePatternWithArguments(firstName);
+            }
+        } catch (MongoException | IOException e) {
+            customHttpResponse = CustomHttpResponse.INTERNAL_SERVER_ERROR;
+            LOG_TO_CONSOLE.fatal(e, e);
+            LOG_TO_FILE.fatal(e, e);
+        } finally {
+            if (customHttpResponse == CustomHttpResponse.OK
+                    || customHttpResponse == CustomHttpResponse.NOT_FOUND_CUSTOM) {
+                LOG_TO_CONSOLE.debug(customHttpResponse.toString());
+            }
+        }
+
+        Response response = null;
+        switch (customHttpResponse) {
+        case OK:
+
+            System.out.println("user.get_id() -> " + user.get_id());
+
+            response = Response.status(customHttpResponse.getStatusCode())
+                    .entity(user).build();
+            break;
+        default:
+            response = Response.status(customHttpResponse.getStatusCode())
+                    .entity(customHttpResponse.getStatusMessage()).build();
+            break;
+        }
+
+        return response;
+    }
+
+    ...
+}
+</code></pre>
+
+<p>The ouput displayed in the console of my tomcat web server (after having requested the web service above, see my DAO class and getUser(String firstName) {...} method above):</p>
+
+<pre><code>user.get_id() -> 54452976a826c51b864dd2e9
+</code></pre>
+
+<p>The JSON result that I get after having requested the web service using POSTMAN:</p>
+
+<pre><code>{
+    "firstName": "Yolo",
+    "lastName": "DOUCE",
+    "age": 31,
+    "_id": {
+        "new": false,
+        "inc": -2041720087,
+        "machine": -1473854181,
+        "timeSecond": 1413818742,
+        "timestamp": 1413818742,
+        "time": 1413818742000,
+        "date": 1413818742000
+    }
+}
+</code></pre>
+
+<p>As you can see the _id field is not under an hexadecimal string format but instead it has multiple fields, this is not what I expect. </p>
+
+<p><strong>1 - Actually in my DAO I am able to print the hexadecimal string format for this field, so I do not understand why in my web service it returns a response which apparently contains an Object representation of the String _id?</strong> </p>
+
+<p><strong>2 - My second question is to know in my particular case, how to deserialize to JSON and return an hexadecimal String representation of String _id (field located in my User POJO), using jongo and/or jackson faster xml V2 and MongoDB?</strong></p>

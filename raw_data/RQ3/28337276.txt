@@ -1,0 +1,224 @@
+<p>I am using Sqlite database in my application.My application works perfectly on every devices that I have tested till now except Samsung Galaxy Tab 4(samsung SM-T330).</p>
+
+<p>I got the error below:</p>
+
+<pre><code>java.lang.Error: Error copying database
+    1   at com.webguru.india.DB.DbHelper.createDataBase(DbHelper.java:152)
+    2   at com.webguru.india.ctp.crud.ApplicationConstant.ReadyApplicationDatabase(ApplicationConstant.java:101)
+    3   at com.webguru.india.ctp.Splash$1.run(Splash.java:35)
+    4   at android.os.Handler.handleCallback(Handler.java:733)
+    5   at android.os.Handler.dispatchMessage(Handler.java:95)
+    6   at android.os.Looper.loop(Looper.java:136)
+    7   at android.app.ActivityThread.main(ActivityThread.java:5479)
+    8   at java.lang.reflect.Method.invokeNative(Native Method)
+    9   at java.lang.reflect.Method.invoke(Method.java:515)
+    10  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1283)
+    11  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1099)
+    12  at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>The relevant code:</p>
+
+<p><strong>DbHelper.java</strong></p>
+
+<pre><code>    /*This class is defined to make the application database*/
+    public class DbHelper extends SQLiteOpenHelper{
+
+        //The Android's default system path of your application database.
+        private static String DB_PATH = Environment.getDataDirectory().getAbsolutePath() + File.separator + "data/com.webguru.india.ctp/databases/";
+
+        //Database name is defined here which is present in the assets folder
+        private static String DB_NAME = "canberracardlist.sqlite";
+
+        //Making object of SQLiteDatabase
+        private SQLiteDatabase myDataBase; 
+
+        //Making object of Context which is required to call this class
+        private final Context myContext;
+
+
+        //Constructor of this current class
+        public DbHelper(Context context) {
+            super(context, DB_NAME, null, 1);
+            this.myContext = context;
+        }
+
+        public SQLiteDatabase MyDB(){
+            return myDataBase;
+        }
+
+
+         @Override
+            public synchronized void close() {
+
+                    if(myDataBase != null)
+                        myDataBase.close();
+
+                    super.close();
+
+            }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            // TODO Auto-generated method stub
+
+        }
+
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // TODO Auto-generated method stub
+
+        }
+
+        /**
+         * Check if the database already exist to avoid re-copying the file each time you open the application.
+         * @return true if it exists, false if it doesn't
+         */
+        private boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+
+            try{
+                //String myPath = DB_PATH + DB_NAME;
+                //String myPath = myContext.getFilesDir().getAbsolutePath().replace("files","databases")+File.separator + DB_NAME;
+                String myPath = DB_PATH + DB_NAME;
+                System.out.println("==>Database Path: " + myPath);
+                File file = new File(myPath);    
+                if (file.exists() && !file.isDirectory())
+                     checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+                //checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.CREATE_IF_NECESSARY);
+
+            }catch(SQLiteException e){
+
+                //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+}
+</code></pre>
+
+<p>DbHelper.java line 152: <strong>throw new Error("Error copying database");</strong></p>
+
+<p>ApplicationConstant.java</p>
+
+<pre><code>// Create database if 1st time run the application
+    public void ReadyApplicationDatabase(Context context) {
+
+        myDbHelper = new DbHelper(context);
+        myDbHelperRetail = new DbHelperRetailer(context);
+
+        try {
+
+            myDbHelper.createDataBase();
+            myDbHelperRetail.createDataBase();
+
+
+        } catch (IOException ioe) {
+
+            throw new Error("Unable to create database");
+
+        }
+
+        try {
+
+            myDbHelper.openDataBase();
+            myDbHelperRetail.openDataBase();
+
+        } catch (SQLException sqle) {
+
+            throw sqle;
+
+        }
+    }
+</code></pre>
+
+<p>ApplicationConstant.java line 101:  <strong>myDbHelper.createDataBase();</strong></p>
+
+<p>I am using splash screen to load the database initially.</p>
+
+<p>Splash.java line 35: </p>
+
+<pre><code>try {
+                    ApplicationConstant app = (ApplicationConstant) getApplication();
+                    app.ReadyApplicationDatabase(Splash.this);
+
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Mint.logExceptionMessage("splash", "EnrollDevice204", e);
+                }
+</code></pre>
+
+<p>The app runs perfectly on other devices.I tried each and every solutions but ended up with no result.Please help.</p>

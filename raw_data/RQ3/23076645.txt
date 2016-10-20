@@ -1,0 +1,76 @@
+<p>I am using SQLiteOpenHelper to create my database. I changed the constructor like this:</p>
+
+<pre><code>public SQLite(Context context){
+    super(context, "/mnt/sdcard"+DATABASE_NAME+".db", null, DATABASE_VERSION);
+}
+</code></pre>
+
+<p>The database is created in the public directory just fine. The problem is that when I try to execute functions, I cant change the database to the one I created in the public directory. How can I change this? eg:</p>
+
+<pre><code>@Override
+public void onCreate(SQLiteDatabase db){
+    Log.i("DB PATH", db.getPath());
+}
+</code></pre>
+
+<p>This prints out:</p>
+
+<pre><code>DB PATH - /data/data/package_name/databases/database_name
+</code></pre>
+
+<p>I need this to print out the path to the public database.</p>
+
+<p>Thank you in advance.</p>
+
+<p><strong>EDIT</strong></p>
+
+<p>Copy private DB to public directory instead</p>
+
+<p>Changed constructor to this:</p>
+
+<pre><code>public SQLite(Context context){
+    super(context, DATABASE_NAME, null, DATABASE_VERSION);
+}
+</code></pre>
+
+<p>Used the code from the link that Geralt suggested:</p>
+
+<pre><code>private void copyDataBase(String dbname) throws IOException {
+    // Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(dbname);
+    // Path to the just created empty db
+    String outFileName = "/data/data/com.sample.view/databases/" + dbname;
+    // Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+    // transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer)) > 0) {
+        myOutput.write(buffer, 0, length);
+    }
+    // Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+}
+</code></pre>
+
+<p>Here is the stack trace of what happens:</p>
+
+<pre><code>04-15 09:57:55.275: W/ResourceType(11994): Invalid package identifier when getting bag for resource number 0xffffffff
+04-15 09:57:55.275: W/ResourceType(11994): Invalid package identifier when getting bag for resource number 0xffffffff
+04-15 09:57:55.275: W/ResourceType(11994): Invalid package identifier when getting bag for resource number 0xffffffff
+04-15 09:57:55.320: W/System.err(11994): java.io.FileNotFoundException: aCollectDatabase
+04-15 09:57:55.320: W/System.err(11994): at android.content.res.AssetManager.openAsset(Native Method)
+04-15 09:57:55.320: W/System.err(11994): at android.content.res.AssetManager.open(AssetManager.java:315)
+04-15 09:57:55.320: W/System.err(11994): at android.content.res.AssetManager.open(AssetManager.java:289)
+04-15 09:57:55.320: W/System.err(11994): at co.za.datasolve.acollect.ACollectActivity.copyDataBase(ACollectActivity.java:184)
+04-15 09:57:55.320: W/System.err(11994): at co.za.datasolve.acollect.ACollectActivity.onCreate(ACollectActivity.java:153)
+</code></pre>
+
+<p>And this is the problem line:</p>
+
+<pre><code>InputStream myInput = getApplicationContext().getAssets().open(dbname);
+</code></pre>
+
+<p>Does anyone have suggestions of how I can fix this?</p>

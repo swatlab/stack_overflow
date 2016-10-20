@@ -1,0 +1,608 @@
+<p>I am trying to save a video from <code>VideoView</code> to the SD card, by touching the <code>VideoView</code>. No errors in <code>LogCat</code>, but my <code>Toast</code> I set up says "Error during video saving", which tells me my boolean I set up did not get to the part where it's set to true. It must be in the file I/O part. One part that works though, is a directory <em>does</em> get created, but the file itself is not found in the directory, it's empty. </p>
+
+<p>Any mistakes anyone sees?</p>
+
+<p>I will post my two main methods that are important, then below I'll post the whole class.</p>
+
+<p><strong>UPDATE:</strong> Here is my working code (changed a couple lines in the <code>saveVideo</code> method.)</p>
+
+<pre><code>// save your video to SD card
+protected void saveVideo(final Uri uriVideo){
+
+// click the video to save it
+mVideoView.setOnTouchListener(new View.OnTouchListener() {
+
+    public boolean onTouch(View v, MotionEvent event) {
+
+        boolean success = false;
+
+        // make the directory
+        File vidDir = new File(android.os.Environment.getExternalStoragePublicDirectory
+                (Environment.DIRECTORY_MOVIES) + File.separator + "Saved iCute Videos");
+        vidDir.mkdirs();
+        // create unique identifier
+        Random generator = new Random();
+        int n = 100;
+        n = generator.nextInt(n);
+        // create file name
+        String videoName = "Video_" + n + ".mp4";
+        File fileVideo = new File(vidDir.getAbsolutePath(), videoName);
+
+        try {
+            fileVideo.createNewFile();
+            success = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (success) {
+            Toast.makeText(getApplicationContext(), "Video saved!",
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(),
+                    "Error during video saving", Toast.LENGTH_LONG).show();
+        }
+
+        return true;
+    }
+});
+}
+</code></pre>
+
+<p>My old, unworking <strong>saveVideo()</strong> method.</p>
+
+<pre><code>   // save your video to SD card
+    protected void saveVideo(final Uri uriVideo){
+
+        // click the video to save it
+        mVideoView.setOnTouchListener(new View.OnTouchListener() {
+
+            public boolean onTouch(View v, MotionEvent event) {
+
+                String sourceVideoName = uriVideo.getPath();
+                boolean success = false;
+                BufferedInputStream bis = null;
+                BufferedOutputStream bos = null;
+
+
+                // make the directory
+                File vidDir = new File(android.os.Environment.getExternalStoragePublicDirectory
+                        (Environment.DIRECTORY_MOVIES) + File.separator + "Saved iCute Videos");
+                vidDir.mkdirs();
+                // create unique identifier
+                Random generator = new Random();
+                int n = 100;
+                n = generator.nextInt(n);
+                // create file name
+                String videoName = "Video_" + n + ".mp4";
+                fileVideo = new File(vidDir.getPath(), videoName);
+
+                try {
+
+                    bis = new BufferedInputStream(new FileInputStream(sourceVideoName));
+                    bos = new BufferedOutputStream(new FileOutputStream(fileVideo, false));
+                    byte[] buf = new byte[8192];
+                    bis.read(buf);
+
+                    do {
+                        bos.write(buf);
+                    } while (bis.read(buf) != 0);
+                    success = true;
+                } catch (IOException e) {
+
+                }finally {
+                    try {
+                        if (bis != null) bis.close();
+                        if (bos != null) bos.close();
+                    } catch (IOException e) {
+
+                    }
+                }
+
+                if (success) {
+                    Toast.makeText(getApplicationContext(), "Video saved!",
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Error during video saving", Toast.LENGTH_LONG).show();
+                }
+
+                return true;
+            }
+        });
+    }
+</code></pre>
+
+<p>My <strong>dispatchTakeVideoIntent()</strong> method. I commented out some code that might be needed... I kept getting a null pointer though on <code>fileUri</code> line (was it from <code>fileUri</code> or <code>fileVideo</code>?), so not sure why.</p>
+
+<pre><code>// Captures video from Android camera component
+    protected void dispatchTakeVideoIntent() {
+        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
+//            // set name of video
+//            Uri fileUri = Uri.fromFile(fileVideo);
+//            takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+            // set the video image quality to high
+            takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+            startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
+        }
+    }
+</code></pre>
+
+<p><strong>MakePhotoVideo.java</strong></p>
+
+<pre><code>package org.azurespot.makecute;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
+import android.widget.VideoView;
+
+import org.azurespot.R;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+public class MakePhotoVideo extends ActionBarActivity {
+
+    private static final int ACTION_TAKE_PHOTO = 1;
+    private static final int ACTION_TAKE_VIDEO = 2;
+    private static final String BITMAP_STORAGE_KEY = "viewbitmap";
+    private static final String IMAGEVIEW_VISIBILITY_STORAGE_KEY = "imageviewvisibility";
+    private ImageView mImageView;
+    private Bitmap mImageBitmap;
+
+    private static final String VIDEO_STORAGE_KEY = "viewvideo";
+    private static final String VIDEOVIEW_VISIBILITY_STORAGE_KEY = "videoviewvisibility";
+    private VideoView mVideoView;
+    private Uri mVideoUri;
+    File fileVideo;
+
+    private String mCurrentPhotoPath;
+
+    private static final String JPEG_FILE_PREFIX = "IMG_";
+    private static final String JPEG_FILE_SUFFIX = ".jpg";
+
+    private PhotoStorageDirFactory mPhotoStorageDirFactory = null;
+
+    /* Photo album for this application */
+    private String getAlbumName() {
+        return getString(R.string.album_name);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_make_photo_video);
+
+        mImageView = (ImageView) findViewById(R.id.taken_photo);
+        mVideoView = (VideoView) findViewById(R.id.video_view);
+        mVideoView.setVisibility(View.INVISIBLE);
+        mImageBitmap = null;
+        mVideoUri = null;
+
+
+        Button photoBtn = (Button) findViewById(R.id.click);
+        setBtnListenerOrDisable(
+                photoBtn,
+                mTakePicOnClickListener,
+                MediaStore.ACTION_IMAGE_CAPTURE
+        );
+
+        Button videoBtn = (Button) findViewById(R.id.record_video);
+        setBtnListenerOrDisable(
+                videoBtn,
+                mTakeVidOnClickListener,
+                MediaStore.ACTION_VIDEO_CAPTURE
+        );
+
+        mPhotoStorageDirFactory = new BasePhotoDirFactory();
+
+        // Shows the up carat near app icon in ActionBar
+        getSupportActionBar().setDisplayUseLogoEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+    }
+
+    private File getAlbumDir() {
+        File storageDir = null;
+
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+
+            storageDir = mPhotoStorageDirFactory.getAlbumStorageDir(getAlbumName());
+
+            if (storageDir != null) {
+                if (! storageDir.mkdirs()) {
+                    if (! storageDir.exists()){
+                        Log.d("Camera", "failed to create directory");
+                        return null;
+                    }
+                }
+            }
+
+        } else {
+            Log.v(getString(R.string.app_name), "External storage is not mounted READ/WRITE.");
+        }
+
+        return storageDir;
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = JPEG_FILE_PREFIX + timeStamp + "_";
+        File albumF = getAlbumDir();
+        File imageF = File.createTempFile(imageFileName, JPEG_FILE_SUFFIX, albumF);
+        return imageF;
+    }
+
+    private File setUpPhotoFile() throws IOException {
+
+        File f = createImageFile();
+        mCurrentPhotoPath = f.getAbsolutePath();
+
+        return f;
+    }
+
+    private void setPic() {
+
+        /* There isn't enough memory to open up more than a couple camera photos */
+        /* So pre-scale the target bitmap into which the file is decoded */
+
+        /* Get the size of the ImageView */
+        int targetW = mImageView.getWidth();
+        int targetH = mImageView.getHeight();
+
+        /* Get the size of the image */
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+
+        /* Figure out which way needs to be reduced less */
+        int scaleFactor = 1;
+        if ((targetW > 0) || (targetH > 0)) {
+            scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+        }
+
+        /* Set bitmap options to scale the image decode target */
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        /* Decode the JPEG file into a Bitmap */
+        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+
+        bitmap = rotateBitmap(bitmap, 90);
+
+        savePhoto(bitmap);
+
+        /* Associate the Bitmap to the ImageView, make sure the VideoView
+         * is cleared to replace with ImageView */
+        mImageView.setImageBitmap(bitmap);
+        mVideoUri = null;
+        mImageView.setVisibility(View.VISIBLE);
+        mVideoView.setVisibility(View.INVISIBLE);
+
+    }
+
+    // save your photo to SD card
+    private void savePhoto(final Bitmap bitmapPhoto){
+        // set OnClickListener to save the photo
+        mImageView.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                boolean success = false;
+
+                File photoDir = new File(Environment.getExternalStoragePublicDirectory
+                        (Environment.DIRECTORY_PICTURES) + "/Saved iCute Photos");
+                photoDir.mkdirs();
+                Random generator = new Random();
+                int n = 10000;
+                n = generator.nextInt(n);
+                String photoName = "Image_"+ n +".jpg";
+                File filePhoto = new File (photoDir, photoName);
+//                if (filePhoto.exists ()) filePhoto.delete ();
+                try {
+                    FileOutputStream out = new FileOutputStream(filePhoto);
+                    bitmapPhoto.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    out.flush();
+                    out.close();
+                    success = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                if (success) {
+                    Toast.makeText(getApplicationContext(), "Image saved!",
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Error during image saving", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
+    }
+
+    // save your video to SD card
+    protected void saveVideo(final Uri uriVideo){
+
+        // click the video to save it
+        mVideoView.setOnTouchListener(new View.OnTouchListener() {
+
+            public boolean onTouch(View v, MotionEvent event) {
+
+                String sourceVideoName = uriVideo.getPath();
+                boolean success = false;
+                BufferedInputStream bis = null;
+                BufferedOutputStream bos = null;
+
+
+                // make the directory
+                File vidDir = new File(android.os.Environment.getExternalStoragePublicDirectory
+                        (Environment.DIRECTORY_MOVIES) + File.separator + "Saved iCute Videos");
+                vidDir.mkdirs();
+                // create unique identifier
+                Random generator = new Random();
+                int n = 100;
+                n = generator.nextInt(n);
+                // create file name
+                String videoName = "Video_" + n + ".mp4";
+                fileVideo = new File(vidDir.getPath(), videoName);
+
+                try {
+
+                    bis = new BufferedInputStream(new FileInputStream(sourceVideoName));
+                    bos = new BufferedOutputStream(new FileOutputStream(fileVideo, false));
+                    byte[] buf = new byte[8192];
+                    bis.read(buf);
+
+                    do {
+                        bos.write(buf);
+                    } while (bis.read(buf) != 0);
+                    success = true;
+                } catch (IOException e) {
+
+                }finally {
+                    try {
+                        if (bis != null) bis.close();
+                        if (bos != null) bos.close();
+                    } catch (IOException e) {
+
+                    }
+                }
+
+                if (success) {
+                    Toast.makeText(getApplicationContext(), "Video saved!",
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Error during video saving", Toast.LENGTH_LONG).show();
+                }
+
+                return true;
+            }
+        });
+    }
+
+
+    public Bitmap rotateBitmap(Bitmap source, int angle)
+    {
+        Matrix matrix = new Matrix();
+        matrix.set(matrix);
+        matrix.setRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(),
+                source.getHeight(), matrix, false);
+    }
+
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent("android.intent.action.MEDIA_SCANNER_SCAN_FILE");
+        File f = new File(mCurrentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
+    private void dispatchTakePictureIntent(int actionCode) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        switch(actionCode) {
+            case ACTION_TAKE_PHOTO:
+                File f;
+
+                try {
+                    f = setUpPhotoFile();
+                    mCurrentPhotoPath = f.getAbsolutePath();
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    f = null;
+                    mCurrentPhotoPath = null;
+                }
+                break;
+
+            default:
+                break;
+        } // switch
+
+        startActivityForResult(takePictureIntent, actionCode);
+    }
+
+    // Captures video from Android camera component
+    protected void dispatchTakeVideoIntent() {
+        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
+//            // set name of video
+//            Uri fileUri = Uri.fromFile(fileVideo);
+//            takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+            // set the video image quality to high
+            takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+            startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
+        }
+    }
+
+    private void handleCameraPhoto() {
+
+        if (mCurrentPhotoPath != null) {
+            setPic();
+            galleryAddPic();
+            mCurrentPhotoPath = null;
+        }
+
+    }
+    // Post recorded video into VideoView
+    private void handleCameraVideo(Intent intent) {
+        mVideoUri = intent.getData();
+        mVideoView.setVideoURI(mVideoUri);
+        mImageBitmap = null;
+        mVideoView.setVisibility(View.VISIBLE);
+        mImageView.setVisibility(View.INVISIBLE);
+        mVideoView.start();
+        saveVideo(mVideoUri);
+        Log.d("VIDEO INTENT: ", "END OF METHOD");
+
+    }
+
+    Button.OnClickListener mTakePicOnClickListener =
+            new Button.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dispatchTakePictureIntent(ACTION_TAKE_PHOTO);
+                }
+            };
+    Button.OnClickListener mTakeVidOnClickListener =
+            new Button.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dispatchTakeVideoIntent();
+                }
+            };
+
+
+
+    // Intent data is how the photo and video transfer into their views
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case ACTION_TAKE_PHOTO: {
+                if (resultCode == RESULT_OK) {
+                    handleCameraPhoto();
+                }
+                break;
+            } // ACTION_TAKE_PHOTO
+
+            case ACTION_TAKE_VIDEO: {
+                if (resultCode == RESULT_OK) {
+                    handleCameraVideo(data);
+                }
+                break;
+            } // ACTION_TAKE_VIDEO
+        } // switch
+    }
+
+    // Some lifecycle callbacks so that the image can survive orientation change
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(BITMAP_STORAGE_KEY, mImageBitmap);
+        outState.putParcelable(VIDEO_STORAGE_KEY, mVideoUri);
+        outState.putBoolean(IMAGEVIEW_VISIBILITY_STORAGE_KEY, (mImageBitmap != null) );
+        outState.putBoolean(VIDEOVIEW_VISIBILITY_STORAGE_KEY, (mVideoUri != null) );
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mImageBitmap = savedInstanceState.getParcelable(BITMAP_STORAGE_KEY);
+        mVideoUri = savedInstanceState.getParcelable(VIDEO_STORAGE_KEY);
+        mImageView.setImageBitmap(mImageBitmap);
+        mImageView.setVisibility(
+                savedInstanceState.getBoolean(IMAGEVIEW_VISIBILITY_STORAGE_KEY) ?
+                        ImageView.VISIBLE : ImageView.INVISIBLE
+        );
+        mVideoView.setVideoURI(mVideoUri);
+        mVideoView.setVisibility(
+                savedInstanceState.getBoolean(VIDEOVIEW_VISIBILITY_STORAGE_KEY) ?
+                        ImageView.VISIBLE : ImageView.INVISIBLE
+        );
+    }
+
+    /**
+     * Indicates whether the specified action can be used as an intent. This
+     * method queries the package manager for installed packages that can
+     * respond to an intent with the specified action. If no suitable package is
+     * found, this method returns false.
+     * http://android-developers.blogspot.com/2009/01/can-i-use-this-intent.html
+     *
+     * @param context The application's environment.
+     * @param action The Intent action to check for availability.
+     *
+     * @return True if an Intent with the specified action can be sent and
+     *         responded to, false otherwise.
+     */
+    public static boolean isIntentAvailable(Context context, String action) {
+        final PackageManager packageManager = context.getPackageManager();
+        final Intent intent = new Intent(action);
+        List<ResolveInfo> list =
+                packageManager.queryIntentActivities(intent,
+                        PackageManager.MATCH_DEFAULT_ONLY);
+        return list.size() > 0;
+    }
+
+    private void setBtnListenerOrDisable(
+            Button btn,
+            Button.OnClickListener onClickListener,
+            String intentName
+    ) {
+        if (isIntentAvailable(this, intentName)) {
+            btn.setOnClickListener(onClickListener);
+        } else {
+            btn.setText(
+                    getText(R.string.cannot).toString() + " " + btn.getText());
+            btn.setClickable(false);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Makes the UP caret go back to the previous fragment MakeCuteFragment
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                android.app.FragmentManager fm= getFragmentManager();
+                fm.popBackStack();
+                finish();
+
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+}
+</code></pre>

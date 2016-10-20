@@ -1,0 +1,423 @@
+<p>How do I get data from my online website to my app and have it saved to my sqlite database so that I can access it when am offline using my app. just like the way whatsapp application does.</p>
+
+<p>here is the code I use to get data to my sqlite database when I save something like a note:</p>
+
+<pre><code>import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.database.Cursor;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.jackson_siro.vsongbook.NotePad.NoteColumns;
+
+public class NoteEditor extends ActionBarActivity {
+    private static final String TAG = "NoteEditor";
+    private static final String[] PROJECTION = new String[] {
+        NoteColumns._ID, // 0
+        NoteColumns.NOTE, // 1
+        NoteColumns.TITLE, // 2
+    };
+
+    private static final int COLUMN_INDEX_NOTE = 1;
+    private static final int COLUMN_INDEX_TITLE = 2;
+    private static final String ORIGINAL_CONTENT = "origContent";
+    private static final int STATE_EDIT = 0;
+    private static final int STATE_INSERT = 1;
+
+    private int mState;
+    private Uri mUri;
+    private Cursor mCursor;
+    private EditText mText;
+    private String mOriginalContent;
+
+    private Button Cancel;
+    private Button Delete;
+
+    public static class LinedEditText extends EditText {
+        private Rect mRect;
+        private Paint mPaint;
+
+        public LinedEditText(Context context, AttributeSet attrs) {
+            super(context, attrs);
+
+            mRect = new Rect();
+            mPaint = new Paint();
+            mPaint.setStyle(Paint.Style.STROKE);
+            mPaint.setColor(0x800000FF);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            int count = getLineCount();
+            Rect r = mRect;
+            Paint paint = mPaint;
+
+            for (int i = 0; i < count; i++) {
+                int baseline = getLineBounds(i, r);
+
+                canvas.drawLine(r.left, baseline + 1, r.right, baseline + 1, paint);
+            }
+
+            super.onDraw(canvas);
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        final Intent intent = getIntent();
+        final String action = intent.getAction();
+        if (Intent.ACTION_EDIT.equals(action)) {
+            mState = STATE_EDIT;
+            mUri = intent.getData();
+        } else if (Intent.ACTION_INSERT.equals(action)) {
+            mState = STATE_INSERT;
+            mUri = getContentResolver().insert(intent.getData(), null);
+            if (mUri == null) {
+                Log.e(TAG, "Failed to insert new note into " + getIntent().getData());
+                finish();
+                return;
+            }
+            setResult(RESULT_OK, (new Intent()).setAction(mUri.toString()));
+
+        } else {
+            Log.e(TAG, "Unknown action, exiting");
+            finish();
+            return;
+        }
+
+        setContentView(R.layout.notes2);
+
+        mText = (EditText) findViewById(R.id.note);
+
+        mCursor = managedQuery(mUri, PROJECTION, null, null, null);
+
+        if (savedInstanceState != null) {
+            mOriginalContent = savedInstanceState.getString(ORIGINAL_CONTENT);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mCursor != null) {
+            mCursor.requery();
+            mCursor.moveToFirst();
+
+            if (mState == STATE_EDIT) {
+                String title = mCursor.getString(COLUMN_INDEX_TITLE);
+                Resources res = getResources();
+                String text = String.format(res.getString(R.string.title_edit), title);
+                setTitle(text);
+            } else if (mState == STATE_INSERT) {
+                setTitle(getText(R.string.title_create));
+            }
+
+            String note = mCursor.getString(COLUMN_INDEX_NOTE);
+            mText.setTextKeepState(note);
+
+            if (mOriginalContent == null) {
+                mOriginalContent = note;
+            }
+
+        } else {
+            setTitle(getText(R.string.error_title));
+            mText.setText(getText(R.string.error_message));
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString(ORIGINAL_CONTENT, mOriginalContent);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        String text = mText.getText().toString();
+        int length = text.length();
+
+        if (isFinishing() && (length == 0) && mCursor != null) {
+            setResult(RESULT_CANCELED);
+            deleteNote();
+        } else {
+            saveNote();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.notes1, menu);
+        Intent intent = new Intent(null, getIntent().getData());
+        return super.onCreateOptionsMenu(menu);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.menu_save:
+            saveNote();
+            finish();
+            break;
+        case R.id.menu_delete:
+            View messageView = getLayoutInflater().inflate(R.layout.option, null, false);
+            TextView textView = (TextView) messageView.findViewById(R.id.warning);       
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setIcon(R.drawable.ic_dialog_alert);
+            builder.setTitle(R.string.warning_h);
+            builder.setView(messageView);
+            builder.create();
+            builder.show();
+
+            Cancel = ( Button)findViewById (R.id.button1 );
+            Delete = ( Button)findViewById (R.id.button2 );
+            deleteNote();
+            finish();
+            break;
+        case R.id.menu_discard:
+            cancelNote();
+            break;
+        }
+        return super.onOptionsItemSelected(item);
+
+    }
+
+    public void Cancel (View view){
+        saveNote();
+        finish();
+    }
+
+    public void Delete (View view){
+
+        deleteNote();
+        finish();
+    }
+
+    private final void saveNote() {
+        if (mCursor != null) {
+            ContentValues values = new ContentValues();
+            values.put(NoteColumns.MODIFIED_DATE, System.currentTimeMillis());
+
+            String text = mText.getText().toString();
+            int length = text.length();
+            if (mState == STATE_INSERT) {
+                if (length == 0) {
+                    Toast.makeText(this, R.string.nothing_to_save, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                String title = text.substring(0, Math.min(30, length));
+                if (length > 30) {
+                    int lastSpace = title.lastIndexOf(' ');
+                    if (lastSpace > 0) {
+                        title = title.substring(0, lastSpace);
+                    }
+                }
+                values.put(NoteColumns.TITLE, title);
+            }
+
+            values.put(NoteColumns.NOTE, text);
+
+            try {
+                getContentResolver().update(mUri, values, null, null);
+            } catch (NullPointerException e) {
+                Log.e(TAG, e.getMessage());
+            }
+
+        }
+    }
+
+    private final void cancelNote() {
+        if (mCursor != null) {
+            if (mState == STATE_EDIT) {
+                mCursor.close();
+                mCursor = null;
+                ContentValues values = new ContentValues();
+                values.put(NoteColumns.NOTE, mOriginalContent);
+                getContentResolver().update(mUri, values, null, null);
+            } else if (mState == STATE_INSERT) {
+                deleteNote();
+            }
+        }
+        setResult(RESULT_CANCELED);
+        finish();
+    }
+
+    private final void deleteNote() {
+        if (mCursor != null) {
+            mCursor.close();
+            mCursor = null;
+            getContentResolver().delete(mUri, null, null);
+            mText.setText("");
+        }
+    }
+}
+</code></pre>
+
+<p>and this is the code from displaying listview of what has been saved in sqlite database</p>
+
+<pre><code>import android.content.ContentUris;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+
+import com.jackson_siro.vsongbook.NotePad.NoteColumns;
+
+public class NotesList extends ActionBarListActivity {
+    private static final String TAG = "NotesList";
+    private static final String[] PROJECTION = new String[] {
+        NoteColumns._ID, // 0
+        NoteColumns.TITLE, // 1
+    };
+
+    /** The index of the title column */
+    private static final int COLUMN_INDEX_TITLE = 1;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setDefaultKeyMode(DEFAULT_KEYS_SHORTCUT);
+
+        // If no data was given in the intent (because we were started
+        // as a MAIN activity), then use our default content provider.
+        Intent intent = getIntent();
+        if (intent.getData() == null) {
+            intent.setData(NoteColumns.CONTENT_URI);
+        }
+
+        // Inform the list we provide context menus for items
+        getListView().setOnCreateContextMenuListener(this);
+
+        // Perform a managed query. The Activity will handle closing and requerying the cursor
+        // when needed.
+        Cursor cursor = managedQuery(getIntent().getData(), PROJECTION, null, null,
+                                        NoteColumns.DEFAULT_SORT_ORDER);
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, R.layout.notes3, cursor,
+                new String[] { NoteColumns.TITLE }, new int[] { android.R.id.text1 });
+        setListAdapter(adapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate menu from XML resource
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.notes2, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            Intent intent = new Intent(this, Home.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+        case R.id.menu_add:
+            startActivity(new Intent(Intent.ACTION_INSERT, getIntent().getData()));
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
+        AdapterView.AdapterContextMenuInfo info;
+        try {
+             info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        } catch (ClassCastException e) {
+            Log.e(TAG, "bad menuInfo", e);
+            return;
+        }
+
+        Cursor cursor = (Cursor) getListAdapter().getItem(info.position);
+        if (cursor == null) {
+            return;
+        }
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.notes3, menu);
+        menu.setHeaderTitle(cursor.getString(COLUMN_INDEX_TITLE));
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info;
+        try {
+             info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        } catch (ClassCastException e) {
+            Log.e(TAG, "bad menuInfo", e);
+            return false;
+        }
+
+        Uri noteUri = ContentUris.withAppendedId(getIntent().getData(), info.id);
+
+        switch (item.getItemId()) {
+
+        case R.id.context_view:
+            startActivity(new Intent(Intent.ACTION_VIEW, noteUri));
+            return true;
+        case R.id.context_edit:
+            startActivity(new Intent(Intent.ACTION_EDIT, noteUri));
+            return true;
+        case R.id.context_delete:
+            getContentResolver().delete(noteUri, null, null);
+            return true;
+        case R.id.context_new:
+            startActivity(new Intent(Intent.ACTION_INSERT, getIntent().getData()));
+            return true;
+        default:
+            return super.onContextItemSelected(item);
+        }
+    }
+
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        Uri noteUri = ContentUris.withAppendedId(getIntent().getData(), id);
+
+        String action = getIntent().getAction();
+        if (Intent.ACTION_PICK.equals(action) || Intent.ACTION_GET_CONTENT.equals(action)) {
+
+            setResult(RESULT_OK, new Intent().setData(noteUri));
+        } else {
+            // Launch activity to view/edit the currently selected item
+            startActivity(new Intent(Intent.ACTION_VIEW, noteUri));
+        }
+    }
+}
+</code></pre>

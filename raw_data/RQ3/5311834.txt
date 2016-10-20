@@ -1,0 +1,63 @@
+<p>I m using one custom listview . When i m click on listview i didn't getting onClick Event .</p>
+
+<p>Here is my code .</p>
+
+<pre><code>        lvlList = (ListView)findViewById(R.id.lvlList);
+        lvlList.setOnItemClickListener(new OnItemClickListener() 
+        {
+            public void onItemClick(AdapterView<?> a, View v,int position, long id) 
+            {
+                Toast.makeText(getBaseContext(), "Click", Toast.LENGTH_LONG).show();
+
+
+            }
+        });
+
+lvlList.setAdapter(new OrderAdapter(getBaseContext()));
+</code></pre>
+
+<h2>OrderAdapter</h2>
+
+<pre><code>private class OrderAdapter extends BaseAdapter
+{
+    private LayoutInflater mInflater;
+
+    public OrderAdapter(Context context) 
+    {
+        mInflater = LayoutInflater.from(context);
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) 
+    {
+        ViewHolder holder;
+
+        if (convertView == null) 
+        {
+            convertView = mInflater.inflate(R.layout.example, null);
+            holder = new ViewHolder();
+
+            holder.txtTest = (TextView) convertView.findViewById(R.id.txtTest);
+
+            convertView.setTag(holder);
+        } 
+        else 
+        {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.txtTest.setText(Util.SampleTest.get(position));
+                    return convertView;
+    }
+
+    public class ViewHolder 
+    {
+        public TextView txtTets;
+    }
+
+    public int getCount(){return Util.SampleTest.size();}
+
+    public Object getItem(int position){return position;}
+
+    public long getItemId(int position){return position;}
+}
+</code></pre>

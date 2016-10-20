@@ -1,0 +1,228 @@
+<p>i am trying to create the database from assets  but is give me error unable to open database
+but after i run again is not give error is complete run
+when first time is create is give me error i put my logcat here</p>
+
+<pre><code>07-04 18:28:00.860: E/Database(990): sqlite3_open_v2("/data/data/com.temp.find/databases/tempfind", &handle, 2, NULL) failed
+07-04 18:28:00.870: W/System.err(990): android.database.sqlite.SQLiteException: unable to open database file
+07-04 18:28:00.880: W/System.err(990):  at android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+07-04 18:28:00.880: W/System.err(990):  at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java:1849)
+07-04 18:28:00.880: W/System.err(990):  at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:820)
+07-04 18:28:00.880: W/System.err(990):  at com.food.find.RestaurantDatabase.checkDataBase(RestaurantDatabase.java:97)
+07-04 18:28:00.890: W/System.err(990):  at com.food.find.RestaurantDatabase.createDataBase(RestaurantDatabase.java:60)
+07-04 18:28:00.890: W/System.err(990):  at com.food.find.SplashScreenActivity.onCreate(SplashScreenActivity.java:25)
+07-04 18:28:00.890: W/System.err(990):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+07-04 18:28:00.890: W/System.err(990):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1611)
+07-04 18:28:00.890: W/System.err(990):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1663)
+07-04 18:28:00.890: W/System.err(990):  at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+07-04 18:28:00.900: W/System.err(990):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:931)
+07-04 18:28:00.900: W/System.err(990):  at android.os.Handler.dispatchMessage(Handler.java:99)
+07-04 18:28:00.900: W/System.err(990):  at android.os.Looper.loop(Looper.java:123)
+07-04 18:28:00.900: W/System.err(990):  at android.app.ActivityThread.main(ActivityThread.java:3683)
+07-04 18:28:00.900: W/System.err(990):  at java.lang.reflect.Method.invokeNative(Native Method)
+07-04 18:28:00.900: W/System.err(990):  at java.lang.reflect.Method.invoke(Method.java:507)
+07-04 18:28:00.900: W/System.err(990):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+07-04 18:28:00.900: W/System.err(990):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+07-04 18:28:00.910: W/System.err(990):  at dalvik.system.NativeStart.main(Native Method)
+07-04 18:28:01.030: E/running(990): database opened page size
+</code></pre>
+
+<blockquote>
+  <p>RestaurantDatabase.java</p>
+</blockquote>
+
+<pre><code>public class RestaurantDatabase extends SQLiteOpenHelper{
+
+
+    // Contacts Table Columns names
+    private static final String KEY_ID = "id";
+    private static final String KEY_NAME = "name";
+    private static final String KEY_FOODADDRESS="address";
+    private static final String KEY_FOODPHONE = "phonenumber";
+    private static final String KEY_LATITUDE="latitude";
+    private static final String KEY_LONGITUDE="longitude";
+
+
+
+    private static final String TAG_LAT="lat";
+    private static final String TAG_LONG="lng";
+    private static final String TAG_RESPONSE = "responseData";
+    private static final String TAG_TITLENOFORMATING = "titleNoFormatting";
+    private static final String TAG_ADDRESSLINES="addressLines";
+    private static final String TAG_PHONENUMBERS="phoneNumbers";
+    private static final String TAG_NUMBER="number";    
+    private static final String TAG_FOOD="food";
+    private static String DB_PATH ="/data/data/com.temp.find/databases/";   
+    private static String DB_NAME ="tempfind";   
+    private SQLiteDatabase myDataBase; 
+    private final Context myContext;    
+
+    String query = "";
+
+    public RestaurantDatabase(Context context)
+    {
+        super(context, DB_NAME, null, 1);
+        this.myContext=context;     
+    };
+
+    public void createDataBase() throws IOException
+    {
+
+         boolean dbExist = checkDataBase();
+
+         if(dbExist)
+         {
+
+         }
+         else
+         {
+
+
+         this.getReadableDatabase();
+
+         try
+         {
+
+             copyDataBase();
+
+         } 
+         catch (IOException e)
+         {
+
+             throw new Error("Error copying database");
+
+         }
+
+         }
+
+
+    }
+
+
+    private boolean checkDataBase()
+    {
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+        }
+        catch(SQLiteException e)
+        {   
+            e.printStackTrace();
+        }
+
+        if(checkDB != null)
+        {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+    private void copyDataBase() throws IOException
+    {
+
+
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        String outFileName = DB_PATH + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public RestaurantDatabase(Context context, String name, CursorFactory factory,int version) 
+    {
+        super(context, name, factory, version);
+        this.myContext=context;
+    }
+
+
+        public void openDataBase() throws SQLException
+        {     
+                //Open the database
+                String myPath = DB_PATH + DB_NAME;
+                myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+                Log.e("running", "database opened page size");
+
+        }
+
+        @Override
+        public synchronized void close() 
+        {
+
+            if(myDataBase != null)
+                myDataBase.close(); 
+            super.close();
+
+        }
+
+
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) 
+    {
+
+
+    }
+
+    public String addContact(String title,String address,String phone,String latitude,String longitude) 
+    {
+
+        String check = null;
+
+        Log.e("Title","--->"+title);
+        Log.e("Address","-->"+address);
+        Log.e("Number","-->"+phone);
+        Log.e("Latitude","-->"+latitude);
+        Log.e("Longitude","-->"+longitude);
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_NAME,title); // Contact Name
+        values.put(KEY_FOODADDRESS,address); // Contact Address
+        values.put(KEY_FOODPHONE,phone); // Contact Phone
+        values.put(KEY_LATITUDE,latitude); // Contact Latitude
+        values.put(KEY_LONGITUDE,longitude); // Contact Longitude
+
+        Log.e("addcontact called","--->");
+
+        // Inserting Row
+        myDataBase.insert(TAG_FOOD, null,values);       
+
+        String selectQuery = " SELECT  * FROM " + TAG_FOOD ;
+
+        Cursor cursor = myDataBase.rawQuery(selectQuery, null);
+
+        Log.e("CURSOR RECORD","--->"+cursor.getCount());
+        Log.e("INSERT RECORD","--->"+values);
+
+
+        return check;
+
+
+    }
+
+
+
+}
+</code></pre>

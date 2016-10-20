@@ -1,0 +1,119 @@
+<p>I have a class that populates a listview, but it is with an error stating that the thread can not handle the view, I wonder if anyone knows of a better way of putting a processdialog before showing the list, Thanks.</p>
+
+<pre><code>public class MainActivity extends ListActivity {
+
+// All static variables
+static final String URL = "sample.com";
+// XML node keys
+static final String KEY_ITEM = "item"; // parent node
+static final String KEY_ID = "id";
+static final String KEY_NAME = "nome";
+static final String KEY_END = "endereco";
+static final String KEY_TEL = "telefone";
+static final String KEY_BAI = "bairro";
+
+private ProgressDialog progressDialog;
+//private Handler handler;
+
+ListAdapter adapter;
+ListView lv;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.list);
+
+    ActionBar actionBar = getActionBar();
+    actionBar.setTitle("Test");
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setIcon(R.drawable.icon);
+
+    //handler = new Handler();
+
+    new Thread(){            
+         public void run() {
+             runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progressDialog = ProgressDialog.show(MainActivity.this, "", "loading...");                      
+                }
+            });             
+             loadList();
+            progressDialog.cancel();
+        }
+     }.start();
+
+    lv = getListView();     
+
+    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view,
+                int position, long id) {
+            // getting values from selected ListItem
+            String name = ((TextView) view.findViewById(R.id.name)).getText().toString();
+            String cost = ((TextView) view.findViewById(R.id.cost)).getText().toString();
+            String description = ((TextView) view.findViewById(R.id.description)).getText().toString();
+
+            // Starting new intent
+            Intent in = new Intent(getApplicationContext(), DescriptionActivity.class);
+            in.putExtra("nome", ((TextView) view.findViewById(R.id.name)).getText().toString());
+            in.putExtra("endereco", ((TextView) view.findViewById(R.id.cost)).getText().toString());
+            in.putExtra("telefone", ((TextView) view.findViewById(R.id.description)).getText().toString());
+            startActivity(in);
+        }
+    });
+}
+
+public void loadList(){
+
+    ArrayList<HashMap<String, String>> menuItems = new ArrayList<HashMap<String, String>>();
+
+    XMLParser parser = new XMLParser();
+    String xml = parser.getXmlFromUrl(URL); // getting XML
+    Document doc = parser.getDomElement(xml); // getting DOM element
+
+    NodeList nl = doc.getElementsByTagName(KEY_ITEM);
+    // looping through all item nodes <item>
+    for (int i = 0; i < nl.getLength(); i++) {
+        // creating new HashMap
+        HashMap<String, String> map = new HashMap<String, String>();
+        Element e = (Element) nl.item(i);
+        // adding each child node to HashMap key => value
+        map.put(KEY_ID, parser.getValue(e, KEY_ID));
+        map.put(KEY_NAME, parser.getValue(e, KEY_NAME));
+        map.put(KEY_END, parser.getValue(e, KEY_END));
+        map.put(KEY_TEL, parser.getValue(e, KEY_TEL));
+        map.put(KEY_BAI, parser.getValue(e, KEY_BAI));
+
+        // adding HashList to ArrayList
+        menuItems.add(map);
+    }
+
+    // Adding menuItems to ListView
+    adapter = new SimpleAdapter(this, menuItems,
+            R.layout.list_row_lojas,
+            new String[] { KEY_NAME, KEY_END,  KEY_TEL, KEY_BAI }, new int[] {
+                    R.id.name, R.id.description, R.id.cost, R.id.bairro });
+    setListAdapter(adapter);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+}
+</code></pre>
+
+<blockquote>
+  <p>04-24 23:03:50.871: E/AndroidRuntime(26159):
+  android.view.ViewRootImpl$CalledFromWrongThreadException: Only the
+  original thread that created a view hierarchy can touch its views.</p>
+</blockquote>

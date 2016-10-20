@@ -1,0 +1,45 @@
+<p>I noticed this: I have a parent activity A which opens child activity B with <code>startActivity(intent)</code>. In the activity B if I will <code>finish()</code> this activity in some way the parent activity will be loaded again from initial state, but if I will hit the back keyboard button I will be returned to activity A as in the state in which I left it. </p>
+
+<p>Here is an example of how I am finishing activity B:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+   switch (item.getItemId()) 
+   {
+     case android.R.id.icon:
+        finish();
+        return true;
+     default:
+        return super.onOptionsItemSelected(item);
+   }
+}
+</code></pre>
+
+<p>Here is how I open activity B from activity A:</p>
+
+<pre><code>Intent intent = new Intent(thisActivity, toActivity);
+startActivity(intent);
+</code></pre>
+
+<p>And here is the Manifest XML:</p>
+
+<pre><code><activity
+    android:name="com.evapp.activities.A"
+    android:label="@string/A" >
+</activity>
+<activity
+    android:name="com.evapp.activities.B"
+    android:configChanges="orientation"
+    android:label="@string/B"
+    android:parentActivityName="com.evapp.activities.A"
+    android:screenOrientation="portrait" >
+
+    <!-- Parent activity meta-data to support 4.0 and lower -->
+    <meta-data
+        android:name="android.support.PARENT_ACTIVITY"
+        android:value="com.evapp.activities.A" />
+</activity>
+</code></pre>
+
+<p>Can someone please explain me the deference between <code>finish()</code> and return? </p>

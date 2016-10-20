@@ -1,0 +1,156 @@
+<p>Help me plzz..In first app version I wrote wrong DB_PATH in DBHelper and after install apk got exception that database not found.Then (next app version) I wrote right DB_PATH but after install get exception </p>
+
+<pre><code>    FATAL EXCEPTION: main
+ java.lang.RuntimeException: Unable to start activity ComponentInfo: android.database.sqlite.SQLiteException: no such table: category: , while compiling: SELECT * FROM category
+    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1651)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1667)
+    at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:935)
+    at android.os.Handler.dispatchMessage(Handler.java:99)
+    at android.os.Looper.loop(Looper.java:130)
+    at android.app.ActivityThread.main(ActivityThread.java:3691)
+    at java.lang.reflect.Method.invokeNative(Native Method)
+    at java.lang.reflect.Method.invoke(Method.java:507)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:907)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:665)
+    at dalvik.system.NativeStart.main(Native Method)
+ Caused by: android.database.sqlite.SQLiteException: no such table: category: , while compiling: SELECT * FROM category
+    at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)
+    at android.database.sqlite.SQLiteCompiledSql.compile(SQLiteCompiledSql.java:92)
+    at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:65)
+    at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:83)
+    at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:49)
+    at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:42)
+    at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1497)
+    at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1376)
+    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1330)
+    at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1450)
+    at package.name.MainPage.update(MainPage.java:125)
+    at package.name.MainPage.onCreate(MainPage.java:88)
+    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1615)
+    ... 11 more
+</code></pre>
+
+<p>If I reinstall apk with clearing caches then apk install successfull! How can I make successful installing without clearing caches and reinstall?</p>
+
+<p>Main.Class</p>
+
+<pre><code>     ...
+     public class MainPage extends MainHelper implements OnClickListener{
+     ...
+     public void onCreate(Bundle savedInstanceState) {
+     ...
+            DBHelper myDbHelper = new DBHelper(this);
+
+            String oldpath = "/data/data/package.name1/databases/";
+            String newpath = "/data/data/package.name/databases/";
+            File dbFile = new File(newpath+"db.sqlite");
+
+        if (!dbFile.exists()) {
+        try {
+            myDbHelper.copyDataBase(oldpath);
+            myDbHelper.myContext.deleteDatabase(oldpath+bd_name);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }       
+        }
+
+        try {     
+                myDbHelper.createDataBase();         
+        } catch (IOException ioe) {      
+            throw new Error("Unable to create database");        
+        }  
+    .... 
+    }
+    }
+</code></pre>
+
+<p>DBHelper</p>
+
+<pre><code>import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+    private static String DB_PATH = "/data/data/package.name/databases/"; 
+    private static String DB_NAME = "db.sqlite"; 
+    private SQLiteDatabase myDataBase;  
+    public final Context myContext;
+
+    public DBHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+        if(dbExist){
+        }else{
+            this.getReadableDatabase();         
+
+            try {
+                copyDataBase(DB_PATH);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    private boolean checkDataBase(){
+        File dbFile = new File(DB_PATH + DB_NAME);
+        return dbFile.exists();
+    }
+
+    public void copyDataBase(String bdpath) throws IOException{
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+        String outFileName = bdpath + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException{
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+}
+</code></pre>

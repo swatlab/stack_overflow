@@ -1,0 +1,241 @@
+<p>I am developing an application which scans for Bluetooth Low Energy devices.The scanned devices are stored in a database.My problem is I want to display a list of devices from this database and on click of this device list item I want to know the device name and mac id.So anyone help me on this.</p>
+
+<pre><code>public class main_activity extends Activity {
+public ImageButton fabbutton;
+Activity activity;
+DisplayMetrics metrics;
+private ArrayAdapter<String> adapter;
+private ArrayList<String> liste;
+private ListView list;
+private AlertDialog.Builder builder;
+public EditText input;
+String name,address,Devicename,Deviceaddress;
+public String SelectedDeviceName;
+ProgressDialog progressDialog;
+private BluetoothAdapter mBluetoothAdapter;
+private Handler mHandler;
+private static final int REQUEST_ENABLE_BT = 1;
+
+private static final long SCAN_PERIOD = 10000;    // Stops scanning after 10 seconds.
+SqlHandler sh = new SqlHandler(this);
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main_activity);
+    fabbutton = (ImageButton) findViewById(R.id.fabbutton);
+
+
+    final ActionBar mActionBar = getActionBar();
+    mActionBar.setDisplayHomeAsUpEnabled(true);
+    mActionBar.setHomeButtonEnabled(true);
+    mActionBar.setBackgroundDrawable(new ColorDrawable(0xffffffff));
+    activity = this;
+    metrics = new DisplayMetrics();
+    getWindowManager().getDefaultDisplay().getMetrics(metrics);
+    mHandler = new Handler();
+
+    //mActionBar.setHomeAsUpIndicator(R.drawable.back);
+
+    mActionBar.setTitle(Html.fromHtml("<font color='#727272'>Board List</font>"));
+    list = (ListView) findViewById(R.id.list);
+
+    liste = new ArrayList<String>();
+    liste.clear();
+    sh.openDB();
+    Cursor cur = sh.getAllnames();
+    while(cur.moveToNext()){
+         name = cur.getString(0);
+         address = cur.getString(1);
+         liste.add(name);
+    }
+
+
+
+    adapter = new ArrayAdapter<String>(list.getContext(), android.R.layout.simple_list_item_1, liste);
+    list.setAdapter(adapter);
+    sh.close();
+
+
+   // scanDeviceList.setAdapter(mLeDeviceListAdapter);
+
+
+
+
+    final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+    mBluetoothAdapter = bluetoothManager.getAdapter();
+
+
+    fabbutton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), ScanList.class);
+            startActivity(intent);
+
+
+        }
+
+    });
+
+    // On Long Click Listener for Paired BLE Device List
+    list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            SelectedDeviceName = list.getItemAtPosition(position).toString();
+
+
+            Toast.makeText(getBaseContext(),SelectedDeviceName,Toast.LENGTH_SHORT).show();
+            showRenameOrDeleteDialog();
+            return true;
+
+        }
+    });
+
+
+
+    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(enableBtIntent, 1);
+    }
+
+}
+
+
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    // System.out.println("resultCode" + resultCode);
+    if (resultCode == RESULT_OK) {
+
+    }
+    if (resultCode == RESULT_CANCELED) {
+        Toast.makeText(this, "Bluetooth is Required", Toast.LENGTH_SHORT).show();
+        finish();
+
+    }
+
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main_activity, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+
+        return true;
+    }
+    if (id == android.R.id.home) {
+        finish();
+    }
+
+
+    return super.onOptionsItemSelected(item);
+}
+
+private void showRenameOrDeleteDialog() {
+
+
+    //set alert builder to delete or rename the device item
+    builder = new AlertDialog.Builder(main_activity.this);
+    builder.setTitle("CREVAVI");
+    builder.setMessage("Tap on Rename to rename the device, Tap on Delete to remove the device");
+
+
+
+    builder.setPositiveButton("Rename", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+            // TODO Add your code for the button here.
+            dialog.dismiss();
+            Toast.makeText(main_activity.this, "Rename the device", Toast.LENGTH_SHORT).show();
+            showRenameDialog();
+        }
+    });
+
+    builder.setNegativeButton("Delete", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+            // TODO Add your code for the button here.
+            dialog.dismiss();
+            sh.openDB();
+            sh.deleteItem(SelectedDeviceName);
+            sh.close();
+            notifyDataChange();
+
+
+
+        }
+    });
+
+    builder.show();
+}
+
+private void showRenameDialog() {
+   final InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+    AlertDialog.Builder alert = new AlertDialog.Builder(main_activity.this);
+    alert.setTitle("Rename the device"); //Set Alert dialog title here
+    alert.setMessage("Enter new Name Here"); //Message here
+
+
+    // Set an EditText view to get user input
+    input = new EditText(main_activity.this);
+    alert.setView(input);
+
+
+    alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+            imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+            //You will get as string input data in this variable.
+            // here we convert the input to a string and show in a toast.
+            String srt = input.getEditableText().toString();
+            sh.openDB();
+            sh.updateData("Hello", srt, SelectedDeviceName);
+            sh.close();
+
+
+
+
+
+
+
+           // adapter.notifyDataSetChanged();
+
+            dialog.dismiss();
+
+        } // End of onClick(DialogInterface dialog, int whichButton)
+
+    }); //End of alert.setPositiveButton
+    alert.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+            imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+            // Canceled.
+            dialog.cancel();
+        }
+    }); //End of alert.setNegativeButton
+    AlertDialog alertDialog = alert.create();
+    alertDialog.show();
+}
+
+public void notifyDataChange(){
+    liste.clear();
+    sh.openDB();
+    Cursor cur = sh.getAllnames();
+    while(cur.moveToNext()){
+        String name = cur.getString(0);
+        liste.add(name);
+    }
+    adapter = new ArrayAdapter<String>(list.getContext(), android.R.layout.simple_list_item_1, liste);
+    list.setAdapter(adapter);
+    sh.close();
+}}
+</code></pre>

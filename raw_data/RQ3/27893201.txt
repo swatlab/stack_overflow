@@ -1,0 +1,232 @@
+<p>I am new to Android Development. I'm trying to make a new tabbed activity, but whenever I run this, the app immediately crashes. It doesn't run on both my phone and my emulator. What is going on?</p>
+
+<p>Here's the error I get:</p>
+
+<pre><code>1676-1685/com.google.process.gapps E/StrictMode﹕ A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.
+java.lang.Throwable: Explicit termination method 'close' not called
+</code></pre>
+
+<p>and then followed by a bunch of stack traces. Here is one of them:</p>
+
+<pre><code>1676-1685/com.google.process.gapps E/StrictMode﹕ A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.
+java.lang.Throwable: Explicit termination method 'close' not called
+        at dalvik.system.CloseGuard.open(CloseGuard.java:184)
+        at android.database.sqlite.SQLiteConnection.<init>(SQLiteConnection.java:170)
+        at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:190)
+        at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+        at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+        at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+        at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:806)
+        at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:791)
+        at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+        at android.app.ContextImpl.openOrCreateDatabase(ContextImpl.java:1142)
+        at android.content.ContextWrapper.openOrCreateDatabase(ContextWrapper.java:267)
+        at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:223)
+        at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:163)
+        at com.google.android.gsf.gservices.GservicesProvider.computeLocalDigestAndUpdateValues(GservicesProvider.java:450)
+        at com.google.android.gsf.gservices.GservicesProvider.onCreate(GservicesProvider.java:185)
+        at android.content.ContentProvider.attachInfo(ContentProvider.java:1686)
+        at android.content.ContentProvider.attachInfo(ContentProvider.java:1655)
+        at android.app.ActivityThread.installProvider(ActivityThread.java:4964)
+        at android.app.ActivityThread.installContentProviders(ActivityThread.java:4559)
+        at android.app.ActivityThread.handleBindApplication(ActivityThread.java:4499)
+        at android.app.ActivityThread.access$1500(ActivityThread.java:144)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1339)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:135)
+        at android.app.ActivityThread.main(ActivityThread.java:5221)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:372)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+</code></pre>
+
+<p>What am I supposed to close? I've barely changed the original code that Android Studio generated for me, but it's still telling me there is some resource leak. </p>
+
+<p>Here's what is in my main activity java file:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+/**
+ * The {@link android.support.v4.view.PagerAdapter} that will provide
+ * fragments for each of the sections. We use a
+ * {@link FragmentPagerAdapter} derivative, which will keep every
+ * loaded fragment in memory. If this becomes too memory intensive, it
+ * may be best to switch to a
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+ */
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+/**
+ * The {@link ViewPager} that will host the section contents.
+ */
+ViewPager mViewPager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    // Set up the action bar.
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the activity.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    // When swiping between different sections, select the corresponding
+    // tab. We can also use ActionBar.Tab#select() to do this if we have
+    // a reference to the Tab.
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    });
+
+    actionBar.addTab(
+            actionBar.newTab()
+                .setText(mSectionsPagerAdapter.getPageTitle(0))
+                .setTabListener(this));
+    actionBar.addTab(
+            actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(1))
+                    .setTabListener(this));
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    // When the given tab is selected, switch to the corresponding page in
+    // the ViewPager.
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class below).
+        switch (position){
+            case 0:
+                return CardListFragment.newInstance();
+        }
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 2 total pages.
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+
+public static class CardListFragment extends Fragment{
+
+    public static CardListFragment newInstance(){
+        CardListFragment fragment = new CardListFragment();
+        return fragment;
+    }
+
+    public CardListFragment(){
+    }
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState){
+        View rootView = inflater.inflate(R.layout.fragment_list_view, container, false);
+        return rootView;
+    }
+}
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public static class PlaceholderFragment extends Fragment {
+    /**
+     * The fragment argument representing the section number for this
+     * fragment.
+     */
+    private static final String ARG_SECTION_NUMBER = "section_number";
+
+    /**
+     * Returns a new instance of this fragment for the given section
+     * number.
+     */
+    public static PlaceholderFragment newInstance(int sectionNumber) {
+        PlaceholderFragment fragment = new PlaceholderFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public PlaceholderFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        return rootView;
+    }
+}
+}
+</code></pre>
+
+<p>Please help! I'm still trying to learn this whole concept of fragment.</p>

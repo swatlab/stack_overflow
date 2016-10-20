@@ -1,0 +1,109 @@
+<p>I am using a custom class object as key for the <code>HashMap</code> in Java. In class definition I have overridden the <code>equals()</code> and <code>hashCode()</code> methods.</p>
+
+<pre><code>public class TimeTableDataModel {
+
+Map <Course , List <Timings>> tm; 
+
+TimeTableDataModel(){
+    tm = new HashMap<>();
+}
+
+void addCourseItem(Course course){
+        tm.put(course, new ArrayList<Timings>());
+}
+
+void addNewTimeTableItem(Course course, Timings newTiming){
+    List <Timings> t;
+    if(!tm.containsKey(course)){
+        addCourseItem(course);
+    }
+    t = tm.get(course);
+    t.add(newTiming);
+    tm.put(course, t);
+}
+
+public static final class Course{
+    private final String courseCode;
+    private final String courseName;
+    private final String section;
+    private final String group;
+
+    Course(String code, String courseName, String section, String group){
+        this.courseCode = code;
+        this.courseName = courseName;
+        this.section = section;
+        this.group = group;
+    }
+
+    public String getCourseCode(){return courseCode;}
+    public String getCourseName(){return courseName;}
+    public String getSection(){return section;}
+    public String getGroup(){return group;}
+
+    @Override
+    public boolean equals(Object obj){
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Course)) {
+            return false;
+        }
+        Course otherObj = (Course) obj;
+        return Objects.equals(courseCode,otherObj.courseCode) 
+                && Objects.equals(courseName, otherObj.courseName) 
+                && Objects.equals(section, otherObj.section)
+                && Objects.equals(group, otherObj.group);
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(courseCode, courseName, section, group);
+    }       
+}
+
+public static class Timings{
+    String time;
+    String day;
+    String room;
+
+    Timings(String time, String day){
+        setTime(time);
+        setDay(day);
+    }
+
+    public String getTime(){return time;}
+    public String getday(){return day;}
+
+    public void setTime(String time){this.time = time;}
+    public void setDay(String day){this.day = day;}
+}
+}
+</code></pre>
+
+<p>TL;DR
+so in above code I have created <code>Course</code> class to be used as the <code>key</code> for the HashMap and using a <code>List</code> of Type <code>Timings</code> class for values.</p>
+
+<p>What I intend to achieve is that to get a List of timings when object of <code>Course</code> key is passed to <code>hm.get(course)</code> </p>
+
+<p>so far I can get a <code>keyset</code> then sequentially get values for each course but.</p>
+
+<pre><code>    for(Course c : timetable.tm.keySet()){
+        System.out.println(c.getCourseCode() + " " + c.getCourseName());
+        for(Timings t : timetable.tm.get(c)){
+            System.out.println(t.time + " " +t.room + " "+ t.day);
+        }           
+    };
+</code></pre>
+
+<p>Here's the code that populates the HashMap</p>
+
+<pre><code>             static TimeTableDataModel timetable = new TimeTableDataModel();
+                        Course course = new Course(courseCode,null,section,group);
+                        Timings dt = new Timings(time, getDayOfWeek(i));
+                        dt.room  = roomNo;
+                        timetable.addNewTimeTableItem(course, dt);
+</code></pre>
+
+<p>So to get the timings for a particular course I have to traverse the whole <code>HashMap</code> until the desired <code>course</code> Key is found. What I want is a way to distinguish between each <code>course</code> object contained in the <code>HashMap</code> Key, so I can get <code>Timings</code> for any random course without traversing the whole <code>KeySet</code>. </p>
+
+<p>Thanks in advance....please ask if somethings is unclear in code</p>

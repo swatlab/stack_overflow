@@ -1,0 +1,46 @@
+<p>I added a back button on the titlebar for some of my activities in my app.The back button works fine for Lollipop devices but when I tested my app on Icecream Sandwich device, the back button does not work.Here's my code:</p>
+
+<pre><code>protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_article);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);   //Adding back button
+    List<ItemObjectArticle> rowListItem = getAllArticleItemList();
+    lLayout = new LinearLayoutManager(ArticleActivity.this);
+    RecyclerView rView = (RecyclerView)findViewById(R.id.recycler_view1);
+    rView.setLayoutManager(lLayout);
+    ArticleAdapter rcAdapter = new ArticleAdapter(ArticleActivity.this, rowListItem);
+    rView.setAdapter(rcAdapter);
+}
+
+public boolean onOptionsItemSelected(MenuItem item) {
+// Handle action bar item clicks here. The action bar will
+// automatically handle clicks on the Home/Up button, so long
+// as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+//noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }else if(id==R.id.home){
+        NavUtils.navigateUpFromSameTask(this);  //handling click
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>And in the Android Manifest file, i added:</p>
+
+<pre><code><activity
+        android:name=".ArticleView"
+        android:label="@string/title_activity_article_view"
+        android:parentActivityName="com.example.android.kheti.ArticleActivity">   //this
+    <intent-filter>
+        <action android:name="com.example.android.kheti.ARTICLEVIEW" />
+
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+    </activity>
+</code></pre>
+
+<p>What code do i need to change to make it work on all Android devices?</p>

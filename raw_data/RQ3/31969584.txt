@@ -1,0 +1,78 @@
+<p>So I have an activity that is a gridview of HD images that are shrunk down to about 64x64 pixel boxes. I want to be able to get the image and then load them in the activity but I get an error that says that the Memory that it takes to load all of the pictures is a whole lot higher than the emulator/phone can handle.</p>
+
+<p>I solved the problem by going into photoshop and making 64x64 images, but I've seen applications that run video and have hundreds of images in the current activity's view. How do they compile with all of that memory in one listview?</p>
+
+<p>I have another application that is a animation that plays a full screen animation with 20 pictures - but it has the same memory bound error in Android Studio. </p>
+
+<p><strong>How can I load 20 pictures on a single activity without getting a out of memory error.</strong> </p>
+
+<p><strong>Code for Activity with GridView</strong>
+      @Override
+      protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.wallpapers);</p>
+
+<pre><code>    //**
+    //Gridview, onclick of icon will open up dialog
+    //allows to SAVE, SET, CANCEL - not in that order
+
+    GridView gridview = (GridView) findViewById(R.id.gridview);
+    gridview.setAdapter(new ImageAdapter(this));
+
+    gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v,
+                                int position, long id) {
+            Toast.makeText(Wallpaper.this, "Setting BG to ..." + position,
+                    Toast.LENGTH_SHORT).show();
+        }
+    });
+}
+</code></pre>
+
+<p><strong>Code for ImageAdapter</strong></p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+
+public ImageAdapter(Context c) {
+    mContext = c;
+}
+
+public int getCount() {
+    return mThumbIds.length;
+}
+
+public Object getItem(int position) {
+    return null;
+}
+
+public long getItemId(int position) {
+    return 0;
+}
+
+// create a new ImageView for each item referenced by the Adapter
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {
+        // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+// references to our images
+private Integer[] mThumbIds = {
+        R.raw.es_1_pix,  R.raw.es1_c, R.raw.es2_c, R.raw.es_1_pix
+            //.raw.es_1_pix,R.raw.es_1_pix,R.raw.es_1_pix,R.raw.es_1_pix,R.raw.es_1_pix
+        //R.raw.es2_c, R.raw.es3_c, R.raw.es4_c,
+        //R.raw.es5_c, R.raw.es6_c, R.raw.es7_c
+};
+}
+</code></pre>

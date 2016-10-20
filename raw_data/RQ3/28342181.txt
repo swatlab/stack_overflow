@@ -1,0 +1,85 @@
+<p>I have a ViewPager with fragments in my Android app. I want to show Action Bar menu item depending the fragment of the ViewPager. I have readen some questions about this but I can´t find the correct solution. My ViewPager´s code is this:</p>
+
+<pre><code>    public class My_Activity extends ActionBarActivity  {
+
+        private ViewPager mViewPager;
+        String idioma;
+
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.my_main);
+
+
+            ActionBar actionBar = getSupportActionBar(); // || getActionBar();
+            actionBar.setIcon(getResources().getDrawable(R.drawable.navbar_logo));
+            actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC3333")));
+
+            actionBar.setTitle("Hello");
+
+
+
+             mViewPager = (ViewPager) findViewById(R.id.viewpager);
+             PagerTabStrip pagerTabStrip = (PagerTabStrip) findViewById(R.id.pagerTabStrip);
+             pagerTabStrip.setTabIndicatorColor(getResources().getColor(R.color.blanco));
+
+
+             Title_Liga_Adapter titleAdapter = new Title_Liga_Adapter(getSupportFragmentManager());
+             mViewPager.setAdapter(titleAdapter);
+
+             mViewPager.setCurrentItem(0);
+
+             getSupportActionBar().setIcon(R.drawable.navbar_logo);
+
+             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+            }
+
+
+     @Override
+public boolean onCreateOptionsMenu(Menu menu) {
+if (mViewPager.getCurrentItem()==4){
+    getMenuInflater().inflate(R.menu.menu_comunidad, menu);
+}
+else{
+
+}
+      return true;  
+}
+
+
+/* *
+ * Called when invalidateOptionsMenu() is triggered
+ */
+@Override
+public boolean onPrepareOptionsMenu(Menu menu) {
+
+    menu.findItem(R.id.action_search).setVisible(true);
+
+
+    return super.onPrepareOptionsMenu(menu);
+}
+
+ public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        // Respond to the action bar's Up/Home button
+        case android.R.id.home:
+           this.finish();
+           return true;
+
+        case R.id.action_search:
+
+            return true;
+
+         default:
+                return super.onOptionsItemSelected(item);
+            }
+    }
+
+
+    }
+</code></pre>
+
+<p>I want that when CurrentItem is 4 for example show menu items icons.</p>

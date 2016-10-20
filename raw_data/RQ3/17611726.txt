@@ -1,0 +1,90 @@
+<p>I am new to <code>Fragments</code> in Android. Just tried to learn about <code>DialogFragment</code>. But it says <code>classcastException</code>.</p>
+
+<pre><code>public class FragmentDialog extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_dialog);
+    }
+
+    void showDialog() {
+
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        Fragment prev = getFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+        DialogFragment newFragment = MyDialogFragment.newInstance(0);
+        newFragment.show(getFragmentManager(), "dialog");
+    }
+
+    public static class MyDialogFragment extends DialogFragment {
+
+        static MyDialogFragment newInstance(int num) {
+            MyDialogFragment f = new MyDialogFragment();
+
+            return f;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            int style = DialogFragment.STYLE_NORMAL, theme = 0;
+            setStyle(style, theme);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View v = inflater.inflate(R.layout.fragment_dialog, container,
+                    false);
+
+            Button button = (Button) v.findViewById(R.id.show);
+            button.setOnClickListener(new OnClickListener() {
+                public void onClick(View v) {
+                     ((FragmentDialog)getActivity()).showDialog(); // Error is in this line.
+                }
+            });
+            return v;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>LogCat error is:</strong></p>
+
+<pre><code>07-12 15:22:25.241: E/AndroidRuntime(6419): java.lang.ClassCastException: com.example.fragmentexample.FragmentTabs cannot be cast to com.example.fragmentexample.FragmentDialog
+07-12 15:22:25.241: E/AndroidRuntime(6419):     at com.example.fragmentexample.FragmentDialog$MyDialogFragment$1.onClick(FragmentDialog.java:74)
+</code></pre>
+
+<p><strong>Edit 1#</strong></p>
+
+<p>This <code>FragmentDialog</code> is the one tab of <code>FragmentTabs</code>.</p>
+
+<pre><code>public class FragmentTabs extends Activity {
+   @Override
+   protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    final ActionBar bar = getActionBar();
+    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+
+    ...
+    ...
+    bar.addTab(bar.newTab()
+            .setText("Dialog")
+            .setTabListener(new TabListener<FragmentDialog.MyDialogFragment>(
+                    this, "Dialog", FragmentDialog.MyDialogFragment.class)));
+    ...
+    ...
+}
+</code></pre>
+
+<p>This is why <code>((FragmentDialog)getActivity()).showDialog();</code> this line returns <code>com.example.fragmentexample.FragmentTabs cannot be cast to com.example.fragmentexample.FragmentDialog</code>. How can I get the activity as <code>MyDialogFragment</code>.</p>
+
+<p>Any help to solve this problem will be highly appreciated.</p>
+
+<p>Thanks</p>

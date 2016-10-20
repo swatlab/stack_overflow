@@ -1,0 +1,91 @@
+<p>I'm making a board game, and I'm using a 10x10 GridView for the board. I've made a class ImageAdapter extending BaseAdapter which holds an Integer array of icons (9 patch files), and these are used to display the images for the squares of the board. The icons are stored in the res/drawable folder, are 629X629 and average about 5 KB in size.</p>
+
+<p>My ImageAdapter class has the following getView() method, which essentially recycles the same view to save memory:</p>
+
+<p><strong>EDIT</strong>: (I've included the changeIcon method which gets called in the Activity for the game)</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    }
+    else{
+        imageView = (ImageView) convertView;
+    }
+
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+public void changeIcon(int x, int y, Integer icon){
+    int position = (9-y)*10 + x;
+    mThumbIds[position] = icon;
+    getView(position, currentView, null);
+}
+</code></pre>
+
+<p>I have a separate class called Game where the logic of the game is handled. I store the pieces in a Piece[][] array, where Piece is another class I've made to hold the data for (you guessed it) pieces of the game. Of relevance is the method move(int xFrom, int yFrom, int xTo, int yTo) which handles the movement of pieces. I can move pieces around all day and everything is fine. </p>
+
+<p>However, once I move one piece <em>into</em> another the app crashes. The intended behaviour is that a new piece gets created. The code where this happens is below:</p>
+
+<pre><code>public boolean move(int xFrom, int yFrom, int xTo, int yTo){
+
+    boolean success = false;
+    Piece pieceToMove = getPiece(xFrom,yFrom);
+    Piece pieceAtDest = getPiece(xTo,yTo);
+    int moveTeam = pieceToMove.getTeam();
+
+    if(isLegalMove(xFrom, yFrom, xTo, yTo, pieceToMove)&&(turn == moveTeam)){
+        if( pieceAtDest == null)
+        {
+           /*I do something when the destination piece is null; 
+                       this block causes no problems */   
+        }
+        else{
+            success = true;
+            pieceToMove.merge();
+            position[xTo][yTo] = pieceToMove;
+            position[xFrom][yFrom] = null;
+        }
+    }
+    return success;
+}
+</code></pre>
+
+<p>So, the offending call is pieceToMove.merge(). The method merge() in the class Piece simply changes the field <strong>type</strong> in that class (the piece becomes something new) then calls the method setIcon() of that class. This method sets the <strong>icon</strong> field of the class depending on the value of type. And, as mentioned above, icons are Integers referring to the nine patch files in res/drawable.</p>
+
+<p>Finally, the method move(int xFrom, int yFrom, int xTo, int yTo) was called from the Activity GameBoardActivity, and after a successful move the Activity asks the ImageAdapter (called <strong>adapter</strong>) to redraw the board, as follows:</p>
+
+<pre><code>boolean success = game.move(xFrom,yFrom,xTo,yTo);
+
+if(success){
+
+Integer destIcon = game.getPiece(xTo, yTo).getIcon();
+Piece pieceAtDep = game.getPiece(xFrom, yFrom);
+Integer depIcon;
+if(pieceAtDep == null)
+    depIcon = R.drawable.square;
+else
+    depIcon = game.getPiece(xFrom, yFrom).getIcon();
+adapter.changeIcon(xTo,yTo,destIcon);
+adapter.changeIcon(xFrom,yFrom,depIcon);
+gridView.setAdapter(adapter);
+}
+</code></pre>
+
+<p>The Logcat says that the line leading to the "Fatal Signal 11" and "Out of memory on a 6330272-byte allocation" is the line <code>imageView.setImageResource(mThumbIds[position]);</code> in the getView method of ImageAdapter.</p>
+
+<p>So, like I said, everything goes along fine until I need to merge two pieces, then I get the out of memory error. It is also worth noting that this merge behaviour was working perfectly fine in an earlier iteration of the app. </p>
+
+<p>I should mention the standard disclaimer now that I am a complete beginner when it comes to coding in java/android, and that I have looked at other questions relating similar issues, but no one else seems to be handling their bitmaps in the same way I am.</p>
+
+<p>Any help is greatly appreciated.
+Thank you very much.</p>
+
+<p><strong>UPDATE</strong></p>
+
+<p>Through further testing I've noticed another oddity which is that, sometimes the problem occurs, and sometimes not, and I cannot identify what causes crashes in some instances and not others. To be more precise, doing the exact same sequence of moves may or may not lead to a crash. This is quite mysterious.</p>

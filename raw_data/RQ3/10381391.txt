@@ -1,0 +1,68 @@
+<p>I am having an <code>Arraylist</code> as [x,y,z..]. I want this <code>ArrayList</code> [x,y,z..] in <code>ListView</code> but <code>getview()</code> method is not getting invoked<br>
+ I am trying this code :</p>
+
+<pre><code>public class CustomAdapter extends BaseAdapter
+{
+public static ArrayList<String> arr=new ArrayList<String>();
+
+public Context Context;
+private LayoutInflater inflater;
+
+HashMap<String, String> map = new HashMap<String, String>();
+public CustomAdapter(Context context, ArrayList<String> arr) 
+{
+    Context=context;
+    inflater=LayoutInflater.from(context);
+    arr=arr;
+
+}
+public int getCount() 
+{
+    // TODO Auto-generated method stub
+    return arr.size();
+}
+
+public Object getItem(int position) 
+{
+    // TODO Auto-generated method stub
+    return arr.get(position);
+}
+
+public long getItemId(int position) 
+{
+    // TODO Auto-generated method stub
+    return position;
+}
+
+public View getView(int position, View convertView, ViewGroup parent) 
+    {
+    System.out.println(arr.get(posstion));
+        ViewHolder holder;
+
+        if (convertView == null) 
+        {
+            convertView = inflater.inflate(R.layout.selecteditemlistview, null);
+            holder = new ViewHolder();
+
+   holder.textViewSelectedText = (TextView)convertView.findViewById(R.id.selectedtext);
+            convertView.setTag(holder);
+        }
+        else 
+        {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.textViewSelectedText.setText(arr.get(position));
+        return convertView;
+    }
+
+    class ViewHolder
+    {
+        TextView textViewSelectedText = null;
+    }
+}
+</code></pre>
+
+<p><code>System.out.println(arr.get(posstion));</code></p>
+
+<p>This line is inside <code>getview()</code> method and it is not printing the values.. please help me.</p>

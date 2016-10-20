@@ -1,0 +1,180 @@
+<p>I am trying to use the <a href="http://hc.apache.org/httpclient-3.x/" rel="nofollow">HttpClient</a> library (in order to call the Facebook API's REST end points) to obtain a session key and verify user...</p>
+
+<p>My code is here:</p>
+
+<pre><code>RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations =
+{ "classpath*:**/*applicationContext-test.xml" })
+public class FacebookUserTest
+{
+    final String API_KEY = "9e2568d68f182a2957878f3acedd9453";
+    final String SECRET = "f1298956895d39110be92a672e0d2284";
+    final String TOKEN = "aa0c41aa4532053e8d0097844ab9bc7d";
+    final String LOGIN = "http://www.facebook.com/login.php";
+    final String HOST = "http://www.facebook.com/restserver.php";
+
+    private static Logger log = 
+        LoggerFactory.getLogger(FacebookUserTest.class);
+
+    protected FacebookUser FacebookUser;
+
+    @Test
+    public void testFindUserBySessionKey() throws Exception
+    {
+        loginToFacebook();
+        String sessionKey = getSessionKey();
+    }
+
+    public void loginToFacebook() throws Exception
+    {
+        HttpClient client = new HttpClient();
+        client.setParams(new HttpClientParams());
+        client.setState(new HttpState());
+
+        GetMethod get = new GetMethod(LOGIN + "?api_key=" + API_KEY
+            + "&v=1.0&auth_token=" + TOKEN);
+
+        // Get login screen
+        client.executeMethod(get);
+
+        // Post credentials to login
+        PostMethod post = new PostMethod(LOGIN);
+        post.addParameter(new NameValuePair("api_key", API_KEY));
+        post.addParameter(new NameValuePair("v", "1.0"));
+        post.addParameter(new NameValuePair("auth_token", TOKEN));
+        post.addParameter(new NameValuePair("email", "user@email.com"));
+        post.addParameter(new NameValuePair("pass", "password"));
+        client.executeMethod(post);
+    }
+
+    public String getSessionKey() throws Exception
+    {
+        HttpClient client = new HttpClient();
+
+        // Obtain session key
+        String host = "http://www.facebook.com/restserver.php";
+        String sessSecret = "false";
+        String toMd = "api_key=" + API_KEY + "auth_token=" + TOKEN
+            + "format=xmlgenerate_session_secret=" + sessSecret
+            + "method=facebook.auth.getSessionv=1.0" + SECRET;
+         String md5 = Md5Utils.MD5(toMd);
+
+         PostMethod post = new PostMethod(HOST);
+
+         NameValuePair[] data = {
+            new NameValuePair("api_key", API_KEY),
+            new NameValuePair("auth_token", TOKEN),
+            new NameValuePair("format", "xml"),
+            new NameValuePair("generate_session_secret", SECRET),
+            new NameValuePair("method", "auth.getSession"),
+            new NameValuePair("sig", md5), new NameValuePair("v", "1.0")
+         };
+
+         post.setRequestBody(data);
+         post.setRequestHeader("Content-Type",
+            "application/x-www-form-urlencoded");
+         post.setRequestHeader("User-Agent",
+            "Facebook API PHP5 Client 1.1 (curl) 5");
+
+         // execute method and handle any error responses.
+         client.executeMethod(post);
+
+         StringBuilder sb = new StringBuilder();
+         byte[] b = new byte[4096];
+
+         for (int n; (n = post.getResponseBodyAsStream().read(b)) != -1;) 
+         {
+             sb.append(new String(b, 0, n));
+         }
+
+         String sessionId = sb.toString();
+         log.warn("Session Id: " + sessionId);
+
+         return sessionId;
+     }
+}
+</code></pre>
+
+<p>When I run my JUnit test, this is what is printed from the console:</p>
+
+<pre><code>WARN : com.myapp.FacebookUserTest - Session Id: 
+
+<?xml version="1.0" encoding="UTF-8"?>
+<error_response xmlns="http://api.facebook.com/1.0/" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://api.facebook.com/1.0/
+   http://api.facebook.com/1.0/facebook.xsd">
+    <error_code>104</error_code>
+    <error_msg>Incorrect signature</error_msg>
+    <request_args list="true">
+        <arg>
+            <key>api_key</key>
+            <value>9e2568d68f182a2957878f3acedd9453</value>
+        </arg>
+        <arg>
+            <key>auth_token</key>
+            <value>aa0c41aa4532053e8d0097844ab9bc7d</value>
+        </arg>
+        <arg>
+            <key>format</key>
+            <value>xml</value>
+        </arg>
+        <arg>
+            <key>generate_session_secret</key>
+            <value>f1298956895d39110be92a672e0d2284</value>
+         </arg>
+         <arg>
+            <key>method</key>
+            <value>auth.getSession</value>
+         </arg>
+         <arg>
+             <key>sig</key>
+             <value>fcf80d658f35d66396ac521da7102782</value>
+         </arg>
+         <arg>
+             <key>v</key>
+             <value>1.0</value>
+          </arg>
+     </request_args>
+</error_response>
+</code></pre>
+
+<p>Could it be my MD5Utils code:</p>
+
+<pre><code> public class Md5Utils
+ {
+      private static String convertToHex(byte[] data)
+      {
+           StringBuffer buf = new StringBuffer();
+           for (int i = 0; i < data.length; i++) {
+               int halfbyte = (data[i] >>> 4) & 0x0F;
+               int two_halfs = 0;
+               do {
+                   if ((0 <= halfbyte) && (halfbyte <= 9))
+                       buf.append((char) ('0' + halfbyte));
+                   else
+                      buf.append((char) ('a' + (halfbyte - 10)));
+                      halfbyte = data[i] & 0x0F;
+               }
+               while (two_halfs++ < 1);
+            }
+        return buf.toString();
+      }
+
+  public static String MD5(String text) 
+  throws NoSuchAlgorithmException, UnsupportedEncodingException {
+      MessageDigest md;
+      md = MessageDigest.getInstance("MD5");
+      byte[] md5hash = new byte[32];
+      md.update(text.getBytes("iso-8859-1"), 0, text.length());
+      md5hash = md.digest();
+      return convertToHex(md5hash);
+   }
+}
+</code></pre>
+
+<p>What am I possibly doing wrong to generate an incorrect signature?</p>
+
+<p>Would really appreciate it if someone could help me or point me in the right direction...</p>
+
+<p>Happy programming and thanks for reading!</p>

@@ -1,0 +1,44 @@
+<p>I am using animations when entering or exiting the activity,entering to an activity animation works fine but exit animation does not work well. I start exit animation when i press back button.What happens is it first start enter animation for current activity then show the last activity what i want a simple exit animation on back button press.</p>
+
+<p><strong>Slide_out.xml</strong></p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@android:integer/config_longAnimTime"
+    android:fromXDelta="0%p"
+    android:toXDelta="-100%p" >
+
+</translate>
+</code></pre>
+
+<p>Slide_in.xml</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@android:integer/config_longAnimTime"
+    android:fromXDelta="100%p"
+    android:toXDelta="0%p" >
+
+</translate>
+</code></pre>
+
+<p><strong>On Action bar back button pressed</strong></p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item) {
+    // TODO Auto-generated method stub
+    switch (item.getItemId()) {
+    case R.id.home:
+
+        finish();
+        overridePendingTransition(R.anim.slide_out, R.anim.slide_in);
+        return true;
+
+
+    default:
+        break;
+    }
+
+    return super.onOptionsItemSelected(item);
+
+}
+</code></pre>

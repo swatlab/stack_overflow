@@ -1,0 +1,147 @@
+<p>I have been fallowing on a <a href="https://www.youtube.com/watch?v=lMAb_oRDqGk" rel="nofollow">touch + tutorials android beginners</a> from a week, and i used android.support.v4.widget.Drawer Layout (drawer layout ) in my main.xml file. but its not working,i am not able to see drawer on toolbar.</p>
+
+<p>error i am getiing is below</p>
+
+<pre><code>02-09 08:30:18.730 24972-24972/? D/dalvikvm: Late-enabling CheckJNI
+02-09 08:30:18.742 24972-24972/? W/dalvikvm: VFY: unable to find class referenced in signature (Landroid/view/SearchEvent;)
+02-09 08:30:18.742 24972-24972/? I/dalvikvm: Could not find method android.view.Window$Callback.onSearchRequested, referenced from method android.support.v7.view.WindowCallbackWrapper.onSearchRequested
+02-09 08:30:18.742 24972-24972/? W/dalvikvm: VFY: unable to resolve interface method 17962: Landroid/view/Window$Callback;.onSearchRequested (Landroid/view/SearchEvent;)Z
+02-09 08:30:18.746 24972-24972/? D/dalvikvm: VFY: replacing opcode 0x72 at 0x0002
+02-09 08:30:18.746 24972-24972/? I/dalvikvm: Could not find method android.view.Window$Callback.onWindowStartingActionMode, referenced from method android.support.v7.view.WindowCallbackWrapper.onWindowStartingActionMode
+02-09 08:30:18.746 24972-24972/? W/dalvikvm: VFY: unable to resolve interface method 17966: Landroid/view/Window$Callback;.onWindowStartingActionMode (Landroid/view/ActionMode$Callback;I)Landroid/view/ActionMode;
+02-09 08:30:18.746 24972-24972/? D/dalvikvm: VFY: replacing opcode 0x72 at 0x0002
+02-09 08:30:18.754 24972-24978/? D/dalvikvm: Debugger has detached; object registry had 1 entries
+02-09 08:30:18.758 24972-24972/? I/dalvikvm: Could not find method android.content.res.TypedArray.getChangingConfigurations, referenced from method android.support.v7.widget.TintTypedArray.getChangingConfigurations
+02-09 08:30:18.758 24972-24972/? W/dalvikvm: VFY: unable to resolve virtual method 421: Landroid/content/res/TypedArray;.getChangingConfigurations ()I
+02-09 08:30:18.758 24972-24972/? D/dalvikvm: VFY: replacing opcode 0x6e at 0x0002
+02-09 08:30:18.758 24972-24972/? I/dalvikvm: Could not find method android.content.res.TypedArray.getType, referenced from method android.support.v7.widget.TintTypedArray.getType
+02-09 08:30:18.758 24972-24972/? W/dalvikvm: VFY: unable to resolve virtual method 443: Landroid/content/res/TypedArray;.getType (I)I
+02-09 08:30:18.758 24972-24972/? D/dalvikvm: VFY: replacing opcode 0x6e at 0x0002
+02-09 08:30:18.814 24972-24972/? D/dalvikvm: GC_FOR_ALLOC freed 134K, 11% free 2451K/2728K, paused 1ms, total 2ms
+02-09 08:30:18.826 24972-24972/? W/ActionBarDrawerToggle: DrawerToggle may not show up because NavigationIcon is not visible. You may need to call actionbar.setDisplayHomeAsUpEnabled(true);
+02-09 08:30:18.838 24972-24972/? D/libEGL: loaded /system/lib/egl/libEGL_genymotion.so
+02-09 08:30:18.842 24972-24972/? D/libEGL: loaded /system/lib/egl/libGLESv1_CM_genymotion.so
+02-09 08:30:18.842 24972-24972/? D/libEGL: loaded /system/lib/egl/libGLESv2_genymotion.so
+02-09 08:30:18.874 24972-24972/? W/EGL_genymotion: eglSurfaceAttrib not implemented
+02-09 08:30:18.886 24972-24972/? D/OpenGLRenderer: Enabling debug mode 0
+02-09 08:30:18.890 24972-24975/? D/dalvikvm: GC_CONCURRENT freed 45K, 7% free 2794K/3004K, paused 2ms+0ms, total 3ms
+02-09 08:53:28.198 24972-24975/com.example.lucy.zoo D/dalvikvm: GC_CONCURRENT freed 379K, 16% free 2799K/3320K, paused 0ms+0ms, total 4ms
+</code></pre>
+
+<p>The code is good but I don't know what is the issue. Can anyone please look into my code and suggest me where does the problem lie. Thanks in advance.</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+ private DrawerLayout mdrawerlyout;
+    private ActionBarDrawerToggle mActionBarDrawerToggle;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+       mdrawerlyout = (DrawerLayout)findViewById(R.id.drawer_layout);
+       mActionBarDrawerToggle = new ActionBarDrawerToggle(this,mdrawerlyout,R.string.drawer_opend,R.string.drawer_closed){
+           @Override
+           public void onDrawerOpened(View drawerView) {
+               super.onDrawerOpened(drawerView);
+               if(getSupportActionBar() != null) {
+
+
+                   getSupportActionBar().setTitle(R.string.drawer_opend);
+               }
+           }
+
+           @Override
+           public void onDrawerClosed(View drawerView) {
+               super.onDrawerClosed(drawerView);
+               if(getSupportActionBar() !=null) {
+                   getSupportActionBar().setTitle(R.string.drawer_closed);
+               }
+           }
+       };
+         mdrawerlyout.setDrawerListener(mActionBarDrawerToggle);
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mActionBarDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mActionBarDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+        if(mActionBarDrawerToggle.onOptionsItemSelected(item))
+        {
+            return true;
+        }
+        int id = item.getItemId();
+
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>Below is my layout file</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.example.lucy.zoo.MainActivity"
+    tools:showIn="@layout/activity_main">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?android:attr/actionBarSize" />
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!" />
+    <ListView
+        android:id="@+id/drawer"
+        android:layout_gravity="start"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"></ListView>
+</android.support.v4.widget.DrawerLayout>
+</LinearLayout>
+</code></pre>

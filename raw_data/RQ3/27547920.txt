@@ -1,0 +1,222 @@
+<p>In my project, i have used a service to retrieving location continuously in background. My <code>LocationService</code> is as follows:</p>
+
+<pre><code>public class LocationService extends Service
+{
+
+    private static final int TWO_MINUTES = 1000 * 60 * 2;
+    public LocationManager locationManager;
+    public MyLocationListener listener;
+    public Location previousBestLocation = null;
+
+    Intent i;
+
+
+    @Override
+    public void onCreate()
+    {
+        super.onCreate();
+    i = new Intent("LOCATION_CHANGED");
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent,int flags, int startId)
+    {
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        listener = new MyLocationListener();
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4000, 0, listener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 4000, 0, listener);
+        return super.onStartCommand(intent, flags, startId);
+
+    }
+
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        return null;
+    }
+
+    protected boolean isBetterLocation(Location location, Location currentBestLocation) {
+        if (currentBestLocation == null) {
+            // A new location is always better than no location
+            return true;
+
+        }
+
+        // Check whether the new location fix is newer or older
+        long timeDelta = location.getTime() - currentBestLocation.getTime();
+        boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+        boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+        boolean isNewer = timeDelta > 0;
+
+        // If it's been more than two minutes since the current location, use the new location
+        // because the user has likely moved
+        if (isSignificantlyNewer) {
+            return true;
+            // If the new location is more than two minutes older, it must be worse
+        } else if (isSignificantlyOlder) {
+            return false;
+        }
+
+        // Check whether the new location fix is more or less accurate
+        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+        boolean isLessAccurate = accuracyDelta > 0;
+        boolean isMoreAccurate = accuracyDelta < 0;
+        boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+        // Check if the old and new location are from the same provider
+        boolean isFromSameProvider = isSameProvider(location.getProvider(),
+                currentBestLocation.getProvider());
+
+        // Determine location quality using a combination of timeliness and accuracy
+        if (isMoreAccurate) {
+            return true;
+        } else if (isNewer && !isLessAccurate) {
+            return true;
+        } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
+            return true;
+        }
+        return false;
+    }
+
+
+
+    /** Checks whether two providers are the same */
+    private boolean isSameProvider(String provider1, String provider2) {
+        if (provider1 == null) {
+            return provider2 == null;
+        }
+        return provider1.equals(provider2);
+    }
+
+
+
+    @Override
+    public void onDestroy() {
+        // handler.removeCallbacks(sendUpdatesToUI);
+        super.onDestroy();
+        Log.v("STOP_SERVICE", "DONE");
+        locationManager.removeUpdates(listener);
+    }
+
+    public static Thread performOnBackgroundThread(final Runnable runnable) {
+        final Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    runnable.run();
+                } catch(Exception e) {
+System.out.print(e);
+                }
+            }
+        };
+        t.start();
+        return t;
+    }
+
+
+
+
+    public class MyLocationListener implements LocationListener
+    {
+
+        public void onLocationChanged(final Location loc)
+        {
+            Log.i("**************************************", "Location changed");
+            if(isBetterLocation(loc, previousBestLocation)) {
+                String newLocation = "Lat: " + loc.getLatitude() + " and Long: " + loc.getLongitude();
+               i = new Intent("LOCATION_CHANGED");
+                i.putExtra("location", newLocation);
+                sendBroadcast(i);
+
+
+
+            }
+        }
+
+        public void onProviderDisabled(String provider)
+        {
+            Toast.makeText( getApplicationContext(), "Gps Disabled", Toast.LENGTH_SHORT ).show();
+        }
+
+
+        public void onProviderEnabled(String provider)
+        {
+            Toast.makeText(getApplicationContext(), "Gps Enabled", Toast.LENGTH_SHORT).show();
+        }
+
+
+        public void onStatusChanged(String provider, int status, Bundle extras)
+        {
+
+        }
+
+    }
+}
+</code></pre>
+
+<p>And I have received broadcasted intent in <code>MainActivity</code> as follows:</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+
+    TextView txt_location;
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        txt_location = (TextView)findViewById(R.id.current_location);
+
+
+        if (savedInstanceState == null) {
+            getFragmentManager().beginTransaction()
+                    .add(R.id.container, new PlaceholderFragment()).commit();
+
+
+        }
+
+   }
+
+
+
+    public class LocationBroadcast extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context ctx, Intent intent) {
+
+            txt_location.setText(intent.getExtras().getString("location"));
+        }
+
+    }
+
+
+
+       public static class PlaceholderFragment extends Fragment {
+
+
+        public PlaceholderFragment() {
+
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+
+
+            return inflater.inflate(R.layout.fragment_main, container,
+                    false);
+
+        }
+    }
+
+}
+</code></pre>
+
+<p>All i want to do is to set location's latitude and longitude on <code>txt_location</code>. this code isn't working and showing <code>txt_location</code> as it is:</p>
+
+<p><img src="http://i.stack.imgur.com/HefME.jpg" alt="enter image description here"></p>
+
+<p>As you can see, it is not showing any location updates...Logcat isn't showing any errors..Can anyone please guide me what is the mistake?</p>

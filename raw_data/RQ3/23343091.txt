@@ -1,0 +1,147 @@
+<p>I'm working an an android app for the last while.
+I have a homepage with a list of buttons...linking to new activities..
+One of the buttons is a gallery..</p>
+
+<p>On the main activity I have an onClick method to open the buttons:</p>
+
+<pre><code>private void init() {
+
+    button3= (Button) findViewById(R.id.button3);//find the button
+
+    button3.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            Intent i = new Intent(v.getContext(), Scholarships.class);
+            startActivity(i);
+            finish();//close main activity after start info activity
+            }
+        });// links to scholarships page
+
+
+    button4= (Button) findViewById(R.id.button4);//find the button
+
+    button4.setOnClickListener(new View.OnClickListener() {
+
+         @Override
+         public void onClick(View v) {
+             Intent i = new Intent(v.getContext(), GalleryActivity.class);
+             startActivity(i);
+             finish();//close main activity after start info activity
+             }
+         });// links to gallery page    
+}
+</code></pre>
+
+<p>Button 3 works fine... but when I click button 4 i get "unfortunatly your app has stopped"</p>
+
+<p>The GalleryActivity does not have much in it at all for there to be errors..</p>
+
+<pre><code>package ie.gmit.project;
+
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.widget.GridView;
+
+public class GalleryActivity extends ActionBarActivity {
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_gallery);
+    GridView gridView = (GridView)
+            findViewById(R.id.grid_view);
+
+    gridView.setAdapter(new ImageAdapter(this));
+
+}
+}
+</code></pre>
+
+<p>with the xml:</p>
+
+<pre><code>   <GridView
+    android:id="@+id/grid_view" 
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent" 
+    android:numColumns="auto_fit" 
+    android:columnWidth="90dp" 
+    android:horizontalSpacing="10dp" 
+    android:verticalSpacing="10dp" 
+    android:gravity="center" 
+    android:stretchMode="columnWidth" > 
+
+</GridView>
+</code></pre>
+
+<p>I have set up the imageAdapter in a different class:</p>
+
+<pre><code>package ie.gmit.project;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter { 
+ private Context mContext; 
+
+ // constructor for this class 
+ public ImageAdapter(Context c) { 
+ mContext = c; 
+ }
+
+ public int getCount() { 
+     return mThumbIds.length; 
+ }
+
+@Override
+public Object getItem(int position) {
+    // TODO Auto-generated method stub
+    return null;
+}
+
+@Override
+public long getItemId(int position) {
+    // TODO Auto-generated method stub
+    return 0;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if(convertView == null){
+
+        imageView = new ImageView(mContext);
+
+        //set parameters
+        imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    }
+    else{
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+
+    return imageView;
+}
+
+public Integer[] mThumbIds = {R.drawable.club0, R.drawable.club1, 
+        R.drawable.club2, R.drawable.club3, R.drawable.club4, 
+        R.drawable.club5, R.drawable.club6, R.drawable.club7 }; 
+}
+</code></pre>
+
+<p>For some reason unknown to me, the project fails when I click "Gallery"... and as far as I can see... I have done everything correctly so I really am at a brick wall.
+I have no errors.. and everything else is running fine. But the gallery..</p>
+
+<p>Any comments or input is greatly appreciated guys.</p>
+
+<p>Thanks.</p>
+
+<p>EDIT: I checked the logCat and I cant see anything 
+alot of things in red with tags of AndroidRuntime</p>

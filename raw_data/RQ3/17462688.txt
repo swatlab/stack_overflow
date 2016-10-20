@@ -1,0 +1,245 @@
+<p>What code is used to detect any changes made in SharedPreferences when the app is running?
+The changes made in my SharedPreferences are only reflected when the app is closed and started  again. It does not gets changed during the same session.</p>
+
+<p>To fetch the preferences I use the following code
+In SettingsActivity.java</p>
+
+<pre><code>@Override
+    public void onCreate(Bundle savedInstanceState) 
+    {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.pref_general);
+        bindPreferenceSummaryToValue(findPreference("unit_type"));
+    }
+</code></pre>
+
+<p>and in activity.java</p>
+
+<pre><code>final SharedPreferences unitpreference = PreferenceManager.getDefaultSharedPreferences(this);
+final String unitstring = unitpreference.getString("unit_type", "");
+</code></pre>
+
+<p>But what and where should I write some code so that the changes are made instantly?</p>
+
+<p>Full Updated Code:
+SettingsActivity.java</p>
+
+<pre><code>package com.basic.mileagecalculatorwithsettings;
+
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.res.Configuration;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.preference.ListPreference;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
+import android.preference.RingtonePreference;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.MenuItem;
+import android.support.v4.app.NavUtils;
+import java.util.List;
+
+public class SettingsActivity extends PreferenceActivity 
+{
+
+private static final boolean ALWAYS_SIMPLE_PREFS = false;
+protected static final String TAG = null;
+
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+@Override
+protected void onCreate(Bundle savedInstanceState) 
+{
+    super.onCreate(savedInstanceState);
+    setupActionBar();
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        // Display the fragment as the main content.
+        getFragmentManager().beginTransaction()
+                .replace(android.R.id.content, new GeneralPreferenceFragment())
+                .commit();
+    } else {
+        // use normal preferences
+        setupSimplePreferencesScreen();
+
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mPrefsListener);
+    }
+}
+
+SharedPreferences.OnSharedPreferenceChangeListener mPrefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+    @Override
+    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
+        if ("unit_type".equals(key)) {
+            Log.v(TAG, "Setting has been changed!");
+        }
+    }
+
+};
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+private void setupActionBar() 
+{
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) 
+    {
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+}
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) 
+    {
+        switch (item.getItemId()) 
+        {
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) 
+    {
+        super.onPostCreate(savedInstanceState);
+
+        //setupSimplePreferencesScreen();
+    }
+    private void setupSimplePreferencesScreen() {
+        if (!isSimplePreferences(this)) {
+            return;
+        }
+        addPreferencesFromResource(R.xml.pref_general);}
+    @Override
+    public boolean onIsMultiPane() 
+    {
+        return isXLargeTablet(this) && !isSimplePreferences(this);
+    }
+    private static boolean isXLargeTablet(Context context) 
+    {
+        return (context.getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
+    }
+    private static boolean isSimplePreferences(Context context) 
+    {
+        return ALWAYS_SIMPLE_PREFS
+                || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
+                || !isXLargeTablet(context);
+    }
+    @Override
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public void onBuildHeaders(List<Header> target) 
+    {
+        if (!isSimplePreferences(this)) 
+        {
+            //loadHeadersFromResource(R.xml.pref_headers, target);
+        }
+    };
+    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) 
+        {
+            String stringValue = value.toString();
+
+            if (preference instanceof ListPreference) 
+            {
+                ListPreference listPreference = (ListPreference) preference;
+                int index = listPreference.findIndexOfValue(stringValue);
+                preference.setSummary(index >= 0 ? listPreference.getEntries()[index]:null);
+            }
+            else if (preference instanceof RingtonePreference) 
+            {
+                if (TextUtils.isEmpty(stringValue))
+                {
+                    //preference.setSummary(R.string.pref_ringtone_silent);
+                }
+                else 
+                {
+                    Ringtone ringtone = RingtoneManager.getRingtone(
+                            preference.getContext(), Uri.parse(stringValue));
+                    if (ringtone == null) 
+                    {preference.setSummary(null);}
+                    else 
+                    {
+                        String name = ringtone.getTitle(preference.getContext());
+                        preference.setSummary(name);
+                    }
+                }
+            }
+            else 
+            {
+                preference.setSummary(stringValue);
+            }
+            return true;
+        }
+};
+private static void bindPreferenceSummaryToValue(Preference preference) 
+{
+    preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,PreferenceManager.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(),""));
+}
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+public static class GeneralPreferenceFragment extends PreferenceFragment 
+{
+    @Override
+    public void onCreate(Bundle savedInstanceState) 
+    {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.pref_general);
+        bindPreferenceSummaryToValue(findPreference("example_list"));
+        bindPreferenceSummaryToValue(findPreference("fuel_type"));
+        bindPreferenceSummaryToValue(findPreference("unit_type"));
+
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
+    }
+    public void onPause(Bundle savedInstanceState)
+    {
+      super.onPause();
+      addPreferencesFromResource(R.xml.pref_general);
+
+     }
+}
+}
+</code></pre>
+
+<p>pref_general.xml
+    </p>
+
+<pre><code><ListPreference
+    android:defaultValue="1"
+    android:entries="@array/pref_example_list_titles"
+    android:entryValues="@array/pref_example_list_values"
+    android:key="city_list"
+    android:negativeButtonText="@null"
+    android:positiveButtonText="@null"
+    android:title="@string/pref_title_add_friends_to_messages" android:enabled="true"/>
+
+<ListPreference
+    android:defaultValue="1"
+    android:entries="@array/pref_fuel_type_titles"
+    android:entryValues="@array/pref_fuel_type_values"
+    android:key="fuel_type"
+    android:negativeButtonText="@null"
+    android:positiveButtonText="@null"
+    android:title="@string/pref_title_select_fuel" android:enabled="true"/>
+
+<ListPreference
+    android:defaultValue="1"
+    android:entries="@array/pref_units_titles"
+    android:entryValues="@array/pref_units_values"
+    android:key="unit_type"
+    android:negativeButtonText="@null"
+    android:positiveButtonText="@null"
+    android:title="@string/pref_title_unit" android:enabled="true"/>
+
+</PreferenceScreen>
+</code></pre>

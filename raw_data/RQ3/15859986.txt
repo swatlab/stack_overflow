@@ -1,0 +1,221 @@
+<p>I am new to SQL.I have a database called emergency_no which I created using Sqlite manager. It is a simple database with just one table named "emergency_no". The database named emergency_no.sqlite is in my assets folder but when I run it on emulator it shows:</p>
+
+<pre><code>android.sqlite.SQLiteException:no such table :emergency_no:
+</code></pre>
+
+<p>Although I got emergency_no.sqlite and emergency_no.journel at /data/data/com.citymasetro/database/</p>
+
+<p>my dbhelper code is below</p>
+
+<pre><code>package com.citymaestro;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+
+ public class Dbmanager1 {
+
+public static final String  KEY_ROWID="_id";
+public static final String  policeno="police_no";
+public static final String  fireno="fire_no";
+public static final String  ambulanceno="ambulance_no";
+public static final String  womenno="women_cell";
+
+public static final String  DATABASE_NAME="emergency_no";
+public static final String DATABASE_TABLE="emergency_no";
+public static final int DATABASE_VERSION=1;
+private static String DB_PATH = "/data/data/com.citymaestro/databases/";
+
+
+public Dbhelper ourhelper;
+public static Context ourcontext;
+public SQLiteDatabase ourdatabase;
+
+
+private static class Dbhelper extends SQLiteOpenHelper{
+    private boolean mCreateDatabase = false;
+    private boolean mUpgradeDatabase = false;
+
+    public Dbhelper(Context context) {
+        super(context, DATABASE_NAME, null, 1);
+        // TODO Auto-generated constructor stub
+    }
+
+
+
+
+
+
+    public void initializeDatabase(String path) {
+           // DATABASE_PATH = path;
+            getWritableDatabase();
+
+            if(mUpgradeDatabase) {
+                ourcontext.deleteDatabase(DATABASE_NAME);
+            }
+
+            if(mCreateDatabase || mUpgradeDatabase) {
+                try {
+                    createDataBase();
+                } catch (IOException e) {
+                    throw new Error("Error copying database");
+                }
+            }
+        }
+
+
+        public void createDataBase() throws IOException
+        {
+            boolean dbExist = checkDataBase();
+
+
+            if(dbExist)
+            {
+                //do nothing - database already exist
+            }else{
+
+                this.getReadableDatabase();
+
+                try {
+
+                    copyDataBase();
+
+                } catch (IOException e) {
+
+                    throw new Error("Error copying database");
+
+                }
+            }
+
+        }
+
+        private boolean checkDataBase()
+        {
+            SQLiteDatabase checkDB = null;
+
+            try
+            {
+                String myPath = DB_PATH + DATABASE_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.CREATE_IF_NECESSARY);
+
+
+            }catch(SQLiteException e)
+            {
+                //database does't exist yet.
+            }
+            if(checkDB != null)
+            {
+                checkDB.close();
+            }
+
+            return checkDB != null ? true : false;
+        }
+        private void copyDataBase() throws IOException
+        {
+            //Open your local db as the input stream
+            InputStream myInput = ourcontext.getAssets().open(DATABASE_NAME);
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DATABASE_NAME;
+
+            //Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            //transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer))>0)
+            {
+                myOutput.write(buffer, 0, length);
+            }
+            //Close the streams
+             myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+    /*  try {
+            createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            Log.d("GAG","oncreatem");
+        }
+        */
+        mCreateDatabase = true;
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+        mUpgradeDatabase = true;
+    }
+
+}
+public Dbmanager1(Context c)
+{
+    ourcontext=c;
+    //Dbhelper dbh=new Dbhelper(ourcontext);
+
+    //Log.d("gag","constru");
+}
+ public Dbmanager1 open(){
+     ourhelper=new Dbhelper(ourcontext);
+     ourdatabase=ourhelper.getWritableDatabase();
+     return this;
+ }
+
+ public void close(){
+     ourhelper.close();
+
+ }
+ public String getdata() {
+        // TODO Auto-generated method stub
+        String[] columns= new String[]{ KEY_ROWID,policeno};
+        Cursor c =ourdatabase.query(DATABASE_TABLE, columns, null, null,null, null, null);
+        String result="";
+        int irow=c.getColumnIndex(KEY_ROWID);
+        int irow2=c.getColumnIndex(policeno);
+        for(c.moveToFirst(); !c.moveToLast();c.moveToNext()){
+            result=result + c.getString(irow) + "" +c.getString(irow2) + "\n";
+        }
+
+        return result;
+    }
+
+
+}
+</code></pre>
+
+<p>I am calling this from my searchscreen.java</p>
+
+<pre><code>       String str;
+    db.open();
+    // Log.d("TAG","before str");
+     try {
+        str=db.getdata();
+        // Log.d("TAG",str);
+         db.open();
+    } catch (Exception e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        Log.d("TAG",e.toString());
+    }
+    searchscreen sc;
+    //sc= db.getdata(i, k);
+    db.close();
+</code></pre>
+
+<p>I am not able to find the mistake. Thanks in advance</p>

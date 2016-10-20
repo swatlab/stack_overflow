@@ -1,0 +1,104 @@
+<p><img src="http://i.stack.imgur.com/HMVo8.png" alt="enter image description here"></p>
+
+<p>this image shows the layout of what i want to achieve, the black squares are images from the drawable folder, the red square is a framelayout with 2 images on top of one another. the problem is this : 
+<img src="http://i.stack.imgur.com/awNm4.png" alt="enter image description here"></p>
+
+<p>the red square (the framelayout) doesnt appear. See code below...</p>
+
+<pre><code> public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+
+    public int getCount() {
+        return mThumbIds.length;
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+
+    // references to our images
+    private Integer[] mThumbIds = {
+            R.drawable.sample_2, R.drawable.sample_3,
+            R.drawable.sample_4, R.drawable.sample_5,
+            R.drawable.sample_6, R.drawable.sample_7
+    };
+}
+</code></pre>
+
+<p>i got this fine working code from <a href="http://developer.android.com/guide/topics/ui/layout/gridview.html" rel="nofollow">Android Developers</a> and it worked fine im my program, the thing is i wanted to change some item in this line :</p>
+
+<pre><code>private Integer[] mThumbIds = {
+    R.drawable.sample_2, R.drawable.sample_3,
+    R.drawable.sample_4, R.drawable.sample_5,
+    R.drawable.sample_6, R.drawable.sample_7
+}; 
+</code></pre>
+
+<p>i changed <code>R.drawable.sample_2</code> to <code>R.layout.some_layout</code></p>
+
+<p>here is the <code>some_layout.xml</code> :</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <FrameLayout
+        android:id="@+id/frame"
+        android:layout_width="wrap_content"
+        android:layout_height="115dp"
+        android:layout_margin="2dp"
+        android:layout_weight="0.33" >
+
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/imagebehind" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/frameimage" />
+    </FrameLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p>all item from the line below appears :</p>
+
+<pre><code>private Integer[] mThumbIds = {
+  R.layout.some_layout, R.drawable.sample_3,
+  R.drawable.sample_4, R.drawable.sample_5,
+  R.drawable.sample_6, R.drawable.sample_7
+};
+</code></pre>
+
+<p>except for the <code>R.layout.some_layout</code>.</p>

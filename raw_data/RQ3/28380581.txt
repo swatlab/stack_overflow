@@ -1,0 +1,159 @@
+<p>I have an odd problem, first time I run my app and try to copy a database from assets folder to it, it crashes but after that it is OK and database is copied, I really want to eliminate the first time crashes in my app. I've been searching for a while but I cannot find someone with same problem as me. Here is my class for copying a database from assets folder:</p>
+
+<pre><code>public  class holidaysDatabaseAdapter extends SQLiteOpenHelper{
+
+    private static String DATABASE_NAME = "holydays.sqlite";
+    //public final static String DATABASE_PATH = "/data/data/myPackage/databases/";
+    private static final int DATABASE_VERSION = 1;
+
+
+    private SQLiteDatabase dataBase;
+    private final Context dbContext;
+
+    public holidaysDatabaseAdapter(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.dbContext = context;
+        //    DATABASE_NAME = "holydays.sqlite";
+        // checking database and open it if exists
+        if (checkDataBase()) {
+            openDataBase();
+        } else
+        {
+            try {
+                this.getReadableDatabase();
+                copyDataBase();
+                this.close();
+                openDataBase();
+
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+            Toast.makeText(context, "Initial database is created", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void copyDataBase() throws IOException{
+        InputStream myInput = dbContext.getAssets().open(DATABASE_NAME);
+        // String outFileName =dbContext.getDatabasePath("holidays.sqlite").toString();
+        // DATABASE_PATH + DATABASE_NAME;
+        OutputStream myOutput = new FileOutputStream(dbContext.getDatabasePath("holidays.sqlite"));
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+        String dbPath = dbContext.getDatabasePath("holidays.sqlite").toString();
+        dataBase = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.CREATE_IF_NECESSARY);
+    }
+
+    public boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        boolean exist = false;
+        try {
+            String dbPath = dbContext.getDatabasePath("holidays.sqlite").toString();
+            checkDB = SQLiteDatabase.openDatabase(dbPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+            Log.v("db log", "database does't exist :"+e.toString());
+        }
+
+        if (checkDB != null) {
+            exist = true;
+            checkDB.close();
+        }
+        return exist;
+    }
+
+    public Cursor fetchAllProfiles() {
+
+        Cursor mCursor = dataBase.query("ninety", new String[] {"_id","date","description"},  
+                null, null, null, null, null);
+
+        if (mCursor != null) {
+            mCursor.moveToFirst();
+        }
+        return mCursor;
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }}
+</code></pre>
+
+<p>And i instantiate that in my app like:</p>
+
+<pre><code>holidaysDatabaseAdapter db=new holidaysDatabaseAdapter(this);
+</code></pre>
+
+<p>And my LogCat is:</p>
+
+<pre><code>02-07 13:13:23.199: E/SQLiteLog(29509): (14) cannot open file at line 30046 of [9491ba7d73]
+02-07 13:13:23.199: E/SQLiteLog(29509): (14) os_unix.c:30046: (2) open(/data/data/ir.nimbit.newcrm/databases/holidays.sqlite) - 
+02-07 13:13:23.202: E/SQLiteDatabase(29509): Failed to open database '/data/data/ir.nimbit.newcrm/databases/holidays.sqlite'.
+02-07 13:13:23.202: E/SQLiteDatabase(29509): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:806)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:791)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at ir.nimbit.database.holidaysDatabaseAdapter.checkDataBase(holidaysDatabaseAdapter.java:79)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at ir.nimbit.database.holidaysDatabaseAdapter.<init>(holidaysDatabaseAdapter.java:35)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at ir.nimbit.newcrm.firstPage.onCreate(firstPage.java:95)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.Activity.performCreate(Activity.java:5933)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2251)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.ActivityThread.access$800(ActivityThread.java:144)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.os.Handler.dispatchMessage(Handler.java:102)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.os.Looper.loop(Looper.java:135)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at android.app.ActivityThread.main(ActivityThread.java:5221)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at java.lang.reflect.Method.invoke(Native Method)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at java.lang.reflect.Method.invoke(Method.java:372)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+02-07 13:13:23.202: E/SQLiteDatabase(29509):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+02-07 13:13:23.202: V/db log(29509): database does't exist :android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+02-07 13:13:23.264: D/AndroidRuntime(29509): Shutting down VM
+02-07 13:13:23.266: E/AndroidRuntime(29509): FATAL EXCEPTION: main
+02-07 13:13:23.266: E/AndroidRuntime(29509): Process: ir.nimbit.newcrm, PID: 29509
+02-07 13:13:23.266: E/AndroidRuntime(29509): java.lang.Error: Error copying database
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at ir.nimbit.database.holidaysDatabaseAdapter.<init>(holidaysDatabaseAdapter.java:46)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at ir.nimbit.newcrm.firstPage.onCreate(firstPage.java:95)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.Activity.performCreate(Activity.java:5933)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2251)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.ActivityThread.access$800(ActivityThread.java:144)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.os.Handler.dispatchMessage(Handler.java:102)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.os.Looper.loop(Looper.java:135)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at android.app.ActivityThread.main(ActivityThread.java:5221)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at java.lang.reflect.Method.invoke(Native Method)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at java.lang.reflect.Method.invoke(Method.java:372)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+02-07 13:13:23.266: E/AndroidRuntime(29509):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+</code></pre>
+
+<p>Please guide me.Thanks</p>

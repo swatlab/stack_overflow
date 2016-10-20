@@ -1,0 +1,178 @@
+<p>My app has a navigation drawer, which worked fine, until I tried to add items to it. I imported the design library, now it crashes on startup even though my compiler doesn't throw me an error.</p>
+
+<p>These are the errors I get:</p>
+
+<pre><code>java.lang.RuntimeException: Unable to start activity ComponentInfo{com.hola/com.hola.MainActivity}: android.view.InflateException: Binary XML file line #34: Error inflating class android.support.design.widget.NavigationView
+[...]
+Caused by: android.view.InflateException: Binary XML file line #34: Error inflating class android.support.design.widget.NavigationView
+[...]
+Caused by: java.lang.reflect.InvocationTargetException
+[...]
+Caused by: java.lang.NoClassDefFoundError: android.support.v7.internal.view.menu.MenuBuilder
+at android.support.design.widget.NavigationView.<init>(NavigationView.java:95)
+at android.support.design.widget.NavigationView.<init>(NavigationView.java:88)
+[...]
+at com.hola.MainActivity.onCreate(MainActivity.java:28)
+[...]
+at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>This is my MainActivity.java</p>
+
+<pre><code>package com.hola;
+
+import android.content.res.Configuration;
+import android.os.Build;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.support.design.*;
+import android.view.Menu;
+import android.view.MenuItem;
+
+public class MainActivity extends AppCompatActivity {
+
+Toolbar toolbar;
+ActionBar actionbar;
+DrawerLayout drawerlayout;
+ActionBarDrawerToggle drawertoggle;
+NavigationView navigationview;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    toolbar = (Toolbar) findViewById(R.id.toolbar1);
+    setSupportActionBar(toolbar);
+    if(Build.VERSION.SDK_INT >= 21) {
+        toolbar.setElevation(25);
+        toolbar.setSubtitle("Vertretungen");
+    }
+    actionbar = getSupportActionBar();
+    actionbar.setDisplayHomeAsUpEnabled(true);
+    //drawertoggle.syncState();
+
+    drawerlayout = (DrawerLayout) findViewById(R.id.drawerlayoutgesamt);
+    drawertoggle = new ActionBarDrawerToggle(MainActivity.this, drawerlayout, R.string.useless1, R.string.useless2);
+    drawerlayout.setDrawerListener(drawertoggle);
+
+    navigationview = (NavigationView)findViewById(R.id.navview);
+    navigationview.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(MenuItem menuItem) {
+            switch (menuItem.getItemId()) {
+                case R.id.drawerviewitem1: {
+                    break;
+                }
+                case R.id.drawerviewitem2: {
+                    break;
+                }
+                case R.id.drawerviewitem3: {
+                    break;
+                }
+            }
+
+            drawerlayout.closeDrawers();
+            menuItem.setChecked(true);
+            return false;
+        }
+    });
+}
+
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    if(drawertoggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    drawertoggle.syncState();
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    drawertoggle.onConfigurationChanged(new Configuration());
+}
+
+}
+</code></pre>
+
+<p>And this is my activity_main.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+xmlns:app="http://schemas.android.com/apk/res-auto">
+
+<android.support.v4.widget.DrawerLayout
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    android:id="@+id/drawerlayoutgesamt">
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/activitylayout">
+
+        <android.support.v7.widget.Toolbar
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/toolbar1"
+            android:background="@color/primary"
+            android:theme="@style/toolbarstyle"
+            android:fitsSystemWindows="true"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/drawerlayoutsingle"
+        android:layout_gravity="start"
+        >
+
+        <android.support.design.widget.NavigationView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/navview"
+            app:menu="@menu/navigation_view_menu"/>
+
+    </RelativeLayout>
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p></p>
+
+<p>To me, it seems like I've done everything correctly. Can anyone help me to get this running? Thanks in advance.</p>

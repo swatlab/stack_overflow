@@ -1,0 +1,481 @@
+<p>I watched a nice Tutorial Video about creating a Navigation Drawer and using custom listView with RecycleView. The NaviDrawer works fine , but when I tried to do it  myself using onClick methods, I failed. Can anyone tell me what have I done wrong and how to make my code better?</p>
+
+<p><strong>NavigationDrawer</strong></p>
+
+<pre><code>import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.internal.widget.AdapterViewCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class NavigationDrawerFragment extends Fragment implements AdapterView.OnItemClickListener {
+
+    public static final String PREF_FILE_NAME = "testpref";
+    public static final String KEY_USER_LEARNED_DRAWER = "user_learned_drawer";
+
+    private RecyclerView recyclerView;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private Adapter adapter;
+    private DrawerLayout mDrawerLayout;
+    private boolean mUserLearnedDrawer;
+    private boolean mFromSavedInstanceState;
+    private View containerView;
+
+    public NavigationDrawerFragment() {
+        // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mUserLearnedDrawer = Boolean.valueOf(readFromPref(getActivity(), KEY_USER_LEARNED_DRAWER, "false"));
+        if (savedInstanceState != null) ;
+        mFromSavedInstanceState = true;
+
+    }
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        View layout = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+
+        recyclerView = (RecyclerView) layout.findViewById(R.id.drawerList);
+
+
+        adapter = new Adapter(getActivity(), getData());
+
+        recyclerView.addOnItemTouchListener(new RecyclerTouchListener(getActivity(), recyclerView, new RecyclerTouchListener.ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+if(view == "MainActivity")
+        {
+            startActivity(new Intent(NavigationDrawerFragment.this, SubActivity.class));
+        }
+
+        if(view == "page 2")
+        {
+            startActivity(new Intent(NavigationDrawerFragment.this, Page_2.class));
+        }
+
+        if(view == "page 3")
+        {
+            startActivity(new Intent(NavigationDrawerFragment.this, Page_3.class));
+        }
+            }
+
+
+            @Override
+            public void onLongClick(View view, int position) {
+
+            }
+        }
+
+        ));
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new
+
+                LinearLayoutManager(getActivity()
+
+        ));
+        return layout;
+
+
+    }
+
+
+    public static List<Information> getData()
+
+
+    {
+        List<Information> data = new ArrayList<>();
+        int[] icons = {R.drawable.ic_action_favorite, R.drawable.ic_action_group, R.drawable.ic_action_important};
+        String[] titles = {"MainActivity", "page 2", "page 3"};
+        for (int i = 0; i < titles.length && i < icons.length; i++) {
+
+            Information current = new Information();
+            current.iconId = icons[i];
+            current.title = titles[i];
+            data.add(current);
+
+        }
+        return data;
+    }
+
+
+    public void setUp(int fragmentId, DrawerLayout drawerLayout, Toolbar toolbar) {
+        containerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+        mDrawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_closed) {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (mUserLearnedDrawer) {
+                    mUserLearnedDrawer = true;
+                    saveToPreference(getActivity(), KEY_USER_LEARNED_DRAWER, mUserLearnedDrawer + "");
+
+                }
+                getActivity().invalidateOptionsMenu();
+            }
+
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                getActivity().invalidateOptionsMenu();
+
+            }
+        };
+
+        if (mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(containerView);
+
+        }
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+    }
+
+
+    public static void saveToPreference(Context context, String prefName, String prefValue) {
+        SharedPreferences sharedPref = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(prefName, prefValue);
+        editor.apply();
+    }
+
+    public static String readFromPref(Context context, String prefName, String defaultValue) {
+        SharedPreferences sharedPref = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);
+        return sharedPref.getString(prefName, defaultValue);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+    }
+}
+
+class RecyclerTouchListener implements RecyclerView.OnItemTouchListener {
+    private ClickListener clickListener;
+    private GestureDetector gestureDetector;
+
+    public RecyclerTouchListener(Context context, final RecyclerView recyclerView, final ClickListener clickListener) {
+        this.clickListener = clickListener;
+        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                View child = recyclerView.findChildViewUnder(e.getX(), e.getY());
+                if (child != null && clickListener != null) {
+
+                    clickListener.onLongClick(child, recyclerView.getChildPosition(child));
+                }
+                super.onLongPress(e);
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+        View child = rv.findChildViewUnder(e.getX(), e.getY());
+        if (child != null && clickListener != null) {
+            clickListener.onClick(child, rv.getChildPosition(child));
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onTouchEvent(RecyclerView recyclerView, MotionEvent motionEvent) {
+
+    }
+
+    public static interface ClickListener {
+        public void onClick(View view, int position);
+
+        public void onLongClick(View view, int position);
+
+    }
+}
+</code></pre>
+
+<hr>
+
+<p><strong>Adapter.java</strong></p>
+
+<pre><code>import android.content.Context;
+import android.content.Intent;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import java.util.Collections;
+import java.util.List;
+
+
+class Adapter extends RecyclerView.Adapter< Adapter.myViewHolder> {
+
+    List<Information> data = Collections.emptyList();
+    private Context context;
+    private ClickListener clickListener;
+    private LayoutInflater inflator;
+
+
+    public Adapter(Context context, List<Information> data) {
+        inflator = LayoutInflater.from(context);
+        this.context = context;
+        this.data = data;
+    }
+
+    @Override
+    public myViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = inflator.inflate(R.layout.costom_row, parent, false);
+        myViewHolder holder = new myViewHolder(view);
+        return holder;
+    }
+
+
+    @Override
+    public void onBindViewHolder(myViewHolder holder, int position) {
+        Information current = data.get(position);
+
+        holder.title.setText(current.title);
+        holder.icon.setImageResource(current.iconId);
+
+
+    }
+    public void setClickListener(ClickListener clickListener){
+        this.clickListener=clickListener;
+    }
+
+    @Override
+    public int getItemCount() {
+        return data.size();
+    }
+
+
+    //Image + Text von dem Drawer
+    class myViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        TextView title;
+        ImageView icon;
+
+        public myViewHolder(View itemView) {
+            super(itemView);
+            itemView.setOnClickListener(this);
+            title = (TextView) itemView.findViewById(R.id.listText);
+            icon = (ImageView) itemView.findViewById(R.id.listIcon);
+        }
+
+        @Override
+        public void onClick(View v) {
+        }
+    }
+    public interface ClickListener{
+        public void itemClicked(View view,int position);
+    }
+}
+</code></pre>
+
+<p><strong>MainActivity</strong></p>
+
+<pre><code>import android.content.Intent;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.ShareActionProvider;
+
+
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toolbar;
+
+
+public class MainActivity extends ActionBarActivity {
+
+    private android.support.v7.widget.Toolbar toolbar;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main_appbar);
+
+        toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);  //das Icon womit man den Drawer Schließt/Öffnet
+        NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
+                getFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+        drawerFragment.setUp(R.id.fragment_navigation_drawer,(DrawerLayout) findViewById(R.id.drawer_layout_0), toolbar);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.navigate) {
+            startActivity(new Intent(this, SubActivity.class));
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p><strong>Information.java</strong>
+(holds the "Titles" as strings and the icons i use )</p>
+
+<pre><code>public class Information {
+    int iconId;
+    String title;
+}
+</code></pre>
+
+<p><strong>the costom_row.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/listIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:src="@drawable/ic_back" />
+
+    <TextView
+        android:id="@+id/listText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="16dp"
+        android:text="heyyyy"
+        android:textSize="22dp" />
+</LinearLayout>
+</code></pre>
+
+<p><strong>the main_layout</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/app_bar"
+        layout="@layout/app_bar" />
+
+    <android.support.v4.widget.DrawerLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/drawer_layout_0"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+
+        <fragment
+            android:id="@+id/fragment_navigation_drawer"
+            android:name="com.example.dima.myapplication.NavigationDrawerFragment"
+            android:layout_width="@dimen/nav_drawer_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            app:layout="@layout/fragment_navigation_drawer"
+            tools:layout="@layout/fragment_navigation_drawer" />
+
+
+    </android.support.v4.widget.DrawerLayout>
+</LinearLayout>
+</code></pre>
+
+<p><strong>NaviDrawerLayout</strong></p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primaryColor"
+    tools:context="com.example.dima.myapplication.NavigationDrawerFragment"
+    android:id="@+id/rela">
+
+    <RelativeLayout
+        android:id="@+id/containerDrawerImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/imageBarney"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_background_two" />
+
+    </RelativeLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/drawerList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/containerDrawerImage">
+
+
+    </android.support.v7.widget.RecyclerView>
+
+
+</RelativeLayout>
+</code></pre>

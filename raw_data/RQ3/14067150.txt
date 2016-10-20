@@ -1,0 +1,117 @@
+<p>This happened for the first time, as soon as I am done with executing queries database connection gets closed. In following code, just after the first loop when I try to execute more queries I am getting an error that database connection is already closed. If I manually open database again then the code runs fine i.e. queries execute without any error. </p>
+
+<p>Why is the database getting closed when I am not doing it? </p>
+
+<p>openDB() and closeDB() are opening and closing connection to database. </p>
+
+<p>Code: <a href="http://pastie.org/5587804#32,34" rel="nofollow">http://pastie.org/5587804#32,34</a> </p>
+
+<pre><code>public void insertCheckedValuesInTable(int test_id,
+            ArrayList<ArrayList<String>> checkedValues) {
+        // TODO Auto-generated method stub
+        openDB();
+        // first collect all the values then insert
+        // insert test_id, Q_id , correct answer and submitted answer in table
+        // testAnswerSubmitted
+
+        for (int i = 0; i < checkedValues.size(); i++) {
+            int Q_id = getQ_id(checkedValues.get(i).get(0).toString().trim());
+            String correctAns = getCorrectAnswer(
+                    test_id,
+                    Integer.parseInt(checkedValues.get(i).get(0).toString()
+                            .trim()));
+            String submittedAns = checkedValues.get(i).get(1).toString().trim();
+            int marksObt;
+            Log.e("value " + i, correctAns.equalsIgnoreCase(submittedAns) + "");
+            // get marks
+            if (correctAns.equalsIgnoreCase(submittedAns)) {
+                // = marks for this question;
+                Cursor cur = myDataBase.rawQuery(
+                        "(SELECT Marks FROM testQuestionBank WHERE Test_id ="
+                                + test_id + " AND Q_id = " + Q_id + ")", null);
+                cur.moveToFirst();
+                marksObt = Integer.parseInt(cur.getString(0));
+                cur.close();
+            } else {
+                marksObt = 0;
+            }
+            // done collecting all values, insert in db now
+
+            Log.e("database state", myDataBase.isOpen() + "");
+
+            openDB();
+
+            String sql = "Insert INTO testAnswerSubmitted (Test_id, Q_id, CorrectAnswer, SubmittedAnswer, MarksObtained) VALUES ( "
+                    + test_id
+                    + ", '"
+                    + Q_id
+                    + "', '"
+                    + correctAns
+                    + "', '"
+                    + submittedAns + "', '" + marksObt + "') ";
+            myDataBase.execSQL(sql);
+            Log.v("Executed", sql);
+        }
+        closeDB();
+    }
+</code></pre>
+
+<p>openDB():</p>
+
+<pre><code>public void openDB() {
+        try {
+            createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            Log.e("DataBaseHelper", e.toString());
+        }
+
+        openDataBase();
+        getWritableDatabase();
+
+    }
+</code></pre>
+
+<p>where createDatabase() is :</p>
+
+<pre><code>public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+            // do nothing - database already exist
+        } else {
+
+            // By calling this method and empty database will be created into
+            // the default system path
+            // of your application so we are gonna be able to overwrite that
+            // database with our database.
+            // this.getReadableDatabase(); // changed to write
+            this.getWritableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+</code></pre>
+
+<p>closeDB(): </p>
+
+<pre><code>@Override
+    public synchronized void close() {
+
+        if (myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+    }
+</code></pre>

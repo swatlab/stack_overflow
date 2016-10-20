@@ -1,0 +1,536 @@
+<p>I want to hide childitems from the expandableListView, but unable to do so, here is my code:</p>
+
+<p>ExpandableListAdapter.java</p>
+
+<pre><code>public class ExpandableListAdapter extends BaseExpandableListAdapter {
+
+private Context _context;
+private String[] osArray;
+private Integer[] imgid;
+private String[][] childList;
+boolean[] hidden = null;
+
+public ExpandableListAdapter(SliderMenu mainActivity, String[] osArray, Integer[] imgid, String[][] childList) {
+    this._context = mainActivity;
+    this.osArray = osArray;
+    this.imgid = imgid;
+    this.childList = childList;
+    hidden = new boolean[osArray.length];
+    for (int i = 0; i < osArray.length; i++)
+        hidden[i] = false;
+}
+
+@Override
+public View getChildView(int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+    int position = getRealPosition(groupPosition);
+    if (convertView == null) {
+        LayoutInflater inflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        convertView = inflater.inflate(R.layout.list_item, null);
+    }
+
+    TextView txtListChild = (TextView) convertView.findViewById(R.id.lblListItem);
+    txtListChild.setText(childList[position][childPosition]);
+    return convertView;
+}
+
+@Override
+public boolean isChildSelectable(int groupPosition, int childPosition) {
+    int position = getRealPosition(groupPosition);
+    return true;
+}
+
+@Override
+public int getGroupCount() {
+    return (osArray.length - getHiddenCount());
+}
+
+@Override
+public int getChildrenCount(int groupPosition) {
+    int position = getRealPosition(groupPosition);
+    return childList[position].length;
+}
+
+@Override
+public Object getGroup(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public Object getChild(int groupPosition, int childPosition) {
+    int position = getRealPosition(groupPosition);
+    return true;
+}
+
+@Override
+public long getGroupId(int groupPosition) {
+    return groupPosition;
+}
+
+@Override
+public long getChildId(int groupPosition, int childPosition) {
+    int position = getRealPosition(groupPosition);
+    return childPosition;
+}
+
+@Override
+public boolean hasStableIds() {
+    return false;
+}
+
+public void hide(int groupPosition) {
+    hidden[getRealPosition(groupPosition)] = true;
+    notifyDataSetChanged();
+    notifyDataSetInvalidated();
+}
+
+private int getRealPosition(int groupPosition) {
+    int hElements = getHiddenCountUpTo(groupPosition);
+    int diff = 0;
+    for(int i=0;i<hElements;i++) {
+        diff++;
+        if(hidden[groupPosition+diff])
+            i--;
+    }
+    return (groupPosition + diff);
+}
+private int getHiddenCount() {
+    int count = 0;
+    for(int i=0;i<osArray.length;i++)
+        if(hidden[i])
+            count++;
+    return count;
+}
+
+private int getHiddenCountUpTo(int location) {
+    int count = 0;
+    for(int i=0;i<=location;i++) {
+        if(hidden[i])
+            count++;
+    }
+    return count;
+}
+
+@Override
+public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+    int position = getRealPosition(groupPosition);
+    if (convertView == null) {
+        LayoutInflater infalInflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        convertView = infalInflater.inflate(R.layout.textview, parent, false);
+    }
+
+    TextView tv = (TextView) convertView.findViewById(R.id.tv);
+    ImageView imageView = (ImageView) convertView.findViewById(R.id.icon);
+    // Populate the data into the template view using the data object
+    tv.setText(osArray[position]);
+    imageView.setImageResource(imgid[position]);
+
+    return convertView;
+}
+}
+</code></pre>
+
+<p>SliderMenu.java</p>
+
+<pre><code>public class SliderMenu extends ActionBarActivity {
+
+private ExpandableListView mDrawerList;
+private DrawerLayout mDrawerLayout;
+private ActionBarDrawerToggle mDrawerToggle;
+private String mActivityTitle;
+Button bLogout;
+private SQLiteHandler db;
+private SessionManager session;
+ExpandableListAdapter adapter;
+TextView textView;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_slider_menu);
+    bLogout = (Button) findViewById(R.id.bLogout);
+    textView = (TextView) findViewById(R.id.checklevel);
+
+    SharedPreferences settings = getSharedPreferences(LoginActivity.PREFS_NAME, Context.MODE_PRIVATE);
+    String a = settings.getString("level", "");
+    Log.d("Level", a);
+    textView.setText(a);
+
+    // SqLite database handler
+    db = new SQLiteHandler(getApplicationContext());
+
+    // session manager
+    session = new SessionManager(getApplicationContext());
+
+    mDrawerList = (ExpandableListView) findViewById(R.id.navList);
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    mActivityTitle = getTitle().toString();
+
+    LayoutInflater inflater = getLayoutInflater();
+    ViewGroup mTop = (ViewGroup)inflater.inflate(R.layout.header, mDrawerList, false);
+    mDrawerList.addHeaderView(mTop, null, false);
+
+    addDrawerItems();
+    setupDrawer();
+
+    if (textView.getText().toString().equals("2")) {
+        adapter.hide(2);
+
+    }else if(textView.getText().toString().equals("3")){
+        adapter.hide(1);
+    }
+
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setHomeButtonEnabled(true);
+
+    // Logout button click event
+    bLogout.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            logoutUser();
+        }
+    });
+}
+
+private void addDrawerItems() {
+    final String[] osArray = {"Students                                         ❯",
+            "Class                                               ❯",
+            "Payment                                         ❯",
+            "Message                                         ❯"
+    };
+    final Integer[] imgid={
+            R.drawable.students,
+            R.drawable.cls,
+            R.drawable.payment,
+            R.drawable.msg
+    };
+    final String [][]childList = {
+            {"           •   Students' List"},
+            {"           •   Attendance",
+             "           •   Subjects",
+             "           •   Monthly Reports",
+             "           •   Activities"
+            },
+            {"           •   Online Payment"},
+            {"           •   Send a reminder",
+             "           •   Send a note"}
+    };
+
+    adapter = new ExpandableListAdapter(this, osArray, imgid, childList);
+    mDrawerList.setAdapter(adapter);
+
+
+    mDrawerList.setOnChildClickListener(new ExpandableListView.OnChildClickListener()
+    {
+        @Override
+        public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+
+            if(textView.getText().toString().equals("2")) {
+                switch (groupPosition) {
+                    case 0:
+                        startActivity(new Intent(SliderMenu.this, StudentActivity.class));
+                        break;
+                    case 1:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, AttendanceActivity.class));
+                        else if (childPosition == 1)
+                            startActivity(new Intent(SliderMenu.this, SubjectsActivity.class));
+                        else if (childPosition == 2)
+                            startActivity(new Intent(SliderMenu.this, MonthlyReportsActivity.class));
+                        else if (childPosition == 3)
+                            startActivity(new Intent(SliderMenu.this, Activities.class));
+                        break;
+                    case 2:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, PaymentActivity.class));
+                        break;
+                    case 3:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, SendReminderActivity.class));
+                        else if (childPosition == 1)
+                            startActivity(new Intent(SliderMenu.this, SendNoteActivity.class));
+                        break;
+                }
+            }
+            else if(textView.getText().toString().equals("3")) {
+                switch (groupPosition) {
+                    case 0:
+                        startActivity(new Intent(SliderMenu.this, StudentActivity.class));
+                        break;
+                    case 2:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, PaymentActivity.class));
+                        break;
+                    case 3:
+                        if (childPosition == 0)
+                            startActivity(new Intent(SliderMenu.this, SendReminderActivity.class));
+                        else if (childPosition == 1)
+                            startActivity(new Intent(SliderMenu.this, SendNoteActivity.class));
+                        break;
+                }
+            }
+                return false;
+        }
+    });
+}
+
+private void setupDrawer() {
+    mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+        /** Called when a drawer has settled in a completely open state. */
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            getSupportActionBar().setTitle("Dashboard");
+            invalidateOptionsMenu();
+        }
+
+        /** Called when a drawer has settled in a completely closed state. */
+        public void onDrawerClosed(View view) {
+            super.onDrawerClosed(view);
+            getSupportActionBar().setTitle(mActivityTitle);
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+    };
+
+    mDrawerToggle.setDrawerIndicatorEnabled(true);
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    // Sync the toggle state after onRestoreInstanceState has occurred.
+    mDrawerToggle.syncState();
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    // Activate the navigation drawer toggle
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+/**
+ * Logging out the user. Will set isLoggedIn flag to false in shared
+ * preferences Clears the user data from sqlite users table
+ * */
+private void logoutUser() {
+    session.setLogin(false);
+    db.deleteUsers();
+    // Launching the login activity
+    Intent intent = new Intent(SliderMenu.this, LoginActivity.class);
+    startActivity(intent);
+    finish();
+}
+}public class StudentActivity extends ListActivity {
+
+private ProgressDialog pDialog;
+
+// JSON Node names
+private static final String TAG_STUDENT = "result";
+private static final String TAG_GR_NUM = "gr_num";
+private static final String TAG_NAME = "name";
+
+// contacts JSONArray
+JSONArray contacts = null;
+
+// Hashmap for ListView
+ArrayList<HashMap<String, String>> studentList;
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_student);
+
+    //textView.setText(Integer.toString(getIntent().getExtras().getInt("level")));
+    TextView textView = (TextView) findViewById(R.id.textViewS);
+    SharedPreferences settings = getSharedPreferences(LoginActivity.PREFS_NAME, Context.MODE_PRIVATE);
+    String a = settings.getString("level", "");
+    Log.d("Level", a);
+    textView.setText(a);
+
+    if(textView.getText().toString().equals("3")){
+        studentList = new ArrayList<HashMap<String, String>>();
+        new GetStudentsForParents().execute();
+    }else{
+        studentList = new ArrayList<HashMap<String, String>>();
+        new GetStudentsForTeacher().execute();
+    }
+}
+/**
+ * Async task class to get json by making HTTP call
+ * */
+private class GetStudentsForTeacher extends AsyncTask<Void, Void, Void> {
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        // Showing progress dialog
+        pDialog = new ProgressDialog(StudentActivity.this);
+        pDialog.setMessage("Please wait...");
+        pDialog.setCancelable(false);
+        pDialog.show();
+    }
+
+    @Override
+    protected Void doInBackground(Void... arg0) {
+        // Creating service handler class instance
+        ServiceHandler sh = new ServiceHandler();
+
+        // Making a request to url and getting response
+        String jsonStr = sh.makeServiceCall("http://10.0.2.2/android_login_api/fetchstudentforparent.php", ServiceHandler.GET);
+
+        Log.d("Response: ", "> " + jsonStr);
+
+        if (jsonStr != null) {
+            try {
+                JSONObject jsonObj = new JSONObject(jsonStr);
+
+                // Getting JSON Array node
+                contacts = jsonObj.getJSONArray(TAG_STUDENT);
+
+                // looping through All Contacts
+                for (int i = 0; i < contacts.length(); i++) {
+                    JSONObject c = contacts.getJSONObject(i);
+
+                    // Phone node is JSON Object
+                    //JSONObject phone = c.getJSONObject(TAG_PHONE);
+                    String gr_num = c.getString(TAG_GR_NUM);
+                    String name = c.getString(TAG_NAME);
+
+                    // tmp hashmap for single contact
+                    HashMap<String, String> studnt = new HashMap<String, String>();
+
+                    // adding each child node to HashMap key => value
+                    studnt.put(TAG_GR_NUM, gr_num);
+                    studnt.put(TAG_NAME, name);
+
+                    // adding contact to contact list
+                    studentList.add(studnt);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.e("ServiceHandler", "Couldn't get any data from the url");
+        }
+
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void result) {
+        super.onPostExecute(result);
+        // Dismiss the progress dialog
+        if (pDialog.isShowing())
+            pDialog.dismiss();
+
+        /**
+         * Updating parsed JSON data into ListView
+         * */
+        ListAdapter adapter = new SimpleAdapter(
+                StudentActivity.this, studentList, R.layout.list_items, new String[] { TAG_GR_NUM, TAG_NAME },
+                new int[] {  R.id.gr_num ,R.id.name });
+        setListAdapter(adapter);
+    }
+}
+
+private class GetStudentsForParents extends AsyncTask<Void, Void, Void> {
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        // Showing progress dialog
+        pDialog = new ProgressDialog(StudentActivity.this);
+        pDialog.setMessage("Please wait...");
+        pDialog.setCancelable(false);
+        pDialog.show();
+    }
+
+    @Override
+    protected Void doInBackground(Void... arg0) {
+        // Creating service handler class instance
+        ServiceHandler sh = new ServiceHandler();
+
+        // Making a request to url and getting response
+        String jsonStr = sh.makeServiceCall("http://10.0.2.2/android_login_api/fetchstudentforteacher.php", ServiceHandler.GET);
+
+        Log.d("Response: ", "> " + jsonStr);
+
+        if (jsonStr != null) {
+            try {
+                JSONObject jsonObj = new JSONObject(jsonStr);
+
+                // Getting JSON Array node
+                contacts = jsonObj.getJSONArray(TAG_STUDENT);
+
+                // looping through All Contacts
+                for (int i = 0; i < contacts.length(); i++) {
+                    JSONObject c = contacts.getJSONObject(i);
+
+                    // Phone node is JSON Object
+                    //JSONObject phone = c.getJSONObject(TAG_PHONE);
+                    String gr_num = c.getString(TAG_GR_NUM);
+                    String name = c.getString(TAG_NAME);
+
+                    // tmp hashmap for single contact
+                    HashMap<String, String> studnt = new HashMap<String, String>();
+
+                    // adding each child node to HashMap key => value
+                    studnt.put(TAG_GR_NUM, gr_num);
+                    studnt.put(TAG_NAME, name);
+
+                    // adding contact to contact list
+                    studentList.add(studnt);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.e("ServiceHandler", "Couldn't get any data from the url");
+        }
+
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void result) {
+        super.onPostExecute(result);
+        // Dismiss the progress dialog
+        if (pDialog.isShowing())
+            pDialog.dismiss();
+
+        /**
+         * Updating parsed JSON data into ListView
+         * */
+        ListAdapter adapter = new SimpleAdapter(
+                StudentActivity.this, studentList, R.layout.list_items, new String[] { TAG_GR_NUM, TAG_NAME },
+                new int[] {  R.id.gr_num ,R.id.name });
+        setListAdapter(adapter);
+    }
+}
+}
+</code></pre>
+
+<p>I think problem is with my expandableListAdapter class in getChildView but dont know what to do.. please suggest some code..
+Any help would be truely appreciated...</p>

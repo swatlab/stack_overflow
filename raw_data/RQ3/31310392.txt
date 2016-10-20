@@ -1,0 +1,277 @@
+<p>I'm trying the build a default db which my app will be using every time it will be opened. 
+For that, I made a short program to convert the data in a certain JSON file I have , and pass it to the empty db file I've created.
+The parsing of the JSON works fine and I am able to get all of its content.
+But when I try to take that content and save into the db file , I get :</p>
+
+<pre><code>E/Database(361): Error inserting password=1234
+ E/Database(361): android.database.sqlite.SQLiteException: no such table: passwords: , while compiling: INSERT INTO passwords(password) VALUES(?);
+</code></pre>
+
+<p>The file itself exists and has a table . it sits in the assets folder. 
+After I'v done :
+sqlite> create table passwords(password varchar(4)); 
+and inserted a record I was able to see it all in the terminal.</p>
+
+<p>In my app, I made my splash screen activity call :</p>
+
+<pre><code>jsonToDb.transfer(new WeakReference<Context>(getApplicationContext()));
+</code></pre>
+
+<p>jsonToDb :</p>
+
+<pre><code>import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.simple.parser.JSONParser;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.util.Log;
+
+public class jsonToDb
+{
+    static void transfer( WeakReference<Context> context )
+    {
+        DatabaseLoader.init( context );
+        String COLUMN_PASSWORD = "password";
+
+        ContentValues cv = new ContentValues();
+        JSONParser parser = new JSONParser();
+
+        AssetManager assetManager = context.get().getAssets();
+        InputStream inputStream = null;
+        String password = "null";
+        int successCount ;
+        try {
+
+            inputStream = assetManager.open("convertcsv.json");
+
+            BufferedReader streamReader = new BufferedReader(new InputStreamReader(inputStream));
+
+
+            StringBuilder strBuilder = new StringBuilder();
+
+            String inputStr;
+             while ((inputStr = streamReader.readLine()) != null)
+                strBuilder.append(inputStr);
+
+            JSONArray jsonArray = new JSONArray( strBuilder.toString() );
+
+//The loop should be up until i=10000 but I've made it 2 just for the sake of the example.
+            for (int i=0 ; i<2 ; i++)
+            {
+                password = (String) jsonArray.getJSONObject(0).get( "Code" );
+                cv.put( COLUMN_PASSWORD, password );
+                DatabaseLoader.getInstance().transferJson( cv );
+            }
+
+        }
+        catch (IOException e)
+        {
+            //
+        }
+        catch(JSONException e)
+        {
+            //
+        }      
+    }
+}
+</code></pre>
+
+<p>DatabaseLoader :</p>
+
+<pre><code>import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.util.Map;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+class DatabaseLoader 
+{
+    private static DatabaseLoader instance;
+    private DatabaseLoaderHelper dbHelper;
+    private static final String ERROR_OPEN_FILE_TAG = "Error Opening File";
+
+    static void init( WeakReference<Context> contextWrapper )
+    {
+        if( instance == null )
+        {
+            instance = new DatabaseLoader( contextWrapper );
+        }
+    }
+
+    protected DatabaseLoader( WeakReference<Context> contextWrapper )
+    {
+        dbHelper = new DatabaseLoaderHelper( contextWrapper.get() );
+    }
+
+    static DatabaseLoader getInstance()
+    {
+        return instance;
+    }
+
+    SQLiteDatabase getDb()
+    {
+        return dbHelper.getWritableDatabase();
+    }
+
+
+    private static class DatabaseLoaderHelper extends SQLiteOpenHelper
+    {
+        private static final String DB_NAME = "passwordsdb.sql";
+        private static final String DB_PATH = "/data/data/mypackage/databases/";
+        private static final int DB_VERSION = 1;
+
+        private DatabaseLoaderHelper( Context context ) 
+        {
+            super( context, DB_NAME, null, DB_VERSION );
+            try
+            {
+                createDatabase( context );
+            }
+            catch ( IOException e )
+            {
+                Log.d( "CAN'T create DB", "cannot create db" );
+                e.printStackTrace();
+            }
+        }
+
+        private void copyDatabase( Context context ) throws IOException{
+
+            //Open your local db as the input stream
+            InputStream myInput = context.getAssets().open( DB_NAME );
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DB_NAME;
+
+            //Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream( outFileName );
+
+            //transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer))>0){
+                myOutput.write(buffer, 0, length);
+            }
+
+            //Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+
+        }
+
+        private boolean checkDatabase() 
+        { 
+            File dbFile = new File( DB_PATH + DB_NAME ); 
+            return dbFile.exists(); 
+        } 
+
+
+        public void createDatabase( Context context ) throws IOException 
+        { 
+          //If database not exists copy it from the assets 
+
+           boolean mDataBaseExist = checkDatabase(); 
+           if(!mDataBaseExist) 
+           { 
+              try  
+              { 
+                //Copy the database from assests 
+                copyDatabase( context ); 
+                Log.e("created DBase", "createDatabase database created"); 
+              }  
+              catch (IOException mIOException)  
+              { 
+                 throw new Error("ErrorCopyingDataBase"); 
+             } 
+          } 
+        } 
+
+
+
+        @Override
+        public void onCreate( SQLiteDatabase db )
+        {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void onUpgrade( SQLiteDatabase db, int oldVersion, int newVersion )
+        {
+            // TODO Auto-generated method stub
+
+        }
+
+    }
+
+    public Map<String,Password> loadDatabase()
+    {
+        final String TABLE_NAME = "passwords";
+        Map<String,Password> passwords = null;  
+
+        try
+        {
+            SQLiteDatabase db = getDb();
+            Cursor result =  db.rawQuery( "select * from " + TABLE_NAME, null );
+            result.moveToFirst();
+
+            while( !result.isAfterLast() )
+            {
+                String password = result.getString( 1 );
+                int date = result.getInt( 2 );
+                int tried = result.getInt( 3 );
+                int successCount = result.getInt( 4 );
+                int dbIndex = result.getInt( 5 );
+                passwords.put( password , new Password( password, date, tried, successCount, dbIndex ) );
+                result.moveToNext();
+            }
+            result.close();
+        }
+        catch( SQLiteException errorOpeningDB )
+        {
+            Log.e( ERROR_OPEN_FILE_TAG, "problem" ,errorOpeningDB );
+        }
+
+        return passwords;
+    }
+
+    public void transferJson( ContentValues cv )
+    {
+        String TABLE_PASSWORDS = "passwords";
+        try
+        {
+            SQLiteDatabase db = getDb();
+            db.insert( TABLE_PASSWORDS, null, cv );
+            db.close();
+        }
+        catch( SQLiteException errorOpeningDB )
+        {
+            Log.e( ERROR_OPEN_FILE_TAG, "problem" ,errorOpeningDB );
+        }
+    }
+}
+</code></pre>
+
+<p>I've been sitting on this for days now to no avail.</p>

@@ -1,0 +1,323 @@
+<p>When i was trying to validate my username and password I am getting an error saying setError is not found can you please help me out in finding my mistake.I performed this in androidstudio1.2.2</p>
+
+<h1>login.java</h1>
+
+<pre><code>package com.example.poornima.bookmyticket;
+
+import com.example.poornima.bookmyticket.util.SystemUiHider;
+
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import android.view.Menu;
+import android.widget.TextView;
+import android.widget.Toast;
+
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ *
+ * @see SystemUiHider
+ */
+public class login extends Activity implements View.OnClickListener {
+    private Button bLogin, bRegister;
+   private  EditText eusername, epassword;
+
+
+    /**
+     * Whether or not the system UI should be auto-hidden after
+     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+     */
+    private static final boolean AUTO_HIDE = true;
+
+    /**
+     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+     * user interaction before hiding the system UI.
+     */
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    /**
+     * If set, will toggle the system UI visibility upon interaction. Otherwise,
+     * will show the system UI visibility upon interaction.
+     */
+    private static final boolean TOGGLE_ON_CLICK = true;
+
+    /**
+     * The flags to pass to {@link SystemUiHider#getInstance}.
+     */
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+
+    /**
+     * The instance of the {@link SystemUiHider} for this activity.
+     */
+    private SystemUiHider mSystemUiHider;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_login);
+
+        final View controlsView = findViewById(R.id.fullscreen_content_controls);
+        final View contentView = findViewById(R.id.fullscreen_content);
+
+        bLogin = (Button) findViewById(R.id.bLogin);
+        bRegister = (Button) findViewById(R.id.bRegister);
+        eusername = (EditText) findViewById(R.id.eusername);
+        epassword = (EditText) findViewById(R.id.epassword);
+        bLogin.setOnClickListener(this);
+        bRegister.setOnClickListener(this);
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider
+                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+                    // Cached values.
+                    int mControlsHeight;
+                    int mShortAnimTime;
+
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+                    public void onVisibilityChange(boolean visible) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                            // If the ViewPropertyAnimator API is available
+                            // (Honeycomb MR2 and later), use it to animate the
+                            // in-layout UI controls at the bottom of the
+                            // screen.
+                            if (mControlsHeight == 0) {
+                                mControlsHeight = controlsView.getHeight();
+                            }
+                            if (mShortAnimTime == 0) {
+                                mShortAnimTime = getResources().getInteger(
+                                        android.R.integer.config_shortAnimTime);
+                            }
+                            controlsView.animate()
+                                    .translationY(visible ? 0 : mControlsHeight)
+                                    .setDuration(mShortAnimTime);
+                        } else {
+                            // If the ViewPropertyAnimator APIs aren't
+                            // available, simply show or hide the in-layout UI
+                            // controls.
+                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                        }
+
+                        if (visible && AUTO_HIDE) {
+                            // Schedule a hide().
+                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                        }
+                    }
+                });
+
+        // Set up the user interaction to manually show or hide the system UI.
+        contentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+            }
+        });
+
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+
+    }
+
+
+    @Override
+    public void onClick(View arg0) {
+        final String username = eusername.getText().toString();
+        if (!isValidUsername(username)) {
+            username.setError("Invalid Email");
+        }
+
+        final String password = epassword.getText().toString();
+        if (!isValidPassword(password)) {
+            password.setError("Invalid Password");
+
+        }
+
+    }
+
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    Handler mHideHandler = new Handler();
+    Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
+
+    /**
+     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    private boolean isValidUsername(String username) {
+        if (username != null && username.length() > 4) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isValidPassword(String pass) {
+        if (pass != null && pass.length() > 6) {
+            return true;
+        }
+        return false;
+    }
+}
+</code></pre>
+
+<pre class="lang-html prettyprint-override"><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="@drawable/train1"
+    tools:context="gss.bookmyticket.LOGIN">
+
+<LinearLayout
+    android:id="@+id/fullscreen_content_controls"
+    style="?metaButtonBarStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
+    android:orientation="horizontal"
+    tools:ignore="UselessParent" >
+</LinearLayout>
+<TextView
+android:id="@+id/fullscreen_content"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:gravity="center"
+android:keepScreenOn="true"
+android:text=" "
+android:textStyle="bold"
+android:layout_below="@+id/fullscreen_content_controls"
+android:layout_alignParentStart="true" />
+
+
+<ImageButton
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:id="@+id/imageButton"
+android:src="@drawable/image1"
+android:background="@android:color/transparent"
+android:layout_below="@+id/fullscreen_content_controls"
+android:layout_centerHorizontal="true" />
+
+<EditText
+android:layout_width="300dp"
+android:layout_height="50dp"
+android:id="@+id/eusername"
+android:background="@drawable/s1"
+android:textColor="#78909C"
+android:hint="USERNAME"
+android:gravity="center"
+android:layout_marginTop="46dp"
+android:layout_below="@+id/imageButton"
+android:layout_centerHorizontal="true" />
+
+<EditText
+android:layout_width="300dp"
+android:layout_height="50dp"
+android:inputType="textPassword"
+android:gravity="center"
+android:background="@drawable/s1"
+android:ems="10"
+android:id="@+id/epassword"
+android:hint="PASSWORD"
+android:textColor="#78909C"
+android:layout_marginTop="60dp"
+android:layout_below="@+id/eUSERNAME1"
+android:layout_alignEnd="@+id/eUSERNAME1"
+android:layout_alignStart="@+id/eUSERNAME1" />
+
+<Button
+android:layout_width="120dp"
+android:background="@drawable/s2"
+android:layout_height="wrap_content"
+android:text="SIGN IN"
+android:id="@+id/bLogin"
+android:layout_alignTop="@+id/bRegister"
+android:layout_alignStart="@+id/ePASSWORD1" />
+
+<Button
+android:layout_width="120dp"
+android:layout_height="wrap_content"
+android:text="SIGN UP"
+android:background="@drawable/s4"
+android:id="@+id/bRegister"
+android:layout_alignParentBottom="true"
+android:layout_alignEnd="@+id/ePASSWORD1"
+android:layout_marginBottom="56dp" />
+
+<ImageView
+android:layout_width="25dp"
+android:layout_height="25dp"
+android:id="@+id/imageView"
+android:src="@drawable/user"
+android:layout_marginLeft="10dp"
+android:paddingLeft="0dp"
+android:paddingRight="0dp"
+android:paddingTop="0dp"
+android:paddingBottom="0dp"
+android:layout_alignTop="@+id/eUSERNAME1"
+android:layout_alignStart="@+id/eUSERNAME1"
+android:layout_alignBottom="@+id/eUSERNAME1" />
+
+<ImageView
+android:layout_width="25dp"
+android:layout_height="25dp"
+android:src="@drawable/i3"
+android:layout_marginLeft="0dp"
+android:id="@+id/imageView2"
+android:layout_alignTop="@+id/ePASSWORD1"
+android:layout_alignBottom="@+id/ePASSWORD1"
+android:layout_alignStart="@+id/imageView" />
+
+
+    </RelativeLayout>
+</code></pre>

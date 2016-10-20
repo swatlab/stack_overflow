@@ -1,0 +1,140 @@
+<p>Hi!</p>
+
+<p>I have a DialogFragment class that implements a TimePicker. The DialogFragment is binded with a PreferenceFragment class, which in turn is held by an Activity. Inside my Preferences, i have also 2 clickable Preferences, "Set" and "Exit". I want to save the values picked from TimePicker only if the "Set" button is pressed, if the "Exit" is pressed, i would like to not save the values from TimePicker and instead use the values that are set the last time "Set" was pressed. Bascially, i want the same behaviour like the default android alarm clock has.</p>
+
+<p>How can this be done? I don't know how to "unsave" the values that i get inside DialogFragment from the PreferenceFragment class (this is the class i initialize the "Set" and "Exit" buttons)</p> 
+
+<p>I'm posting the code also, but you don't have to read through them to answer the question, i think.</p>
+
+<p>PreferenceFragment class implementing clickable Preferences:</p>
+
+<pre><code>public class PrefsFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Load the preferences from an XML resource
+        addPreferencesFromResource(R.xml.preferences);
+
+        Preference setbutton = (Preference)getPreferenceManager().findPreference("set");      
+        if(setbutton != null) 
+        {
+             setbutton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                         @Override
+                         public boolean onPreferenceClick(Preference arg0) {
+                             return true;
+                         }
+                     });     
+        }
+        Preference exitbutton = (Preference)getPreferenceManager().findPreference("close");      
+        if(exitbutton != null) 
+        {
+             exitbutton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                         @Override
+                         public boolean onPreferenceClick(Preference arg0) {
+                             return true;
+                         }
+                     });     
+        }
+    }
+</code></pre>
+
+<p>DialogFragment implementing TimePicker dialog:</p>
+
+<pre><code>public class TimePreference extends DialogPreference {
+    private int lastHour=0;
+    private int lastMinute=0;
+    private TimePicker picker=null;
+    private Calendar calendar = Calendar.getInstance();
+
+    public static int getHour(String time) {
+        String[] pieces=time.split(":");
+
+        return(Integer.parseInt(pieces[0]));
+    }
+
+    public static int getMinute(String time) {
+        String[] pieces=time.split(":");
+
+        return(Integer.parseInt(pieces[1]));
+    }
+
+    public TimePreference(Context ctxt) {
+        this(ctxt, null);
+    }
+
+    public TimePreference(Context ctxt, AttributeSet attrs) {
+        this(ctxt, attrs, 0);
+    }
+
+    public TimePreference(Context ctxt, AttributeSet attrs, int defStyle) {
+        super(ctxt, attrs, defStyle);
+
+        setPositiveButtonText("Set");
+        setNegativeButtonText("Cancel");
+    }
+
+    @Override
+    protected View onCreateDialogView() {
+        picker=new TimePicker(getContext());
+
+        return(picker);
+    }
+
+    @Override
+    protected void onBindDialogView(View v) {
+        super.onBindDialogView(v);
+
+        picker.setCurrentHour(lastHour);
+        picker.setCurrentMinute(lastMinute);
+    }
+
+    @Override
+    protected void onDialogClosed(boolean positiveResult) {
+        super.onDialogClosed(positiveResult);
+
+        if (positiveResult) {
+            lastHour=picker.getCurrentHour();
+            lastMinute=picker.getCurrentMinute();
+
+            String time=String.valueOf(lastHour)+":"+String.valueOf(lastMinute);
+
+            if (callChangeListener(time)) {
+                persistString(time);
+
+            }
+            setSummary(time);
+        }
+    }
+
+    @Override
+    protected Object onGetDefaultValue(TypedArray a, int index) {
+        return(a.getString(index));
+    }
+
+    @Override
+    protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
+        String time=null;
+
+        if (restoreValue) {
+            if (defaultValue==null) {
+                time=getPersistedString("00:00");
+            }
+            else {
+                time=getPersistedString(defaultValue.toString());
+            }
+        }
+        else {
+            time=defaultValue.toString();
+        }
+
+        lastHour=getHour(time);
+        lastMinute=getMinute(time);
+
+        setSummary(time);
+    }
+}
+</code></pre>
+
+<p>Thank you very much!</p>

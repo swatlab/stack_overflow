@@ -1,0 +1,119 @@
+<p>I'm creating Android homescreen widget with clickable button. After clicking the button I'm updating TextView using data from SharedPreferences. I don't know what I'm doing wrong, but after clicking button each instances of widget are updated. How to update only clicked widget?</p>
+
+<p>TestWidgetConfiguration:</p>
+
+<pre><code>public class TestWidgetConfiguration extends Activity {
+    Button confirm;
+    EditText edit;
+    int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setResult(RESULT_CANCELED);
+        setContentView(R.layout.testwidgetconfiguration);
+
+        confirm = (Button)findViewById(R.id.button1);
+        confirm.setOnClickListener(confirmListener);
+
+        edit = (EditText)findViewById(R.id.editText1);
+
+        Intent intent = getIntent();
+        Bundle extras = intent.getExtras();
+
+        if(extras != null) {
+            mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID); 
+        }
+
+        if(mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            finish();
+        }
+    }
+
+    private Button.OnClickListener confirmListener = new Button.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent resultValue = new Intent();
+            resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+
+            SharedPreferences prefs = getSharedPreferences("prefs", 0);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("id:"+mAppWidgetId, Integer.parseInt(edit.getText().toString()));
+            editor.commit();
+
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(TestWidgetConfiguration.this);
+            TestWidget.updateAppWidget(TestWidgetConfiguration.this, appWidgetManager, mAppWidgetId);
+
+            setResult(RESULT_OK, resultValue);
+            finish();
+        }
+    };
+}
+</code></pre>
+
+<p>TestWidget:</p>
+
+<pre><code>public class TestWidget extends AppWidgetProvider {
+    public static String ACTION = "TestAction";
+    public static String URI_SCHEME ="ASD";
+
+    @Override
+    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds);
+
+        Toast.makeText(context, "onUpdate()", Toast.LENGTH_SHORT).show();
+    }
+
+    public static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+        SharedPreferences prefs = context.getSharedPreferences("prefs", 0);
+        int id = prefs.getInt("id:"+appWidgetId, 0);
+
+        RemoteViews updateViews = new RemoteViews(context.getPackageName(), R.layout.testwidget);
+        updateViews.setTextViewText(R.id.textView2, "[" + String.valueOf(appWidgetId) + "]" + id);
+
+        Intent intent = new Intent(context, TestWidget.class);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        intent.setAction(ACTION);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, appWidgetId, intent, 0);
+        //Uri data = Uri.withAppendedPath(
+        //      Uri.parse(URI_SCHEME + "://widget/id/")
+        //      ,String.valueOf(appWidgetId));
+        //intent.setData(data);
+
+        updateViews.setOnClickPendingIntent(R.id.button1, pendingIntent);
+        appWidgetManager.updateAppWidget(appWidgetId, updateViews);
+
+        Toast.makeText(context, "updateAppWidget(): " + String.valueOf(appWidgetId) + "\n", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+
+        Toast.makeText(context, "onReceive()", Toast.LENGTH_SHORT).show();
+
+        if (ACTION.equals(intent.getAction())) {
+            int idd = 0;
+            Bundle extras = intent.getExtras();
+
+            if(extras != null) {
+                idd = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID); 
+            }
+
+            Toast.makeText(context, "id: " + idd, Toast.LENGTH_SHORT).show();
+
+            SharedPreferences prefs = context.getSharedPreferences("prefs", 0);
+            int id = prefs.getInt("id:"+idd, 0);
+
+            RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.testwidget);
+            rv.setTextViewText(R.id.textView1, "lala" + id);
+
+            ComponentName testWidget = new ComponentName(context, TestWidget.class);
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            manager.updateAppWidget(testWidget, rv);
+        }
+    }
+}
+</code></pre>

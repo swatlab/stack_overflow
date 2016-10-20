@@ -1,0 +1,45 @@
+<p>We are targeting android 2.2+</p>
+
+<p>I am trying to use androids built in system regarding the hardware menu button still found on many phones. However I have had no luck and no error message:</p>
+
+<p><strong>/res/menu/optionsmenu.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menuHelp"
+          android:title="Help"
+          />
+    <item android:id="@+id/menuShowInstallationCode"
+          android:title="Show Installation Code"
+          />
+</menu>
+</code></pre>
+
+<p><strong>in the activity class</strong></p>
+
+<pre><code>@Override
+public boolean onCreateOptionsMenu(Menu menu){
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.optionsmenu, menu);
+    return(super.onCreateOptionsMenu(menu));
+}
+
+
+public boolean onOptionsItemSelected(MenuItem item){
+    switch (item.getItemId()){
+        case R.id.menuHelp :
+            return true;
+
+        case R.id.menuShowInstallationCode :
+            return true;
+
+        default:
+            return super.onContextItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>The result so far is, that I press the menu button and nothing happens. Really nothing, no error message, no menu, nothing.</p>
+
+<p>I would like a menu to appear. Anyone have any ideas?</p>

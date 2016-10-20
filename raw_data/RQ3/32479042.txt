@@ -1,0 +1,58 @@
+<p>Am using Picasso to populate my GridView, using this code:</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ImageView imageView;
+    if (convertView == null) {
+        // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(585, 585));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+
+        Picasso.with(mContext)
+                .load(photoUrls.get(position))                    
+                .into(imageView);
+
+
+    return imageView;
+}
+</code></pre>
+
+<p>and my GridView looks like this:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+   android:id="@+id/galleryGridView"
+   android:layout_width="match_parent"
+   android:layout_height="wrap_content"
+   android:numColumns="2"
+   android:columnWidth="90dp"
+   android:horizontalSpacing="10dp"
+   android:verticalSpacing="10dp"
+   android:gravity="center"
+   android:stretchMode="columnWidth" >
+
+</GridView>
+</code></pre>
+
+<p>But as you can see, some of the images overlap.</p>
+
+<p><a href="http://i.stack.imgur.com/YSy7f.png" rel="nofollow"><img src="http://i.stack.imgur.com/YSy7f.png" alt="enter image description here"></a></p>
+
+<p>So I added <code>fit().centerCrop()</code>:</p>
+
+<pre><code>Picasso.with(mContext)
+            .load(photoUrls.get(position))
+            .fit().centerCrop()
+            .into(imageView);
+</code></pre>
+
+<p>Now the images are well aligned but a huge space has opened up:</p>
+
+<p><a href="http://i.stack.imgur.com/pCHif.png" rel="nofollow"><img src="http://i.stack.imgur.com/pCHif.png" alt="enter image description here"></a></p>
+
+<p>Not sure what I need to do now.I've tried changing the layout width/height with no luck.</p>

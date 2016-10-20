@@ -1,0 +1,302 @@
+<p>I would like to send a picture and text from one application to one server php android. How do I do? what are the best practices ??</p>
+
+<p>Here is the php file which receives the information and insert in the database</p>
+
+<pre><code><?php
+
+ header('Content-type : bitmap; charset=utf-8');
+
+ if(isset($_POST["encoded_string"])){
+
+     $encoded_string = $_POST["encoded_string"];
+     $image_name = $_POST["image_name"];
+     $fullname = $_POST["fullname"];
+     $description = $_POST["description"];
+     $contact = $_POST["contact"];
+     $email      = $_POST["email"]
+
+
+    $decoded_string = base64_decode($encoded_string);
+
+    $linkphoto = 'images/'.$image_name;
+
+    $file = fopen($path, 'wb');
+
+    $is_written = fwrite($file, $decoded_string);
+    fclose($file);
+
+    if($is_written > 0) {
+
+    // Include Database handler
+    require_once 'include/DB_Functions.php';
+    $db = new DB_Functions();
+
+    //check user
+
+    if ($result = $mysqli->query("SELECT * FROM users WHERE email = ".$email."")) {
+    $result->num_rows;
+    $user_id = $result['id'];
+
+    $result->close();
+    }
+
+    $query = "INSERT INTO posts(user_id,fullname,description,contact,nom_image,linkphoto) values('$user_id','$fullname','$description','$contact','$image_name','$linkphoto');";
+
+    $result = mysqli_query($connection, $query) ;
+
+    if($result){
+        echo "success";
+    }else{
+        echo "failed";
+    }
+
+}
+}
+?>
+</code></pre>
+
+<p>my java file (android activity)</p>
+
+<pre><code>public class AddPostActivity extends AppCompatActivity{
+
+    private EditText editTextFullname;
+    private EditText editTextContact;
+    private EditText editTextDescription;
+
+    private Button  btnAddPost;
+    private Button  btnPic;
+    private String encoded_string, photo;
+    private Bitmap bitmap;
+    private File file;
+    private Uri file_uri;
+    String urLink = Constants.endPoint() + Constants.URL_DATA;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_addpost);
+
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+        editTextFullname = (EditText) findViewById(R.id.postFullname);
+        editTextDescription = (EditText) findViewById(R.id.postDescription);
+        editTextContact = (EditText) findViewById(R.id.postAuthContact);
+        btnAddPost = (Button) findViewById(R.id.btnAddPost);
+
+        btnPic = (Button) findViewById(R.id.start);
+        btnPic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                getFileUri();
+                i.putExtra(MediaStore.EXTRA_OUTPUT, file_uri);
+                startActivityForResult(i, 10);
+            }
+        });
+    }
+
+    private void getFileUri() {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        photo = "DT_" + timeStamp + ".jpg";
+        file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                + File.separator + photo
+        );
+
+        file_uri = Uri.fromFile(file);
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == 10 && resultCode == RESULT_OK) {
+            new Encode_image().execute();
+        }
+    }
+
+    private class Encode_image extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            bitmap = BitmapFactory.decodeFile(file_uri.getPath());
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+
+            byte[] array = stream.toByteArray();
+            encoded_string = Base64.encodeToString(array, 0);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            makeRequest();
+        }
+    }
+
+    private void makeRequest() {
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest request = new StringRequest(Request.Method.POST, urLink,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                HashMap<String,String> map = new HashMap<>();
+                map.put("encoded_string",encoded_string);
+                map.put("image_name",photo);
+                map.put("fullname", editTextFullname.getText().toString());
+                map.put("description",editTextDescription.getText().toString());
+                map.put("contact",editTextContact.getText().toString());
+
+                return map;
+            }
+        };
+        requestQueue.add(request);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // app icon in action bar clicked; go home
+                Intent home = new Intent(this, MainActivity.class);
+                startActivity(home);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+}
+</code></pre>
+
+<p>xml and related java</p>
+
+<pre><code><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context=".activity.AddPostActivity">
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <!-- Login progress -->
+    <ProgressBar
+        android:id="@+id/login_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/top"
+        android:paddingRight="@dimen/top"
+        android:paddingTop="@dimen/top">
+
+        <LinearLayout
+            android:id="@+id/post_form"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <AutoCompleteTextView
+                    android:id="@+id/postFullname"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/post_fullname"
+                    android:inputType=""
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+            </android.support.design.widget.TextInputLayout>
+
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <AutoCompleteTextView
+                    android:id="@+id/postDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/post_description"
+                    android:inputType="textMultiLine"
+                    android:lines="3"
+                    android:singleLine="true" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/postAuthContact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="phone"
+                    android:ems="10"
+                    android:hint="@string/post_authorcontact"
+                    android:layout_gravity="center_horizontal" />
+
+            </android.support.design.widget.TextInputLayout>
+
+                <Button
+                    android:text="TAKE PICTURE"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/start"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true" />
+
+            <Button
+                android:id="@+id/btnAddPost"
+                style="?android:textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/action_post"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
+</code></pre>
+
+<p>Thanks for your help!</p>

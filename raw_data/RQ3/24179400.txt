@@ -1,0 +1,126 @@
+<p>I'm having an issue with following error:</p>
+
+<blockquote>
+  <p>E/AndroidRuntime(658): FATAL EXCEPTION: main
+  E/AndroidRuntime(658): java.lang.NullPointerException
+  E/AndroidRuntime(658):  at android.view.LayoutInflater.from(LayoutInflater.java:210)
+  E/AndroidRuntime(658):  at com.gauss.sportsapp.messages.RecievedRequestsAdapter.(RecievedRequestsAdapter.java:26)
+  E/AndroidRuntime(658):  at com.gauss.sportsapp.messages.MessagesList.setRecievedRequests(MessagesList.java:157)
+  E/AndroidRuntime(658):  at com.gauss.sportsapp.messages.MessagesList.onEventsAvailable(MessagesList.java:181)
+  E/AndroidRuntime(658):  at com.gauss.sportsapp.eventrequests.GetEventRequestsTask.onPostExecute(GetEventRequestsTask.java:74)
+  E/AndroidRuntime(658):  at com.gauss.sportsapp.eventrequests.GetEventRequestsTask.onPostExecute(GetEventRequestsTask.java:1)
+  E/AndroidRuntime(658):  at android.os.AsyncTask.finish(AsyncTask.java:602)
+  E/AndroidRuntime(658):  at android.os.AsyncTask.access$600(AsyncTask.java:156)
+  E/AndroidRuntime(658):  at android.os.AsyncTask$InternalHandler.handleMessage(AsyncTask.java:615)
+  E/AndroidRuntime(658):  at android.os.Handler.dispatchMessage(Handler.java:99)
+  E/AndroidRuntime(658):  at android.os.Looper.loop(Looper.java:154)
+  E/AndroidRuntime(658):  at android.app.ActivityThread.main(ActivityThread.java:4945)
+  E/AndroidRuntime(658):  at java.lang.reflect.Method.invokeNative(Native Method)
+  E/AndroidRuntime(658):  at java.lang.reflect.Method.invoke(Method.java:511)
+  E/AndroidRuntime(658):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:784)
+  E/AndroidRuntime(658):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:551)
+  E/AndroidRuntime(658):  at dalvik.system.NativeStart.main(Native Method)</p>
+</blockquote>
+
+<p>The error only occurs after I exit my application via home button and let it sit in the background for a while. If I just exit the app and instantly start it again, there's no error. Sometimes it even works after I let it sit for a while, but more often than not, it returns a null pointer for context when I set layout inflater in adapter's constructor.</p>
+
+<p>Important code bits of my Fragment:</p>
+
+<pre><code>public class MessagesList extends Fragment implements EventRequestListener { 
+
+    private ListView lv;
+    private GetEventRequestsTask recievedRequestsTask;      
+    private List<GetEventRequest> data;
+    private RecievedRequestsAdapter adapter;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onActivityCreated(savedInstanceState);
+        recievedRequestsTask = new GetEventRequestsTask(getActivity(), user_id);
+        recievedRequestsTask.setEventRequestListener(MessagesList.this);
+        recievedRequestsTask.execute(); 
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        return inflater.inflate(R.layout.fragment_messages, container, false);
+    }
+
+    //Async Task listener, gets called if(result != null)
+    @Override
+    public void onEventsAvailable(List<GetEventRequest> result) {
+        // TODO Auto-generated method stub
+        adapter = new RecievedRequestsAdapter(getActivity(), data);
+        lv.setAdapter(adapter);
+    }
+
+    @Override
+    public void onStop() {
+        // TODO Auto-generated method stub
+        super.onStop();
+        if(recievedRequestsTask != null){
+            recievedRequestsTask.cancel(true);
+        }
+    }
+}
+</code></pre>
+
+<p>Adapter:</p>
+
+<pre><code>public class RecievedRequestsAdapter extends BaseAdapter {
+
+    private LayoutInflater inflater;
+    private List<GetEventRequest> list; 
+
+    public RecievedRequestsAdapter(Context ctx, List<GetEventRequest> list){
+        this.list = list;
+        inflater = LayoutInflater.from(ctx); //This is where null pointer happens
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return list.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if(convertView == null){
+            holder = new ViewHolder();
+            convertView = inflater.inflate(R.layout.result_list_adapter, parent, false);
+            holder.txtTitle = (TextView) convertView.findViewById(R.id.txtTitle);
+            holder.txtDesc = (TextView) convertView.findViewById(R.id.txtDescription);      
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        //Do stuff, set views, etc
+
+        return convertView;
+    }
+
+    private static final class ViewHolder{
+        public TextView txtTitle, txtDesc;
+     }
+}
+</code></pre>
+
+<p>Anyone has any ideas? It's very difficult to test or debug this because it happens so randomly and only after extended period of application sitting idly in the background.</p>

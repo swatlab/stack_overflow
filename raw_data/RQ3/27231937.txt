@@ -1,0 +1,47 @@
+<p>I need some help. Still a bit new to android programming, and I'm not sure if this can be done.</p>
+
+<p>The gist of what I'm doing: I'm currently grabbing data from a RESTful API, that spits data back as a json array. I get the data and pump it into a table, then I use an adapter and display all the data in a listview.</p>
+
+<p>The data looks like this (replace x with data):</p>
+
+<pre><code>[{
+id: xxx,
+number: "xxxxx",
+title: "xxxxxxx",
+definition: "xxxxxxx",
+status: "xxxxx",
+name: "xxxxx"
+},
+</code></pre>
+
+<p>Here's the problem: From the listview, I want to take the data, and onItemSelect, I want to insert the selected data into a separate table. The user can select one or more listview, and then click a menuItem from onoptionitemselect and it would insert the data into the table.</p>
+
+<p>I have two main questions:
+1. I am currently using this code in the setOnItemClickListener:</p>
+
+<pre><code>String item = adapterView.getItemAtPosition(position).toString();
+</code></pre>
+
+<p>It pumps out as an array. Is it possible for me to parse from the array each individual element? (based on the data, I want to pull out data for id, number, title, etc)
+2. I'm not sure if this works, but after I have the selected items, can I use the onOptionsItemSelected menuitem to tell the app to insert the data into the new table?</p>
+
+<p>This is all I have right now:</p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.menu_favorite){
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+</code></pre>
+
+<p>Thanks for any and all of your help. This has been a great learning experience, and I hope to learn more.</p>
+
+<p>Thanks!</p>

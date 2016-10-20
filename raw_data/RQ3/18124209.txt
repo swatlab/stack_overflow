@@ -1,0 +1,350 @@
+<p>I'm creating Quiz app and import SQLite Database file into my Android project, which looks like this :</p>
+
+<p><img src="http://i.stack.imgur.com/sdNT4.png" alt="My SQL Database which looks like this: "></p>
+
+<p>It just has an id, actual question, when the right answer, 3 wrong answers and the difficulty of the question. id has number, question and answers has text type, because I want to add numbers AND text in their fields, and difficulty has number type. So I just import this file into my <strong>assets</strong> folder named <strong>dbQuestion</strong> and tried to run my app, pressed Play button, and it opens up first question from Database, but when I check the radio button and press <strong>Next Question</strong> I get these errors: </p>
+
+<pre><code>08-08 06:42:15.266: D/AndroidRuntime(2459): Shutting down VM
+08-08 06:42:15.266: W/dalvikvm(2459): threadid=1: thread exiting with uncaught exception (group=0x414c4700)
+08-08 06:42:15.367: E/AndroidRuntime(2459): FATAL EXCEPTION: main
+08-08 06:42:15.367: E/AndroidRuntime(2459): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.tmm.android.chuck/com.tmm.android.chuck.QuestionActivity}: java.lang.IndexOutOfBoundsException: Invalid index 1, size is 1
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2211)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2261)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.ActivityThread.access$600(ActivityThread.java:141)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1256)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.os.Handler.dispatchMessage(Handler.java:99)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.os.Looper.loop(Looper.java:137)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.ActivityThread.main(ActivityThread.java:5103)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at java.lang.reflect.Method.invokeNative(Native Method)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at java.lang.reflect.Method.invoke(Method.java:525)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:737)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at dalvik.system.NativeStart.main(Native Method)
+08-08 06:42:15.367: E/AndroidRuntime(2459): Caused by: java.lang.IndexOutOfBoundsException: Invalid index 1, size is 1
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at java.util.ArrayList.throwIndexOutOfBoundsException(ArrayList.java:255)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at java.util.ArrayList.get(ArrayList.java:308)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at com.tmm.android.chuck.quiz.GamePlay.getNextQuestion(GamePlay.java:112)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at com.tmm.android.chuck.QuestionActivity.onCreate(QuestionActivity.java:39)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.Activity.performCreate(Activity.java:5133)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2175)
+08-08 06:42:15.367: E/AndroidRuntime(2459):     ... 11 more
+08-08 06:42:19.576: D/dalvikvm(2485): GC_FOR_ALLOC freed 67K, 6% free 2844K/3016K, paused 187ms, total 197ms
+08-08 06:42:20.756: D/gralloc_goldfish(2485): Emulator without GPU emulation detected.
+</code></pre>
+
+<p>This is how my DbHelper.class looks like:</p>
+
+<pre><code>package com.tmm.android.chuck.db;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import com.tmm.android.chuck.quiz.Question;
+
+/**
+ * @author robert.hinds
+ * 
+ */
+public class DBHelper extends SQLiteOpenHelper {
+
+    // The Android's default system path of your application database
+    private static String DB_PATH = "/data/data/com.tmm.android.chuck/databases/";
+    private static String DB_NAME = "dbQuestion";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+
+    /**
+     * Constructor Takes and keeps a reference of the passed context in order to
+     * access to the application assets and resources.
+     * 
+     * @param context
+     */
+    public DBHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own
+     * database.
+     * */
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+        if (!dbExist) {
+            // By calling this method and empty database will be created into
+            // the default system path
+            // of your application so we are gonna be able to overwrite that
+            // database with our database.
+            this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each
+     * time you open the application.
+     * 
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase() {
+        File dbFile = myContext.getDatabasePath(DB_NAME);
+        return dbFile.exists();
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created
+     * empty database in the system folder, from where it can be accessed and
+     * handled. This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException {
+
+        // Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+        // Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        if (myDataBase != null)
+            myDataBase.close();
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    // Add your public helper methods to access and get content from the
+    // database.
+    // You could return cursors by doing "return myDataBase.query(....)" so it'd
+    // be easy
+    // to you to create adapters for your views.
+
+    public List<Question> getQuestionSet(int difficulty, int numQ) {
+        List<Question> questionSet = new ArrayList<Question>();
+        Cursor c = myDataBase.rawQuery(
+                "SELECT * FROM QUESTIONS WHERE DIFFICULTY=" + difficulty
+                        + " ORDER BY RANDOM() LIMIT " + numQ, null);
+        while (c.moveToNext()) {
+            // Log.d("QUESTION", "Question Found in DB: " + c.getString(1));
+            Question q = new Question();
+            q.setQuestion(c.getString(1));
+            q.setAnswer(c.getString(2));
+            q.setOption1(c.getString(3));
+            q.setOption2(c.getString(4));
+            q.setOption3(c.getString(5));
+            q.setRating(difficulty);
+            questionSet.add(q);
+        }
+        return questionSet;
+    }
+}
+</code></pre>
+
+<p>Gameplay.class :</p>
+
+<pre><code>/**
+ * 
+ */
+package com.tmm.android.chuck.quiz;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author robert.hinds
+ * 
+ * This class represents the current game being played
+ * tracks the score and player details
+ *
+ */
+public class GamePlay {
+
+    private int numRounds;
+    private int difficulty;
+    private String playerName;
+    private int right;
+    private int wrong;
+    private int round;
+
+    private List<Question> questions = new ArrayList<Question>();
+
+    /**
+     * @return the playerName
+     */
+    public String getPlayerName() {
+        return playerName;
+    }
+    /**
+     * @param playerName the playerName to set
+     */
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
+    }
+    /**
+     * @return the right
+     */
+    public int getRight() {
+        return right;
+    }
+    /**
+     * @param right the right to set
+     */
+    public void setRight(int right) {
+        this.right = right;
+    }
+    /**
+     * @return the wrong
+     */
+    public int getWrong() {
+        return wrong;
+    }
+    /**
+     * @param wrong the wrong to set
+     */
+    public void setWrong(int wrong) {
+        this.wrong = wrong;
+    }
+    /**
+     * @return the round
+     */
+    public int getRound() {
+        return round;
+    }
+    /**
+     * @param round the round to set
+     */
+    public void setRound(int round) {
+        this.round = round;
+    }
+    /**
+     * @param difficulty the difficulty to set
+     */
+    public void setDifficulty(int difficulty) {
+        this.difficulty = difficulty;
+    }
+    /**
+     * @return the difficulty
+     */
+    public int getDifficulty() {
+        return difficulty;
+    }
+    /**
+     * @param questions the questions to set
+     */
+    public void setQuestions(List<Question> questions) {
+        this.questions = questions;
+    }
+
+    /**
+     * @param q the question to add
+     */
+    public void addQuestions(Question q) {
+        this.questions.add(q);
+    }
+
+    /**
+     * @return the questions
+     */
+    public List<Question> getQuestions() {
+        return questions;
+    }
+
+
+    public Question getNextQuestion(){
+
+        //get the question
+        Question next = questions.get(this.getRound());
+        //update the round number to the next round
+        this.setRound(this.getRound()+1);
+        return next;
+    }
+
+    /**
+     * method to increment the number of correct answers this game
+     */
+    public void incrementRightAnswers(){
+        right ++;
+    }
+
+    /**
+     * method to increment the number of incorrect answers this game
+     */
+    public void incrementWrongAnswers(){
+        wrong ++;
+    }
+    /**
+     * @param numRounds the numRounds to set
+     */
+    public void setNumRounds(int numRounds) {
+        this.numRounds = numRounds;
+    }
+    /**
+     * @return the numRounds
+     */
+    public int getNumRounds() {
+        return numRounds;
+    }
+
+    /**
+     * method that checks if the game is over
+     * @return boolean
+     */
+    public boolean isGameOver(){
+        return (getRound() >= getNumRounds());
+    }
+
+
+}
+</code></pre>
+
+<p>Appreciate any help :) </p>
+
+<p>This is my whole project ->> <a href="https://www.dropbox.com/s/e7jl14b1503aj6v/AndroidChuckQuiz-master.rar" rel="nofollow">https://www.dropbox.com/s/e7jl14b1503aj6v/AndroidChuckQuiz-master.rar</a></p>

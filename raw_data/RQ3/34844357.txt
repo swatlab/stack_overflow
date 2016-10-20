@@ -1,0 +1,169 @@
+<p>I'm working on a posting system in an app.
+What I want to do is when I press on the post icon I'll go to another <code>Activity</code> where I have an <code>EditText</code> and a <code>Button</code>.
+When I press the button I want to get the text from the <code>EditText</code> and post it in the <code>ListView</code> of the main page or the "feed" page.
+I don't seem to know how to link the array adapter to the feed so that the text appears on the <code>ListView</code>.</p>
+
+<p>This is the code:</p>
+
+<p>Main where I need to know what to do:</p>
+
+<pre><code>package com.example.ali.test1;
+
+import android.content.Intent;
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+
+public class MainActivity extends ActionBarActivity   {
+
+    EditText input;
+    ListView list1;
+    ArrayAdapter<String> adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        int id2 = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        } else if (id2 == R.id.action_cart) {
+            startActivity(new Intent(MainActivity.this, Post.class));
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>This is the post activity :</p>
+
+<pre><code>package com.example.ali.test1;
+
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+public class Post extends ActionBarActivity {
+    ArrayAdapter<String> adapter1;
+    EditText input;
+    ListView list;
+    ArrayAdapter<String> adapter;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_post);
+
+        // android:id="@+id/input"
+        input = (EditText) findViewById(R.id.input);
+        // android:id="@+id/list"
+
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+    }
+
+    // android:onClick="addToList"
+    public void addToList(View view) {
+        adapter.add(input.getText().toString());
+        adapter.notifyDataSetChanged();
+        // Clear the input
+        input.setText("");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_post, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>These are xml:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.example.ali.test1.MainActivity">
+
+    <ListView
+        android:id="@+id/list1"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_weight="1" />
+</RelativeLayout>
+</code></pre>
+
+<p>post:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.example.ali.test1.Post">
+
+    <EditText
+        android:id="@+id/input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/list" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add to list"
+        android:onClick="addToList"
+        android:layout_below="@id/input"/>
+</RelativeLayout>
+</code></pre>
+
+<p>Thank you!</p>

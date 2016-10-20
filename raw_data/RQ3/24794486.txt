@@ -1,0 +1,66 @@
+<p>I'm trying to get the name of an alarm that the user just selected. It works for ALMOST every alarm I've tested. So far there's only one exception: Hangout Message. I pick an alarm with this:</p>
+
+<pre><code>Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
+intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select ringtone for notifications:");
+intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false);
+intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
+if (alarm.getSound() != null) {
+    intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, alarm.getSound());
+} else {
+    Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+    intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, alert);
+}
+intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE,RingtoneManager.TYPE_ALARM);
+startActivityForResult(intent, alarm.getID());
+</code></pre>
+
+<p>and my <code>onActivityResponse</code>:</p>
+
+<pre><code>protected void onActivityResult(int id, int resultCode, Intent data) {
+    if (resultCode == RESULT_OK) {
+        Uri ringtone = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
+        if (id != -1) {
+            for (int i = 0; i < Alarms.size(); i++) {
+                Alarm alarm = Alarms.get(i);
+                if (alarm.getID() == id) {
+                    alarm.setSound(ringtone);
+                    alarm.UpdateView();
+                    DB.SaveAlarm(alarm);
+                    break;
+                }
+            }
+        }
+    }
+}
+</code></pre>
+
+<p>I have a pretty simple way to get ringtone names from a URI:</p>
+
+<pre><code>Ringtone tone = RingtoneManager.getRingtone(this.Con, this.Sound);
+AlarmSound.setText(tone.getTitle(this.Con).toUpperCase());
+</code></pre>
+
+<p><code>this.Con</code> is a context, generally an <code>Activity</code>, potentially a <code>Service</code>. The <code>Alarm</code> class is my own class. <code>this.Sound</code> is a URI for a ringtone. For every other alarm that's not Hangout Message, this works great and gives me the correct ringtone name. For Hangout Message, I get <code>11</code> and no errors. The URI is <code>content://media/external/audio/media/11</code> so I see where it got <code>11</code> from, but I want to translate that to its proper name. I don't want to hard code a special case for it.</p>
+
+<p>How can I get Hangout Message from this URI?</p>
+
+<p>I do want to note that in my code where I set the Existing URI, if Hangout Message is the existing sound, it will pre-select it properly just like any other ringtone. The ringtone selector does show it's name properly and the app does play the sound correctly when the time comes.</p>
+
+<p>EDIT: I've found where the stock Android DeskClock app gets the title name <a href="http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android-apps/4.4.2_r1/com/android/deskclock/AlarmClockFragment.java?av=f" rel="nofollow">here (line 1356)</a>:</p>
+
+<pre><code>private String getRingToneTitle(Uri uri) {
+    // Try the cache first
+    String title = mRingtoneTitleCache.getString(uri.toString());
+    if (title == null) {
+        // This is slow because a media player is created during Ringtone object creation.
+        Ringtone ringTone = RingtoneManager.getRingtone(mContext, uri);
+        title = ringTone.getTitle(mContext);
+        if (title != null) {
+            mRingtoneTitleCache.putString(uri.toString(), title);
+        }
+    }
+    return title;
+}
+</code></pre>
+
+<p>Aside from the caching, it's not doing anything different than I am. This leads me to believe that maybe I'm creating the problem elsewhere but I have no clue what else could be impacting this. Could rooting or the Xposed framework have this specific a side affect?</p>

@@ -1,0 +1,46 @@
+<p>If I click the <code>settings</code> icon,it have to create the new activity.But It shows the pop up search.Below I  am posted the codes and screenshot relevant to that.</p>
+
+<p><img src="http://i.stack.imgur.com/ANMcJ.png" alt="enter image description here"></p>
+
+<p><img src="http://i.stack.imgur.com/4KRwg.png" alt="enter image description here"></p>
+
+<p><strong>MainActivity.java:</strong></p>
+
+<pre><code>@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) 
+    {
+       switch (item.getItemId()) 
+       {
+         case R.id.search:
+            Intent intent = new Intent(this, SettingsActivity.class);
+      //      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            return true;
+         default:
+            return super.onOptionsItemSelected(item);
+       }
+    }
+</code></pre>
+
+<p><strong>main.xml:</strong></p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" >
+
+    <item
+        android:id="@+id/search"
+        android:icon="@drawable/ic_action_settings"
+        android:title="@string/search"/>
+
+</menu>
+</code></pre>
+
+<p>If I click that icon,the new activity have to created.But it shows the pop up window <code>search</code>.I didn't need that pop up window.simply it have to move to the new activity while click the setting icon.So far I done a code like this.</p>

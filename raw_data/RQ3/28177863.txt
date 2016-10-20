@@ -1,0 +1,163 @@
+<p>Anyone know how to fix this <code>NullPointerException</code> on the start of setup of the IabHelper?   </p>
+
+<pre><code>java.lang.NullPointerException
+       at android.app.ApplicationPackageManager.queryIntentServicesAsUser(ApplicationPackageManager.java:559)
+       at android.app.ApplicationPackageManager.queryIntentServices(ApplicationPackageManager.java:571)
+       at IabHelper.startSetup(IabHelper.java:266)
+       at MyApplication.createIABHelper(MyApplication.java:256)
+       at MyApplication.onCreate(MyApplication.java:156)
+       at android.app.Instrumentation.callApplicationOnCreate(Instrumentation.java:1000)
+       at android.app.ActivityThread.handleBindApplication(ActivityThread.java:4391)
+       at android.app.ActivityThread.access$1300(ActivityThread.java:141)
+       at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1294)
+       at android.os.Handler.dispatchMessage(Handler.java:99)
+       at android.os.Looper.loop(Looper.java:137)
+       at android.app.ActivityThread.main(ActivityThread.java:5041)
+       at java.lang.reflect.Method.invokeNative(Method.java)
+       at java.lang.reflect.Method.invoke(Method.java:511)
+       at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:816)
+       at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:582)
+       at dalvik.system.NativeStart.main(NativeStart.java)
+</code></pre>
+
+<p>My IabHelper code is slightly modified because of other issues with it so here is the startSetup method:</p>
+
+<pre><code>public void startSetup(final OnIabSetupFinishedListener listener) {
+        // If already set up, can't do it again.
+        checkNotDisposed();
+        if (mSetupDone) throw new IllegalStateException("IAB helper is already set up.");
+
+        // Connection to IAB service
+        logDebug("Starting in-app billing setup.");
+        mServiceConn = new ServiceConnection() {
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                logDebug("Billing service disconnected.");
+                mService = null;
+            }
+
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                if (mDisposed) return;
+                logDebug("Billing service connected.");
+                mService = IInAppBillingService.Stub.asInterface(service);
+                String packageName = mContext.getPackageName();
+                try {
+                    logDebug("Checking for in-app billing 3 support.");
+
+                    // check for in-app billing v3 support
+                    int response = mService.isBillingSupported(3, packageName, ITEM_TYPE_INAPP);
+                    if (response != BILLING_RESPONSE_RESULT_OK) {
+                        if (listener != null) listener.onIabSetupFinished(new IabResult(response,
+                                "Error checking for billing v3 support."));
+
+                        // if in-app purchases aren't supported, neither are subscriptions.
+                        mSubscriptionsSupported = false;
+                        return;
+                    }
+                    logDebug("In-app billing version 3 supported for " + packageName);
+
+                    // check for v3 subscriptions support
+                    response = mService.isBillingSupported(3, packageName, ITEM_TYPE_SUBS);
+                    if (response == BILLING_RESPONSE_RESULT_OK) {
+                        logDebug("Subscriptions AVAILABLE.");
+                        mSubscriptionsSupported = true;
+                    } else {
+                        logDebug("Subscriptions NOT AVAILABLE. Response: " + response);
+                    }
+
+                    mSetupDone = true;
+                } catch (RemoteException e) {
+                    if (listener != null) {
+                        listener.onIabSetupFinished(new IabResult(IABHELPER_REMOTE_EXCEPTION,
+                                "RemoteException while setting up in-app billing."));
+                    }
+                    e.printStackTrace();
+                    return;
+                }
+
+                if (listener != null) {
+                    listener.onIabSetupFinished(new IabResult(BILLING_RESPONSE_RESULT_OK, "Setup successful."));
+                }
+            }
+        };
+
+        Intent serviceIntent = getExplicitIapIntent();
+        PackageManager pm = mContext.getPackageManager();
+        List<ResolveInfo> intentServices = pm.queryIntentServices(serviceIntent, 0);
+        if (intentServices != null && !intentServices.isEmpty()) {
+            //this was replaced per this comment http://stackoverflow.com/a/24202135/704836
+            //if (!mContext.getPackageManager().queryIntentServices(serviceIntent, 0).isEmpty()) {
+            // service available to handle that Intent
+            mContext.bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
+        } else {
+            // no service available to handle that Intent
+            if (listener != null) {
+                listener.onIabSetupFinished(
+                        new IabResult(BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE,
+                                "Billing service unavailable on device."));
+            }
+        }
+    }
+</code></pre>
+
+<p>The <code>NullPointerException</code> is happening at <code>List<ResolveInfo> intentServices = pm.queryIntentServices(serviceIntent, 0);</code> </p>
+
+<p>Any ideas?</p>
+
+<p>Thanks.</p>
+
+<p>EDIT: here is the code for <code>getExplicitIapIntent</code>:</p>
+
+<pre><code> /**
+     * From http://stackoverflow.com/a/26318757/704836
+     * @return
+     */
+    private Intent getExplicitIapIntent() {
+        PackageManager pm = mContext.getPackageManager();
+        Intent implicitIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
+        implicitIntent.setPackage("com.android.vending");
+        List<ResolveInfo> resolveInfos = pm.queryIntentServices(implicitIntent, 0);
+
+        // Is somebody else trying to intercept our IAP call?
+        if (resolveInfos == null || resolveInfos.size() != 1) {
+            return null;
+        }
+
+        ResolveInfo serviceInfo = resolveInfos.get(0);
+        String packageName = serviceInfo.serviceInfo.packageName;
+        String className = serviceInfo.serviceInfo.name;
+        ComponentName component = new ComponentName(packageName, className);
+        Intent iapIntent = new Intent();
+        iapIntent.setComponent(component);
+        return iapIntent;
+    }
+</code></pre>
+
+<p>EDIT: I should also point out that according to crashlytics, 100% of the devices giving this error are rooted. So maybe it is something to do with people trying to get around having to pay for features. </p>
+
+<p>EDIT: I tried passing <code>null</code> instead of <code>serviceIntent</code> and got the following exception:</p>
+
+<pre><code>java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String android.content.Intent.resolveTypeIfNeeded(android.content.ContentResolver)' on a null object reference
+            at android.app.ApplicationPackageManager.queryIntentServicesAsUser(ApplicationPackageManager.java:644)
+            at android.app.ApplicationPackageManager.queryIntentServices(ApplicationPackageManager.java:656)
+            at IabHelper.startSetup(IabHelper.java:266)
+</code></pre>
+
+<p>On that exception the line numbers are different from the reports I've gotten, so I'm not certain it is the same. </p>
+
+<p>EDIT: I think the exception I got on the last edit might be pretty much the same as the exception I am getting for 5.0.2 devices. Here is one of the 5.0.2 reports:</p>
+
+<pre><code> java.lang.NullPointerException
+Attempt to invoke virtual method 'java.lang.String android.content.Intent.resolveTypeIfNeeded(android.content.ContentResolver)' on a null object reference
+
+android.app.ApplicationPackageManager.queryIntentServicesAsUser (ApplicationPackageManager.java:645)
+
+android.app.ApplicationPackageManager.queryIntentServices (ApplicationPackageManager.java:657)
+
+IabHelper.startSetup (IabHelper.java:266)
+</code></pre>
+
+<p>EDIT: I went ahead and modified the code to throw an exception when <code>serviceIntent</code> is null and I've already had a few reports come back from my beta testers. All 100% rooted devices so I am guessing their devices don't have the correct com.android.vending.billing.InAppBillingService.BIND. </p>
+
+<p>EDIT: Once the code was released the 100% rooted devices dropped to about 80%. Anyways I got a chance to troubleshoot with a user and it turned out that the getExplicitIntent method can return null sometimes under kitkat (not sure which other versions) so I went ahead and added an answer with how I changed the code. </p>

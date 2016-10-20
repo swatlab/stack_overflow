@@ -1,0 +1,166 @@
+<p>I have an android application with a small database.
+I can use da database with a database manager.</p>
+
+<p>I tried a query and got "no such table", so in order to find out which tables there are, I tried, with help from here:</p>
+
+<pre><code>    Cursor c = helper.getReadableDatabase().rawQuery("SELECT name FROM sqlite_master WHERE type=?",  new String[] {"table"});
+
+    DatabaseUtils.dumpCursor(c);
+</code></pre>
+
+<p>The result of this, however , is:</p>
+
+<pre><code> 09-22 15:30:59.710: I/System.out(973): >>>>> Dumping cursor   android.database.sqlite.SQLiteCursor@b2d5af30
+ 09-22 15:30:59.710: I/System.out(973): >>>>> Dumping cursor   android.database.sqlite.SQLiteCursor@b2d5af30
+09-22 15:30:59.710: I/System.out(973): 0 {
+09-22 15:30:59.720: I/System.out(973):    name=android_metadata
+09-22 15:30:59.720: I/System.out(973): }
+09-22 15:30:59.720: I/System.out(973): <<<<<
+</code></pre>
+
+<p>How can I find out what happened to the rest of my database</p>
+
+<p>My dbhelperclass was:</p>
+
+<pre><code> package com.example.myapp;
+
+
+public class Helper extends SQLiteOpenHelper
+
+{
+private static String path = "/data/data/com.example.myapp/databases/";
+private static String db = "nn";
+private static String dbpath = path + db;
+private SQLiteDatabase myDB;
+private  Context con;
+
+ public Helper(Context context) {
+
+     super(context, db, null, 1);
+     this.con = context;
+     }  
+
+ public Context getContext(){
+     return this.con;
+ }
+
+ public void createDataBase() throws IOException{
+
+
+     if(!checkDataBase()){
+     this.getReadableDatabase();
+
+     try {
+
+     copyDataBase();
+
+     } catch (IOException e) {
+
+     System.out.println("no Database");
+
+     }
+     }
+
+     }
+
+
+private boolean checkDataBase() {
+     SQLiteDatabase checkDB = null;
+
+     try{
+
+     checkDB = SQLiteDatabase.openDatabase(dbpath, null, SQLiteDatabase.OPEN_READONLY);
+
+     }catch(SQLiteException e){
+
+
+
+     }
+
+     if(checkDB != null){
+
+     checkDB.close();
+     return true;
+
+     } else {return false;}
+
+
+}
+
+
+private void copyDataBase() throws IOException {
+
+    InputStream myInput = con.getAssets().open(db);  
+    OutputStream myOutput = new FileOutputStream(dbpath);
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+    myOutput.write(buffer, 0, length);
+    }
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+
+}
+
+
+ public void openDataBase() throws SQLException{
+
+
+    myDB = SQLiteDatabase.openDatabase(dbpath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+ @Override
+ public synchronized void close() {
+ if(myDB != null)
+ myDB.close();    
+ super.close();
+
+ }   
+
+
+@Override
+public void onCreate(SQLiteDatabase arg0) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+    // TODO Auto-generated method stub
+
+}
+
+}
+</code></pre>
+
+<p>I initialized the helper thus:</p>
+
+<pre><code> @Override
+protected void onCreate(Bundle savedInstanceState) {
+
+    super.onCreate(savedInstanceState);
+    helper = new Helper(this);
+
+    try {
+        helper.createDataBase();
+    } catch (IOException ex) {
+        System.out.println("no start");
+    }
+    try {
+        helper.openDataBase();
+    } catch (SQLException sqlex) {
+        System.out.println("does not open");
+    }
+     }
+</code></pre>
+
+<p>Ok it turns out I get a filenotfound exception:</p>
+
+<pre><code> 09-22 18:39:04.103: I/System.out(1119): java.io.FileNotFoundException: /data/data/com.example.myapp/databases/nn
+</code></pre>
+
+<p>However: provided my db is named nn (which it is) and my app is named myapp, should not this be the correct path?
+nn is in assets.</p>

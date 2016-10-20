@@ -1,0 +1,96 @@
+<p>I am creating and gallery in which images are grouped by date. I am using an ListView which has Gridview at each row. When Gridview of a row contains large amount of images about 2000, app crashed giving <strong>OutOfMemoryError</strong>. How to fix this ?</p>
+
+<p>Adapter of Listview:</p>
+
+<pre><code>public class MyAdapter extends BaseAdapter {
+private ArrayList<String> itemDetailsrrayList;
+Context mContext;
+
+private LayoutInflater l_Inflater;
+
+public MyAdapter(Context context,
+        ArrayList<String> results) {
+    itemDetailsrrayList = results;
+    l_Inflater = LayoutInflater.from(context);
+    mContext = context;
+}
+
+public int getCount() {
+    return itemDetailsrrayList.size();
+}
+
+public Object getItem(int position) {
+    return itemDetailsrrayList.get(position);
+}
+
+public long getItemId(int position) {
+    return position;
+}
+
+public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder holder;
+    if (convertView == null) {
+        convertView = l_Inflater.inflate(R.layout.settinglayout, null);
+        holder = new ViewHolder();
+
+        holder.myGrid = (MyGridView) convertView
+                .findViewById(R.id.grid);           
+
+
+
+        convertView.setTag(holder);
+    } else {
+        holder = (ViewHolder) convertView.getTag();
+    }
+
+    holder.myGrid.setAdapter(new ImageAdapter(itemDetailsrrayList.get(position)));
+
+    return convertView;
+}
+
+static class ViewHolder {
+    MyGridView myGrid;      
+
+}   
+}
+</code></pre>
+
+<p>My Custom GridView class</p>
+
+<pre><code>public class MyGridView extends GridView{
+
+public MyGridView(Context context) {
+    super(context);
+
+}
+boolean expanded = false;
+
+
+public boolean isExpanded() {
+    return expanded;
+}
+
+public void setExpanded(boolean expanded) {
+    this.expanded = expanded;
+}
+
+@Override
+public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    // HACK!  TAKE THAT ANDROID!
+    if (isExpanded()) {         
+        // Calculate entire height by providing a very large height hint.
+        // But do not use the highest 2 bits of this integer; those are
+        // reserved for the MeasureSpec mode.
+        int expandSpec = MeasureSpec.makeMeasureSpec(Integer.MAX_VALUE >> 2,
+                    MeasureSpec.AT_MOST);
+        super.onMeasure(widthMeasureSpec, expandSpec);
+
+        LayoutParams params = (LayoutParams) getLayoutParams();
+        params.height = getMeasuredHeight();
+    } else {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+}
+</code></pre>
+
+<p>}</p>

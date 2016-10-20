@@ -1,0 +1,241 @@
+<p>i try inserting data into my sqlite table, but i have a trouble inserted</p>
+
+<p>my error log</p>
+
+<pre><code>02-12 10:55:47.927: V/aaaa(1273): zaza
+02-12 10:55:47.927: I/Database(1273): sqlite returned: error code = 1, msg = no such table: users
+02-12 10:55:47.957: E/Database(1273): Error inserting username=zaza
+02-12 10:55:47.957: E/Database(1273): android.database.sqlite.SQLiteException: no such table: users: , while compiling: INSERT INTO users(username) VALUES(?);
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteCompiledSql.compile(SQLiteCompiledSql.java:92)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:65)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:83)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteStatement.<init>(SQLiteStatement.java:41)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteDatabase.compileStatement(SQLiteDatabase.java:1149)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteDatabase.insertWithOnConflict(SQLiteDatabase.java:1569)
+02-12 10:55:47.957: E/Database(1273):   at android.database.sqlite.SQLiteDatabase.insert(SQLiteDatabase.java:1426)
+02-12 10:55:47.957: E/Database(1273):   at com.example.database.DatabaseMain$1$1.onClick(DatabaseMain.java:63)
+02-12 10:55:47.957: E/Database(1273):   at com.android.internal.app.AlertController$ButtonHandler.handleMessage(AlertController.java:159)
+02-12 10:55:47.957: E/Database(1273):   at android.os.Handler.dispatchMessage(Handler.java:99)
+02-12 10:55:47.957: E/Database(1273):   at android.os.Looper.loop(Looper.java:123)
+02-12 10:55:47.957: E/Database(1273):   at android.app.ActivityThread.main(ActivityThread.java:3683)
+02-12 10:55:47.957: E/Database(1273):   at java.lang.reflect.Method.invokeNative(Native Method)
+02-12 10:55:47.957: E/Database(1273):   at java.lang.reflect.Method.invoke(Method.java:507)
+02-12 10:55:47.957: E/Database(1273):   at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+02-12 10:55:47.957: E/Database(1273):   at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+02-12 10:55:47.957: E/Database(1273):   at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>i am inserting use custom dialog with edittext, my editttext i show on <code>log.v</code> is show</p>
+
+<p>but why can't inserted my data?</p>
+
+<p>my code</p>
+
+<pre><code>public class DatabaseMain extends Activity {
+
+    private DataBaseHelper dbHelper;
+    SQLiteDatabase db;
+    //private CursorAdapter dataSource;
+
+    //put the table name and column in constants
+    public static final String TABLE_NAME = "users";
+    public static final String COLUMN_NAME = "username";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_database_main);
+        dbHelper = new DataBaseHelper (this);
+        //dbHelper.openDataBase();
+        db = dbHelper.getWritableDatabase();
+
+        ListView listdata= (ListView)findViewById(R.id.listView1);
+        Button btn = (Button)findViewById(R.id.button1);
+        btn.setOnClickListener(new View.OnClickListener() {
+
+            ContentValues values = new ContentValues();
+            public void onClick(View v) {
+                LayoutInflater inflater = DatabaseMain.this.getLayoutInflater();
+                final View v1 =inflater.inflate(R.layout.username , null) ;
+
+                new AlertDialog.Builder(DatabaseMain.this)
+                    .setTitle("input your name:")
+                    .setView(v1)
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dlg, int sumthin) {
+                            EditText name = (EditText)v1.findViewById(R.id.name);
+
+
+                            String your_name = name.getText().toString();
+                            values.put(COLUMN_NAME,name);
+
+                                    db.insert(TABLE_NAME,null,values);
+                        }
+                    })
+                    .show();
+
+            }
+        }); 
+    }
+
+
+}
+</code></pre>
+
+<p>i am using database from file then i put on folder assets then i am copy with this code</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+    private static String DB_PATH = "/data/data/com.example/databases/";
+
+    private static String DB_NAME = "MyDb";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    private static DataBaseHelper sInstance = null;
+
+
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+    public Cursor select(String query) throws SQLException {
+        return myDataBase.rawQuery(query, null);
+    }
+
+
+    public void insert(String table, ContentValues values) throws SQLException {
+        myDataBase.insert(table, null, values);
+    }
+
+
+    public void delete(String table, String where) throws SQLException {
+
+        myDataBase.delete(table, where, null);
+
+    }
+
+
+    public void update(String table, ContentValues values, String where) {
+
+        myDataBase.update(table, values, where, null);
+
+    }
+    public void sqlCommand(String command) {
+        myDataBase.execSQL(command);
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    public static DataBaseHelper instance() {
+        /*
+        if (sInstance == null) {
+            sInstance = new DataBaseHelper();
+        }
+        */
+        return sInstance;
+    }
+
+}
+</code></pre>

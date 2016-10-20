@@ -1,0 +1,334 @@
+<p>I have used an answer on stackoverflow to edit the default android navigation drawer.</p>
+
+<p>My problem is when running the project I get this error message:</p>
+
+<pre><code>Caused by: java.lang.ClassCastException: android.widget.LinearLayout cannot be cast to android.widget.ListView
+       at uk.co.mrgyro.cropcirclelocatorandroid.NavigationDrawerFragment.onCreateView(NavigationDrawerFragment.java:97)
+</code></pre>
+
+<p>Looking at other answers this seams to be caused by using a reserved word, however as far as I am aware I am not using one.</p>
+
+<p><strong>NavigationDrawerFragment.java</strong> </p>
+
+<pre><code>public class NavigationDrawerFragment extends Fragment {
+
+private ImageView mDrawerImage;
+private TextView mDrawerText;
+
+/**
+ * Remember the position of the selected item.
+ */
+private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+
+/**
+ * Per the design guidelines, you should show the drawer on launch until the user manually
+ * expands it. This shared preference tracks this.
+ */
+private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+/**
+ * A pointer to the current callbacks instance (the Activity).
+ */
+private NavigationDrawerCallbacks mCallbacks;
+
+/**
+ * Helper component that ties the action bar to the navigation drawer.
+ */
+private ActionBarDrawerToggle mDrawerToggle;
+
+private DrawerLayout mDrawerLayout;
+private ListView mDrawerListView;
+private View mFragmentContainerView;
+
+private int mCurrentSelectedPosition = 0;
+private boolean mFromSavedInstanceState;
+private boolean mUserLearnedDrawer;
+
+public NavigationDrawerFragment() {
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    // Read in the flag indicating whether or not the user has demonstrated awareness of the
+    // drawer. See PREF_USER_LEARNED_DRAWER for details.
+    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+    if (savedInstanceState != null) {
+        mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+        mFromSavedInstanceState = true;
+    }
+
+    // Select either the default item (0) or the last selected item.
+    selectItem(mCurrentSelectedPosition);
+}
+
+@Override
+public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    // Indicate that this fragment would like to influence the set of actions in the action bar.
+    setHasOptionsMenu(true);
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater,
+                         ViewGroup container,
+                         Bundle savedInstanceState)
+{
+    // need site names for list
+    String[] siteNames = getActivity().getResources().getStringArray(R.array.section_titles);
+
+
+    // inflate the parent view (the entire layout)
+    View view = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+    // now grab the separate child views from inside it
+    mDrawerListView = (ListView) view.findViewById(R.id.nav_listView);
+    mDrawerImage = (ImageView) view.findViewById(R.id.nav_image);
+    mDrawerText = (TextView) view.findViewById(R.id.nav_text);
+
+    // configure the Views
+    mDrawerText.setText("Give it a name/title");
+    //mDrawerImage.setImageURI(...);    // set your ImageView however you want, I just gave it one in XML
+    mDrawerListView.setOnItemClickListener((AdapterView.OnItemClickListener) this);
+    mDrawerListView.setAdapter(new ArrayAdapter<String>(getActionBar().getThemedContext(),
+            android.R.layout.simple_list_item_1, android.R.id.text1, siteNames));
+    mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+
+    // and return the inflated view up the stack
+    return view;
+}
+
+public boolean isDrawerOpen() {
+    return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+}
+
+/**
+ * Users of this fragment must call this method to set up the navigation drawer interactions.
+ *
+ * @param fragmentId   The android:id of this fragment in its activity's layout.
+ * @param drawerLayout The DrawerLayout containing this fragment's UI.
+ */
+public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+    mFragmentContainerView = getActivity().findViewById(fragmentId);
+    mDrawerLayout = drawerLayout;
+
+    // set a custom shadow that overlays the webviews content when the drawer opens
+    mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+    // set up the drawer's list view with items and click listener
+
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setHomeButtonEnabled(true);
+
+
+    // ActionBarDrawerToggle ties together the the proper interactions
+    // between the navigation drawer and the action bar app icon.
+    mDrawerToggle = new ActionBarDrawerToggle(
+            getActivity(),                    /* host Activity */
+            mDrawerLayout,                    /* DrawerLayout object */
+            R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+            R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+            R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+    ) {
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            if (!isAdded()) {
+                return;
+            }
+
+            if (!mUserLearnedDrawer) {
+                // The user manually opened the drawer; store this flag to prevent auto-showing
+                // the navigation drawer automatically in the future.
+                mUserLearnedDrawer = true;
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+            }
+
+            getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+        }
+    };
+
+    // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+    // per the navigation drawer design guidelines.
+    if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    // Defer code dependent on restoration of previous instance state.
+    mDrawerLayout.post(new Runnable() {
+        @Override
+        public void run() {
+            mDrawerToggle.syncState();
+        }
+    });
+
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+private void selectItem(int position) {
+    mCurrentSelectedPosition = position;
+    if (mDrawerListView != null) {
+        mDrawerListView.setItemChecked(position, true);
+    }
+    if (mDrawerLayout != null) {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+    if (mCallbacks != null) {
+        mCallbacks.onNavigationDrawerItemSelected(position);
+    }
+}
+
+@Override
+public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    try {
+        mCallbacks = (NavigationDrawerCallbacks) activity;
+    } catch (ClassCastException e) {
+        throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+    }
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    mCallbacks = null;
+}
+
+@Override
+public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    // Forward the new configuration the drawer toggle component.
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+@Override
+public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    // If the drawer is open, show the global app actions in the action bar. See also
+    // showGlobalContextActionBar, which controls the top-left area of the action bar.
+    if (mDrawerLayout != null && isDrawerOpen()) {
+      //  inflater.inflate(R.menu.main, menu);
+        showGlobalContextActionBar();
+    }
+    super.onCreateOptionsMenu(menu, inflater);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    if (item.getItemId() == R.id.action_example) {
+        Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+/**
+ * Per the navigation drawer design guidelines, updates the action bar to show the global app
+ * 'context', rather than just what's in the current screen.
+ */
+private void showGlobalContextActionBar() {
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    actionBar.setTitle(R.string.app_name);
+    actionBar.setHomeAsUpIndicator(R.drawable.ic_drawer);
+}
+
+private ActionBar getActionBar() {
+    return ((ActionBarActivity) getActivity()).getSupportActionBar();
+}
+
+/**
+ * Callbacks interface that all activities using this fragment must implement.
+ */
+public static interface NavigationDrawerCallbacks {
+    /**
+     * Called when an item in the navigation drawer is selected.
+     */
+    void onNavigationDrawerItemSelected(int position);
+}
+}
+</code></pre>
+
+<p><strong>fragment_navigation_drawer.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<!-- the root view is now a LinearLayout, all other Views are children of this -->
+<LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_height="match_parent"
+android:layout_width="match_parent"
+android:background="#cccc"
+android:orientation="vertical"
+android:id="@+id/listview2">
+
+<!-- a separate section to go above the list -->
+<LinearLayout
+    android:id="@+id/listview"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:orientation="horizontal">
+
+    <!-- your image, you can set it later (see NavDrawerFrag) -->
+    <ImageView
+        android:id="@+id/nav_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="15dp"
+        android:src="@android:drawable/ic_menu_myplaces"/>
+
+    <!-- a bit of test or a title to go with it -->
+    <TextView
+        android:id="@+id/nav_text"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:text="Default text"/>
+
+</LinearLayout>
+
+<!-- some divider thing -->
+<View
+    android:layout_width="match_parent"
+    android:layout_height="2dp"
+    android:padding="20dp"
+    android:background="#000000"/>
+
+<!-- your ListView is now a child View -->
+<ListView
+    android:id="@+id/nav_listView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:choiceMode="singleChoice"
+    android:divider="@android:color/transparent"
+    android:dividerHeight="0dp"/>
+
+</LinearLayout>
+</code></pre>

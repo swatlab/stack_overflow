@@ -1,0 +1,599 @@
+<p>I'm developing a very little audio player but sometimes I get some error that really drives me crazy. Now I'm facing a NullPointerException while I set the adapter for a ListView (the list of audio files on external storage).
+I'm using just one activity with actionbar and two tabs (two fragments that can be switched with swype). I didn't implement controls for the player yet, I'm still developing the list.</p>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Locale;
+
+import android.app.ActionBar.Tab;
+import android.app.ActionBar;
+import android.database.Cursor;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore.Audio;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+
+public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    private MyAdapter mAdapter;
+    private ViewPager mPager;
+
+    private ArrayList<Song> songsList;
+    private ListView songsView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        tabs();
+    }
+
+    private void tabs() {
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        mAdapter = new MyAdapter(getSupportFragmentManager());
+
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mPager.setAdapter(mAdapter);
+
+        mPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+
+        for (int i = 0; i < mAdapter.getCount(); i++) {
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+
+    public class MyAdapter extends FragmentPagerAdapter {
+        public MyAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+            case 0:
+                return FilesFragment.newInstance(0);
+            case 1:
+                return ControlsFragment.newInstance(1);
+
+            default:
+                return null;
+            }
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    @Override
+    protected void onStart(){
+        retrieveAudioFiles();
+
+        songsOrder();
+
+        inflateWithSongs();
+    }
+
+    public void retrieveAudioFiles(){
+        songsView = (ListView)findViewById(R.id.list);
+        songsList = new ArrayList<Song>();
+
+        Uri sd = Audio.Media.EXTERNAL_CONTENT_URI;
+        String[] cols = {Audio.Media.TITLE,Audio.Media.ARTIST,Audio.Media.ALBUM};
+        String where = Audio.Media.IS_MUSIC;
+        Cursor audioCursor = getContentResolver().query(sd,cols,where,null,null);
+
+        while (audioCursor.moveToNext()){
+            int posColTitle = audioCursor.getColumnIndex(Audio.Media.TITLE);
+            int posColArtist = audioCursor.getColumnIndex(Audio.Media.ARTIST);
+            int posColAlbum = audioCursor.getColumnIndex(Audio.Media.ALBUM);
+
+            String songTitle = audioCursor.getString(posColTitle);
+            String songArtist = audioCursor.getString(posColArtist);
+            String songAlbum = audioCursor.getString(posColAlbum);
+
+            songsList.add(new Song(songTitle,songArtist,songAlbum));
+            }
+        audioCursor.close();
+    }
+
+    public void songsOrder(){
+        Collections.sort(songsList, new Comparator<Song>(){
+              public int compare(Song a, Song b){
+                return a.title.compareTo(b.title);
+              }
+            });
+    }
+
+    public void inflateWithSongs(){
+        SongsAdapter songsAdt = new SongsAdapter(this, songsList);
+        songsView = (ListView) findViewById(R.id.list);
+        songsView.setAdapter(songsAdt); //ERROR HERE!!! SONGSVIEW IS NULL
+    }
+
+    public void songPicked(){
+        //work in progress
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_files, container,
+                    false);
+            return rootView;
+        }
+    }
+
+    @Override
+    public void onTabSelected(Tab tab, android.app.FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+        mPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, android.app.FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, android.app.FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+
+    }
+}
+</code></pre>
+
+<p><strong>FilesFragment.java</strong></p>
+
+<pre><code>import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class FilesFragment extends Fragment {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    public static FilesFragment newInstance(int index) {
+        FilesFragment f = new FilesFragment();
+        Bundle args = new Bundle();
+        args.putInt("index", index);
+        f.setArguments(args);
+        return f;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_files, container, false);
+        return view;
+    }
+}
+</code></pre>
+
+<p><strong>ControlsFragment.java</strong></p>
+
+<pre><code>import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class ControlsFragment extends Fragment {
+
+    public static ControlsFragment newInstance(int index) {
+        ControlsFragment f = new ControlsFragment();
+        Bundle args = new Bundle();
+        args.putInt("index", index);
+        f.setArguments(args);
+        return f;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_controls, container, false);
+        return view;
+    }
+}
+</code></pre>
+
+<p><strong>Song.java</strong></p>
+
+<pre><code>import android.graphics.Bitmap;
+import android.net.Uri;
+
+public class Song {
+
+    public String title="";
+    public String artist="";
+    public String album="";
+    private Uri path=null;
+    private Bitmap cover=null;
+
+    public Song(String t, String ar, String al){
+        title=t;
+        artist=ar;
+        album=al;
+    }
+
+    public Song(String t, String ar, String al, Uri p){
+        title=t;
+        artist=ar;
+        album=al;
+        path=p;
+    }
+
+    public Song(String t, Uri p){
+        title=t;
+        path=p;
+    }
+
+    public Song(){
+
+    }
+
+}
+</code></pre>
+
+<p><strong>SongsList.java</strong></p>
+
+<pre><code>import java.util.ArrayList;
+
+public class SongsList extends ArrayList<Song> {
+
+    public SongsList(){
+        super();
+    }
+
+}
+</code></pre>
+
+<p><strong>SongsAdapter.java</strong></p>
+
+<pre><code>import java.util.ArrayList;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+public class SongsAdapter extends BaseAdapter {
+
+    private ArrayList<Song> songs;
+    private LayoutInflater songInf;
+
+    public SongsAdapter(Context c, ArrayList<Song> theSongs){
+        super();  
+        songs=theSongs;
+        songInf=LayoutInflater.from(c);
+    }
+
+    @Override
+    public int getCount() {
+        // TODO Auto-generated method stub
+        return songs.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        // TODO Auto-generated method stub
+        return songs.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        // TODO Auto-generated method stub
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // TODO Auto-generated method stub
+        RowWrapper wrapper;
+        if (convertView == null)
+        {
+            convertView = songInf.inflate(
+                R.layout.song_row, null);
+            wrapper = new RowWrapper(convertView);
+            convertView.setTag(wrapper);
+        }
+        else
+        {
+            wrapper = (RowWrapper) convertView.getTag();
+        }
+        Song song = (Song) getItem(position);
+        wrapper.populate(song);
+
+        return convertView;
+    }
+
+    private static class RowWrapper
+    {
+        private TextView titleTextView;
+        private TextView artistTextView;
+        private TextView albumTextView;
+
+        public RowWrapper(View convertView)
+        {
+            titleTextView = (TextView) 
+                convertView.findViewById(R.id.textTitle);
+            artistTextView = (TextView) 
+                convertView.findViewById(R.id.textArtist);
+            albumTextView = (TextView) 
+                convertView.findViewById(R.id.textAlbum);
+        }
+
+        public void populate(Song song)
+        {
+            titleTextView.setText(song.title);
+            artistTextView.setText(song.artist);
+            albumTextView.setText(song.album);
+        }
+    }
+
+}
+</code></pre>
+
+<p><strong>AndroidManifest.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.audioplayer"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="19" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.example.audioplayer.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+         />
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>fragment_files.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:divider="#242424"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>song_row.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:onClick="songPicked" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/labelTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/labelTitle" />
+
+        <TextView
+            android:id="@+id/textTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:text="@string/textTitle" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/labelArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="0dp"
+            android:text="@string/labelArtist" />
+
+        <TextView
+            android:id="@+id/textArtist"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:text="@string/textArtist" />
+
+        <TextView
+            android:id="@+id/labelAlbum"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="@string/labelAlbum" />
+
+        <TextView
+            android:id="@+id/textAlbum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:text="@string/textAlbum" />
+    </LinearLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>fragment_controls.xml</strong>: doesn't matter</p>
+
+<p><strong>Error log</strong></p>
+
+<pre><code>[2014-04-24 17:21:34 - AudioPlayer] Starting activity com.example.audioplayer.MainActivity on device c0808b11451fb7f
+[2014-04-24 17:21:35 - AudioPlayer] ActivityManager: Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.example.audioplayer/.MainActivity }
+
+04-24 17:27:03.647: D/ActivityThread(23489): handleBindApplication:com.example.audioplayer
+04-24 17:27:03.647: D/ActivityThread(23489): setTargetHeapUtilization:0.75
+04-24 17:27:03.647: D/ActivityThread(23489): setTargetHeapMinFree:524288
+04-24 17:27:03.663: W/ActivityThread(23489): Application com.example.audioplayer is waiting for the debugger on port 8100...
+04-24 17:27:03.671: I/System.out(23489): Sending WAIT chunk
+04-24 17:27:03.983: I/dalvikvm(23489): Debugger is active
+04-24 17:27:04.077: I/System.out(23489): Debugger has connected
+04-24 17:27:04.077: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:04.272: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:04.475: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:04.686: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:04.889: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:05.085: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:05.280: I/System.out(23489): waiting for debugger to settle...
+04-24 17:27:05.483: I/System.out(23489): debugger has settled (1485)
+04-24 17:27:05.835: D/AndroidRuntime(23489): Shutting down VM
+04-24 17:27:05.835: W/dalvikvm(23489): threadid=1: thread exiting with uncaught exception (group=0x418bbce0)
+04-24 17:27:05.850: E/AndroidRuntime(23489): FATAL EXCEPTION: main
+04-24 17:27:05.850: E/AndroidRuntime(23489): Process: com.example.audioplayer, PID: 23489
+04-24 17:27:05.850: E/AndroidRuntime(23489): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.audioplayer/com.example.audioplayer.MainActivity}: java.lang.NullPointerException
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2215)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2265)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.ActivityThread.access$800(ActivityThread.java:145)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1206)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.os.Handler.dispatchMessage(Handler.java:102)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.os.Looper.loop(Looper.java:136)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.ActivityThread.main(ActivityThread.java:5149)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at java.lang.reflect.Method.invokeNative(Native Method)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at java.lang.reflect.Method.invoke(Method.java:515)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:789)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:605)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at dalvik.system.NativeStart.main(Native Method)
+04-24 17:27:05.850: E/AndroidRuntime(23489): Caused by: java.lang.NullPointerException
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at com.example.audioplayer.MainActivity.inflateWithSongs(MainActivity.java:151)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at com.example.audioplayer.MainActivity.onStart(MainActivity.java:112)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.Instrumentation.callActivityOnStart(Instrumentation.java:1171)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.Activity.performStart(Activity.java:5241)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2178)
+04-24 17:27:05.850: E/AndroidRuntime(23489):    ... 11 more
+04-24 17:27:09.147: I/Process(23489): Sending signal. PID: 23489 SIG: 9
+</code></pre>

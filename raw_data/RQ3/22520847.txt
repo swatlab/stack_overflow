@@ -1,0 +1,120 @@
+<p>I have a main Activity with two different drawers:
+- A navigation one on the left side
+- A notification one on the right side</p>
+
+<p>The layout <strong>main.xml</strong> is the following:</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.test.toto.MainActivity">
+
+    <!-- As the main content view, the view below consumes the entire
+         space available using match_parent in both dimensions. -->
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white"/>
+
+    <fragment android:id="@+id/navigation_drawer"
+        android:layout_width="@dimen/navigation_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:name="com.test.toto.NavigationDrawer" />
+
+    <fragment android:id="@+id/notification_drawer"
+        android:layout_width="@dimen/navigation_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:name="com.test.toto.NotificationDrawer" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>In my main activity <strong>MainActivity.java</strong> I do the following:</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.main);
+
+    mNavigationDrawer = (NavigationDrawer)
+            getFragmentManager().findFragmentById(R.id.navigation_drawer);
+    mNotificationDrawer = (NotificationDrawer)
+            getFragmentManager().findFragmentById(R.id.notification_drawer);
+
+    // Set up the drawers
+    mNavigationDrawer.setUp(
+            R.id.navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+
+    mNotificationDrawer.setUp(
+            R.id.notification_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+}
+</code></pre>
+
+<p>And in both drawer fragments there is the setUp method (ex. <strong>NotificationDrawer.java</strong>) :</p>
+
+<pre><code>public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the navigation drawer and the action bar app icon.
+        mDrawerToggle = new ActionBarDrawerToggle(
+                getActivity(),                    /* host Activity */
+                mDrawerLayout,                    /* DrawerLayout object */
+                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+        ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+            }
+        };
+
+        // Defer code dependent on restoration of previous instance state.
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        // HERE IS THE PROBLEM
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+</code></pre>
+
+<p>My problem is that the mDrawerLayout will be the same one in both setup (R.id.drawer_layout) and so the setDrawerListener method is overwritten with the new Listener when I call the setUp the second time (in my case the Navigation one is replaced my the Notification one).</p>
+
+<p>For this reason, the methods to interact between the navigation drawer and the action bar (<strong>onDrawerClosed</strong> and <strong>onDrawerOpened</strong>) are not called for the Navigation Drawer.</p>
+
+<p><strong>How can I get these methods called for both drawers?</strong>
+I need to do something in both cases when one or the other drawer is opened.</p>

@@ -1,0 +1,250 @@
+<p>Hello I'm trying to pass a intent to a FragmentActivity but it's not working. The activity close in the initialization of the FragmentActivity. Here is the Activity:</p>
+
+<pre><code>public class ProcuraPontoActivity extends Activity implements OnClickListener, OnItemClickListener {
+    /** EditText da procura do ponto. Geralmente o input é o ID ou nome do ponto */
+    private EditText procura;
+    /** ListView que mostra todos os pontos encontrados */
+    private ListView lv;
+    /** DAO do Ponto para procurar pontos */
+    private PontoDAO dao;
+    /** ArrayList de Pontos encontrados */
+    private ArrayList<Ponto> AL = null;
+    /** ArrayList que vai pegar a ID do ponto encontrado com o nome do Ponto para mostrar na lv */
+    private ArrayList<HashMap<String,String>> lista;
+    /** Adaptador utilizado */
+    private SimpleAdapter adapter;
+    /** O usuário atual */
+    private Usuario user;
+
+    /**
+     * Inicia a activity de procura de pontos.
+     */
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.procura_ponto);
+        lista = new ArrayList<HashMap<String,String>>();
+        AL = new ArrayList<Ponto>();
+        user = Usuario.toUser(getIntent().getBundleExtra("user"));
+
+        /*
+         * Widgets
+         */
+
+        procura = (EditText) findViewById(R.id.procura_ponto_et);
+        Button achar = (Button) findViewById(R.id.procura_ponto_achar);
+        TextView ppSigla = (TextView) findViewById(R.id.ppSigla);
+        ppSigla.setText(user.getSigla());
+        achar.setOnClickListener(this);
+        dao = new PontoDAO(this);
+
+        /*
+         * ListView
+         */
+        lv = (ListView) findViewById(R.id.procura_ponto_lv);
+        String[] from = new String[] { "a", "b"};
+        int[] to = new int[] { R.id.pp_tv1, R.id.pp_tv2 };
+        int layout = R.layout.procura_ponto_list;
+        adapter = new SimpleAdapter(this ,lista, layout, from, to);
+        lv.setAdapter(adapter);
+        lv.setOnItemClickListener(this);
+
+    }
+
+    /**
+     * Faz a verificação da procura e exibe resultados.
+     */
+    public void onClick(View v) {
+        if (!(procura.getText().toString().equals(""))) {
+            lista.clear();
+            FiltroPonto fp = new FiltroPonto();
+            fp.setNomePonto(procura.getText().toString());
+            fp.setValor(1);
+            AL = dao.procuraPonto(user.getSigla(),fp);
+            Log.i("ProcuraPontoActivity",
+                    "Número de pontos encontrados: " + AL.size());
+            for (Ponto p : AL) {
+                HashMap<String, String> hm = new HashMap<String, String>();
+                if (p.getIdPonto().equals(null)) {
+                    hm.put("a", user.getSigla()+p.getPontoNome());
+                } else {
+                    hm.put("a", p.getIdPonto());
+                }
+                hm.put("b",
+                        "[UTM] E: [" + p.getUTMEste() + "] N: ["
+                                + p.getUTMNorte() + "] Fuso: ["
+                                + p.getUTMFuso() + "]");
+                lista.add(hm);
+            }
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Método chamado cada vez que um click é feito na listview percorrida
+     * que vai chamar uma nova intent para iniciar o Ponto (PontoTabActivity)
+     */
+    public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+        PontoDAO pdao = new PontoDAO(this);
+        String max = pdao.maxIdPonto(user.getIdUsuario(), user.getSigla());
+        if (AL.get(arg2).getIdPonto().equals(max)) {
+            Intent i = new Intent(this, PontoTabActivity.class);
+            i.putExtra("id", AL.get(arg2).getIdPonto());
+            i.putExtra("user", getIntent().getBundleExtra("user"));
+            i.putExtra("cria", 1);
+            startActivity(i);
+            finish();
+        } else {
+            Intent i2 = new Intent(this, RelatorioPontos.class);
+            i2.putExtra("id", AL.get(arg2).getIdPonto());
+            startActivity(i2);
+        }
+
+    }
+}
+</code></pre>
+
+<p>And this is the RelatorioPontos.class:</p>
+
+<pre><code>public class RelatorioPontos extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap mapTabInfo = new HashMap();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+        private String tag;
+        private Class clss;
+        private Bundle args;
+        private Fragment fragment;
+        TabInfo(String tag, Class clazz, Bundle args) {
+            this.tag = tag;
+            this.clss = clazz;
+            this.args = args;
+        }
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+
+        /** 
+         * @param context 
+         */
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {        
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.relatorio_layout);
+
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+        }
+    }   
+
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); //salva a tabela selecionada
+        super.onSaveInstanceState(outState);
+    }
+
+    private void initialiseTabHost(Bundle args) {
+        String id = getIntent().getExtras().getString("id");
+        args.putString("id", id);
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        RelatorioPontos.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Dados").setIndicator("Dados"),
+                (tabInfo = new TabInfo("Dados", DadosPonto.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        RelatorioPontos.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Analises").setIndicator("Analises"),
+                (tabInfo = new TabInfo("Analises", AnalisesPonto.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        RelatorioPontos.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Multimidia").setIndicator("Multimidia"),
+                (tabInfo = new TabInfo("Multimidia", ArquivosMultimidia.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    }
+
+    /** 
+     * @param activity
+     * @param tabHost
+     * @param tabSpec
+     * @param clss
+     * @param args 
+     */
+    private static void addTab(RelatorioPontos activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+
+        tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+
+        tabHost.addTab(tabSpec);
+    }
+
+    public void onTabChanged(String tag) {
+        TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this, newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+}
+</code></pre>
+
+<p>And this is the LogCat:</p>
+
+<pre><code>06-06 11:45:20.661: E/AndroidRuntime(905): java.lang.RuntimeException: Unable to start activity ComponentInfo{caderneta.main.activity/caderneta.main.activity.RelatorioPontos}: java.lang.NullPointerException
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.ActivityThread.access$600(ActivityThread.java:141)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.os.Handler.dispatchMessage(Handler.java:99)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.os.Looper.loop(Looper.java:137)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.ActivityThread.main(ActivityThread.java:5041)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at java.lang.reflect.Method.invokeNative(Native Method)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at java.lang.reflect.Method.invoke(Method.java:511)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at dalvik.system.NativeStart.main(Native Method)
+06-06 11:45:20.661: E/AndroidRuntime(905): Caused by: java.lang.NullPointerException
+06-06 11:45:20.661: E/AndroidRuntime(905):  at caderneta.main.activity.RelatorioPontos.initialiseTabHost(RelatorioPontos.java:74)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at caderneta.main.activity.RelatorioPontos.onCreate(RelatorioPontos.java:61)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.Activity.performCreate(Activity.java:5104)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+06-06 11:45:20.661: E/AndroidRuntime(905):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+06-06 11:45:20.661: E/AndroidRuntime(905):  ... 11 more
+</code></pre>

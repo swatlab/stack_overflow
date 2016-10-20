@@ -1,0 +1,373 @@
+<p>Parent Activity</p>
+
+<pre><code>public class MyPageActivity extends AppCompatActivity {
+
+    private MyReportsFragment myReportsFragment;
+    private BlogsFragment blogsFragment;
+    private MyGoalsFragment myGoalsFragment;
+    private ZnanieFragment znanieFragment;
+
+    private FragmentManager manager;
+    private FragmentTransaction transaction;
+
+    String access_token;
+    String userID;
+    StringBuilder feedInput;
+
+    JSONObject jsonResponseProfile = null;
+    JSONObject jsonResponse;
+
+    String username;
+    String city;
+    String userJob;
+    String status;
+
+    URL urlImage;
+    Bitmap bmp;
+    int imageExist;
+
+    String connectURL;
+    Bundle bundle;
+
+    String[] feedType = {"Отчеты", "Блоги", "Цели и желания", "Знания"};
+    String[] lifeAreaType = {"Все", "Материальное", "Личность", "Тело и здоровье", "Личная жизнь", "Стиль жизни"};
+    String selectFeed = "Отчеты";
+    String selectSphere = "Все";
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_my_page);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        manager = getSupportFragmentManager();
+        myReportsFragment = new MyReportsFragment();
+        blogsFragment = new BlogsFragment();
+        myGoalsFragment = new MyGoalsFragment();
+        znanieFragment = new ZnanieFragment();
+
+        access_token = getIntent().getStringExtra("access_token");
+        userID = getIntent().getStringExtra("userID");
+
+        new GetMyProfile().execute();
+
+        connectURL = "http://upgrade.im/api/method/wall.actions?access_token=" + access_token;
+        bundle = new Bundle();
+        bundle.putString("connectURL", connectURL);
+        myReportsFragment.setArguments(bundle);
+        transaction = manager.beginTransaction();
+        transaction.add(R.id.myPageReportFeed, myReportsFragment);
+        transaction.commit();
+
+        // адаптер
+        ArrayAdapter<String> adapterFeedType = new ArrayAdapter<String>(this, R.layout.spinner_row, feedType);
+        adapterFeedType.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        final Spinner feedTypeSp = (Spinner) findViewById(R.id.spinnerFeedTypeMyPage);
+        feedTypeSp.setAdapter(adapterFeedType);
+
+
+        // устанавливаем обработчик нажатия
+        feedTypeSp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {               
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        // адаптер
+        ArrayAdapter<String> adapterLifeAreaType = new ArrayAdapter<String>(this, R.layout.spinner_row, lifeAreaType);
+        adapterFeedType.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        final Spinner lifeAreaTypeSp = (Spinner) findViewById(R.id.spinnerLifeAreaTypeMyPage);
+        lifeAreaTypeSp.setAdapter(adapterLifeAreaType);
+
+        // устанавливаем обработчик нажатия
+        lifeAreaTypeSp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {            
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private class GetMyProfile extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+                URL url = new URL("http://upgrade.im/api/method/profile.get?access_token=" + access_token + "&rettype=full");
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true); // Triggers POST.
+                connection.setDoInput(true);
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                feedInput = new StringBuilder();
+                String inputBufferSymbol = "";
+                while ((inputBufferSymbol = br.readLine()) != null) {
+                    feedInput.append(inputBufferSymbol);
+                }
+                br.close();
+
+
+                jsonResponseProfile = new JSONObject(feedInput.toString());
+                jsonResponse = jsonResponseProfile.getJSONObject("response");
+
+                if (jsonResponse.has("first_name")) {
+                    username = jsonResponse.getString("first_name");
+                } else {
+                    username = jsonResponse.getString("login");
+                }
+
+                if (jsonResponse.getString("online").equals("1")) {
+                    status = "online";
+                } else {
+                    status = "offline";
+                }
+
+                if (jsonResponse.has("city")) {
+                    city = jsonResponse.getString("city");
+                } else {
+                }
+
+                if (jsonResponse.has("activity")) {
+                    userJob = jsonResponse.getString("activity");
+                } else {
+                }
+
+                if (jsonResponse.has("photo")) {
+                    urlImage = new URL("http://upgrade.im/upload/avatar/" + jsonResponse.getString("photo"));
+                    imageExist = 1;
+                } else {
+                    imageExist = 0;
+                }
+
+
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            FillProfile();
+        }
+    }
+
+    private void FillProfile() {
+
+        TextView myPageUsername = (TextView) findViewById(R.id.myPageUsernameAge);
+        TextView myPageCity = (TextView) findViewById(R.id.myPageUserCity);
+        TextView myPageUserJob = (TextView) findViewById(R.id.myPageUserJob);
+        TextView myPageStatus = (TextView) findViewById(R.id.myPageStatus);
+        ImageView userAvatar = (ImageView) findViewById(R.id.userAvatar);
+
+
+        myPageUsername.setText(username);
+        myPageCity.setText(city);
+        myPageUserJob.setText(userJob);
+        myPageStatus.setText(status);
+
+        if (imageExist == 1) {
+            Glide.with(this).load(urlImage.toString()).into(userAvatar);
+        } else {
+            userAvatar.setImageDrawable(null);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_my_page, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(MyPageActivity.this, AllNewsActivity.class);
+            intent.putExtra("access_token", access_token);
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>
+
+<p>Fragment attached to this activity</p>
+
+<pre><code>public class MyReportsFragment extends Fragment {
+
+    Button buttonToStart;
+    Button buttonPrevReport;
+    Button buttonNextReport;
+    int reportID;
+
+    JSONObject jsonResponseReports = null;
+    JSONObject jsonResponse;
+    JSONArray items;
+
+
+    String linkGoal;
+    String report;
+    String goalType;
+    String sphere;
+    String timeStamp;
+
+    ImageView spheraTypeIcon;
+    LinearLayout linkGoalImageView;
+    TextView linkGoalText;
+    TextView reportText;
+    TextView timeView;
+
+    StringBuilder feedInput;
+
+    String connectURL;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        connectURL = getArguments().getString("connectURL");
+        reportID=0;
+
+        View reportsFragment = inflater.inflate(R.layout.fragment_my_reports_line, null);
+
+        buttonNextReport = (Button) reportsFragment.findViewById(R.id.buttonNextReport);
+        buttonPrevReport = (Button) reportsFragment.findViewById(R.id.buttonPreviousReport);
+        buttonToStart = (Button) reportsFragment.findViewById(R.id.toStartButton);
+        spheraTypeIcon = (ImageView) reportsFragment.findViewById(R.id.spheraTypeIcon);
+        linkGoalImageView = (LinearLayout) reportsFragment.findViewById(R.id.linkGoalImageView);
+        linkGoalText = (TextView) reportsFragment.findViewById(R.id.linkGoalText);
+        reportText = (TextView) reportsFragment.findViewById(R.id.reportText);
+        timeView = (TextView)reportsFragment.findViewById(R.id.timeView);
+
+        new GetReportFeed().execute();       
+
+        return reportsFragment;
+    }
+
+    private class GetReportFeed extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+                URL url = new URL(connectURL);
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true); // Triggers POST.
+                connection.setDoInput(true);
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                feedInput = new StringBuilder();
+                String inputBufferSymbol = "";
+                while ((inputBufferSymbol = br.readLine()) != null) {
+                    feedInput.append(inputBufferSymbol);
+                }
+                br.close();
+
+                jsonResponseReports = new JSONObject(feedInput.toString());
+                jsonResponse = jsonResponseReports.getJSONObject("response");
+                items = jsonResponse.getJSONArray("items");
+                JSONObject item0 = items.getJSONObject(0);
+                JSONObject item0user = item0.getJSONObject("user");
+                JSONObject item0userGoal = item0.getJSONObject("map_block");
+                linkGoal = item0userGoal.getString("title");
+                goalType = item0userGoal.getString("type");
+                report = item0.getString("description");
+                sphere = item0.getString("sphere");
+                timeStamp = item0.getString("time");
+
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            FillReport();
+        }
+    }
+
+    private void FillReport() {
+
+        switch (sphere) {
+            case "1":
+                spheraTypeIcon.setImageResource(R.drawable.material);
+                break;
+            case "2":
+                spheraTypeIcon.setImageResource(R.drawable.lichnost);
+                break;
+            case "3":
+                spheraTypeIcon.setImageResource(R.drawable.tiz);
+                break;
+            case "4":
+                spheraTypeIcon.setImageResource(R.drawable.lj);
+                break;
+            case "5":
+                spheraTypeIcon.setImageResource(R.drawable.stj);
+                break;
+        }
+
+        switch (goalType) {
+            case "goal":
+                linkGoalImageView.setBackgroundColor(Color.parseColor("#f7846a"));
+                break;
+            case "desire":
+                linkGoalImageView.setBackgroundColor(Color.parseColor("#8EF165"));
+                break;
+            case "act":
+                linkGoalImageView.setBackgroundColor(Color.parseColor("#F9D753"));
+                break;
+        }
+
+        linkGoalText.setText(linkGoal);
+        reportText.setText(report);
+
+        Date normalDateTime = new java.util.Date(Integer.parseInt(timeStamp) * 1000L);
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss z");
+        timeView.setText(format.format(normalDateTime.getTime()+TimeZone.getDefault().getRawOffset()));
+    }
+
+}
+</code></pre>
+
+<p>Through the menu item I go to child activity, and when I back to parent activity I get</p>
+
+<blockquote>
+  <p>org.json.JSONException: No value for response</p>
+</blockquote>
+
+<p>But Why? I put all important code to <code>onStart()</code> for repeat all generate-activity-processes when I back to parent activity and all data must be ready already.</p>

@@ -1,0 +1,490 @@
+<p>I have made a premade one and am trying to use it from the asset folder but keep getting errors.</p>
+
+<pre><code>05-02 14:58:44.771: E/Database(573): sqlite3_open_v2("/data/data/com.MC.ChemPal/databases/ChemPaldb.db", &handle, 2, NULL) failed
+
+05-02 14:58:44.792: E/AndroidRuntime(573): FATAL EXCEPTION: main
+05-02 14:58:44.792: E/AndroidRuntime(573): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.MC.ChemPal/com.MC.ChemPal.sqlView}: android.database.sqlite.SQLiteException: unable to open database file
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1647)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1663)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:931)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.os.Handler.dispatchMessage(Handler.java:99)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.os.Looper.loop(Looper.java:123)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.ActivityThread.main(ActivityThread.java:3683)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at java.lang.reflect.Method.invokeNative(Native Method)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at java.lang.reflect.Method.invoke(Method.java:507)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at dalvik.system.NativeStart.main(Native Method)
+05-02 14:58:44.792: E/AndroidRuntime(573): Caused by: android.database.sqlite.SQLiteException: unable to open database file
+05-02 14:58:44.792: E/AndroidRuntime(573):  at  android.database.sqlite.SQLiteDatabase.dbopen(Native Method)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.database.sqlite.SQLiteDatabase.<init>(SQLiteDatabase.java:1849)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:820)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at com.MC.ChemPal.sqlStuff.openDatabase(sqlStuff.java:148)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at com.MC.ChemPal.sqlView.onCreate(sqlView.java:20)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+05-02 14:58:44.792: E/AndroidRuntime(573):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1611)
+05-02 14:58:44.792: E/AndroidRuntime(573):  ... 11 more
+</code></pre>
+
+<p>The log cats above go with the code below i'm trying to use a database i made in sqlite browser I have added the android meta data and a integer primary key is present in the database. It causes the app to crash whenever i try to do anything relating to my db.</p>
+
+<pre><code>package com.MC.ChemPal;
+
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+
+public class sqlStuff extends SQLiteOpenHelper{
+
+public static final String KEY_ROWID= "_id";
+public static final String KEY_SYSNAME= "systematic_name";
+public static final String KEY_MOLARMASS= "molar_mass";
+public static final String KEY_GROUP = "groups";
+public static final String KEY_MP ="melting_point";
+public static final String KEY_BP ="boiling_point";
+public static final String KEY_COMNAME="general_name";
+public static final String KEY_CONELEMENTS="elements_included_C_H";
+
+
+
+
+
+
+ private SQLiteDatabase ChemPal;
+ private static String DATABASE_NAME = "ChemPaldb.db";
+ private static int DATABASE_VERSION = 1;
+ private String DATABASE_PATH = "/data/data/com.MC.ChemPal/databases/";
+ private static String DATABASE_TABLE = "ChemTable";
+
+
+
+    private SQLiteDatabase sampleDatabase; 
+    private final Context androidContext;
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the   application assets and resources.
+     * @param context
+     */
+    public sqlStuff(Context context) {
+
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.androidContext = context;
+    }   
+
+  /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDatabase() throws IOException{
+
+        boolean dbExist = checkDatabase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }
+        else {
+
+
+
+            // Create a skeleton database
+            this.getReadableDatabase();
+
+            try {
+
+                copyDatabase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you  open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDatabase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+            //database does't exist yet.
+
+        }
+
+        if(checkDB != null){
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDatabase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = androidContext.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDatabase() throws SQLException{
+
+        //Open the database
+        String myPath = DATABASE_PATH + DATABASE_NAME;
+        sampleDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(sampleDatabase != null)
+                sampleDatabase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO: Write routines to remove and overwrite the database on an upgrade
+        db.execSQL("DROP TABLE IF EXISTS" + DATABASE_TABLE);
+        onCreate(db);
+    }
+
+    /***
+     * A sample function that returns a Cursor from the database.  Should use the Data Provider pattern, but used for brevity
+     * @return
+     */
+    public Cursor getUserTable() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM User", null);
+        return cursor;
+    }
+
+
+
+
+
+public long createEntry(String SYSNAME, String MOLMASS, String GROUP, String MP, String BP, String COMNAME, String CONELEMENTS){
+      //TODO Auto-generated method stub
+    try{
+    ContentValues cv = new ContentValues();
+    cv.put(KEY_SYSNAME, SYSNAME);
+    cv.put(KEY_MOLARMASS, MOLMASS);
+    cv.put(KEY_GROUP, GROUP);
+    cv.put(KEY_MP, MP);
+    cv.put(KEY_BP, BP);
+    cv.put(KEY_COMNAME, COMNAME); 
+    cv.put(KEY_CONELEMENTS, CONELEMENTS);
+    return ChemPal.insert(DATABASE_TABLE, null, cv);
+    } catch (Exception e) {
+        String TAG = "my tag";
+        Log.e(TAG, e.toString());
+        return 0;
+
+    }
+
+}
+public String getData() {
+    // TODO Auto-generated method stub
+    String[] columns = new String[] { KEY_ROWID , KEY_SYSNAME , KEY_MOLARMASS ,KEY_GROUP ,
+            KEY_MP , KEY_BP  , KEY_COMNAME , KEY_CONELEMENTS };
+    Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+    String result = "";
+
+    int iRow = c.getColumnIndex(KEY_ROWID);
+    int iSysName = c.getColumnIndex(KEY_SYSNAME);
+    int iMolarMass = c.getColumnIndex(KEY_MOLARMASS);
+    int iGroup = c.getColumnIndex(KEY_GROUP);
+    int iMp = c.getColumnIndex(KEY_MP);
+    int iBp = c.getColumnIndex(KEY_BP);
+    int iCommonName = c.getColumnIndex(KEY_COMNAME);
+    int iElements = c.getColumnIndex(KEY_CONELEMENTS);
+
+    for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+        result = result + c.getString(iRow) + " " + c.getString(iSysName) + " " + c.getString(iMolarMass) + " " +c.getString(iGroup) +
+                " " + c.getString(iMp)+ " " + c.getString(iBp) + " "+ c.getString(iCommonName) + " " +c.getString(iElements) + "\n";
+
+    }
+        return result;
+
+    }
+
+
+
+
+
+
+
+public String[] getIDSysName()
+{
+    String[] result = new String[0];
+
+    try
+    {
+        String[] columns = new String[] {KEY_SYSNAME};
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        Log.d("SqlDStuff", "Cursor count: "+c.getCount());
+        int iSysName = c.getColumnIndex(KEY_SYSNAME);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result[i] = c.getString(iSysName);
+            i++;
+
+        }
+    }
+    catch(Exception e)
+    {   
+
+    }
+
+    return result;
+}
+
+public String[] getIDGroup()
+{
+    String[] result2 = new String[0];
+
+    try
+    {
+        String[] columns = new String[] { KEY_GROUP };
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        int iGroup = c.getColumnIndex(KEY_GROUP);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result2 = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result2[i] = c.getString(iGroup);
+            i++;
+        }
+
+    }
+    catch(Exception e)
+    {
+
+    }
+
+    return result2;
+}
+
+public String[] getIDMP()
+{
+    String[] result3 = new String[0];
+
+    try
+    {
+        String[] columns = new String[] { KEY_MP };
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        int iMp = c.getColumnIndex(KEY_MP);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result3 = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result3[i] = c.getString(iMp);
+            i++;
+        }
+
+    }
+    catch(Exception e)
+    {
+
+    }
+
+    return result3;
+}
+
+
+
+public String[] getIDBP()
+{
+    String[] result3 = new String[0];
+
+    try
+    {
+        String[] columns = new String[] { KEY_BP };
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        int iBp = c.getColumnIndex(KEY_BP);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result3 = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result3[i] = c.getString(iBp);
+            i++;
+        }
+
+    }
+    catch(Exception e)
+    {
+
+    }
+
+    return result3;
+}
+
+public String[] getIDComname()
+{
+    String[] result4 = new String[0];
+
+    try
+    {
+        String[] columns = new String[] { KEY_COMNAME };
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        int iCommonName = c.getColumnIndex(KEY_COMNAME);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result4 = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result4[i] = c.getString(iCommonName);
+            i++;
+        }
+
+    }
+    catch(Exception e)
+    {
+
+    }
+
+    return result4;
+}
+public String[] getIDElement()
+{
+    String[] result5 = new String[0];
+
+    try
+    {
+        String[] columns = new String[] { KEY_CONELEMENTS };
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        int iElements = c.getColumnIndex(KEY_CONELEMENTS);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result5 = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result5[i] = c.getString(iElements);
+            i++;
+        }
+
+    }
+    catch(Exception e)
+    {
+
+    }
+
+    return result5;
+}
+
+public String[] getIDMOLARMASS()
+{
+    String[] result6 = new String[0];
+
+    try
+    {
+        String[] columns = new String[] { KEY_MOLARMASS };
+        Cursor c  =  ChemPal.query(DATABASE_TABLE, columns, null, null,  null, null, null);
+        int iElements = c.getColumnIndex(KEY_MOLARMASS);
+
+        int i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            i++;
+        }
+
+        result6 = new String[i];
+        i = 0;
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+            result6[i] = c.getString(iElements);
+            i++;
+        }
+
+    }
+    catch(Exception e)
+    {
+
+    }
+
+    return result6;
+}
+}
+</code></pre>

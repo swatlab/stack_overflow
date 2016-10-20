@@ -1,0 +1,175 @@
+<p>I'm trying to implement sliding tab layout using android material design.But it gives me <strong>NullPointerException</strong>.</p>
+
+<h2><em>Here is my code so far:</em></h2>
+
+<p>MainActivity.java:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+    private Toolbar toolbar;
+    private ViewPager pager;
+    private SlidingTabLayout nLayout;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_main_appbar);
+        toolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
+                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer_fragment);
+        drawerFragment.setUp(R.id.navigation_drawer_fragment, (DrawerLayout) findViewById(R.id.drawer_layout), toolbar);
+        pager = (ViewPager) findViewById(R.id.pager);
+        pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+
+        nLayout = (SlidingTabLayout) findViewById(R.id.tabs);
+        nLayout.setViewPager(pager);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.navigate) {
+            startActivity(new Intent(this, SubActivity.class));
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    class MyPagerAdapter extends FragmentPagerAdapter {
+
+        String tabs[];
+
+        public MyPagerAdapter(FragmentManager fm) {
+            super(fm);
+            tabs = getResources().getStringArray(R.array.tabs);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            MyFragment myFragment = MyFragment.getInstance(position);
+            return myFragment;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return tabs[position];
+        }
+
+        @Override
+        public int getCount() {
+            return 3;
+        }
+    }
+
+    public static class MyFragment extends Fragment {
+        private TextView textView;
+
+        public static MyFragment getInstance(int position) {
+            MyFragment myFragment = new MyFragment();
+            Bundle args = new Bundle();
+            args.putInt("position", position);
+            myFragment.setArguments(args);
+            return myFragment;
+        }
+
+        @Nullable
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View layout = inflater.inflate(R.layout.fragment_my, container, false);
+            textView = (TextView) layout.findViewById(R.id.position);
+            Bundle bundle = getArguments();
+            if (bundle != null) {
+                textView.setText("The page selected is " + bundle.getInt("position"));
+            }
+            return layout;
+        }
+    }
+
+
+}
+</code></pre>
+
+<p>activity_main.xml:</p>
+
+<pre><code><LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="carsaleapp.shanaka.com.carsaleapp.MainActivity">
+
+    <include
+        android:id="@+id/app_bar"
+        layout="@layout/app_bar" />
+
+    <app.shanaka.tabs.SlidingTabLayout
+        android:id="@+id/tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+
+</LinearLayout>
+</code></pre>
+
+<p>This is the error I got after run my application:</p>
+
+<pre><code>java.lang.RuntimeException: Unable to start activity ComponentInfo{carsaleapp.shanaka.com.carsaleapp/carsaleapp.shanaka.com.carsaleapp.MainActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.support.v4.view.ViewPager.setAdapter(android.support.v4.view.PagerAdapter)' on a null object reference
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2298)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+            at android.app.ActivityThread.access$800(ActivityThread.java:144)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5221)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+     Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.support.v4.view.ViewPager.setAdapter(android.support.v4.view.PagerAdapter)' on a null object reference
+            at carsaleapp.shanaka.com.carsaleapp.MainActivity.onCreate(MainActivity.java:42)
+            at android.app.Activity.performCreate(Activity.java:5933)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2251)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2360)
+            at android.app.ActivityThread.access$800(ActivityThread.java:144)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1278)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:135)
+            at android.app.ActivityThread.main(ActivityThread.java:5221)
+            at java.lang.reflect.Method.invoke(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:372)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+</code></pre>
+
+<p>They keep on saying that the <strong>pager</strong> object is null. But for me I have set it correctly. </p>
+
+<blockquote>
+  <p>pager = (ViewPager) findViewById(R.id.pager);</p>
+</blockquote>

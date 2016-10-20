@@ -1,0 +1,306 @@
+<p>I have 2 JPA entities <code>Xparent</code> and <code>Xchild</code>, mapped with an annotation <code>@OneToMany</code>, a controller class <code>Xcontroller</code> and a JSF button “persist”. Clicking “persist” works fine so far, but there is no reference id set into the field <code>Xchild.xparent_id</code> in the <code>Xchild</code> records.  </p>
+
+<p>As far as I know there is everything correct annotated, since its producing records with the <code>List<Xchild></code> loop in the controller class and the <code>persist(xparent)</code> call with the <code>xparent</code> object.  </p>
+
+<p>How can I set the field <code>Xchild.parent_id</code> correctly?  </p>
+
+<p>Current <code>Xparent</code> relation results:<br>
+"id" "text"<br>
+"1"  "Parent"  </p>
+
+<p>Current <code>Xchild</code> relation results:<br>
+"id" "text" "xparent_id"<br>
+"1"  "Child 1" ""<br>
+"2"  "Child 2" ""<br>
+"3"  "Child 3" ""<br>
+"4"  "Child 4" ""  </p>
+
+<p><strong>Expected <code>Xchild</code> relation (with id from <code>Xparent</code>)</strong>:<br>
+"id" "text" "<strong>xparent_id</strong>"<br>
+"1"  "Child 1" "<strong>1</strong>"<br>
+"2"  "Child 2" "<strong>1</strong>"<br>
+"3"  "Child 3" "<strong>1</strong>"<br>
+"4"  "Child 4" "<strong>1</strong>"  </p>
+
+<h2>Sourcecodes</h2>
+
+<p><em>Xparent.java</em>  </p>
+
+<pre><code>package model;
+
+import java.io.Serializable;
+import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Column;;
+
+/**
+ * The persistent class for the xparent database table.
+ * 
+ */
+@Entity
+@Table(schema="public", name="xparent")
+@NamedQuery(name="Xparent.findAll", query="SELECT i FROM Xparent i")
+public class Xparent implements Serializable
+{
+    private static final long serialVersionUID = -4192021332968372280L;
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(unique=true, nullable=false)
+    private Integer id;
+
+    //bi-directional many-to-one association to Xchild
+    @OneToMany(mappedBy="xparent", cascade=CascadeType.PERSIST)
+    private List<Xchild> xchilds;
+
+    @Column(length=2147483647)
+    private String text;
+
+    public Xparent() {}
+
+    public Integer getId()
+    {
+        return this.id;
+    }
+
+    public void setId(Integer id)
+    {
+        this.id = id;
+    }
+
+    public String getText()
+    {
+        return text;
+    }
+
+    public void setText(String text)
+    {
+        this.text = text;
+    }
+
+    public List<Xchild> getXchilds()
+    {
+        return this.xchilds;
+    }
+
+    public void setXchilds(List<Xchild> xchilds)
+    {
+        this.xchilds = xchilds;
+    }
+
+    @Override
+    public int hashCode() 
+    {
+        final int  prime   = 31;
+        int        result  = 1;
+
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (!(obj instanceof Xparent))
+        {
+            return false;
+        }
+
+        Xparent other = (Xparent) obj;
+
+        if (id == null)
+        {
+            if (other.id != null)
+            {
+                return false;
+            }
+        }
+        else if (!id.equals(other.id))
+        {
+            return false;
+        }
+
+        return true;
+    }
+}
+</code></pre>
+
+<p><em>Xchild.java</em></p>
+
+<pre><code>package model;
+
+import java.io.Serializable;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+
+/**
+ * The persistent class for the xchild database table.
+ * 
+ */
+@Entity
+@Table(schema="public", name="xchild")
+@NamedQuery(name="Xchild.findAll", query="SELECT i FROM Xchild i")
+public class Xchild implements Serializable
+{
+    private static final long serialVersionUID = 1337852548952194022L;
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(unique=true, nullable=false)
+    private Integer id;
+
+    @Column(length=2147483647)
+    private String text;
+
+    //bi-directional many-to-one association to Xparent
+    @ManyToOne
+    @JoinColumn(name="xparent_id")
+    private Xparent xparent;    
+
+    public Xchild() { }
+
+    public Integer getId()
+    {
+        return this.id;
+    }
+
+    public void setId(Integer id)
+    {
+        this.id = id;
+    }
+
+    public String getText()
+    {
+        return text;
+    }
+
+    public void setText(String text)
+    {
+        this.text = text;
+    }
+
+    public Xparent getXparent()
+    {
+        return xparent;
+    }
+
+    public void setXparent(Xparent xparent)
+    {
+        this.xparent = xparent;
+    }
+}
+</code></pre>
+
+<p><em>Xcontroller.java</em></p>
+
+<pre><code>package controller;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Resource;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
+import javax.transaction.UserTransaction;
+import model.Xchild;
+import model.Xparent;
+
+@Named
+@RequestScoped
+public class Xcontroller implements Serializable
+{
+    private static final long serialVersionUID = 8016446885968464239L;
+
+    @PersistenceUnit
+    private EntityManagerFactory    emf;
+
+    @Resource
+    private UserTransaction         ut;
+
+    @Inject
+    private Xparent              xparent;
+
+    public Xparent getXparent()
+    {
+        return xparent;
+    }
+
+    public void setXparent(Xparent xparent)
+    {
+        this.xparent = xparent;
+    }
+
+    public String persist()
+    {
+        try
+        {
+            ut.begin();
+
+            List<Xchild> xchilds = new ArrayList<Xchild>();
+
+            for (int i = 1; i <= 4; i++)
+            {
+                Xchild   xchild = new Xchild();
+                xchild.setText("Child " + i);                
+                xchilds.add(xchild);
+            }
+
+            xparent.setText("Parent");
+            xparent.setXchilds(xchilds);
+
+            emf.createEntityManager().persist(xparent);
+            ut.commit();
+
+            System.out.println("*** Run method: " + this.getClass().getSimpleName() + ".persist() ***");
+        }
+        catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+        return "/one2ManyPersistence.xhtml";
+    }
+}
+</code></pre>
+
+<h2>Software</h2>
+
+<ul>
+<li>EclipseLink 2.5.2  </li>
+<li>Database: PostgreSQL 9.4  </li>
+<li>Applicationserver: GlassFish Server Open Source Edition 4.1 (build 13)  </li>
+<li>Editor: Eclipse Version: Luna Service Release 1a (4.4.1)  </li>
+<li>Java SDK / Runtime: 1.8.0_25</li>
+</ul>
+
+<p>Thank you in advance!  </p>
+
+<p>P.S. The annotation <code>@OneToMany(mappedBy="xparent")</code> persisted no records. The annotation <code>@OneToMany(mappedBy="xparent", cascade=CascadeType.PERSIST)</code> persisted records, but with missing <code>Xchild.xparent_id</code> values.</p>

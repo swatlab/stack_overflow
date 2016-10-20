@@ -1,0 +1,208 @@
+<p>I have packaged a database with my application, and I can see in my File Explorer that the databases folder along with the workoutsDatabase.sqlite file is being created.  When I look at the contents of the database, though, the only table in there is the android_metadata table.  I have been searching for hours and have seen many people with similar problems, however, I cannot seem to figure out the correct solution.</p>
+
+<p>Can anyone spot why the tables dont seem to copy over?  I have validated the workoutsDatabase.sqlite in my assets folder DOES contain the table "workout" and it does have data in it.</p>
+
+<p><strong>WorkoutsDatabaseHelper</strong></p>
+
+<pre><code>import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
+import android.util.Log;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
+public class WorkoutsDatabaseHelper extends SQLiteOpenHelper {
+
+    private String DATABASE_PATH = "/data/data/com.rcd.myworkouts/databases/";
+    private static final int DATABASE_VERSION = 1;
+    private static final String DATABASE_NAME = "workoutsDatabase.sqlite";
+    private static final String TABLE_WORKOUTS = "workouts";
+
+    private static final String KEY_ID = "_id";
+    private static final String KEY_WORKOUT_NAME = "workout_name";
+    private static final String KEY_LAST_NAME = "last_name";
+    private static final String KEY_FIRST_NAME = "first_name";
+    private static final String KEY_MIDDLE_NAME = "middle_name";
+    private static final String KEY_DESCRIPTION = "description";
+    private static final String KEY_DATE_ADDED = "date_added";
+    private static final String KEY_WORKOUT = "workout";
+    private static final String KEY_MEASUREMENT = "measurement";
+    private static final String KEY_PHOTO = "photo";
+
+    private SQLiteDatabase myDatabase;
+    private final Context myContext;
+
+    public WorkoutsDatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.myContext = context;
+    }
+
+    // Creates a empty database on the system and rewrites it with your own database.
+    public void createDatabase() throws IOException {
+
+        boolean dbExist = checkDatabase();
+        SQLiteDatabase db_Read = null;
+
+        if(dbExist) {
+            // Do nothing - database already exist
+        } else {
+            //By calling this method an empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            db_Read = getReadableDatabase();
+            db_Read.close();
+
+            try {
+                copyDatabase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+
+
+    }
+
+    //Check if the database already exist to avoid re-copying the file each time you open the application.
+    //@return true if it exists, false if it doesn't
+    private boolean checkDatabase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        } catch(SQLiteException e) {
+            // Database doesn't exist yet
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+
+    private void copyDatabase() throws IOException {
+
+        getWritableDatabase();
+        Log.d("Database", "New database is being copied to device!");
+
+        try
+        {
+            // Open your local db as the input stream
+            InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
+            // transfer bytes from the inputfile to the
+            // Path to the just created empty db
+            String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            // Transfer bytes form the inputfile to the output file
+            byte[] buffer = new byte[1024];
+            int length;
+            while((length = myInput.read(buffer)) > 0)
+            {
+                myOutput.write(buffer, 0, length);
+            }
+
+            // Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+            Log.i("Database", "New database has been copied to device!");
+
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    protected Boolean openDatabase() {
+        if(checkDatabase())
+        {
+            // Open the database
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            try
+            {
+                Log.i("Database", "Trying to Open Database!");
+                if(myDatabase != null)
+                {
+                    if(!myDatabase.isOpen())
+                    {
+                        Log.i("Database", "Database is closed now opening it!");
+                        myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+                    }
+                    else
+                    {
+                        Log.i("Database", "Database is already Open!");
+                    }
+                    Log.i("Database", "Database is Opened successfully in OPEN_READWRITE  Mode !");
+                    return true;
+
+                }
+                else
+                {
+                    myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+                    Log.i("Database", "Database is Opened successfully in OPEN_READWRITE  Mode !");
+                    return true;
+                }
+
+            }
+            catch(Exception e)
+            {
+                Log.e("Database", "Some error occured while opening Database Error:" + e.getMessage());
+                myDatabase = null;
+                return false;
+            }
+
+        }
+        else
+        try {
+            copyDatabase();
+            Log.d("WorkoutsDatabaseHelper.java", "Copy Database..");
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+        return false;
+
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if(myDatabase != null)
+            myDatabase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+ }
+</code></pre>

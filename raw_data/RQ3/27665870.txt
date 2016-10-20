@@ -1,0 +1,271 @@
+<p>I am building an <code>Android</code> application which synchronizes my incidents (values from <code>SQlite</code>database and a corresponding screen shot image) and posts the data to my web server.</p>
+
+<p>First of all I select the incidents to be synchronized by using checkboxes and then post the selected incidents and images to the web server using an asynchronous task for each incident . </p>
+
+<p>By problem is that if I have two incidents, the same incident is posted twice.</p>
+
+<pre><code>    package com.softwareconcepts.incidentmanager;
+
+    import java.util.ArrayList;
+    import java.util.HashSet;
+    import java.util.List;
+    import java.util.Set;
+
+    import android.annotation.SuppressLint;
+    import android.app.Activity;
+    import android.app.ProgressDialog;
+    import android.content.Context;
+    import android.content.Intent;
+    import android.os.AsyncTask;
+    import android.os.Bundle;
+    import android.util.Base64;
+    import android.util.Log;
+    import android.view.LayoutInflater;
+    import android.view.MenuItem;
+    import android.view.View;
+    import android.view.View.OnClickListener;
+    import android.view.ViewGroup;
+    import android.widget.AdapterView;
+    import android.widget.AdapterView.OnItemClickListener;
+    import android.widget.ArrayAdapter;
+    import android.widget.Button;
+    import android.widget.CheckBox;
+    import android.widget.ListView;
+    import android.widget.TextView;
+    import android.widget.Toast;
+
+    import com.loopj.android.http.AsyncHttpClient;
+    import com.loopj.android.http.AsyncHttpResponseHandler;
+    import com.loopj.android.http.RequestParams;
+    import com.softwareconcepts.incidentmanager.constants.Constants;
+    import com.softwareconcepts.incidentmanager.model.Incident;
+
+    public class SynchronizeIncidentsActivity extends Activity {
+        private List<Incident> allIncidentsList = new ArrayList<Incident>();
+        private  Set<Incident> selectedIncidentsSet = new HashSet<Incident>();
+        private static final String LOG_TAG = "SynchronizeIncidentsActivity";
+        private Incident currentIncident;
+        private byte [] imageByteArray;
+
+        private ProgressDialog prgDialog;
+        private String encodedString;
+        private RequestParams params = new RequestParams();
+        private String fileName;
+
+        MyCustomAdapter dataAdapter = null;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_synchronize_incidents);
+            getActionBar().setDisplayHomeAsUpEnabled(true);
+            prgDialog = new ProgressDialog(this);
+            prgDialog.setCancelable(false);
+            Bundle bundle = getIntent().getExtras();
+            allIncidentsList = bundle.getParcelableArrayList(".model.Incident");
+            displayListView();
+            addIncidentsToSynchronize();
+        }
+
+
+        private void displayListView() {
+            dataAdapter = new MyCustomAdapter(this,
+                    R.layout.incident_info, allIncidentsList);
+            ListView listView = (ListView) findViewById(R.id.listView1);
+            listView.setAdapter(dataAdapter);
+
+            listView.setOnItemClickListener(new OnItemClickListener() {
+                public void onItemClick(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    Incident incident = (Incident) parent.getItemAtPosition(position);
+                    Toast.makeText(getApplicationContext(),
+                            "Clicked on Row: " + incident.getDescription(), 
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+
+        }
+
+        private class MyCustomAdapter extends ArrayAdapter<Incident> {
+            private ArrayList<Incident> incidentsList;
+
+            public MyCustomAdapter(Context context, int textViewResourceId, 
+                    List<Incident> incidentsList) {
+                super(context, textViewResourceId, incidentsList);
+                this.incidentsList = new ArrayList<Incident>();
+                this.incidentsList.addAll(incidentsList);
+            }
+            private class ViewHolder {
+                TextView clientIdTextView;
+                CheckBox descriptionCheckBox;
+            }
+            @SuppressLint("InflateParams")
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                ViewHolder holder = null;
+                Log.v("ConvertView", String.valueOf(position));
+                if (convertView == null) {
+                    LayoutInflater vi = (LayoutInflater)getSystemService(
+                            Context.LAYOUT_INFLATER_SERVICE);
+                    convertView = vi.inflate(R.layout.incident_info, null);
+
+                    holder = new ViewHolder();
+                    holder.clientIdTextView = (TextView) convertView.findViewById(R.id.code);
+                    holder.descriptionCheckBox = (CheckBox) convertView.findViewById(R.id.check_box);
+                    convertView.setTag(holder);
+
+                    holder.descriptionCheckBox.setOnClickListener( new View.OnClickListener() {  
+                        public void onClick(View v) {  
+                            CheckBox cb = (CheckBox) v ;  
+                            Incident incident = (Incident) cb.getTag();
+                            if (cb.isChecked()) {
+                                selectedIncidentsSet.add(incident);
+                                incident.setSelected(true);
+                            } else {
+                                if(selectedIncidentsSet.contains(incident)) {
+                                    selectedIncidentsSet.remove(incident);
+                                }
+                            }
+                        }  
+                    });  
+                } 
+                else {
+                    holder = (ViewHolder) convertView.getTag();
+                }
+
+                Incident incident = incidentsList.get(position);
+                holder.clientIdTextView.setText(" (" +  incident.getClientId() + ")");
+                holder.descriptionCheckBox.setText(incident.getDescription());
+                holder.descriptionCheckBox.setChecked(incident.isSelected());
+                holder.descriptionCheckBox.setTag(incident);
+                return convertView;
+            }
+        }
+
+        private void addIncidentsToSynchronize() {
+            Button synchronizeButton = (Button) findViewById(R.id.findSelected);
+            synchronizeButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    for (Incident incident : selectedIncidentsSet) {
+                        if (incident.isSelected()) {
+                            currentIncident = incident;
+                            synchronizeData();
+                        }
+                    }
+                }
+            });
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                break;
+            default:
+                break;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+
+        private void refreshActivity() {
+            Intent intent = getIntent();
+            overridePendingTransition(0, 0);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            finish();
+            overridePendingTransition(0, 0);
+            startActivity(intent);
+            Toast.makeText(getApplicationContext(),
+                    "The main activity has been refreshed",
+                    Toast.LENGTH_LONG).show();
+        }
+
+
+        public void synchronizeData() {
+            prgDialog.setMessage("Synchronizing data to web server.");
+            prgDialog.show();
+            new AsyncTask<Void, Void, String>() {
+
+                protected void onPreExecute() {
+                    imageByteArray = currentIncident.getImageByteArray();
+                    fileName = currentIncident.getImagePath();
+                    params.put("filename", fileName);
+                    params.put("description", currentIncident.getDescription());
+                    params.put("agentId", currentIncident.getAgentId());
+                    params.put("clientId", currentIncident.getClientId());
+                    Log.i(LOG_TAG, "currentIncident being synchronized: " + currentIncident.getId());
+                    Log.i(LOG_TAG, "currentIncident description being synchronized: " + currentIncident.getDescription());
+
+                };
+
+                @Override
+                protected String doInBackground(Void... params) {
+                    encodedString = Base64.encodeToString(imageByteArray, 0);
+                    return "";
+                }
+
+                @Override
+                protected void onPostExecute(String msg) {
+                    prgDialog.setMessage("Calling Upload");
+                    params.put("image", encodedString);
+                    triggerImageUpload();
+                }
+            }.execute(null, null, null);
+        }
+
+        public void triggerImageUpload() {
+            makeHTTPCall();
+        }
+
+        public void makeHTTPCall() {
+            prgDialog.setMessage("Invoking the Web Service for file incident upload");      
+            AsyncHttpClient client = new AsyncHttpClient();
+            Log.i(LOG_TAG, "The incident decription being posted: " + params.toString());
+            client.post(Constants.IMAGE_UPLOAD_SERVLET_URL,
+                    params, new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(String response) {
+                    prgDialog.hide();
+                    Toast.makeText(getApplicationContext(), response,
+                            Toast.LENGTH_LONG).show();
+                }
+
+                public void onFailure(int statusCode, Throwable error,
+                        String content) {
+                    prgDialog.hide();
+                    if (statusCode == 404) {
+                        Toast.makeText(getApplicationContext(),
+                                "Requested resource not found.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    else if (statusCode == 500) {
+                        Toast.makeText(getApplicationContext(),
+                                "Something went wrong at server end.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    else {
+                        Toast.makeText(
+                                getApplicationContext(),
+                                "Error Occured \n Most Common Error: \n"
+                                        + "1. Device not connected to Internet\n"
+                                        + "2. Web App is not deployed in App server\n"
+                                        + "3. App server is not running\n HTTP Status code : "
+                                        + statusCode, Toast.LENGTH_LONG)
+                                        .show();
+                    }
+                }
+            });
+        }
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            if (prgDialog != null) {
+                prgDialog.dismiss();
+            }
+        }
+
+    }
+</code></pre>

@@ -1,0 +1,292 @@
+<p>I made a table in SQLite browser and import the data in assets folder in adnroid,now i am getting an error no such table, in my logcat,this is my code...</p>
+
+ <hr/>
+
+<pre><code>public class CardDatabase {
+
+    private static final String TB_CARD_ID="CARD_ID";
+    private static final String TB_CARD_QUESTION="CARD_QUESTION";
+    private static final String TB_CARD_ANSWER="CARD_ANSWER";
+
+    public static final String TABLE_CREATE =
+            "CREATE TABLE TB_CARDS (" + " CARD_ID INTEGER PRIMARY KEY, "+
+                    " CARD_QUESTION VARCHAR ," +
+            " CARD_ANSWER VARCHAR);"
+
+            ;
+
+    private final Context context;
+    public static MydataBasehelper DBHelper;
+    public static SQLiteDatabase db;
+
+    public CardDatabase(Context ctx)
+    {Log.e("problem","here2");
+            Log.e("info","database called");
+            this.context = ctx;
+            DBHelper = new MydataBasehelper(context);
+
+            try 
+            {
+                DBHelper.createDataBase();
+            } 
+            catch (IOException ioe)
+           {
+                 throw new Error("Unable to create database");
+     }
+
+        try {
+
+            DBHelper.openDataBase();
+
+            }
+        catch(SQLException sqle)
+        {
+
+            throw sqle;
+        }
+
+
+
+    }
+    public CardDatabase open() throws SQLException {db =
+    DBHelper.getWritableDatabase();return this;}
+
+    public void close() {DBHelper.close();}
+
+
+
+    public static  void insert(
+
+                    String CARD_ID,
+                    String CARD_QUESTION,
+                    String CARD_ANSWER
+
+
+    ){
+                            ContentValues initialValues = new ContentValues();
+            initialValues.put(TB_CARD_ID,CARD_ID);
+            initialValues.put(TB_CARD_QUESTION,CARD_QUESTION);
+            initialValues.put(TB_CARD_ANSWER,CARD_ANSWER);
+
+
+
+
+
+            try{
+            Log.e("HERE IT IS", CARD_ID);
+
+
+            }catch (Exception e) {
+               Log.e("here","null");
+                }
+
+            db.insert("TB_CARDS", null, initialValues);
+
+    }
+    public static void truncate(){
+            db.execSQL("DELETE FROM TB_CARDS");
+    }
+    public static void deletetable(){db.execSQL("DROP TABLE IF EXISTS TB_CARDS");}
+    public static void createtable(){db.execSQL(TABLE_CREATE);}
+
+    public Cursor getrecord( String CARD_ID){
+            Log.e("we are","here");
+            Cursor mCursor= db.query("TB_CARDS", new String[] {
+                            TB_CARD_ID,
+                            TB_CARD_QUESTION,
+                            TB_CARD_ANSWER,
+
+
+            },TB_CARD_ID  + "=" +"'"+ CARD_ID+ "'"
+            ,null,null,null,null,null);
+            if (mCursor != null) {
+                    mCursor.moveToFirst();
+            }
+            return mCursor;
+    }
+    Cursor cur;
+    public Cursor selectAll(){
+
+        try{
+        String query="SELECT * FROM TB_CARDS";
+        System.out.println(query);
+        cur= db.rawQuery(query,null);
+        cur.moveToFirst();
+        }
+
+        catch (Exception e) {
+            // TODO: handle exception
+            e.printStackTrace();
+            System.out.println("problem");
+        }
+        return cur;
+
+    }
+</code></pre>
+
+<p><hr/>
+AND this is mydatabasehelper..</p>
+
+<pre><code>    public class MydataBasehelper extends SQLiteOpenHelper 
+{
+    private static final String TAG = "info";
+
+      private static final String DB_NAME = "flipdata1";
+      private static final String DB_PATH="data/data/cue.flip/databases/";
+      private SQLiteDatabase myDataBase; 
+    private static final int DATABASE_VERSION =1332;
+
+      private  Context mycontext;
+
+    public MydataBasehelper(Context context) 
+
+    {
+
+
+        super(context, DB_NAME, null, DATABASE_VERSION);
+        Log.e("info","dataHelper");
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) 
+    {
+
+
+
+    //  Log.e("aashish","table create was called");
+
+        //db.execSQL(CardDatabase.TABLE_CREATE);
+
+        //db.execSQL(Question_database.TABLE_CREATE);
+        //db.execSQL(Answers_Database.TABLE_CREATE);
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, 
+            int newVersion) 
+    {
+        Log.w(TAG, "Upgrading database from version " + oldVersion 
+                + " to "
+                + newVersion + ", which will destroy all old data");
+        db.execSQL("DROP TABLE IF EXISTS " + "TB_CARDS");
+
+
+
+
+        //db.execSQL("DROP TABLE IF EXISTS " + Question_database.DATABASE_TABLE);
+        //db.execSQL("DROP TABLE IF EXISTS " + Answers_Database.DATABASE_TABLE);
+        onCreate(db);
+    }
+     public void createDataBase() throws IOException{
+
+            boolean dbExist = checkDataBase();
+        System.out.println("Create database");
+            if(dbExist){
+
+                System.out.println("database exists");
+
+                //do nothing - database already exist.
+            }else{
+
+                System.out.println("database not exists");
+
+                //By calling this method and empty database will be created into the default system path
+                      //of your application so we are gonna be able to overwrite that database with our database.
+                this.getReadableDatabase();
+
+                try {
+
+                    copyDataBase();
+
+                } catch (IOException e) {
+
+                    throw new Error("Error copying database");
+
+                }
+            }
+
+           }
+           @Override
+        public synchronized void close() {
+
+                if(myDataBase != null)
+                    myDataBase.close();
+
+                super.close();
+
+        }
+           private boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+
+            try{
+                String myPath = DB_PATH + DB_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+            }catch(SQLiteException e){
+
+                //database does't exist yet.
+
+            }
+
+            if(checkDB != null){
+
+                checkDB.close();
+
+            }
+
+            return checkDB != null ? true : false;
+           }
+
+           /**
+            * Copies your database from your local assets-folder to the just created empty database in the
+            * system folder, from where it can be accessed and handled.
+            * This is done by transfering bytestream.
+            * */
+           private void copyDataBase() throws IOException{
+
+               System.out.println("Copy STARTSSS");
+            //Open your local db as the input stream
+            InputStream myInput = mycontext.getAssets().open(DB_NAME);
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DB_NAME;
+
+            //Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            //transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while ((length = myInput.read(buffer))>0){
+                myOutput.write(buffer, 0, length);
+            }
+
+            //Close the streams
+            myOutput.flush();
+            myOutput.close();
+
+            myInput.close();
+
+            System.out.println("CopYY DONE");
+           }
+           public void openDataBase() throws SQLException{
+
+            //Open the database
+               System.out.println("OPEN DATABASE");
+               String myPath = DB_PATH + DB_NAME;
+            myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+           }
+
+
+
+}
+</code></pre>
+
+<hr/>
+
+<p>Please Help
+Thanks </p>

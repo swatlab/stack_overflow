@@ -1,0 +1,34 @@
+<p>I'm writing an android apps in Java of Eclipse. I'm not very familiar with the java syntax. I encounter this error.</p>
+
+<pre><code> The constructor Intent(new AdapterView.OnItemClickListener(){},
+ Class<NoteEditor> ) is undefined
+</code></pre>
+
+<p>Below is the code</p>
+
+<pre><code>ListView lv = getListView();
+
+ lv.setOnItemClickListener(new OnItemClickListener() {
+    public void onItemClick(AdapterView<?> parent, View view,
+            int position, long id) {
+            Intent intent = new Intent(this, NoteEditor.class);
+            startActivity(intent);
+    }
+});
+</code></pre>
+
+<p>NoteEditor is extends Activity of Android. The above code is correct because I write it in another place it's no error.</p>
+
+<pre><code>public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle item selection
+    switch (item.getItemId()) {
+    case R.id.new_game:
+        Intent intent = new Intent(this, NoteEditor.class);
+        startActivity(intent);
+        //newGame();
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>

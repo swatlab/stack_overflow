@@ -1,0 +1,71 @@
+<p>HI am learning material design and i have created an appbar. When i add items to main_menu its displays in the drop down, but i want it to display a new icon just before the settings icon in app bar.</p>
+
+<p><strong>My app</strong></p>
+
+<p><a href="http://i.stack.imgur.com/6zGij.png" rel="nofollow"><img src="http://i.stack.imgur.com/6zGij.png" alt="enter image description here"></a>
+<a href="http://i.stack.imgur.com/8LMwS.png" rel="nofollow"><img src="http://i.stack.imgur.com/8LMwS.png" alt="enter image description here"></a></p>
+
+<p>1) I want to add the icon just next the settings icon. But now it shows in the dropdown box when i click on settings icon.</p>
+
+<p><strong>Main Menu</strong></p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+
+    <item android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/favorite"
+        android:title="@string/favourite"
+        android:orderInCategory="200"
+        android:showAsAction="always"
+        android:icon="@drawable/ic_favorite_white_24dp"
+        />
+
+</menu>
+</code></pre>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+    private Toolbar toolbar;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+
+        toolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.favorite){
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+</code></pre>

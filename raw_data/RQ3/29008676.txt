@@ -1,0 +1,44 @@
+<p>I have <a href="http://sourceforge.net/projects/subsonic/" rel="nofollow">downloaded Subsonic Project</a> and after changing packageName it is giving me an alert <code>Username may not be null</code> but before changing <code>packageName</code> it is working fine. </p>
+
+<p>What to do then ?</p>
+
+<p><strong>Util.class</strong></p>
+
+<pre><code>public static String getRestUrl(Context context , String method)
+{
+    StringBuilder builder = new StringBuilder();
+
+    SharedPreferences prefs = getPreferences(context);
+
+    int instance = prefs.getInt(Constants.PREFERENCES_KEY_SERVER_INSTANCE,
+            1);
+    String serverUrl = prefs.getString(Constants.PREFERENCES_KEY_SERVER_URL
+            + instance, null);
+    String username = prefs.getString(Constants.PREFERENCES_KEY_USERNAME
+            + instance, null); // it is null i changed it to joe
+    String password = prefs.getString(Constants.PREFERENCES_KEY_PASSWORD
+            + instance, null);
+
+    // Slightly obfuscate password
+    password = "enc:" + Util.utf8HexEncode(password);
+
+    builder.append(serverUrl);
+    if (builder.charAt(builder.length() - 1) != '/')
+    {
+        builder.append("/");
+    }
+    builder.append("rest/").append(method).append(".view");
+    builder.append("?u=").append(username);
+    builder.append("&p=").append(password);
+    builder.append("&v=").append(Constants.REST_PROTOCOL_VERSION);
+    builder.append("&c=").append(Constants.REST_CLIENT_ID);
+
+    Log.v("builder",builder.toString());
+
+    return builder.toString();
+}
+</code></pre>
+
+<p><strong>Username and password are null</strong>. And the <code>final Url</code> becomes <code>null/rest/getRandomSongs.view?u=null&p=enc:null&v=1.2.0&c=android</code></p>
+
+<p>I have also <a href="http://www.subsonic.org/pages/api.jsp" rel="nofollow">read it's api</a> but didn't find a good solution.</p>

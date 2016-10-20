@@ -1,0 +1,261 @@
+<p>I have a problem in showing the maps activity in navigation drawer. Here is my code.</p>
+
+<p>MainActivity.java (This is my navigation drawer)</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity {
+
+private ListView mDrawerList;
+private DrawerLayout mDrawerLayout;
+private ArrayAdapter<String> mAdapter;
+private ActionBarDrawerToggle mDrawerToggle;
+private String mActivityTitle;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    mDrawerList = (ListView)findViewById(R.id.navList);
+    mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+    mActivityTitle = getTitle().toString();
+
+    addDrawerItems();
+    setupDrawer();
+
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setHomeButtonEnabled(true);
+}
+
+private void addDrawerItems() {
+    String[] Array = { "Driver Details", "Track Me", "Contact", "Report Driver", "Call For Emergency", "Rate Taxi", "Favorites", "Top Drivers", "Security Tips" };
+    mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, Array);
+    mDrawerList.setAdapter(mAdapter);
+
+    mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            switch (position){
+                case 0:
+                    startActivity(new Intent(getBaseContext(), DriverDetails.class));
+                    break;
+                case 1:
+                    startActivity(new Intent(getBaseContext(), MapsActivity.class));
+                    break;
+                case 2:
+                    Toast.makeText(MainActivity.this, "Contact", Toast.LENGTH_SHORT).show();
+                    break;
+                case 3:
+                    Toast.makeText(MainActivity.this, "Report Driver", Toast.LENGTH_SHORT).show();
+                    break;
+                case 4:
+                    Toast.makeText(MainActivity.this, "Call for Emergency", Toast.LENGTH_SHORT).show();
+                    break;
+                case 5:
+                    Toast.makeText(MainActivity.this, "Rate Taxi", Toast.LENGTH_SHORT).show();
+                    break;
+                case 6:
+                    Toast.makeText(MainActivity.this, "Favorites", Toast.LENGTH_SHORT).show();
+                    break;
+                case 7:
+                    Toast.makeText(MainActivity.this, "Top Drivers", Toast.LENGTH_SHORT).show();
+                    break;
+                case 8:
+                    Toast.makeText(MainActivity.this, "Security Tips", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    });
+}
+
+private void setupDrawer() {
+    mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+        /** Called when a drawer has settled in a completely open state. */
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            getSupportActionBar().setTitle("TaxiSafe");
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+
+        /** Called when a drawer has settled in a completely closed state. */
+        public void onDrawerClosed(View view) {
+            super.onDrawerClosed(view);
+            getSupportActionBar().setTitle(mActivityTitle);
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+    };
+
+    mDrawerToggle.setDrawerIndicatorEnabled(true);
+    mDrawerLayout.setDrawerListener(mDrawerToggle);
+}
+
+@Override
+protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    // Sync the toggle state after onRestoreInstanceState has occurred.
+    mDrawerToggle.syncState();
+}
+
+@Override
+public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    mDrawerToggle.onConfigurationChanged(newConfig);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    // Activate the navigation drawer toggle
+    if (mDrawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p>MapsActivity.java</p>
+
+<pre><code>public class MapsActivity extends FragmentActivity {
+
+private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_maps);
+    setUpMapIfNeeded();
+
+
+}
+
+@Override
+protected void onResume() {
+    super.onResume();
+    setUpMapIfNeeded();
+}
+
+private void setUpMapIfNeeded() {
+    // Do a null check to confirm that we have not already instantiated the map.
+    if (mMap == null) {
+        // Try to obtain the map from the SupportMapFragment.
+        mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+                .getMap();
+        // Check if we were successful in obtaining the map.
+        if (mMap != null) {
+            setUpMap();
+        }
+    }
+}
+
+private void setUpMap() {
+    mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+}
+}
+</code></pre>
+
+<p>activity_maps.xml </p>
+
+<pre><code> <LinearLayout
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="386dp"
+    android:layout_height="573dp" android:id="@+id/map"
+    tools:context="com.example.group.taxisafe.MapsActivity"
+    android:name="com.google.android.gms.maps.SupportMapFragment" />
+</LinearLayout>
+</code></pre>
+
+<p>AndroidManifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+</code></pre>
+
+<p></p>
+
+<pre><code><uses-sdk
+    android:minSdkVersion="10"
+    android:targetSdkVersion="19" />
+
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_PHONE_STATE" />
+<uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+<!--
+   The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+     Google Maps Android API v2, but are recommended.
+-->
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+<application
+    android:allowBackup="true"
+    android:icon="@mipmap/taxisafe"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme" >
+    <activity
+        android:name=".Login"
+        android:label="TaxiSafe" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+    <activity
+        android:name=".Register"
+        android:label="@string/app_name" >
+    </activity>
+    <activity
+        android:name=".Home"
+        android:label="@string/title_activity_home" >
+    </activity>
+    <activity
+        android:name=".DriverDetails"
+        android:label="@string/title_activity_driver_details" >
+    </activity>
+    <activity
+        android:name=".MainActivity"
+        android:label="@string/title_activity_main" >
+    </activity>
+
+    <meta-data
+        android:name="com.google.android.gms.version"
+        android:value="@integer/google_play_services_version" />
+    <meta-data
+        android:name="com.google.android.maps.v2.API_KEY"
+        android:value="@string/google_maps_key" />
+
+    <activity
+        android:name=".MapsActivity"
+        android:label="@string/title_activity_maps" >
+    </activity>
+</application>
+</code></pre>
+
+<p></p>
+
+<p>I am working fine in a separate project in creating the google map. When I put it to my project it always stopped every time I choose the track me in my navigation drawer. I don't know what is wrong with my code or what is lacking in my code. </p>

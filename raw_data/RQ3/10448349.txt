@@ -1,0 +1,71 @@
+<p>I'm writing a recipe book, and I've encountered a problem - when I click my menu item, which is supposed to send email, with email address and subject pre-filled, nothing happens ...</p>
+
+<p>Any ideas why ???</p>
+
+<pre><code>public class recipedisplayscreen extends Activity {
+
+TextView EmailAddress;
+
+TextView EmailSubject;
+
+     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.recipedisplayscreen);
+
+        TextView MethodDisplay = (TextView) findViewById(R.id.textView3);
+        TextView IngredientsDisplay = (TextView) findViewById(R.id.textView5);
+
+
+        Intent i = getIntent();
+        String Ingredients = i.getStringExtra("textView1");
+        String Method = i.getStringExtra("textView2");
+        Log.e("recipedisplayscreen", Ingredients + "." + Method);
+
+        MethodDisplay.setText(Method);
+        IngredientsDisplay.setText(Ingredients);
+
+        EmailAddress=(TextView) findViewById(R.id.textView2); 
+        EmailSubject=(TextView) findViewById(R.id.textView4); 
+
+
+        ActionBar actionBar = getActionBar();
+        setTitle(R.string.title);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        setTitle(Method);}
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+                case android.R.id.home:
+                    // App icon in action bar clicked; go home
+                    Intent intent = new Intent(this, MainScreen.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+            }
+        }
+
+        public boolean onOptionsItemSelected1(MenuItem recipe_suggest) {
+            final Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND); 
+            emailIntent.setType("plain/text"); 
+            emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{ EmailAddress.getText().toString()}); 
+            emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, EmailSubject.getText()); 
+
+            startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+            return true;
+        }
+
+
+
+
+     @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.recipe_menu1, menu);
+            return true;         
+    }    
+}
+</code></pre>

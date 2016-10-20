@@ -1,0 +1,375 @@
+<p>I tried use androidannotations library and i have some problems. After run app when i click button open activity i see this error:</p>
+
+<pre><code>09-11 15:42:15.376  12443-12443/? W/System.err﹕ java.lang.RuntimeException: Unable to start activity ComponentInfo{driverclient.sedi.ru.driverclient/sedi.driverclient.activities.balance_activity.BalanceHistoryActivity_}: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.EditText.setOnFocusChangeListener(android.view.View$OnFocusChangeListener)' on a null object reference
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2316)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2376)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.ActivityThread.access$800(ActivityThread.java:147)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1281)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.os.Handler.dispatchMessage(Handler.java:102)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.os.Looper.loop(Looper.java:135)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.ActivityThread.main(ActivityThread.java:5253)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at java.lang.reflect.Method.invoke(Native Method)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at java.lang.reflect.Method.invoke(Method.java:372)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:899)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:694)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.EditText.setOnFocusChangeListener(android.view.View$OnFocusChangeListener)' on a null object reference
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at sedi.driverclient.activities.balance_activity.BalanceHistoryActivity.initUiElements(BalanceHistoryActivity.java:87)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at sedi.driverclient.activities.balance_activity.BalanceHistoryActivity.onCreate(BalanceHistoryActivity.java:72)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at sedi.driverclient.activities.balance_activity.BalanceHistoryActivity_.onCreate(BalanceHistoryActivity_.java:40)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.Activity.performCreate(Activity.java:5975)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1105)
+09-11 15:42:15.376  12443-12443/? W/System.err﹕ at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2269)
+</code></pre>
+
+<p>I do all by documentation. It is my Activity:</p>
+
+<pre><code>@EActivity(R.layout.activity_balance_history)
+public class BalanceHistoryActivity extends AppCompatActivity implements View.OnClickListener, View.OnFocusChangeListener {
+
+    @ViewById(R.id.sbh_etStartDate)
+    EditText etStartDate;
+
+    @ViewById(R.id.sbh_etFinishDate)
+    EditText etFinishDate;
+
+    @ViewById(R.id.sbh_spnrOperationType)
+    Spinner spnrOperationType;
+
+    @ViewById(R.id.sbh_btnGetHistory)
+    Button btnGetHistory;
+
+    @ViewById(R.id.sbh_btnClose)
+    Button btnClose;
+
+    @ViewById(R.id.sbh_lvHistoryList)
+    ListView lvHistoryList;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        MessageBox.setFormContext(this);
+        ProgressDialogHelper.SetFormContext(this);
+
+        setTitleInfo();
+        initUiElements();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MessageBox.setFormContext(this);
+        ProgressDialogHelper.SetFormContext(this);
+    }
+
+    /**
+     * Инициализация UI элементов
+     */
+    @AfterViews
+    public void initUiElements() {
+        etStartDate.setOnFocusChangeListener(this);
+        etStartDate.setOnClickListener(this);
+        etFinishDate.setOnFocusChangeListener(this);
+        etFinishDate.setOnClickListener(this);
+        btnGetHistory.setOnClickListener(this);
+        btnClose.setOnClickListener(this);
+        initDataForUiElements();
+    }
+
+    /**
+     * Инициализаия данных в UI элементах
+     */
+    @AfterViews
+    public void initDataForUiElements() {
+
+        String[] operationType = {AppContext.getInstance().getString(R.string.AllOperation),
+                AppContext.getInstance().getString(R.string.WriteIn),
+                AppContext.getInstance().getString(R.string.WriteOff)};
+
+        etStartDate.setText(DateTime.Now().GetDateString());
+        etFinishDate.setText(DateTime.Now().GetDateString());
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, operationType);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spnrOperationType.setAdapter(adapter);
+    }
+
+    /**
+     * Установка информации в ActionBar
+     */
+    @AfterViews
+    public void setTitleInfo() {
+        ActionBar supportActionBar = getSupportActionBar();
+        if (supportActionBar != null) {
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+            supportActionBar.setDisplayShowHomeEnabled(true);
+            supportActionBar.setIcon(R.drawable.ic_white_edit_property);
+            supportActionBar.setTitle(getString(R.string.AccountHistory));
+        }
+    }
+
+    public void updateTitleInfoWithBack(int icon, int title) {
+
+    }
+
+    /**
+     * Показать диалог для выбора даты;
+     *
+     * @param editText поле для установки значения после выбора;
+     */
+    private void showDatePickerDialog(final EditText editText) {
+        try {
+            DateTime dateTime;
+
+            if (editText.getText().toString().length() < 1)
+                dateTime = DateTime.Now();
+            else {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+                Date date = sdf.parse(editText.getText().toString());
+                dateTime = new DateTime(date);
+            }
+
+            int day = dateTime.GetDay();
+            int month = dateTime.GetMonth() - 1;
+            int year = dateTime.GetYear();
+
+            final DateTime date = new DateTime();
+            LayoutInflater inflater = LayoutInflater.from(getBaseContext());
+            final View datePicker = inflater.inflate(R.layout.layout_datepicker, null);
+            final DatePicker picker = (DatePicker) datePicker.findViewById(R.id.datePicker);
+            picker.init(year, month, day, null);
+            AlertDialog.Builder builder = new AlertDialog.Builder(BalanceHistoryActivity.this).setTitle(getString(R.string.SelectDate)).setView(datePicker);
+            builder.setPositiveButton(getString(R.string.Ok), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    date.SetYear(picker.getYear());
+                    date.SetMonth(picker.getMonth());
+                    date.SetDay(picker.getDayOfMonth());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            editText.setText(date.GetDateString());
+                        }
+                    });
+                }
+            });
+            builder.create().show();
+        } catch (Exception e) {
+            ToastHelper.ShowError(304, e.toString());
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home: {
+                finish();
+                return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.sbh_etStartDate:
+            case R.id.sbh_etFinishDate: {
+                showDatePickerDialog((EditText) v);
+                break;
+            }
+            case R.id.sbh_btnClose: {
+                BalanceHistoryActivity.this.finish();
+                break;
+            }
+            case R.id.sbh_btnGetHistory: {
+                if (validDateRange()) break;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    private boolean validDateRange() {
+
+        if (etStartDate.getText().length() < 10 || etFinishDate.getText().length() < 10) {
+            MessageBox.show(getString(R.string.IncorrectStartEndDate), null);
+            return false;
+        }
+
+        final DateTime startDate = DateTime.getDateFromString(etStartDate.getText().toString());
+        if (startDate == null) {
+            ToastHelper.ShowError(305, "null");
+            return false;
+        }
+        startDate.SetHour(0);
+        startDate.SetMinute(0);
+
+        final DateTime finishDate = DateTime.getDateFromString(etFinishDate.getText().toString());
+        if (finishDate == null) {
+            ToastHelper.ShowError(306, "null");
+            return false;
+        }
+        finishDate.SetHour(23);
+        finishDate.SetMinute(59);
+
+        try {
+            long a = Long.parseLong("3456000000");
+            if (Math.abs(finishDate.GetTime() - startDate.GetTime()) > a)
+                MessageBox.show(getString(R.string.MaxDayDiapason), null);
+            else {
+//                AsyncAction.run(new IFunc<Object>() {
+//                    @Override
+//                    public Object Func() throws Exception {
+//                        getDriverHistory(startDate, finishDate);
+//                        return null;
+//                    }
+//                });
+                getDriverHistory(startDate, finishDate);
+            }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Получение истории счета водителя за промежуток времени
+     *
+     * @param startDate  дата начала
+     * @param finishDate дата конца
+     */
+    private void getDriverHistory(DateTime startDate, DateTime finishDate) {
+        try {
+            ProgressDialogHelper.Show();
+
+            ServerProxy.GetInstance().GetBalanceHistories2(startDate, finishDate, spnrOperationType.getSelectedItemPosition(), new IRemoteCallback<DriverBalanceHistory2[]>() {
+                @Override
+                public void Callback(Exception ex, DriverBalanceHistory2[] result) throws Exception {
+                    ProgressDialogHelper.Hide();
+                    if (ex != null) {
+                        LogUtil.log(LogUtil.ERROR, ex.getMessage());
+                        return;
+                    }
+
+                    List<String> strHistory = new ArrayList<String>();
+                    for (DriverBalanceHistory2 history : result) {
+                        strHistory.add(String.format("%s %s %dр. %s(%s)", new DateTime(history.OperationDateTime).GetDateTimeString(),
+                                (history.Transfer ? getString(R.string.DoWriteOnBalance) : getString(R.string.DoWriteoffOnBalance)),
+                                Math.abs(history.TransferSum),
+                                (history.Detail.length() > 1 ? "за  " + history.Detail.toLowerCase() : ""),
+                                String.format(getString(R.string.BalaceBeforAfterFormat), history.BalanceBefore, history.BalanceAfter)));
+                    }
+                    lvHistoryList.setAdapter(new ArrayAdapter<String>(BalanceHistoryActivity.this, android.R.layout.simple_list_item_1, strHistory));
+                }
+            });
+        } catch (Exception e) {
+            LogUtil.log(LogUtil.ERROR, e.getMessage());
+        }
+    }
+
+    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        if (hasFocus && v instanceof EditText)
+            showDatePickerDialog((EditText) v);
+    }
+}
+</code></pre>
+
+<p>In the manifest i change <code>BalanceHistoryActivity_</code></p>
+
+<p>I write all annotations. 
+Aftwr compile i have this</p>
+
+<pre><code>@Override
+    public void onCreate(Bundle savedInstanceState) {
+        OnViewChangedNotifier previousNotifier = OnViewChangedNotifier.replaceNotifier(onViewChangedNotifier_);
+        init_(savedInstanceState);
+        super.onCreate(savedInstanceState);
+        OnViewChangedNotifier.replaceNotifier(previousNotifier);
+        setContentView(layout.activity_balance_history);
+    }
+</code></pre>
+
+<p>Layout</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent" android:padding="10dp" android:id="@+id/sbh_llContent">
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" android:focusable="true" android:focusableInTouchMode="true">
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" android:layout_weight="0.5">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/With_"
+                    android:id="@+id/sbh_tvStartDateCaption" android:textSize="@dimen/TextSize_18"/>
+            <EditText
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="date"
+                    android:ems="10"
+                    android:id="@+id/sbh_etStartDate" android:hint="Начальная дата"/>
+        </LinearLayout>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" android:layout_weight="0.5">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/To_"
+                      android:id="@+id/sbh_tvFinishDateCaption" android:textSize="@dimen/TextSize_18"/>
+            <EditText
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="date"
+                    android:ems="10"
+                    android:id="@+id/sbh_etFinishDate" android:hint="Конечная дата"/>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" android:gravity="center">
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/Operation_"
+                android:id="@+id/textView3" android:textSize="@dimen/TextSize_18"/>
+        <Spinner
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/sbh_spnrOperationType" android:minHeight="60dp"/>
+    </LinearLayout>
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+        <Button
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/GetHistory"
+                android:id="@+id/sbh_btnGetHistory" android:layout_weight="0.5" android:background="@drawable/btn_green"
+                android:textColor="#ffffffff"/>
+        <Button
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/Close"
+                android:id="@+id/sbh_btnClose" android:layout_weight="0.5" android:background="@drawable/btn_lite_red"
+                android:layout_marginLeft="5dp" android:textColor="#ffffffff"/>
+    </LinearLayout>
+    <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/sbh_lvHistoryList" android:layout_marginTop="10dp"/>
+</LinearLayout>
+</code></pre>

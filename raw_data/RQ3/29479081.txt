@@ -1,0 +1,66 @@
+<p>i use this link <a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html" rel="nofollow">link</a> to load my images efficiently.but still have out of memory.i have only 70 images with size of 4kb. i load my images as bitmap but still i have low scroll issue and out of memory.why?</p>
+
+<pre><code>public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder viewHolder;
+
+    if (convertView == null) {
+        LayoutInflater mInflater = (LayoutInflater)
+                context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+        convertView = mInflater.inflate(R.layout.itemlist, null);
+
+        viewHolder = new ViewHolder();
+        viewHolder.ivIcon = (ImageView) convertView.findViewById(R.id.icon);
+        convertView.setTag(viewHolder);
+    }
+    else {
+        // recycle the already inflated view
+        viewHolder = (ViewHolder) convertView.getTag();
+    }
+
+    ImageView imgIcon = (ImageView) convertView.findViewById(R.id.icon);
+    BitmapDrawable bd=(BitmapDrawable) context.getResources().getDrawable(R.drawable.data_5);
+    int height=bd.getBitmap().getHeight();
+    int width=bd.getBitmap().getWidth();
+    imgIcon.setImageBitmap(decodeSampledBitmapFromResource(context.getResources(),navDrawerItems.get(position).getIcon(),width,height));
+    // displaying count
+    // check whether it set visible or not
+    return convertView;
+}
+public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                                                     int reqWidth, int reqHeight) {
+
+    // First decode with inJustDecodeBounds=true to check dimensions
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeResource(res, resId, options);
+
+    // Calculate inSampleSize
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+    return BitmapFactory.decodeResource(res, resId, options);
+}
+
+public static int calculateInSampleSize(
+        BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+</code></pre>

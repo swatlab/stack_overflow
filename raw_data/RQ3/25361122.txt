@@ -1,0 +1,63 @@
+<p>I am trying to read from a file and count how many times each string appears in the file. I am using a HashSet on the Object Item which i have created as follows :</p>
+
+<p>Now in my main i am trying to read the file and add each String in the file to my set. Also while adding i am trying to increment the count of an item in the set which is appearing more than once. Here's my implementation for that :</p>
+
+<pre><code>package pack;
+
+public class Item {
+
+    public String name;
+    public int count=1;
+    public Item(String name)
+    {
+        this.name = name;
+    }
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + count;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Item other = (Item) obj;
+        if (count != other.count)
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+
+}
+</code></pre>
+
+<p>For an input file like this : </p>
+
+<p>chair table teapot<br>
+teapot book table<br>
+chair floor ceiling<br>
+wall chair floor<br> </p>
+
+<p>it is giving an output as follows :</p>
+
+<p>wall appears 1 times<br>
+book appears 1 times<br>
+table appears 2 times<br>
+floor appears 2 times<br>
+teapot appears 2 times<br>
+chair appears 1 times<br>
+ceiling appears 1 times<br>
+chair appears 2 times</p>
+
+<p>Here the set is having duplicate elements which i don't want. What is the correct way to update the objects inside a set?</p>

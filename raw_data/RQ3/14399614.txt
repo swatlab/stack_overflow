@@ -1,0 +1,291 @@
+<p>I am trying to implement lazy load on a listview in a tab fragment to load the elements of an array abc. I am trying to load 10 elements, then when the user scrolls down, next 10 elements will be loaded. But My app is not working as I am not able to jump to the UI thread in order to update it(runonUithread(returnRes); not working). COuld you [please take a look at the below code and suggest the right way to implement lazy load. Thank you.</p>
+
+<p>Fragment Class:</p>
+
+<pre><code>package com.example.abe;
+
+import java.util.ArrayList;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.ListFragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+public class Tab1Fragment extends ListFragment {
+    ListView lv;
+    Activity act = this.getActivity();
+    Context ct = this.getActivity();
+    XMLGettersSetters data;
+    boolean loadingMore = false;
+    String abc[] = new String[50];
+    static int count = 0;
+    int itemsPerPage = 10;
+    ArrayList<String> myListItems;
+    ArrayList<String> myListItems2;
+    ArrayAdapter<String> adapter;
+    static int size = 0;
+
+    @SuppressWarnings("unused")
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        if (container == null) {
+            return null;
+        }
+        myListItems2 = new ArrayList<String>();
+        adapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                android.R.layout.simple_list_item_1, myListItems2);
+        View root = inflater.inflate(R.layout.tab_frag1_layout, container,
+                false);
+        lv = (ListView) root.findViewById(android.R.id.list);
+        lv.setAdapter(adapter);
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        myListItems = new ArrayList<String>();
+        View footerView = ((LayoutInflater) this.getActivity()
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(
+                R.layout.listfooter, null, false);
+        this.getListView().addFooterView(footerView);
+        this.setListAdapter(adapter);
+        for (int i = 0; i < 50; i++) {
+            abc[i] = "ab" + i;
+        }
+        this.getListView().setOnScrollListener(new OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem,
+                    int visibleItemCount, int totalItemCount) {
+                System.out.println(abc.length);
+                System.out.println(count);
+                int lastInScreen = firstVisibleItem + visibleItemCount;
+                System.out.println(lastInScreen);
+                if ((lastInScreen == totalItemCount) && !(loadingMore)) {
+                    try {
+                        Thread thread = new Thread(null, loadMoreListItems);
+                        thread.start();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        try {
+            Thread thread = new Thread(null, loadMoreListItems);
+            thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Runnable loadMoreListItems = new Runnable() {
+        @Override
+        public void run() {
+            loadingMore = true;
+            myListItems = new ArrayList<String>();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+            size = abc.length;
+            for (int i = 0; i < itemsPerPage; i++) {
+                if (count < size) {
+                    myListItems.add(abc[count].toString());
+                    count = count + 1;
+                } else {
+                    break;
+                }
+            }
+            Log.i("a", "b");
+            try {
+                act.runOnUiThread(returnRes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.i("a", "b");
+        }
+    };
+    private Runnable returnRes = new Runnable() {
+        @Override
+        public void run() {
+            if (myListItems != null && myListItems.size() > 0) {
+                for (int i = 0; i < myListItems.size(); i++)
+                    adapter.add(myListItems.get(i));
+            }
+            lv.setAdapter(adapter);
+            Log.i("a", "b");
+            adapter.notifyDataSetChanged();
+            Log.i("a", "b");
+            loadingMore = false;
+        }
+    };
+}
+</code></pre>
+
+<p>Logcat:</p>
+
+<pre><code>01-18 18:59:21.606: I/System.out(971): 50
+01-18 18:59:21.606: I/System.out(971): 0
+01-18 18:59:21.606: I/System.out(971): 0
+01-18 18:59:21.926: I/System.out(971): 50
+01-18 18:59:21.926: I/System.out(971): 0
+01-18 18:59:21.926: I/System.out(971): 1
+01-18 18:59:22.257: I/System.out(971): 50
+01-18 18:59:22.257: I/System.out(971): 0
+01-18 18:59:22.257: I/System.out(971): 1
+01-18 18:59:22.676: I/a(971): b
+01-18 18:59:22.676: W/System.err(971): java.lang.NullPointerException
+01-18 18:59:22.715: W/System.err(971):  at com.example.abe.Tab1Fragment$1.run(Tab1Fragment.java:113)
+01-18 18:59:22.936: W/System.err(971):  at java.lang.Thread.run(Thread.java:1019)
+01-18 18:59:22.936: I/a(971): b
+</code></pre>
+
+<p>FragmentActivity class:</p>
+
+<pre><code>package com.example.abe;
+
+import java.util.HashMap;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
+
+public class TabsFragmentActivity extends FragmentActivity implements
+        TabHost.OnTabChangeListener {
+
+    private TabHost mTabHost;
+    private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, TabsFragmentActivity.TabInfo>();
+    private TabInfo mLastTab = null;
+
+    private class TabInfo {
+        private String tag;
+        private Class<?> clss;
+        private Bundle args;
+        private Fragment fragment;
+
+        TabInfo(String tag, Class<?> clazz, Bundle args) {
+            this.tag = tag;
+            this.clss = clazz;
+            this.args = args;
+        }
+
+    }
+
+    class TabFactory implements TabContentFactory {
+
+        private final Context mContext;
+
+        public TabFactory(Context context) {
+            mContext = context;
+        }
+
+        public View createTabContent(String tag) {
+            View v = new View(mContext);
+            v.setMinimumWidth(0);
+            v.setMinimumHeight(0);
+            return v;
+        }
+
+    }
+
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.tabs_layout);
+        initialiseTabHost(savedInstanceState);
+        if (savedInstanceState != null) {
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); // set
+                                                                                // the
+                                                                                // tab
+                                                                                // as
+                                                                                // per
+                                                                                // the
+                                                                                // saved
+                                                                                // state
+        }
+    }
+
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag()); // save the tab
+                                                                // selected
+        super.onSaveInstanceState(outState);
+    }
+
+    private void initialiseTabHost(Bundle args) {
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();
+        TabInfo tabInfo = null;
+        TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab1").setIndicator("ST"), (tabInfo = new TabInfo(
+                "Tab1", Tab1Fragment.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost
+                .newTabSpec("Tab2").setIndicator("CSI"),
+                (tabInfo = new TabInfo("Tab2", Tab2Fragment.class, args)));
+        this.mapTabInfo.put(tabInfo.tag, tabInfo);
+        this.onTabChanged("Tab1");
+        mTabHost.setOnTabChangedListener(this);
+    }
+
+    private static void addTab(TabsFragmentActivity activity, TabHost tabHost,
+            TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+        tabSpec.setContent(activity.new TabFactory(activity));
+        String tag = tabSpec.getTag();
+        tabInfo.fragment = activity.getSupportFragmentManager()
+                .findFragmentByTag(tag);
+        if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+            FragmentTransaction ft = activity.getSupportFragmentManager()
+                    .beginTransaction();
+            ft.detach(tabInfo.fragment);
+            ft.commit();
+            activity.getSupportFragmentManager().executePendingTransactions();
+        }
+        tabHost.addTab(tabSpec);
+    }
+
+    public void onTabChanged(String tag) {
+        TabInfo newTab = this.mapTabInfo.get(tag);
+        if (mLastTab != newTab) {
+            FragmentTransaction ft = this.getSupportFragmentManager()
+                    .beginTransaction();
+            if (mLastTab != null) {
+                if (mLastTab.fragment != null) {
+                    ft.detach(mLastTab.fragment);
+                }
+            }
+            if (newTab != null) {
+                if (newTab.fragment == null) {
+                    newTab.fragment = Fragment.instantiate(this,
+                            newTab.clss.getName(), newTab.args);
+                    ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                } else {
+                    ft.attach(newTab.fragment);
+                }
+            }
+            mLastTab = newTab;
+            ft.commit();
+            this.getSupportFragmentManager().executePendingTransactions();
+        }
+    }
+
+}
+</code></pre>

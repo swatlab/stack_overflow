@@ -1,0 +1,58 @@
+<p>I am working on getting my preferences screen setup, but I can't seem to get my preference activity working right.</p>
+
+<p>I created a new blank activity called <code>SettingsActivity</code> that extends <code>PreferenceActivity</code> and removed <code>setContentView(R.layout.activity_settings);</code> from the <code>onCreate</code> method, and replaced it with <code>addPreferencesFromResource(R.xml.preferences);</code>.</p>
+
+<p>In my main activity class, I setup a new intent to call my <code>SettingsActivity</code> class when I clicked the settings button that android creates by default.</p>
+
+<p>I added a test item to my <code>preferences.xml</code> and ran it with this result. What happened to my Nav bar? Do I have to do something to add it? Android Studio shows that <code>addPreferencesFromResource</code> is deprecated. What am I supposed to do?</p>
+
+<p><img src="http://i.stack.imgur.com/lUBKQ.png" alt="enter image description here"></p>
+
+<p>MainActivity method that calls SettingsActivity</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>SettingsActivity</p>
+
+<pre><code>public class SettingsActivity extends PreferenceActivity {
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    addPreferencesFromResource(R.xml.preferences);
+}
+</code></pre>
+
+<p>Here is my preferences.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen          
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"   
+android:layout_height="match_parent">
+
+<CheckBoxPreference
+    android:key="test check box"
+    android:title="Test"
+    android:defaultValue="false"/>
+
+</PreferenceScreen>
+</code></pre>

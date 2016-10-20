@@ -1,0 +1,14 @@
+<pre><code>    public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle item selection
+    switch (item.getItemId()) {
+    case R.id.menu_done:
+    myResult(RESULT_OK);
+    finish();
+    return true;
+    default:
+    return super.onOptionsItemSelected(item);
+    }
+    }  
+</code></pre>
+
+<p>Here is an error which i'm facing. In "menu_done" Please help me to resolve         this  error rom code.</p>

@@ -1,0 +1,20 @@
+<p>I implemented in my application, in a screen showing the information "Up Navigation". It worked, however when I click on the icon with the arrow on the ActionBar, it's not a return effect, like that when I click on the return arrow Smarthphone itself but rather an effect as if I had started a new Activity. I wonder if someone could help me with this doubt.</p>
+
+<p>My Code:</p>
+
+<pre><code>  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+      switch (item.getItemId()) {
+          case android.R.id.home:
+              // é aqui que você volta para a activity ou fragment anterior
+              Intent parentActivityIntent = new Intent(this, MainActivity.class);
+              // Remove todas as outras activitys que estão na pilha
+              parentActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+              startActivity(parentActivityIntent);
+              finish();
+              break;
+
+      }
+      return super.onOptionsItemSelected(item);
+  }
+</code></pre>

@@ -1,0 +1,77 @@
+<p>I'm trying to use a SearchView and I got everything to work, except when I want to search an empty string.<br>
+The onQueryTextChange does react when I remove the last character, but I want the user to be able to press the search button when the searchfield is empty.</p>
+
+<pre><code> final SearchView.OnQueryTextListener queryTextListener = new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    // Do something
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    // Do something
+                    return true;
+                }
+            };
+
+        searchView.setOnQueryTextListener(queryTextListener);
+</code></pre>
+
+<p>I've also tried using a OnKeyListner. but it does not seem to work either.</p>
+
+<pre><code>            searchView.setOnKeyListener(new OnKeyListener() {
+            @Override
+            public boolean onKey(View arg0, int arg1, KeyEvent arg2) {
+
+                //Do something
+                return true;
+            }
+        }); 
+</code></pre>
+
+<p>This seems such a simple thing to do, but I can't get it to work. Any suggestions?</p>
+
+<p><strong>Edit</strong></p>
+
+<p>I have looked for a solution for a while now and just some minutes after posting this, I found a solution.<br>
+On this thread I found out this was not a bug, but it actually was deliberate.</p>
+
+<p><a href="http://stackoverflow.com/questions/13576283/android-searchview-onquerytextlistener-onquerytextsubmit-not-fired-on-empty-quer">Android SearchView.OnQueryTextListener OnQueryTextSubmit not fired on empty query string</a></p>
+
+<p>So I just downloaded <a href="http://actionbarsherlock.com/" rel="nofollow">ActionBarSherlock</a> and made some modification to the method onSubmitQuery()</p>
+
+<p>From</p>
+
+<pre><code>private void onSubmitQuery() {
+    CharSequence query = mQueryTextView.getText();
+    if (query != null && TextUtils.getTrimmedLength(query) > 0) {
+        if (mOnQueryChangeListener == null
+                || !mOnQueryChangeListener.onQueryTextSubmit(query.toString())) {
+            if (mSearchable != null) {
+                launchQuerySearch(KeyEvent.KEYCODE_UNKNOWN, null, query.toString());
+                setImeVisibility(false);
+            }
+            dismissSuggestions();
+        }
+    }
+}
+</code></pre>
+
+<p>And the modified version</p>
+
+<pre><code>private void onSubmitQuery() {
+    CharSequence query = mQueryTextView.getText();
+    if(query == null) {query = "";}
+    if (mOnQueryChangeListener == null
+                || !mOnQueryChangeListener.onQueryTextSubmit(query.toString())) {
+        if (mSearchable != null) {
+                launchQuerySearch(KeyEvent.KEYCODE_UNKNOWN, null, query.toString());
+                setImeVisibility(false);
+         }
+         dismissSuggestions();
+    }
+}
+</code></pre>
+
+<p>Hope this helps if anyone else is having this problem.</p>

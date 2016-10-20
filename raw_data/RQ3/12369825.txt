@@ -1,0 +1,597 @@
+<p>I have a FragmentActivity that sets up a tabhost. Each tab is a simple Fragment called TabFragment. TabFragment has a ViewPager, in this case it is an InfiniteViewPager by <a href="http://stackoverflow.com/questions/7546224/viewpager-as-a-circular-queue-wrapping/9656874">antonyt</a> (discussed here: <a href="http://stackoverflow.com/questions/7546224/viewpager-as-a-circular-queue-wrapping/9656874">ViewPager as a circular queue / wrapping</a>).</p>
+
+<p>The (main) problems are the following:</p>
+
+<ol>
+<li><p>I start up the application. I click on the second tab. There is only a blank screen when I should see identical things as in the first tab.
+After scrolling right a few times I do see my TextViews.</p></li>
+<li><p>Scrolling fragments in ViewPagers and changing tabs eventually leads to a halt and FC with no clear Exception being thrown.</p></li>
+</ol>
+
+<p>This is my first take on Fragments and, I must confess, I do not understand the observed behaviour.</p>
+
+<p>Any hints would be greatly appreciated.</p>
+
+<p>The whole project is <a href="http://www.sendspace.com/file/rtguqq" rel="nofollow">here</a>.</p>
+
+<p>The code:</p>
+
+<p>FragmentActivity with TabHost:</p>
+
+<pre><code>
+
+    package com.example.viewpagerintab;
+
+    import java.util.HashMap;
+
+    import android.content.Context;
+    import android.os.Bundle;
+    import android.support.v4.app.Fragment;
+    import android.support.v4.app.FragmentActivity;
+    import android.support.v4.app.FragmentTransaction;
+    import android.view.View;
+    import android.widget.TabHost;
+    import android.widget.TabHost.TabContentFactory;
+
+    public class TabsFragmentActivity extends FragmentActivity implements
+            TabHost.OnTabChangeListener {
+
+        private TabHost mTabHost;
+        private HashMap mapTabInfo = new HashMap();
+        private TabInfo mLastTab = null;
+
+        public TabsFragmentActivity() {
+
+        }
+
+        private class TabInfo {
+            private String tag;
+            private Class clss;
+            private Bundle args;
+            private Fragment fragment;
+
+            TabInfo(String tag, Class classObject, Bundle args) {
+                this.tag = tag;
+                this.clss = classObject;
+                this.args = args;
+            }
+
+        }
+
+        class TabFactory implements TabContentFactory {
+
+            private final Context mContext;
+
+            /**
+             * @param context
+             */
+            public TabFactory(Context context) {
+                mContext = context;
+            }
+
+            /**
+             * (non-Javadoc)
+             * 
+             * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+             */
+            public View createTabContent(String tag) {
+                View v = new View(mContext);
+                v.setMinimumWidth(0);
+                v.setMinimumHeight(0);
+                return v;
+            }
+
+        }
+
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+         */
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            setContentView(R.layout.tabs);
+
+            initialiseTabHost(savedInstanceState);
+
+            if (savedInstanceState != null) {
+                mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+            }
+        }
+
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+         */
+        protected void onSaveInstanceState(Bundle outState) {
+            outState.putString("tab", mTabHost.getCurrentTabTag());
+            super.onSaveInstanceState(outState);
+        }
+
+        private void initialiseTabHost(Bundle args) {
+            mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+            mTabHost.setup();
+            TabInfo tabInfo = null;
+
+            tabInfo = new TabInfo("Discover", TabFragmentD.class, args);
+            TabsFragmentActivity.addTab(this, mTabHost,
+                    mTabHost.newTabSpec("Discover").setIndicator("Discover"),
+                    tabInfo);
+            mapTabInfo.put(tabInfo.tag, tabInfo);
+
+            tabInfo = new TabInfo("Friends", TabFragmentF.class, args);
+            TabsFragmentActivity
+                    .addTab(this, mTabHost, mTabHost.newTabSpec("Friends")
+                            .setIndicator("Friends"), tabInfo);
+            mapTabInfo.put(tabInfo.tag, tabInfo);
+
+            onTabChanged("Discover");
+
+            mTabHost.setOnTabChangedListener(this);
+        }
+
+        /**
+         * @param activity
+         * @param tabHost
+         * @param tabSpec
+         * @param clss
+         * @param args
+         */
+        private static void addTab(TabsFragmentActivity activity, TabHost tabHost,
+                TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+
+            // Attach a Tab view factory to the spec
+            tabSpec.setContent(activity.new TabFactory(activity));
+            String tag = tabSpec.getTag();
+
+            // Check to see if we already have a fragment for this tab, probably
+            // from a previously saved state. If so, deactivate it, because our
+            // initial state is that a tab isn't shown.
+            tabInfo.fragment = activity.getSupportFragmentManager()
+                    .findFragmentByTag(tag);
+            if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+                FragmentTransaction ft = activity.getSupportFragmentManager()
+                        .beginTransaction();
+                ft.detach(tabInfo.fragment);
+                ft.commit();
+                activity.getSupportFragmentManager().executePendingTransactions();
+            }
+
+            tabHost.addTab(tabSpec);
+        }
+
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+         */
+        public void onTabChanged(String tag) {
+            TabInfo newTab = mapTabInfo.get(tag);
+            if (mLastTab != newTab) {
+                FragmentTransaction ft = getSupportFragmentManager()
+                        .beginTransaction();
+                if (mLastTab != null) {
+                    if (mLastTab.fragment != null) {
+                        ft.detach(mLastTab.fragment);
+                    }
+                }
+                if (newTab != null) {
+                    if (newTab.fragment == null) {
+                        newTab.fragment = Fragment.instantiate(this,
+                                newTab.clss.getName(), newTab.args);
+                        ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+                    } else {
+                        ft.attach(newTab.fragment);
+                    }
+                }
+
+                mLastTab = newTab;
+                ft.commit();
+                getSupportFragmentManager().executePendingTransactions();
+            }
+        }
+
+    }
+
+</code></pre>
+
+<p>TabFragment containing InfiniteViewPager:</p>
+
+<pre><code>
+
+    package com.example.viewpagerintab;
+
+    import java.util.List;
+    import java.util.Vector;
+
+    import android.os.AsyncTask;
+    import android.os.Bundle;
+    import android.support.v4.app.Fragment;
+    import android.support.v4.app.FragmentPagerAdapter;
+    import android.support.v4.view.ViewPager;
+    import android.support.v4.view.ViewPager.OnPageChangeListener;
+    import android.util.Log;
+    import android.view.LayoutInflater;
+    import android.view.View;
+    import android.view.ViewGroup;
+    import android.widget.LinearLayout;
+
+    import com.antonyt.infiniteviewpager.InfinitePagerAdapter;
+    import com.example.viewpagerintab.pager.SimpleAdapter;
+
+    public class TabFragment extends Fragment {
+
+        private static final String TAG = TabFragment.class.getSimpleName();
+
+        protected View mView;
+
+        ViewPager mViewPager;
+
+        private InfinitePagerAdapter mPagerAdapter;
+
+        PageListener pageListener;
+
+        public TabFragment() {
+
+        }
+
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater,
+         *      android.view.ViewGroup, android.os.Bundle)
+         */
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+
+            Log.d(TAG, "onCreateView - called");
+
+            if (container == null) {
+                // We have different layouts, and in one of them this
+                // fragment's containing frame doesn't exist. The fragment
+                // may still be created from its saved state, but there is
+                // no reason to try to create its view hierarchy because it
+                // won't be displayed. Note this is not needed -- we could
+                // just run the code below, where we would create and return
+                // the view hierarchy; it would just never be used.
+                return null;
+            }
+
+            pageListener = new PageListener();
+
+            mView = (LinearLayout) inflater.inflate(R.layout.tab, container, false);
+
+            List fragments = new Vector();
+            fragments.add(DayFragment.newInstance("one"));
+            fragments.add(DayFragment.newInstance("two"));
+            fragments.add(DayFragment.newInstance("three"));
+            fragments.add(DayFragment.newInstance("four"));
+
+            mPagerAdapter = new InfinitePagerAdapter(
+                    new com.example.viewpagerintab.PagerAdapter(
+                            getFragmentManager(), fragments));
+
+            mViewPager = (ViewPager) mView.findViewById(R.id.viewpager);
+
+            mViewPager.setOnPageChangeListener(pageListener);
+
+            new setAdapterTask().execute();
+
+            Log.d(TAG, "onCreateView - finished");
+
+            return mView;
+        }
+
+        private class setAdapterTask extends AsyncTask {
+            protected Void doInBackground(Void... params) {
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                mViewPager.setAdapter(mPagerAdapter);
+            }
+        }
+
+        class PageListener implements OnPageChangeListener {
+            private final String TAG = PageListener.class.getSimpleName();
+
+            @Override
+            public void onPageScrollStateChanged(int arg0) {
+                Log.d(TAG, "onPageScrollStateChanged(..) to: " + arg0);
+
+            }
+
+            @Override
+            public void onPageScrolled(int arg0, float arg1, int arg2) {
+                // Log.d(TAG, "onPageScrolled(..) - called");
+
+            }
+
+            @Override
+            public void onPageSelected(int arg0) {
+                Log.d(TAG, "onPageSelected(..) selected: " + arg0);
+
+            }
+        }
+    }
+
+</code></pre>
+
+<p>TabFragmentD and TabFragmentF are near identical:</p>
+
+<pre><code>
+
+    public class TabFragmentD extends TabFragment {
+
+        public TabFragmentD() {
+
+        }
+
+    }
+
+</code></pre>
+
+<p>DayFragment containing just one TextView:</p>
+
+<pre><code>
+
+    package com.example.viewpagerintab;
+
+    import android.os.Bundle;
+    import android.support.v4.app.Fragment;
+    import android.util.Log;
+    import android.view.LayoutInflater;
+    import android.view.View;
+    import android.view.ViewGroup;
+    import android.widget.LinearLayout;
+    import android.widget.TextView;
+
+    public class DayFragment extends Fragment {
+
+        private static final String TAG = DayFragment.class.getSimpleName();
+
+        protected View mView;
+
+        protected TextView tvDay;
+
+        public DayFragment() {
+
+        }
+
+        /**
+         * (non-Javadoc)
+         * 
+         * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater,
+         *      android.view.ViewGroup, android.os.Bundle)
+         */
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+
+            if (container == null) {
+                // We have different layouts, and in one of them this
+                // fragment's containing frame doesn't exist. The fragment
+                // may still be created from its saved state, but there is
+                // no reason to try to create its view hierarchy because it
+                // won't be displayed. Note this is not needed -- we could
+                // just run the code below, where we would create and return
+                // the view hierarchy; it would just never be used.
+                return null;
+            }
+
+            mView = (LinearLayout) inflater.inflate(R.layout.day, container, false);
+
+            tvDay = (TextView) mView.findViewById(R.id.tvText);
+
+            String text = getArguments().getString("text");
+            Log.d(TAG, "creating view with text: " + text);
+
+            tvDay.setText(text);
+
+            return mView;
+        }
+
+        public static DayFragment newInstance(String text) {
+            Log.d(TAG, "newInstance with text: " + text);
+            DayFragment f = new DayFragment();
+
+            // Supply text input as an argument.
+            Bundle args = new Bundle();
+            args.putString("text", text);
+            f.setArguments(args);
+
+            return f;
+        }
+
+    }
+
+</code></pre>
+
+<p>PagerAdapter:</p>
+
+<pre><code>
+
+    package com.example.viewpagerintab;
+
+    import java.util.List;
+
+    import android.support.v4.app.Fragment;
+    import android.support.v4.app.FragmentManager;
+    import android.support.v4.app.FragmentPagerAdapter;
+
+    public class PagerAdapter extends FragmentPagerAdapter {
+
+        private List fragments;
+
+        public PagerAdapter(FragmentManager fm, List fragments) {
+            super(fm);
+            this.fragments = fragments;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see android.support.v4.app.FragmentPagerAdapter#getItem(int)
+         */
+        @Override
+        public Fragment getItem(int position) {
+            return fragments.get(position);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see android.support.v4.view.PagerAdapter#getCount()
+         */
+        @Override
+        public int getCount() {
+            return this.fragments.size();
+        }
+    }
+
+</code></pre>
+
+<p>InfiniteViewPager and InfinitePageAdapter are on <a href="https://github.com/antonyt/InfiniteViewPager" rel="nofollow">antonyt's github</a>.</p>
+
+<p>tabs.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:orientation="vertical" >
+
+<TabHost
+    android:id="@android:id/tabhost"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical" >
+
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:orientation="horizontal" />
+
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0" />
+
+        <FrameLayout
+            android:id="@+android:id/realtabcontent"
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+</TabHost>
+</LinearLayout>
+</code></pre>
+
+<p>tab.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:background="@android:color/black" >
+
+<com.antonyt.infiniteviewpager.InfiniteViewPager
+    android:id="@+android:id/viewpager"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" />
+
+</LinearLayout>
+</code></pre>
+
+<p>day.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:background="@android:color/black"
+android:gravity="center" >
+
+<TextView
+    android:id="@+id/tvText"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:textColor="@android:color/white" />
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>UPDATE</strong></p>
+
+<p>As pointed out by CommonsWare, Android has problems with Fragments within Fragments.</p>
+
+<p>I modified tabs.xml to:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <TabHost
+        android:id="@android:id/tabhost"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:orientation="horizontal" />
+
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="0" />
+
+            <FrameLayout
+                android:id="@+android:id/realtabcontent"
+                android:layout_width="fill_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0" />
+
+            <com.antonyt.infiniteviewpager.InfiniteViewPager
+                android:id="@+android:id/viewpager"
+                android:layout_width="fill_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+    </TabHost>
+
+</LinearLayout>
+</code></pre>
+
+<p>and created empty TabFragments (tab.xml):</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="0dp" >
+
+</LinearLayout>
+</code></pre>
+
+<p>So now switching tabs is nearly independent of swiping.</p>
+
+<p>Only drawback is that there was a very annoying problem with any attempts to set current position of the ViewPager to 0 after changing tabs (app just crashed with no exception).</p>

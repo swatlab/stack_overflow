@@ -1,0 +1,356 @@
+<p>First, sorry for my english, I'm so bad. </p>
+
+<p>Here warning log:</p>
+
+<pre><code>10-21 16:46:19.108    4240-4273/com.costular.guaguaslapalma E/AndroidRuntime﹕ FATAL EXCEPTION: AsyncTask #1
+
+Process: com.costular.guaguaslapalma, PID: 4240
+java.lang.RuntimeException: An error occured while executing doInBackground()
+        at android.os.AsyncTask$3.done(AsyncTask.java:300)
+        at java.util.concurrent.FutureTask.finishCompletion(FutureTask.java:355)
+        at java.util.concurrent.FutureTask.setException(FutureTask.java:222)
+        at java.util.concurrent.FutureTask.run(FutureTask.java:242)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1112)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:587)
+        at java.lang.Thread.run(Thread.java:841)
+ Caused by: android.database.sqlite.SQLiteDatabaseCorruptException: file is encrypted or is not a database (code 26): , while compiling: SELECT * FROM routes
+        at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+        at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+        at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+        at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+        at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+        at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+        at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+        at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+        at android.database.sqlite.SQLiteDatabase.queryWithFactory(SQLiteDatabase.java:1161)
+        at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1032)
+        at android.database.sqlite.SQLiteDatabase.query(SQLiteDatabase.java:1200)
+        at com.costular.guaguaslapalma.util.Provider.query(Provider.java:76)
+        at android.content.ContentProvider.query(ContentProvider.java:857)
+        at android.content.ContentProvider$Transport.query(ContentProvider.java:200)
+        at android.content.ContentResolver.query(ContentResolver.java:461)
+        at android.content.CursorLoader.loadInBackground(CursorLoader.java:65)
+        at android.content.CursorLoader.loadInBackground(CursorLoader.java:43)
+        at android.content.AsyncTaskLoader.onLoadInBackground(AsyncTaskLoader.java:312)
+        at android.content.AsyncTaskLoader$LoadTask.doInBackground(AsyncTaskLoader.java:69)
+        at android.content.AsyncTaskLoader$LoadTask.doInBackground(AsyncTaskLoader.java:57)
+        at android.os.AsyncTask$2.call(AsyncTask.java:288)
+        at java.util.concurrent.FutureTask.run(FutureTask.java:237)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1112)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:587)
+            at java.lang.Thread.run(Thread.java:841)
+</code></pre>
+
+<p>Here my Provider:</p>
+
+<pre><code>> /**  * Created by Costular on 21/10/2014.  */ public class Provider
+> extends ContentProvider{
+> 
+>     public static final String AUTHORITY = "com.costular.guaguaslapalma";
+> 
+>     private static final String URI_ROUTES = "content://"+AUTHORITY+"/routes";
+>     private static final String URI_STOPS = "content://"+AUTHORITY+"/stops";
+>     private static final String URI_SCHEDULE = "content://"+AUTHORITY+"/schedule";
+> 
+>     public static final Uri CONTENT_URI_ROUTES = Uri.parse(URI_ROUTES);
+>     public static final Uri CONTENT_URI_STOPS = Uri.parse(URI_STOPS);
+>     public static final Uri CONTENT_URI_SCHEDULE = Uri.parse(URI_SCHEDULE);
+> 
+>     //Some data
+>     private Database database;
+>     public static final String DATABASE_NAME = "db";
+>     public static final String TABLE_ROUTES = "routes";
+>     public static final String TABLE_STOPS = "stops";
+>     public static final String TABLE_SCHEDULE = "timetables";
+> 
+>     //URI MATCHER
+>     public static UriMatcher uriMatcher;
+>     // ---------MATCHERS---------------
+>     // RUTAS
+>     private static final int URI_MATCHER_ROUTES = 1;
+>     private static final int URI_MATCHER_ROUTES_ID = 2;
+>     // PARADAS
+>     private static final int URI_MATCHER_STOPS = 10;
+>     private static final int URI_MATCHER_STOPS_ID = 11;
+>     // HOIRARIOS
+>     private static final int URI_MATCHER_SCHEDULES = 20;
+>     private static final int URI_MATCHER_SCHEDULES_ID = 21;
+> 
+>     static {
+>         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+>         uriMatcher.addURI(AUTHORITY, TABLE_ROUTES, URI_MATCHER_ROUTES);
+>         uriMatcher.addURI(AUTHORITY, TABLE_ROUTES + "/#", URI_MATCHER_ROUTES_ID);
+> 
+>         uriMatcher.addURI(AUTHORITY, TABLE_STOPS, URI_MATCHER_STOPS);
+>         uriMatcher.addURI(AUTHORITY, TABLE_STOPS + "/#", URI_MATCHER_STOPS_ID);
+> 
+>         uriMatcher.addURI(AUTHORITY, TABLE_SCHEDULE, URI_MATCHER_SCHEDULES);
+>         uriMatcher.addURI(AUTHORITY, TABLE_SCHEDULE + "/#", URI_MATCHER_SCHEDULES_ID);
+>     }
+> 
+>     @Override
+>     public boolean onCreate() {
+>         database = Database.getInstance(getContext());
+>         return true;
+>     }
+> 
+>     @Override
+>     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+> 
+>         String where = selection;
+>         SQLiteDatabase db = database.getDatabase();
+> 
+> 
+>         Cursor c = null;
+>         if(uriMatcher.match(uri) == URI_MATCHER_ROUTES) {
+> 
+>             c = db.query(TABLE_ROUTES, projection, where, selectionArgs, null, null, sortOrder);
+> 
+>         } else if(uriMatcher.match(uri) == URI_MATCHER_ROUTES_ID) {
+> 
+>             where = "id = " + uri.getLastPathSegment();
+>             c = db.query(TABLE_ROUTES, projection, where, selectionArgs, null, null, sortOrder);
+> 
+>         } else if(uriMatcher.match(uri) == URI_MATCHER_STOPS) {
+> 
+>             c = db.query(TABLE_STOPS, projection, where, selectionArgs, null, null, sortOrder);
+> 
+>         } else if(uriMatcher.match(uri) == URI_MATCHER_STOPS_ID) {
+> 
+>             where = "id = " + uri.getLastPathSegment();
+>             c = db.query(TABLE_STOPS, projection, where, selectionArgs, null, null, sortOrder);
+> 
+>         } else if(uriMatcher.match(uri) == URI_MATCHER_SCHEDULES) {
+> 
+>             c = db.query(TABLE_SCHEDULE, projection, where, selectionArgs, null, null, sortOrder);
+> 
+>         } else { // URI MATCHER SCHEDULE ID!!!
+> 
+>             where = "id = " + uri.getLastPathSegment();
+>             c = db.query(TABLE_SCHEDULE, projection, where, selectionArgs, null, null, sortOrder);
+> 
+>         }
+> 
+>         return c;
+>     }
+> 
+>     @Override
+>     public String getType(Uri uri) {
+> 
+> 
+>         switch(uriMatcher.match(uri)) {
+> 
+>             case URI_MATCHER_ROUTES:
+>                 return "vnd.android.cursor.dir/com.costular.routes";
+> 
+>             case URI_MATCHER_ROUTES_ID:
+>                 return "vnd.android.cursor.item/com.costular.routes";
+> 
+>             case URI_MATCHER_STOPS:
+>                 return "vnd.android.cursor.dir/com.costular.stops";
+> 
+>             case URI_MATCHER_STOPS_ID:
+>                 return "vnd.android.cursor.item/com.costular.stops";
+> 
+>             case URI_MATCHER_SCHEDULES:
+>                 return "vnd.android.cursor.dir/com.costular.schedules";
+> 
+>             case URI_MATCHER_SCHEDULES_ID:
+>                 return "vnd.android.cursor.item/com.costular.schedules";
+>         }
+> 
+>         return "";
+>     }
+> 
+>     @Override
+>     public Uri insert(Uri uri, ContentValues values) {
+>         return null;
+>     }
+> 
+>     @Override
+>     public int delete(Uri uri, String selection, String[] selectionArgs) {
+>         return 0;
+>     }
+> 
+>     @Override
+>     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+>         return 0;
+>     }
+> 
+>     public static final class RoutesCol implements BaseColumns {
+> 
+>         public static final String COL_ID = "id";
+>         public static final String COL_START = "start";
+>         public static final String COL_END = "end";
+>         public static final String COL_NAME = "name";
+>         public static final String COL_NUMBER = "number";
+>     }
+> 
+>     public static final class StopsCol implements BaseColumns {
+> 
+>         public static final String COL_ID = "id";
+>         public static final String COL_NAME = "name";
+>         public static final String COL_NUMBER = "number";
+>         public static final String COL_ROUTE = "route";
+>     }
+> 
+>     public static final class ScheduleCol implements BaseColumns {
+> 
+>         public static final String COL_ID = "id";
+>         public static final String COL_STOP = "stop";
+>         public static final String COL_TIME = "time";
+>         public static final String COL_RUN_WEEKEND = "run_weekend";
+>         public static final String DISABLED_ACCESS = "disabled_access";
+>     } }
+</code></pre>
+
+<p>Here my SQLite:</p>
+
+<pre><code>/**
+ * Created by Costular on 17/10/2014.
+ */
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+        //The Android's default system path of your application database.
+        private static String DB_PATH = "/data/data/com.costular.guaguaslapalma/databases/";
+
+        private static String DB_NAME = "databasepene";
+
+        private SQLiteDatabase myDataBase;
+
+        private final Context myContext;
+
+        /**
+         * Constructor
+         * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+         * @param context
+         */
+        public DatabaseHelper(Context context) {
+
+            super(context, DB_NAME, null, 1);
+            this.myContext = context;
+        }
+
+        public SQLiteDatabase getDatabase() {
+            return myDataBase;
+        }
+
+        /**
+         * Creates a empty database on the system and rewrites it with your own database.
+         * */
+        public void createDataBase() throws IOException{
+
+            boolean dbExist = checkDataBase();
+
+            if(dbExist){
+                //do nothing - database already exist
+            }else{
+
+                //By calling this method and empty database will be created into the default system path
+                //of your application so we are gonna be able to overwrite that database with our database.
+                this.getReadableDatabase();
+
+                try {
+
+                    copyDataBase();
+
+                } catch (IOException e) {
+
+                    throw new Error("Error copying database");
+
+                }
+            }
+
+        }
+
+        /**
+         * Check if the database already exist to avoid re-copying the file each time you open the application.
+         * @return true if it exists, false if it doesn't
+         */
+        private boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+
+            try{
+                String myPath = DB_PATH + DB_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+            }catch(SQLiteException e){
+
+                //database does't exist yet.
+
+            }
+
+            if(checkDB != null){
+
+                checkDB.close();
+
+            }
+
+            return checkDB != null ? true : false;
+        }
+
+        /**
+         * Copies your database from your local assets-folder to the just created empty database in the
+         * system folder, from where it can be accessed and handled.
+         * This is done by transfering bytestream.
+         * */
+        private void copyDataBase() throws IOException{
+
+            //Open your local db as the input stream
+            InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DB_NAME;
+
+            //Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            //transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer))>0){
+                myOutput.write(buffer, 0, length);
+            }
+
+            //Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+
+        }
+
+        public void openDataBase() throws SQLException{
+
+            //Open the database
+            String myPath = DB_PATH + DB_NAME;
+            myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }
+
+        @Override
+        public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        }
+
+        // Add your public helper methods to access and get content from the database.
+        // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+        // to you to create adapters for your views.
+
+    }
+</code></pre>

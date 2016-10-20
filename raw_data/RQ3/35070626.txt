@@ -1,0 +1,51 @@
+<p>How do the below code provides value of the Employee  object e2 as employee even I didn't add e2 to the HashMap. I would like to know how e2 is referred here.</p>
+
+<pre><code>import java.util.HashMap;
+
+    public class Employee {
+    int phno;
+    String name;
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+    Employee e1=new Employee();
+   e1.name="niks";
+   e1.phno=9032944566;
+   HashMap<Employee,String> m=new HashMap();
+   m.put(e1, "employee1");
+   Employee e2=new Employee();
+   e2.name="niks";
+   e2.phno=9032944566;
+   System.out.println("value of e2:"+m.get(e2));
+    }
+
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + phno;
+    return result;
+}
+@Override
+public boolean equals(Object obj) {
+    if (this == obj)
+        return true;
+    if (obj == null)
+        return false;
+    if (getClass() != obj.getClass())
+        return false;
+    Employee other = (Employee) obj;
+    if (name == null) {
+        if (other.name != null)
+            return false;
+    } else if (!name.equals(other.name))
+        return false;
+    if (phno != other.phno)
+        return false;
+    return true;
+}
+ }
+</code></pre>
+
+<p><strong>Output</strong>
+  value of e2: employee1</p>

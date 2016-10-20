@@ -1,0 +1,257 @@
+<p>This is a followup to this question: <a href="http://stackoverflow.com/questions/9286391/android-why-is-this-telling-me-content-view-not-yet-created">Android - why is this telling me "Content view not yet created"?</a></p>
+
+<p>So, the following code throws an error:</p>
+
+<pre><code>public View onCreateView(LayoutInflater inflater, ViewGroup container,
+       Bundle savedInstanceState) {
+
+        LinearLayout Layout5 = (LinearLayout) inflater.inflate(R.layout.tab_frag5_layout, container, false);
+
+        Cursor allBands;
+        MyDatabase db;
+
+        Context ctx = (Context)TabFragment5.this.getActivity();
+
+
+        db = new MyDatabase(ctx);
+        allBands = db.getBands();
+
+
+        ListAdapter adapter = new SimpleCursorAdapter (ctx, 
+                R.layout.listelement, 
+                allBands, 
+                new String[] {"BandName"},  
+                new int[] {R.id.text15});
+
+        getListView().setAdapter(adapter);  
+
+        return Layout5;
+
+     }
+</code></pre>
+
+<p>BUT, 
+if i add a button to the layout and place the code inside the OnClick method, it works perfectly. Like this:</p>
+
+<pre><code>@Override
+         public View onCreateView(LayoutInflater inflater, ViewGroup container,
+           Bundle savedInstanceState) {
+
+            LinearLayout Layout5 = (LinearLayout) inflater.inflate(R.layout.tab_frag5_layout, container, false);
+            // Register for the Button.OnClick event 
+            Button bShop = (Button)Layout5.findViewById(R.id.button_test);
+            bShop.setOnClickListener(new View.OnClickListener() {           
+                @Override
+                public void onClick(View v) {
+
+                    Cursor allBands;
+                    MyDatabase db;
+
+                    Context ctx = (Context)TabFragment5.this.getActivity();
+
+
+                    db = new MyDatabase(ctx);
+                    allBands = db.getBands();
+
+
+                    ListAdapter adapter = new SimpleCursorAdapter (ctx, 
+                            R.layout.listelement, 
+                            allBands, 
+                            new String[] {"BandName"},  
+                            new int[] {R.id.text15});   
+
+                    getListView().setAdapter(adapter);
+
+                        }
+                    });                                                                 
+
+            return Layout5; 
+</code></pre>
+
+<p>Why does this happen. i understand it must have something to do with the fragments lifecycle, but what? How can I circumvent this so the list listview is populated when the fragment opens, and not only when i click the button?</p>
+
+<p>Thanks</p>
+
+<p>EDIT: this is the main activity</p>
+
+<pre><code> public class TabsFragmentActivity extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+private TabHost mTabHost;
+private HashMap mapTabInfo = new HashMap();
+private TabInfo mLastTab = null;
+
+
+
+private class TabInfo {
+     private String tag;
+     private Class clss;
+     private Bundle args;
+     private Fragment fragment;
+     TabInfo(String tag, Class clazz, Bundle args) {
+         this.tag = tag;
+         this.clss = clazz;
+         this.args = args;
+     }
+
+}
+
+class TabFactory implements TabContentFactory {
+
+    private final Context mContext;
+
+    /**
+     * @param context
+     */
+    public TabFactory(Context context) {
+        mContext = context;
+    }
+
+
+    /** (non-Javadoc)
+     * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+     */
+    public View createTabContent(String tag) {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+    }
+
+}
+/** (non-Javadoc)
+ * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+ */
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Step 1: Inflate layout
+    setContentView(R.layout.tabs_layout);
+    // Step 2: Setup TabHost
+    initialiseTabHost(savedInstanceState);
+
+
+
+    if (savedInstanceState != null) {
+        mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); //set the tab     as per the saved state
+    }
+}
+
+  /** (non-Javadoc)
+ * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+ */
+   protected void onSaveInstanceState(Bundle outState) {
+    outState.putString("tab", mTabHost.getCurrentTabTag()); //save the tab selected
+    super.onSaveInstanceState(outState);
+}
+
+/**
+ * Step 2: Setup TabHost
+ */
+private void initialiseTabHost(Bundle args) {
+    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+    TabInfo tabInfo = null;
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab1").setIndicator("s1"), ( tabInfo = new TabInfo("Tab1", TabFragment1.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab2").setIndicator("s2"), ( tabInfo = new TabInfo("Tab2", TabFragment2.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab3").setIndicator("s3"), ( tabInfo = new TabInfo("Tab3", TabFragment3.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab4").setIndicator("s4"), ( tabInfo = new TabInfo("Tab4", TabFragment4.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab5").setIndicator("s5"), ( tabInfo = new TabInfo("Tab5", TabFragment5.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    TabsFragmentActivity.addTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab6").setIndicator("s6"), ( tabInfo = new TabInfo("Tab6", TabFragment6.class, args)));
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    // Default to first tab
+    this.onTabChanged("Tab1");
+    //
+    mTabHost.setOnTabChangedListener(this);
+}
+
+/**
+ * @param activity
+ * @param tabHost
+ * @param tabSpec
+ * @param clss
+ * @param args
+ */
+private static void addTab(TabsFragmentActivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+    // Attach a Tab view factory to the spec
+    tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+
+    // Check to see if we already have a fragment for this tab, probably
+    // from a previously saved state.  If so, deactivate it, because our
+    // initial state is that a tab isn't shown.
+    tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+    if (tabInfo.fragment != null && !tabInfo.fragment.isDetached()) {
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.detach(tabInfo.fragment);
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+    }
+
+    tabHost.addTab(tabSpec);
+}
+
+/** (non-Javadoc)
+9
+ * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
+ */
+public void onTabChanged(String tag) {
+    TabInfo newTab = (TabInfo) this.mapTabInfo.get(tag);
+   if (mLastTab != newTab) {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if (mLastTab != null) {
+            if (mLastTab.fragment != null) {
+
+                ft.detach(mLastTab.fragment);
+            }
+
+       }
+        if (newTab != null) {
+            if (newTab.fragment == null) {
+                newTab.fragment = Fragment.instantiate(this,
+                        newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            } else {
+                ft.attach(newTab.fragment);
+
+            }
+        }
+
+        mLastTab = newTab;
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+
+}
+</code></pre>
+
+<p>And the fragment XML</p>
+
+<pre><code>        <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/mylayout2"
+  android:layout_width="fill_parent"
+ android:layout_height="fill_parent"
+ android:background="#D6D6D6"
+ >
+
+<Button
+    android:id="@+id/button_test"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_weight="0"
+    android:text="Button" />
+
+<ListView 
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_weight="0" 
+    android:id="@android:id/list"></ListView>
+</code></pre>
+
+<p></p>

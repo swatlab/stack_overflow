@@ -1,0 +1,451 @@
+<p>When I change the layout of a fragment within an activity, the menu options in the action bar seem to stop working.  The buttons (Search icon and NavDrawer icon) become unresponsive.</p>
+
+<p>This is the layout file of the fragment with the working menu options:
+<strong>activity_login.xml (working)</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".LoginFragment"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Login."
+            android:id="@+id/login_title_text"
+            android:layout_alignParentTop="true"
+            android:textSize="40sp"
+            android:layout_marginTop="100dp"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/colorAlt"
+            android:layout_centerHorizontal="true" />
+
+        <!-- E-mail section -->
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"
+            android:hint="E-mail address"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="20dp"
+            android:ems="10"
+            android:id="@+id/login_emailField"
+            android:layout_above="@+id/login_passwordField" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/register_email_icon"
+            android:layout_alignBottom="@id/login_emailField"
+            android:layout_marginLeft="15dp"
+            android:layout_marginBottom="10dp"/>
+
+
+        <!-- Password section -->
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/register_password_icon"
+            android:layout_alignBottom="@id/login_passwordField"
+            android:layout_marginLeft="15dp"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:layout_marginTop="10dp"
+            android:hint="Password"
+            android:id="@+id/login_passwordField"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="25dp" />
+
+        <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/login_login_button"
+            android:layout_gravity="center_vertical"
+            android:layout_below="@+id/login_passwordField"
+            android:layout_marginBottom="29dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            card_view:cardBackgroundColor="#E91E63"
+            card_view:cardCornerRadius="2dp"
+            card_view:cardElevation="6dp">
+
+            <TextView
+                android:id="@+id/material_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
+                android:layout_gravity="center_horizontal"
+                android:textColor="#FFF"
+                android:textSize="19sp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Login" />
+        </android.support.v7.widget.CardView>
+
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Forgotten your username or password?"
+            android:layout_below="@id/login_login_button"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/login_footer_text"
+            android:layout_marginTop="40dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Tap here"
+            android:textColor="#000000"
+            android:layout_below="@id/login_footer_text"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/loginForgottenTapText"
+            android:layout_marginTop="20dp"/>
+    </RelativeLayout>
+
+</LinearLayout>
+</code></pre>
+
+<p>This is the layout file that seems to break the buttons:
+<strong>activity_login.xml (non-working)</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".LoginFragment"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Login."
+            android:id="@+id/login_title_text"
+            android:layout_alignParentTop="true"
+            android:textSize="40sp"
+            android:layout_marginTop="100dp"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/colorAlt"
+            android:layout_centerHorizontal="true" />
+
+        <!-- E-mail section -->
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"
+            android:hint="E-mail address"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="20dp"
+            android:ems="10"
+            android:id="@+id/login_emailField"
+            android:layout_below="@+id/login_title_text" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/register_email_icon"
+            android:layout_alignBottom="@id/login_emailField"
+            android:layout_marginLeft="15dp"
+            android:layout_marginBottom="10dp"/>
+
+
+        <!-- Password section -->
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:layout_marginTop="10dp"
+            android:hint="Password"
+            android:layout_below="@id/login_emailField"
+            android:id="@+id/login_passwordField"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="25dp" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/register_password_icon"
+            android:layout_alignBottom="@id/login_passwordField"
+            android:layout_marginLeft="15dp"
+            android:layout_marginBottom="10dp"/>
+
+        <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/login_login_button"
+            android:layout_gravity="center_vertical"
+            android:layout_below="@+id/login_passwordField"
+            android:layout_marginBottom="29dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            card_view:cardBackgroundColor="#E91E63"
+            card_view:cardCornerRadius="2dp"
+            card_view:cardElevation="6dp">
+
+            <TextView
+                android:id="@+id/material_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
+                android:layout_gravity="center_horizontal"
+                android:textColor="#FFF"
+                android:textSize="19sp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Login" />
+        </android.support.v7.widget.CardView>
+
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Forgotten your username or password?"
+            android:layout_below="@id/login_login_button"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/login_footer_text"
+            android:layout_marginTop="20dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Tap here"
+            android:textColor="#000000"
+            android:layout_below="@id/login_footer_text"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/loginForgottenTapText"
+            android:layout_marginTop="10dp"/>
+    </RelativeLayout>
+
+</ScrollView>
+</code></pre>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LoginFragment.OnLoginCallback {
+
+    MenuItem register;
+    MenuItem login;
+    MenuItem logout;
+    MenuItem completeListing;
+    MenuItem expiredListing;
+    MenuItem activeListing;
+
+    NavigationView navigationView;
+    UserCredentialHandler userStatus;
+
+    protected static final String KEY_USER_STATUS = "USER_STATUS";
+    protected static final String USER_PREFS = "userNamePrefs";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        userStatus = new UserCredentialHandler();
+
+        final HomeFragment homeFragment = new HomeFragment();
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(getApplicationContext(), CreateListingActivity.class);
+                startActivity(i);
+            }
+        });
+
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        getMenuItems(navigationView);
+
+        if(userStatus.checkIfUserIsLoggedIn(getApplicationContext())){
+            userStatus.setNavHeaderOnLogin(getApplicationContext(), navigationView);
+            updateNavDrawer("login", register, login, logout, expiredListing, completeListing, activeListing);
+        } else {
+            userStatus.setNavHeaderOnLogout(navigationView);
+            updateNavDrawer("logout", register, login, logout, expiredListing, completeListing, activeListing);
+        }
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager
+                .beginTransaction();
+        fragmentTransaction.replace(R.id.main_container,homeFragment);
+        fragmentTransaction.commit();
+    }
+
+    @Override
+    public void onLoginSuccess() {
+        HomeFragment homeFragment = new HomeFragment();
+        userStatus.setNavHeaderOnLogin(getApplicationContext(), navigationView);
+
+        updateNavDrawer("login",register,login,logout, expiredListing, completeListing, activeListing);
+
+        register.setVisible(false);
+        login.setVisible(false);
+        logout.setVisible(true);
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager
+                .beginTransaction();
+        fragmentTransaction.replace(R.id.main_container,homeFragment);
+        fragmentTransaction.commit();
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            getSupportFragmentManager().popBackStack();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main_activity_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        } else if (id == R.id.search_mag_icon){
+            SearchFragment searchFragment = new SearchFragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.main_container, searchFragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_register) {
+            final RegisterFragment registerFragment = new RegisterFragment();
+
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.main_container, registerFragment)
+                    .addToBackStack(null)
+                    .commit();
+
+        } else if (id == R.id.nav_login) {
+            final LoginFragment loginFragment = new LoginFragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.main_container, loginFragment)
+                    .addToBackStack(null)
+                    .commit();
+
+        } else if(id == R.id.nav_logout) {
+            userStatus.logoutUser(getApplicationContext());
+            userStatus.setNavHeaderOnLogout(navigationView);
+            updateNavDrawer("logout",register,login,logout, expiredListing, completeListing, activeListing);
+
+        } else if (id == R.id.nav_my_listings) {
+            // navigate to my listings
+        } else if (id == R.id.nav_how) {
+            // navigate to how it works page
+        } else if (id == R.id.nav_help) {
+            // navigate to help page
+        } else if (id == R.id.nav_contact_us) {
+            // navigate to contact page,
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    private void updateNavDrawer(String action, MenuItem register, MenuItem login, MenuItem logout, MenuItem expiredListing, MenuItem completeListing, MenuItem activeListing){
+        if(action=="login"){
+            register.setVisible(false);
+            login.setVisible(false);
+            logout.setVisible(true);
+            completeListing.setVisible(true);
+            activeListing.setVisible(true);
+            expiredListing.setVisible(true);
+        } else {
+            register.setVisible(true);
+            login.setVisible(true);
+            logout.setVisible(false);
+            completeListing.setVisible(false);
+            activeListing.setVisible(false);
+            expiredListing.setVisible(false);
+        }
+    }
+
+    private void getMenuItems(NavigationView nv){
+        register = nv.getMenu().getItem(0);
+        login = nv.getMenu().getItem(1);
+        logout = nv.getMenu().getItem(2);
+        activeListing = nv.getMenu().getItem(3);
+        completeListing = nv.getMenu().getItem(4);
+        expiredListing = nv.getMenu().getItem(5);
+    }
+
+}
+</code></pre>
+
+<p>I cannot seem to workout why changing the layout is breaking the ActionBar menu options, any help would be appreciated.</p>
+
+<p><strong>Edit:</strong>
+Changing the <code><ScrollView></code> element to <code><LinearLayout></code> seems to solve it but I need a ScrollView.  The ScrollView seems to overlap the ActionBar and is on the top.</p>

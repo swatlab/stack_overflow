@@ -1,0 +1,562 @@
+<p>I'm developing app like Show current month data if January, show data that is for January from db using Android Studio and Sqlite db. User are also can select Month. I have added Button that will show Dialog box to choose months.  Db is inside assets folder. I'm getting error and logcat shows "couldn't open database". I'm populating listview from Monthly table. There is only table and twelve columns in my db.</p>
+
+<p><strong>DBHelper.java</strong></p>
+
+<pre><code>import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
+public class DBHelper extends SQLiteOpenHelper {
+
+    public static String DATABASE_NAME = "monthlydata";
+    public static File extStore = Environment.getExternalStorageDirectory();
+    public static String DATABASE_PATH = "/data/data/lin.com.native/databases/";
+    private SQLiteDatabase myDataBase;
+    public static final String DATABASE_TABLE = "Monthly";
+    private static final int DATABASE_VERSION = 1;
+    public static final int ver = 1;
+    private SQLiteDatabase db;
+    Context context;
+
+    public DBHelper(Context context) {
+
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
+        if (checkDataBase()) {
+            openDataBase();
+            Log.i("run", "open db");
+        } else {
+            try {
+                copyDatase();
+                openDataBase();
+            } catch (Exception ex) {
+
+            }
+
+        }
+    }
+
+    private void copyDatase() throws IOException {
+        // Open your local db as the input stream
+        InputStream myInput = context.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+        Log.i("run", "copy successful");
+
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLiteException {
+        // Open the database
+        String myPath = DATABASE_PATH + DATABASE_NAME;
+        db = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READWRITE);
+
+    }
+
+    private boolean checkDataBase() {
+        // TODO Auto-generated method stub
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DATABASE_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+
+            this.getWritableDatabase();
+        }
+        dbExist = checkDataBase();
+        if (!dbExist) {
+
+            this.getReadableDatabase();
+            try {
+                copyDatase();
+            } catch (IOException e) {
+
+            }
+        }
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+        try {
+            createDataBase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public java.util.List<dateObj> getAllData() {
+        java.util.List<dateObj> lst_mth_data = new java.util.ArrayList<dateObj>();
+        Cursor cursor = null;
+
+        try {
+            String sql = " select * from Monthly";
+            cursor = db.rawQuery(sql, null);
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    dateObj obj = new dateObj();
+                    obj.setJanuary(cursor.getString(0));
+                    obj.setFebruary(cursor.getString(1));
+                    obj.setMarch(cursor.getString(2));
+                    obj.setApril(cursor.getString(3));
+                    obj.setMay(cursor.getString(4));
+                    obj.setJune(cursor.getString(5));
+                    obj.setJuly(cursor.getString(6));
+                    obj.setAugust(cursor.getString(7));
+                    obj.setSeptember(cursor.getString(8));
+                    obj.setOctober(cursor.getString(9));
+                    obj.setNovember(cursor.getString(10));
+                    obj.setDecember(cursor.getString(11));
+
+                    lst_mth_data.add(obj);
+                    cursor.moveToNext();
+                }
+
+
+            }
+        } catch (Exception ex) {
+            ex.toString();
+            ex.printStackTrace();
+        }
+
+        return lst_mth_data;
+    }
+
+
+}
+</code></pre>
+
+<p><strong>dateObj.java</strong></p>
+
+<pre><code>public class dateObj {
+    private String january, february, march, april, may, june, july, august, september, october, november, december;
+
+    public dateObj() {
+        super();
+    }
+
+    public String getJanuary() {
+        return january;
+    }
+
+    public void setJanuary(String january) {
+        this.january = january;
+    }
+
+    public String getFebruary() {
+        return february;
+    }
+
+    public void setFebruary(String february) {
+        this.february = february;
+    }
+
+    public String getMarch() {
+        return march;
+    }
+
+    public void setMarch(String march) {
+        this.march = march;
+    }
+
+    public String getApril() {
+        return april;
+    }
+
+    public void setApril(String april) {
+        this.april = april;
+    }
+
+    public String getMay() {
+        return may;
+    }
+
+    public void setMay(String may) {
+        this.may = may;
+    }
+
+    public String getJune() {
+        return june;
+    }
+
+    public void setJune(String june) {
+        this.june = june;
+    }
+
+    public String getJuly() {
+        return july;
+    }
+
+    public void setJuly(String july) {
+        this.july = july;
+    }
+
+    public String getAugust() {
+        return august;
+    }
+
+    public void setAugust(String august) {
+        this.august = august;
+    }
+
+    public String getSeptember() {
+        return september;
+    }
+
+    public void setSeptember(String september) {
+        this.september = september;
+    }
+
+    public String getOctober() {
+        return october;
+    }
+
+    public void setOctober(String october) {
+        this.october = october;
+    }
+
+    public String getNovember() {
+        return november;
+    }
+
+    public void setNovember(String november) {
+        this.november = november;
+    }
+
+    public String getDecember() {
+        return december;
+    }
+
+    public void setDecember(String december) {
+        this.december = december;
+    }
+}
+</code></pre>
+
+<p><strong>MonthlyFragment.java</strong></p>
+
+<pre><code>import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.util.Calendar;
+
+public class MonthlyFragment extends Fragment {
+    // private int monthField;
+    private ListView MonthlyList;
+    private java.util.List<dateObj> lst_month_list = new java.util.ArrayList<dateObj>();
+
+    private java.util.List<dateObj> lst_items_in_vans;
+
+    public MonthlyFragment() {
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_monthly, container, false);
+        DBHelper adb = new DBHelper(getActivity());
+        lst_month_list = adb.getAllData();
+        MonthlyList = (ListView) rootView.findViewById(R.id.listView);
+        MonthlyList.setAdapter(new LAdapter());
+
+        //    String currentDateString = DateFormat.getDateInstance().format(new Date());
+        Button button = (Button) rootView.findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAlertDialog1();
+            }
+        });
+        getMonth();
+
+        return rootView;
+    }
+
+     private void showAlertDialog1() {
+        final String[] Selected = new String[]{"January", "February", "March", "April",
+                "May", "June", "July", "Augest", "September", "October", "November", "December"};
+
+        new AlertDialog.Builder(getActivity()).setTitle("Pick the month")
+                .setItems(Selected, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (Selected[which] == "January") {
+                            // Show the 
+                        }
+
+
+                        Toast.makeText(getActivity(), Selected[which], Toast.LENGTH_SHORT)
+                                .show();
+
+
+                    }
+                }).setNeutralButton("Close dialog", null).show();
+    }
+
+   //To known current month
+    private void getMonth() {
+        Integer mMonth;
+        final Calendar c = Calendar.getInstance();
+        mMonth = c.get(Calendar.MONTH);
+        switch (mMonth) {
+            case Calendar.JANUARY:
+
+                Toast.makeText(getActivity(), "January", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.FEBRUARY:
+                Toast.makeText(getActivity(), "February", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.MARCH:
+                Toast.makeText(getActivity(), "March", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.APRIL:
+                Toast.makeText(getActivity(), "April", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.MAY:
+                Toast.makeText(getActivity(), "May", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.JUNE:
+                Toast.makeText(getActivity(), "June", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.JULY:
+                Toast.makeText(getActivity(), "July", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.AUGUST:
+                Toast.makeText(getActivity(), "August", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.SEPTEMBER:
+                Toast.makeText(getActivity(), "September", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.OCTOBER:
+                Toast.makeText(getActivity(), "October", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.NOVEMBER:
+                Toast.makeText(getActivity(), "November", Toast.LENGTH_SHORT).show();
+                break;
+            case Calendar.DECEMBER:
+                Toast.makeText(getActivity(), "December", Toast.LENGTH_SHORT).show();
+                break;
+        }
+
+    }
+
+    public class LAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return lst_month_list.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return lst_month_list.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            // TODO Auto-generated method stub
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            // TODO Auto-generated method stub
+            final ViewHolder holder;
+            //final int pos;
+            LayoutInflater inflater = getLayoutInflater();
+            //pos = position;
+            if (convertView == null) {
+
+                convertView = inflater.inflate(R.layout.each_item, null);
+                holder = new ViewHolder();
+                holder.txtItemName = (TextView) convertView.findViewById(R.id.tv_eachitem);
+                //       holder.txtItemId = (TextView)convertView.findViewById(R.id.txtVItemId);
+
+
+                convertView.setTag(holder);
+
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+
+            holder.txtItemName.setText(lst_month_list.get(position).getJanuary());
+            //   holder.txtItemId.setText(lst_month_list.get(position).getItemId();
+
+            return convertView;
+        }
+
+
+        private class ViewHolder {
+            TextView txtItemName;
+            TextView txtItemId;
+
+        }
+    }
+
+
+    private LayoutInflater getLayoutInflater() {
+        return null;
+    }
+}
+</code></pre>
+
+<p><strong>Monthly.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="false">
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Month"
+        android:layout_gravity="center_horizontal"
+        android:onClick="setDate"
+        android:id="@+id/button"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView"
+        android:layout_below="@+id/button"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/tv_currentdate"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>eachitem.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:singleLine="false"
+        android:lineSpacingMultiplier="@android:integer/config_longAnimTime"
+        android:id="@+id/tv_eachitem" />
+</LinearLayout>
+</code></pre>
+
+<p><strong>Logcat</strong></p>
+
+<pre><code>01-22 13:00:29.235  24798-24798/lin.com.native E/SQLiteLog? (14) cannot open file at line 30191 of [00bb9c9ce4] 01-22 13:00:29.235  24798-24798/lin.com.native E/SQLiteLog? (14) os_unix.c:30191: (2) open(/data/data/lin.com.native/databases/monthlydata)
+- 01-22 13:00:29.235  24798-24798/.lin.com.native E/SQLiteDatabase? Failed to open database '/data/data/lin.com.native/databases/monthlydata'.
+    android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+            at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+            at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+            at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+            at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+            at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:804)
+            at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:789)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:694)
+            at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:669)
+            at astro.lin.com.myanmarastroacademy.DBHelper.checkDataBase(DBHelper.java:86)
+            at astro.lin.com.myanmarastroacademy.DBHelper.<init>(DBHelper.java:35)
+            at astro.lin.com.myanmarastroacademy.MonthlyFragment.onCreateView(MonthlyFragment.java:33)
+            at android.support.v4.app.Fragment.performCreateView(Fragment.java:1786)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:947)
+            at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1126)
+            at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:739)
+            at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1489)
+            at android.support.v4.app.FragmentManagerImpl$1.run(FragmentManager.java:454)
+            at android.os.Handler.handleCallback(Handler.java:733)
+            at android.os.Handler.dispatchMessage(Handler.java:95)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5050)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:805)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:621)
+            at de.robv.android.xposed.XposedBridge.main(XposedBridge.java:132)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

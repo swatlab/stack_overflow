@@ -1,0 +1,154 @@
+<p>I have multiple tabs using FragmentPagerAdapter but the ViewPager creates a page before and after my current tab and the <code>OnCreate()</code> method gets called even when I'm not on that tab. It becomes really difficult to run a specific operation on a specific tab rather than executing before visiting the tab. Is there anyway so that I can detect if the user has visited the particular tab from the tab itself?</p>
+
+<pre><code>  public class MainActivity extends ActionBarActivity implements ViewPager.OnPageChangeListener {
+
+    public static final int TAB_PROFILE = 0;
+    public static final int TAB_JOBS = 1;
+    public static final int TAB_GPS = 2;
+    public static final int TAB_COMMENTS = 3;
+    public static final int TAB_OTHERS = 4;
+
+    Toolbar toolbar;
+    private ViewPager mPager;
+    private SlidingTabLayout mTabs;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        toolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+        drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), toolbar);
+
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        mPager.setOnPageChangeListener(this);
+
+        mTabs = (SlidingTabLayout) findViewById(R.id.tabs);
+        mTabs.setCustomTabView(R.layout.custom_tab_item, R.id.tabText);
+        mTabs.setDistributeEvenly(true);
+        mTabs.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+        mTabs.setSelectedIndicatorColors(getResources().getColor(R.color.colorAccent));
+        mTabs.setViewPager(mPager);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        if (id == R.id.action_search) {
+            startActivity(new Intent(this, subActivity.class));
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        Log.d("CURRENT_TAB", "" + position);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
+    class MyPagerAdapter extends FragmentPagerAdapter {
+
+        //String[] tabsTitle = getResources().getStringArray(R.array.tabs);
+        int tabIcons[] = {R.drawable.ic_tab_home,
+                R.drawable.ic_tab_job,
+                R.drawable.ic_tab_map,
+                R.drawable.ic_tab_comments,
+                R.drawable.ic_tab_others};
+
+        public MyPagerAdapter(FragmentManager fm) {
+            super(fm);
+            //tabsTitle = getResources().getStringArray(R.array.tabs);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+
+            Fragment fragment = null;
+            Logs.logs("getItem called for " + position);
+
+            switch (position) {
+                case TAB_PROFILE:
+                    fragment = FragmentProfile.newInstance("" + position, "true");
+                    break;
+                case TAB_JOBS:
+                    fragment = FragmentJobs.newInstance("" + position, "true");
+                    break;
+                case TAB_GPS:
+                    fragment = FragmentGPS.newInstance("" + position, "true");
+                    break;
+                case TAB_COMMENTS:
+                    fragment = FragmentComments.newInstance("" + position, "true");
+                    break;
+                case TAB_OTHERS:
+                    fragment = FragmentOthers.newInstance("" + position, "true");
+                    break;
+            }
+            return fragment;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+
+            Drawable drawable = getResources().getDrawable(tabIcons[position]);
+            drawable.setBounds(0, 0, 36, 36);
+            ImageSpan imageSpan = new ImageSpan(drawable);
+            SpannableString spannableString = new SpannableString(" ");
+            spannableString.setSpan(imageSpan, 0, spannableString.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return spannableString;
+        }
+
+        @Override
+        public int getCount() {
+            return 5;
+        }
+
+
+    }
+}
+</code></pre>
+
+<p>Tab #1</p>
+
+<pre><code>public class FragmentProfile extends Fragment {
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+
+        // Inflate the layout for this fragment
+        view = inflater.inflate(R.layout.fragment_profile, container,false);
+        return view;
+}
+}
+</code></pre>

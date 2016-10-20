@@ -1,0 +1,255 @@
+<p>Been breaking my head over using an externally created database(a wordlist with 109,000 records and size 6.307MB). I need help with figuring out just what is going wrong here. Any answers would be greatly appreciated.</p>
+
+<p>This is the code:</p>
+
+<p><code></p>
+
+<pre><code>import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.os.Build;
+import android.app.*;
+import android.database.Cursor;
+
+public class MainActivity extends Activity 
+{
+    private DatabaseHelper db;
+    private Cursor c;
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        String[] a = new String[100];
+        int i=0;
+
+       db.openDataBase();
+       c = db.getWords("sl");
+       db.close();
+
+       while(c.isAfterLast())
+       {
+           a[i++]=c.getString(c.getColumnIndex("WORD"));
+           c.moveToNext();
+       }
+
+       ListView l = (ListView)findViewById(R.id.listView1);
+       l.setAdapter(new ArrayAdapter(this,android.R.layout.simple_list_item_1,a));
+    }
+
+}
+</code></pre>
+
+<p></code></p>
+
+<p>this is the helper class</p>
+
+<p><code></p>
+
+<pre><code>import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.database.*;
+import android.database.sqlite.*;
+import android.content.*;
+
+import android.app.*;
+
+public class DatabaseHelper extends SQLiteOpenHelper
+{
+
+private static String DB_PATH = "/data/data/com.example.attempt/databases/";
+
+// Data Base Name.
+private static final String DATABASE_NAME = "dict.db";
+// Data Base Version.
+private static final int DATABASE_VERSION = 1;
+// Table Names of Data Base.
+static final String TABLE_Name1 = "WORDS";
+
+
+public Context context;
+static SQLiteDatabase sqliteDataBase;
+
+public DatabaseHelper(Context context) 
+{
+super(context, DATABASE_NAME, null ,DATABASE_VERSION);
+this.context = context;
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase arg0)
+{
+
+}
+//check if the database exists
+public void createDataBase() throws IOException
+{
+boolean databaseExist = checkDataBase();
+
+if(databaseExist)
+{
+// Do Nothing.
+}
+else
+{
+this.getWritableDatabase();
+
+copyDataBase();
+
+// TODO Auto-generated catch block
+
+}
+}// end if else dbExist
+// end createDataBase().
+public boolean checkDataBase()
+{
+File databaseFile = new File(DB_PATH + DATABASE_NAME);
+return databaseFile.exists();
+}
+
+private void copyDataBase() throws IOException
+{
+//Open your local db as the input stream
+InputStream myInput = context.getAssets().open(DATABASE_NAME);
+// Path to the just created empty db
+String outFileName = DB_PATH + DATABASE_NAME;
+//Open the empty db as the output stream
+OutputStream myOutput = new FileOutputStream(outFileName);
+//transfer bytes from the input file to the output file
+byte[] buffer = new byte[1024];
+int length;
+while ((length = myInput.read(buffer))>0){
+myOutput.write(buffer, 0, length);
+}
+
+//Close the streams
+myOutput.flush();
+myOutput.close();
+myInput.close();
+}
+
+/**
+* This method opens the data base connection.
+* First it create the path up till data base of the device.
+* Then create connection with data base.
+*/
+public void openDataBase() throws SQLException
+{
+//Open the database
+
+try {
+createDataBase();
+} catch (IOException e) {
+// TODO Auto-generated catch block
+e.printStackTrace();
+}
+String myPath = DB_PATH + DATABASE_NAME;
+
+sqliteDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+}
+
+/**
+* This Method is used to close the data base connection.
+*/
+@Override
+public synchronized void close() 
+{
+if(sqliteDataBase != null)
+sqliteDataBase.close();
+super.close();
+}
+//declare methods to fetch data
+public Cursor getWords(String cat)
+{
+
+return sqliteDataBase.query("WORDS",new String[]{"WORD"},"CAT="+"'"+cat+"'", null, null,null,null);
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+// TODO Auto-generated method stub
+
+}
+
+}
+</code></pre>
+
+<p></code></p>
+
+<p>here is the logcat shown after debugging:</p>
+
+<p><code></p>
+
+<pre><code>04-19 12:17:32.463: D/dalvikvm(4040): GC_FOR_ALLOC freed 58K, 10% free 3450K/3832K, paused 317ms, total 324ms
+04-19 12:17:34.073: D/dalvikvm(4040): GC_FOR_ALLOC freed 3K, 10% free 3668K/4056K, paused 414ms, total 415ms
+04-19 12:17:34.073: I/dalvikvm-heap(4040): Grow heap (frag case) to 6.307MB for 2536936-byte allocation
+04-19 12:17:34.603: D/dalvikvm(4040): GC_FOR_ALLOC freed <1K, 6% free 6145K/6536K, paused 520ms, total 520ms
+04-19 12:17:35.623: D/AndroidRuntime(4040): Shutting down VM
+04-19 12:17:35.623: W/dalvikvm(4040): threadid=1: thread exiting with uncaught exception (group=0xb1a8bba8)
+04-19 12:17:35.673: E/AndroidRuntime(4040): FATAL EXCEPTION: main
+04-19 12:17:35.673: E/AndroidRuntime(4040): Process: com.example.lexicant, PID: 4040
+04-19 12:17:35.673: E/AndroidRuntime(4040): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.lexicant/com.example.lexicant.MainActivity}: java.lang.NullPointerException
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.ActivityThread.access$800(ActivityThread.java:135)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.os.Handler.dispatchMessage(Handler.java:102)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.os.Looper.loop(Looper.java:136)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at dalvik.system.NativeStart.main(Native Method)
+04-19 12:17:35.673: E/AndroidRuntime(4040): Caused by: java.lang.NullPointerException
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at com.example.lexicant.MainActivity.onCreate(MainActivity.java:30)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.Activity.performCreate(Activity.java:5231)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+04-19 12:17:35.673: E/AndroidRuntime(4040):     ... 11 more
+04-19 12:19:09.363: I/Process(4040): Sending signal. PID: 4040 SIG: 9
+04-19 12:25:08.663: D/dalvikvm(5842): GC_FOR_ALLOC freed 66K, 11% free 3450K/3836K, paused 242ms, total 247ms
+04-19 12:25:09.283: D/dalvikvm(5842): GC_FOR_ALLOC freed 3K, 10% free 3668K/4060K, paused 42ms, total 43ms
+04-19 12:25:09.283: I/dalvikvm-heap(5842): Grow heap (frag case) to 6.307MB for 2536936-byte allocation
+04-19 12:25:09.353: D/dalvikvm(5842): GC_FOR_ALLOC freed <1K, 7% free 6145K/6540K, paused 58ms, total 58ms
+04-19 12:25:09.763: D/AndroidRuntime(5842): Shutting down VM
+04-19 12:25:09.773: W/dalvikvm(5842): threadid=1: thread exiting with uncaught exception (group=0xb1a8bba8)
+04-19 12:25:09.843: E/AndroidRuntime(5842): FATAL EXCEPTION: main
+04-19 12:25:09.843: E/AndroidRuntime(5842): Process: com.example.lexicant, PID: 5842
+04-19 12:25:09.843: E/AndroidRuntime(5842): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.lexicant/com.example.lexicant.MainActivity}: java.lang.NullPointerException
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2195)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.ActivityThread.access$800(ActivityThread.java:135)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.os.Handler.dispatchMessage(Handler.java:102)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.os.Looper.loop(Looper.java:136)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at dalvik.system.NativeStart.main(Native Method)
+04-19 12:25:09.843: E/AndroidRuntime(5842): Caused by: java.lang.NullPointerException
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at com.example.lexicant.MainActivity.onCreate(MainActivity.java:30)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.Activity.performCreate(Activity.java:5231)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2159)
+04-19 12:25:09.843: E/AndroidRuntime(5842):     ... 11 more
+04-19 12:25:15.073: I/Process(5842): Sending signal. PID: 5842 SIG: 9
+</code></pre>
+
+<p></code></p>

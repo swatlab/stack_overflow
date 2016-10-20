@@ -1,0 +1,95 @@
+<p>I have an app that shows notification in a listview. I want these notifications to be saved so that if I open the app and see notification I can see these notifications again when I close the app and then open it. I tried <a href="http://stackoverflow.com/questions/23899873/how-to-save-listview-in-shared-preferences-android">this</a> 
+ but nothing was saved.</p>
+
+<p>Another major question is how can I run this app in background? So if notification is received the app lists that notification in the listview without being opened? </p>
+
+<p>My Code</p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    ListView list;
+    CustomListAdapter adapter;
+    ArrayList<Model> modelList;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        modelList = new ArrayList<Model>();
+        adapter = new CustomListAdapter(getApplicationContext(), modelList);
+        list=(ListView)findViewById(R.id.list);
+        list.setAdapter(adapter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);//Menu Resource, Menu
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent intent = new Intent(
+                        "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    private BroadcastReceiver onNotice= new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pack = intent.getStringExtra("package");
+            String title = intent.getStringExtra("title");
+            String text = intent.getStringExtra("text");
+            //int id = intent.getIntExtra("icon",0);
+
+            Context remotePackageContext = null;
+            if (pack.contains("fake")){
+
+            try {
+//                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
+//                Drawable icon = remotePackageContext.getResources().getDrawable(id);
+//                if(icon !=null) {
+//                    ((ImageView) findViewById(R.id.imageView)).setBackground(icon);
+//                }
+                byte[] byteArray = intent.getByteArrayExtra("icon");
+                Bitmap bmp = null;
+                if (byteArray != null) {
+                    bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+                }
+                Model model = new Model();
+                if(text.contains("") && !text.contains(" messages")) {
+                    model.setName(title + ": " + text);
+                    model.setImage(bmp);
+
+                    if (modelList != null) {
+                        modelList.add(model);
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        modelList = new ArrayList<Model>();
+                        modelList.add(model);
+                        adapter = new CustomListAdapter(getApplicationContext(), modelList);
+                        list = (ListView) findViewById(R.id.list);
+                        list.setAdapter(adapter);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+        }
+    }
+    };
+
+
+
+    }
+</code></pre>

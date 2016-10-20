@@ -1,0 +1,40 @@
+<p>I have a FragmentActivity with 3 Tabs, they are sharing a Location data (I need latitude and longitude), but I can't get it!</p>
+
+<p>I have this method:</p>
+
+<pre><code>  public void addTab(String tag, TabHost.TabSpec tabSpec, Class<?> clss, Bundle args) {
+
+       tabSpec.setContent(new DummyTabFactory(mActivity));
+
+
+        TabInfo info = new TabInfo(tag, clss, args);
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        info.fragment = mActivity.getSupportFragmentManager().findFragmentByTag(tag);
+        if (info.fragment != null && !info.fragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+            ft.detach(info.fragment);
+            ft.commit();
+        }
+
+        mTabs.put(tag, info);
+        mTabHost.addTab(tabSpec);
+    }
+</code></pre>
+
+<p>So, when I create the tab:</p>
+
+<pre><code>  Bundle bundlePos = new Bundle();
+    bundlePos.putString("lat", "98.645");
+    bundlePos.putString("lng", "-1.2545");
+
+    mTabManager.addTab("map", mTabHost.newTabSpec("map").setIndicator("Plano de paradas", this.getResources().getDrawable(R.drawable.maps_tab)), maps.class, bundlePos);
+</code></pre>
+
+<p>In maps.java I try to get the lat and lng parameters but I cant.</p>
+
+<p>How can I do that?</p>
+
+<p>Thank you very much in advance</p>

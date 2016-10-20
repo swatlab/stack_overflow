@@ -1,0 +1,87 @@
+<p>I have an <code>Activity</code> (<code>MainActivity</code>) which contains a <code>Fragment</code> (<code>PlaceholderFragment</code>) with a <code>TextView</code> (<code>myTextView</code>) on it. I try to change <code>TextView</code>'s text from <code>MainActivity</code> via below code but always <code>myTextView</code> is <code>null</code>.</p>
+
+<p>my  <code>MainActivity</code> class:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+     int id = item.getItemId();
+
+    if (id == R.id.action_settings) {
+
+          PlaceholderFragment myPlace =   mSectionsPagerAdapter.getPlaceholde(1);
+          myPlace.setText("New Text");
+          return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>
+
+<p>my  <code>SectionsPagerAdapter</code> class:</p>
+
+<pre><code>public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+
+        return PlaceholderFragment.newInstance(position + 1);
+    }
+
+    @Override
+    public int getCount() {
+        return 4;
+    }
+
+    public PlaceholderFragment getPlaceholde(int position) {
+
+      return PlaceholderFragment.newInstance(position);
+    }
+}
+</code></pre>
+
+<p>my  <code>PlaceholderFragment</code> class:</p>
+
+<pre><code> public static class PlaceholderFragment extends Fragment {
+
+        private static final String ARG_SECTION_NUMBER = "section_number";
+        TextView myTextView;
+
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+
+        }
+
+        public void setText(String s){
+
+            if(myTextView!=null) {
+                myTextView.setText(s);
+            }else{
+                Log.w("myTextView","NULL");    // problem is here: that this line is always launched
+            }
+
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            myTextView =  (TextView)rootView.findViewById(R.id.section_label);
+            myTextView.setText("some text");//work well
+            return rootView;
+        }
+    }
+
+}
+</code></pre>

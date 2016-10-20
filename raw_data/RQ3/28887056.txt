@@ -1,0 +1,97 @@
+<p>I am developing an app with a dynamic view.
+You can write in an edittext and then you can tap a button to add the text in the edittext to a textview. Opposite of the textview is a button for deleting the textview. Now I want to make it so that the textview will save when the app closes.
+I tested it with sharedpreference and many other ways.
+Can you help me?</p>
+
+<p>Source Code:</p>
+
+<pre><code>package com.studiocrew.lk;
+
+import android.app.*;
+import android.os.*;
+import android.view.*;
+import android.widget.*;
+
+import android.view.View.*;
+import android.content.*;
+
+public class MainActivity extends Activity
+
+{
+    EditText textIn;
+    Button buttonAdd;
+    Button buttonAddFirst;
+    LinearLayout container;
+
+/** Called when the activity is first created. */
+@Override
+public void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main);
+
+    textIn = (EditText)findViewById(R.id.textin);
+    buttonAdd = (Button)findViewById(R.id.add);
+    container = (LinearLayout)findViewById(R.id.container);
+
+    buttonAdd.setOnClickListener(new OnClickListener(){
+
+            @Override
+            public void onClick(View arg0) {
+                LayoutInflater layoutInflater = 
+                    (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                final View addView = layoutInflater.inflate(R.layout.row, null);
+                TextView textOut = (TextView)addView.findViewById(R.id.textout);
+                textOut.setText(textIn.getText().toString());
+                Button buttonRemove = (Button)addView.findViewById(R.id.remove);
+                buttonRemove.setOnClickListener(new OnClickListener(){
+
+                        @Override
+                        public void onClick(View v) {
+                        ((LinearLayout)addView.getParent()).removeView(addView);
+
+
+}});
+
+                container.addView(addView);
+            }});
+
+            buttonAddFirst = (Button)findViewById(R.id.addfirst);
+            buttonAddFirst.setOnClickListener(new OnClickListener(){
+
+                        @Override
+                        public void onClick(View v) {
+                        // TODO Auto-generated method stub
+
+                        buttonAdd.setVisibility(View.VISIBLE);
+                        textIn.setVisibility(View.VISIBLE);
+}});
+
+
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu, menu);
+    return true;
+}
+@Override
+public boolean onOptionsItemSelected(MenuItem item) 
+{
+    switch (item.getItemId()) 
+    {
+        case R.id.Settings:
+            Intent intent= new Intent(MainActivity.this,SettingsActivity.class);
+            startActivity(intent);
+
+
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+}   
+}
+</code></pre>

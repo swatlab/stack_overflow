@@ -1,0 +1,330 @@
+<p>I currently have a database in android asset folder saved with three database tables named DATABASE_TABLE,DATABASE_TABLE2 and DATABASE_TABLE3.As of now i have implemented all i need for the "DATABASE_TABLE" and i want to avoid repeating the code for DATABASE_TABLE2 and DATABASE_TABLE3.I wonder what the best approach would be to do this?Any helpful suggestions would be appreciated. </p>
+
+<pre><code>package com.topscore.db;
+
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import com.topscore.core.Question;
+
+public class Database {
+    String DB_PATH = "/data/data/com.topscore/databases/";
+    private static final String DATABASE_NAME = "tsp";
+    private static final int DATABASE_VERSION = 1;
+
+    private final Context mContext;
+    private DatabaseHelper DBHelper;
+    private SQLiteDatabase db;
+    private static final String DATABASE_TABLE = "CHEMISTRY";
+        private static final String DATABASE_TABLE2 = "MATH";
+        private static final String DATABASE_TABLE3 = "PHYSICS";
+    public static final String KEY_ID = "QuestionId";
+    public static final String KEY_TYEP = "ExamType";
+    public static final String KEY_YEAR = "Year";
+    public static final String KEY_SUBJECT = "Subject";
+    public static final String KEY_QUESTION = "Question";
+    public static final String KEY_ANSWERONE = "Answer1";
+    public static final String KEY_ANSWERTWO = "Answer2";
+    public static final String KEY_ANSWERTHREE = "Answer3";
+    public static final String KEY_ANSWERFOUR = "Answer4";
+    public static final String KEY_ANSWERFIVE = "Answer5";
+    public static final String KEY_CURRECTANSWER = "CorrectAnswer";
+
+
+
+    public Database(Context context) {
+        mContext = context;
+        DBHelper = new DatabaseHelper(mContext);
+    }
+
+    /*
+     * Database helper class which fires events on database open/create/upgrade
+     */
+
+    private static class DatabaseHelper extends SQLiteOpenHelper {
+
+        public DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            // db.execSQL(DATABASE_CREATE_ITEMS);
+
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE_TOPSCORE);
+
+        }
+    }
+
+    public Database open() throws SQLException {
+        db = DBHelper.getWritableDatabase();
+        return this;
+    }
+
+    public void close() {
+        DBHelper.close();
+    }
+
+    /*
+     * Insert Dairy
+     */
+    public long insertDairy(long time, String note) {
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(KEY_TYEP, note);
+        initialValues.put(KEY_YEAR, time);
+        initialValues.put(KEY_SUBJECT, System.currentTimeMillis());
+        return db.insert(DATABASE_TABLE_TOPSCORE, null, initialValues);
+    }
+
+    /*
+     * Update Dairy
+     */
+    public boolean UpdateDairy(long time, String note, int id) {
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(KEY_TYEP, note);
+        initialValues.put(KEY_YEAR, time);
+        initialValues.put(KEY_SUBJECT, System.currentTimeMillis());
+        return db.update(DATABASE_TABLE_TOPSCORE, initialValues, KEY_ID + "="
+                + id, null) > 0;
+    }
+
+    /*
+     * Returns all the dairys from the table memory
+     */
+    public List<Question> getAllDairys(String year, String type, String sub) {
+        year = year.replaceAll("'", "''");
+        type = type.replaceAll("'", "''");
+        sub = sub.replaceAll("'", "''");
+        List<Question> list = new ArrayList<Question>();
+        Cursor _cursor = db.query(true, DATABASE_TABLE_TOPSCORE, null, KEY_YEAR
+                + " = '" + year + "' AND " + KEY_TYEP + " = '" + type
+                + "' AND " + KEY_SUBJECT + " = '" + sub + "'", null, null,
+                null, KEY_ID +" ASC", null);
+        if (_cursor != null) {
+            _cursor.moveToFirst();
+            int count = _cursor.getCount();
+            Question question;
+            List<String> optionslist;
+            for (int i = 0; i < count; i++) {
+                _cursor.moveToPosition(i);
+                question = new Question();
+                question.setId(_cursor.getInt(0));
+                question.setType(_cursor.getString(1).trim());
+                String pyear = _cursor.getString(2).trim();
+                try {
+                    question.setYear(Integer.parseInt(pyear));
+                } catch (Exception e) {
+
+                }
+                question.setSubject(_cursor.getString(3).trim());
+                question.setQuestion(_cursor.getString(4).trim());
+                optionslist = new ArrayList<String>();
+                optionslist.add(_cursor.getString(4).trim());
+                if (_cursor.getString(5).trim().length() > 0) {
+                    optionslist.add(_cursor.getString(5).trim());
+                    if (_cursor.getString(5).trim().equals(
+                            _cursor.getString(10).trim())) {
+                        question.setCurretAnswer(1);
+
+                    }
+                }
+                if (_cursor.getString(6).trim().length() > 0) {
+                    optionslist.add(_cursor.getString(6).trim());
+                    if (_cursor.getString(6).trim().equals(
+                            _cursor.getString(10).trim())) {
+                        question.setCurretAnswer(2);
+
+                    }
+                }
+                if (_cursor.getString(7).trim().length() > 0) {
+                    optionslist.add(_cursor.getString(7).trim());
+                    if (_cursor.getString(7).trim().equals(
+                            _cursor.getString(10).trim())) {
+                        question.setCurretAnswer(3);
+
+                    }
+                }
+                if (_cursor.getString(8).trim().length() > 0) {
+                    optionslist.add(_cursor.getString(8).trim());
+                    if (_cursor.getString(8).trim().equals(
+                            _cursor.getString(10).trim())) {
+                        question.setCurretAnswer(4);
+
+                    }
+                }
+                if (_cursor.getString(9).trim().length() > 0) {
+                    optionslist.add(_cursor.getString(9).trim());
+                    if (_cursor.getString(9).trim().equals(
+                            _cursor.getString(10).trim())) {
+                        question.setCurretAnswer(5);
+
+                    }
+                }
+                question.setChoiceList(optionslist);
+                list.add(question);
+
+            }
+        }
+        return list;
+    }
+
+    /*
+     * Returns dairy from the table memory
+     */
+    public Question getDairyWithId(int id) {
+        Question dairy = new Question();
+        Cursor _cursor = db.query(true, DATABASE_TABLE_TOPSCORE, null, KEY_ID
+                + "=" + id, null, null, null, null, null);
+        if (_cursor != null) {
+            dairy = new Question();
+            _cursor.moveToFirst();
+
+        }
+        return dairy;
+    }
+
+    /*
+     * Returns dairy from the table memory
+     */
+    public String[] getAllSubjects(int id) {
+        String string[] = null;
+        String key = "";
+        if (id == 3) {
+            key = KEY_SUBJECT;
+        } else if (id == 1) {
+            key = KEY_TYEP;
+        } else if (id == 2) {
+            key = KEY_YEAR;
+        }
+
+        Cursor _cursor = db.query(true, DATABASE_TABLE_TOPSCORE, null, null,
+                null, key, null, null, null);
+        if (_cursor != null && _cursor.getCount() > 0) {
+
+            _cursor.moveToFirst();
+            int count = _cursor.getCount();
+            string = new String[count];
+            for (int i = 0; i < count; i++) {
+                string[i] = _cursor.getString(id);
+            }
+
+        }
+        return string;
+    }
+
+    public boolean deleteDairy(int id) {
+        return db.delete(DATABASE_TABLE_TOPSCORE, KEY_ID + "=" + id, null) > 0;
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own
+     * database.
+     * */
+    public void createDataBase() {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+            // do nothing - database already exist
+        } else {
+
+            // By calling this method and empty database will be created into
+            // the default system path
+            // of your application so we are gonna be able to overwrite that
+            // database with our database.
+            DBHelper.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (Exception e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each
+     * time you open the application.
+     * 
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            // database does't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created
+     * empty database in the system folder, from where it can be accessed and
+     * handled. This is done by transfering bytestream.
+     * */
+    private void copyDataBase() {
+        try {
+
+            // Open your local db as the input stream
+            InputStream myInput = mContext.getAssets().open("TopScoreDB");
+
+            // Path to the just created empty db
+            String outFileName = DB_PATH + DATABASE_NAME;
+
+            // Open the empty db as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            // transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+
+            // Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
+        } catch (Exception e) {
+
+        }
+
+    }
+}
+</code></pre>

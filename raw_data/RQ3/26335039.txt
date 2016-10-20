@@ -1,0 +1,67 @@
+<p>I am currently trying to understand an exception which suddently appeared when everything was working. I have a ViewPager and two fragments, and I am calling a camera intent in one of them. When the intent is finished, the application crashes:</p>
+
+<pre><code>E/AndroidRuntime(14095): java.lang.RuntimeException: Unable to start activity ComponentInfo{...}:
+java.lang.IllegalStateException: The specified child already has a parent. You must call
+removeView() on the child's parent first.
+</code></pre>
+
+<p>Here is my onCreateView code:</p>
+
+<pre><code>switch (index) {
+case 1:
+    rootView = frag_capture(rootView, inflater, container);
+    break;
+case 2:
+    rootView = frag_notepad(rootView, inflater, container);
+    break;
+}
+</code></pre>
+
+<p>And in the corresponding functions:</p>
+
+<pre><code>int resId = R.layout.<corresponding fragment>;
+
+rootView = inflater.inflate(resId, container, false);
+((ViewPager) container).addView(rootView, 0);
+</code></pre>
+
+<p>I guess the addView is wrong, but can't find how to correct it.</p>
+
+<p>Edit:</p>
+
+<pre><code> public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    @Override
+    public void unregisterDataSetObserver(DataSetObserver observer) {
+        if (observer != null) {
+            super.unregisterDataSetObserver(observer);
+        }
+    }
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        return PlaceholderFragment.newInstance(position + 1);
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.title_section1).toUpperCase(l);
+        case 1:
+            return getString(R.string.title_section2).toUpperCase(l);
+        }
+        return null;
+    }
+}
+</code></pre>

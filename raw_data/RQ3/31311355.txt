@@ -1,0 +1,75 @@
+<p>I'm trying to implement a basic GridView gallery as per the Android Developer Guide/Tutorial.</p>
+
+<p>The ImageViews inside my grid are Bitmaps taken from a user's camera.</p>
+
+<p>This works fine except for the fact that my images are incredibly small.</p>
+
+<p>My xml:</p>
+
+<pre><code><LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/gridview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:columnWidth="90dp"
+            android:numColumns="auto_fit"
+            android:verticalSpacing="10dp"
+            android:horizontalSpacing="10dp"
+            android:stretchMode="columnWidth"
+            android:gravity="center"
+            />
+
+</LinearLayout>
+</code></pre>
+
+<p>My <code>ImageAdapter</code></p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+    private Context mContext;
+    private ArrayList<Bitmap> imgs;
+
+    public ImageAdapter(Context c, ArrayList<Bitmap> arrayList) {
+        mContext = c;
+        imgs = arrayList;
+    }
+
+    public int getCount() {
+        return imgs.size();
+    }
+
+    public Object getItem(int position) {
+        return null;
+    }
+
+    public long getItemId(int position) {
+        return 0;
+    }
+
+    // create a new ImageView for each item referenced by the Adapter
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {
+            // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageBitmap(imgs.get(position));
+        return imageView;
+    }
+
+}
+</code></pre>
+
+<p>I've tried various things to fix this issue, but the only one that seems to work is adjusting the ImageView's layout params to enormous numbers (e.g. <code>GridView.LayoutParams(300, 300)</code>). 
+However, even if I do this, my images are still relatively small (i.e. nowhere near 300dp x 300dp).</p>
+
+<p>Any idea what I'm doing wrong?</p>

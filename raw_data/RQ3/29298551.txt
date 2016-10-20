@@ -1,0 +1,144 @@
+<p>I use pre populate database in my android application .when update version apps add new column then my application database not replace new database .so my application crash . if onUpgrate() function call new database and then remove old database and copy new database .my apps is very slow . </p>
+
+<pre><code>public class DatabaseOpenHelper extends SQLiteOpenHelper {
+    private static String DB_PATH = "/data/data/com.twgbd.dims/databases/";
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+    public static final String DB_NAME = "dims.db";
+
+
+    public DatabaseOpenHelper(Context context) {
+        super(context, DB_NAME, null, 4);
+        // TODO Auto-generated constructor stub
+        this.myContext = context;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase database) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase database, int oldVersion,
+            int newVersion) {
+        Log.w("Upgrading", "Upgrading application's database from version "
+                + oldVersion + " to " + newVersion
+                + ", which will destroy all old data!");
+        Context context = this.myContext;
+        context.deleteDatabase(DB_NAME);
+
+        try {
+
+            updateDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    public void updateDataBase() throws IOException {
+
+
+
+        try {
+            copyDataBase();
+        } catch (IOException e) {
+            throw new Error("Error copying database");
+        }
+
+    }
+
+    public void createDataBase() throws IOException {
+
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+
+        } else {
+
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+
+
+    private boolean checkDataBase() {
+
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+    private void copyDataBase() throws IOException {
+
+        // Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException {
+
+
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+                SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        if (myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+    }
+}
+</code></pre>

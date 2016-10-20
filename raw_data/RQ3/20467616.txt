@@ -1,0 +1,91 @@
+<p>I just used this code form developers site ,</p>
+
+<pre><code>    public static int calculateInSampleSize(BitmapFactory.Options options,int reqWidth,int reqHeight){
+    //Raw height & width of the image
+
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height>reqHeight || width>reqWidth) {
+        //Calculate ratios of height & width to requested height & width.
+        final int heightRatio = Math.round((float)height / (float)reqHeight);
+        final int widthRatio = Math.round((float)width / (float)reqWidth);
+
+
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio; 
+    }
+    return inSampleSize;
+}
+
+public static Bitmap decodeSampledBitmapFromresource(Resources res, int resId,int reqWidth,int reqHeight){
+    //First decode with inJustDecodeBounds = true to check Dimensions
+
+    final BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeResource(res, resId, options);
+
+    //Calculate inSampleSize
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    //Decode Bitmap with inSampleSize Set
+    options.inJustDecodeBounds = false;
+
+    return BitmapFactory.decodeResource(res, resId, options);
+}
+</code></pre>
+
+<p>By Using this code I am really successfully calling the scaled bitmaps to my ImageViews using this line of code,</p>
+
+<pre><code>image.setImageBitmap(decodeSampledBitmapFromresource(getResources(), resId, width, height));
+
+image.setImageBitmap(decodeSampledBitmapFromresource(getResources(), res, 640, 360));
+</code></pre>
+
+<p>This line of code is really scaling my Images to any size I desired.</p>
+
+<p>But the problem I am facing here is ,"OUT OF MEMORY EXCEPTION."</p>
+
+<ul>
+<li><strong>The maximum size of Image I have is 1280*720 for now.</strong></li>
+</ul>
+
+<p>-<strong>How to scale Bitmaps according to the screen Estate  available.</strong></p>
+
+<p>I framed My code according to the densities of the device using:</p>
+
+<pre><code>int screenDensity = getResources().getDisplayMetrics().densityDpi;
+</code></pre>
+
+<p>This will return Screen Densities such as 160,320,480,600,720,....</p>
+
+<pre><code>ImageView image = new ImageView(this);
+    if (screenDensity<=240) {
+        image.setImageBitmap(decodeSampledBitmapFromresource(getResources(), res, 320, 180));
+    } else if (screenDensity<=320) {
+        image.setImageBitmap(decodeSampledBitmapFromresource(getResources(), res, 430, 240));
+    } else if (screenDensity<=640) {
+        image.setImageBitmap(decodeSampledBitmapFromresource(getResources(), res, 640, 360));
+    } else {
+        image.setImageBitmap(decodeSampledBitmapFromresource(getResources(), res, 1280, 720));
+    } 
+    background_image.addView(image);
+</code></pre>
+
+<p>The first time I run this on a device I realized that I was on a wrong track, for some of the Local Phablets, Tablets, mobile that have Large screen has less screen density. </p>
+
+<p>For example,</p>
+
+<ul>
+<li>Micromax CanvasA116 has screen Resolution of more than 1280*720, but falls under a density of less than 320 integer value.</li>
+<li>Some Local Tablet with same screen resolution has screen density of less than 160.</li>
+<li>Sony Xperia E With Screen Resolution of 320*480 is coming under the Screen Density of 320.</li>
+</ul>
+
+<p>So, on Xperia E kind of devices my above equation is working perfectly. But for devices with High Screen Resolution, But on Low screen Density devices, the applied images are really BLURRED or OUTSHAPED completely beyond recognition.</p>
+
+<p>I also tried using the factor Screen width and Height. But it is too fatal with devices having low heap.</p>
+
+<p>So, The question is :</p>
+
+<p><strong>How can I perfectly Scale my Bitmaps accordingly to the devices irrespective of density & resolutions.</strong> As in this condition the width & height of the Bitmpa are completely unknown!</p>

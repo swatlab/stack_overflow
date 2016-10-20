@@ -1,0 +1,134 @@
+<p>I am trying to create <code>'Offline Dictionary Android App</code> Using Cordova. I have created sqlite database using <code>SQLite database browser</code>. The database file is <code>test.db</code> and it has one table <code>test</code> with two fields '_id' which is <code>INTEGER</code> <code>PRIMARY KEY</code> and 'value' which is <code>TEXT</code>. Some records are also inserted.</p>
+
+<p>I have tried these with no luck :<br /></p>
+
+<ol>
+<li><a href="http://stackoverflow.com/questions/16537145/import-export-to-android-sqlite-database">import/export to android sqlite database</a></li>
+<li><a href="http://stackoverflow.com/questions/18014419/cant-access-pre-populated-sqlite-database-using-phonegap-cordova-in-android">Can't access pre populated SQLite database using PhoneGap/Cordova in Android</a></li>
+</ol>
+
+<p><br /></p>
+
+<p>I have been able to collect the following code. 
+I want my third attempt to be successful so I am here to ask for a help with experts.</p>
+
+<p><em><strong>WHAT I HAVE DONE</em></strong></p>
+
+<p>I put the <code>test.db</code> sqlite database file in the <code>assets</code> directory of my android project. I have <code>MainActivity.java</code> File which has the following code : </p>
+
+<p><em><strong>MainActivity.java</em></strong></p>
+
+<pre><code>package com.example.sqlite;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.os.Bundle;
+import android.util.Log;
+
+import org.apache.cordova.*;
+
+public class MainActivity extends DroidGap {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        super.loadUrl("file:///android_asset/www/index.html");
+
+        try{
+            System.out.println("----------Copying Database -----------");
+                copyDataBase("test.db");
+
+        } catch (IOException ioe){
+            System.out.println("----------Error Copying Database -----------");
+            ioe.printStackTrace();
+
+        }
+
+
+    }
+
+    private void copyDataBase(String dbname) throws IOException {
+        // Open your local db as the input stream
+        String pkg = this.getApplicationContext().getPackageName();
+        InputStream myInput = this.getAssets().open(dbname);
+
+        // Path to the just created empty db
+        String outFileName = "/data/data/"+ pkg + "/databases/" + dbname;
+
+        // Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+
+        // transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+        // Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+}
+</code></pre>
+
+<p>and <code>script.js</code> file with the following script :</p>
+
+<p><em><strong>script.js</em></strong></p>
+
+<pre><code>(function($, undefined){
+
+    document.addEventListener('deviceready', onDeviceReady, false);
+
+    function onDeviceReady(){
+
+        var db = window.openDatabase(
+            'test.db',
+            '1.0.0',
+            'Test Database',
+            64 * 1024
+        );
+
+        db.transaction(function(tx){
+
+            tx.executeSql(
+                'SELECT * FROM test', [], function(tx, result){
+
+                    console.log("Query Success");
+                    console.log('Total Rows :' + result.rows.length);
+
+                },function(tx, error) {
+                    console.log('An Error Occured (Qry) : ' + error.message);
+                }
+            )
+
+        }, function(error){
+
+            console.log('An Error Occured : ' + error.message);
+
+        }, function(){
+            console.log("Transaction Success");
+        })
+
+    }
+
+})(jQuery);
+</code></pre>
+
+<p>I have launched my app in both <code>emulator</code> and the <code>physical device</code> and got the same error response that says 'no such table : test'. I found the <code>test.db</code> insdie <code>data/data/MY_PACKAGE/databases/</code>. I <code>pulled</code> that database file using eclipse and opened in <code>SQLite Database browser</code> and there is <code>test</code> table with some records that I have populated. </p>
+
+<p>I am using cordova 2.6.0 and testing my app on android 4.2 . My device is not rooted (ignore if it does not affect). </p>
+
+<p>The screen shot which visualizes the scenario :
+<img src="http://i.stack.imgur.com/lJLH5.png" alt="enter image description here"></p>
+
+<p><strong>Why am I getting the 'no such table' error even there is a table ?</strong></p>
+
+<p>Please Help.</p>

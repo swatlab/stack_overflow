@@ -1,0 +1,406 @@
+<p>I have a custom ListView and a database, I'm trying populate that ListView from database, but always not work.</p>
+
+<p><strong>My code:</strong></p>
+
+<pre><code>public class MainActivity extends ListFragment  {
+
+    public sql myDbHelper;
+    public SQLiteDatabase db = null;
+    public List<String> mostrar, mostrar2;
+    AdaptadorTitulares adapter;
+    public ListView list;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+
+        // if extending Activity
+        View root = inflater.inflate(R.layout.activity_main, container, false);
+
+
+        try {
+            myDbHelper = new sql(getActivity());
+            myDbHelper.createDataBase(getActivity());
+
+        } catch (Exception e) {
+        }
+        new threadbd().execute();
+list = (ListView) root.findViewById(android.R.id.list);
+
+list.setOnItemClickListener(new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int posicion, long arg3) {
+
+            String bebida=mostrar.get(posicion);
+            String precio=mostrar2.get(posicion);
+
+            //Toast.makeText(getApplicationContext(), "El precio es: " + precio + "Y la bebida es: " + bebida, Toast.LENGTH_LONG).show();
+        }
+        });
+
+
+        return root;
+    }// end onCreate
+
+
+class AdaptadorTitulares extends BaseAdapter {
+
+        private Activity mActivityAct;
+        private LayoutInflater mInflater;
+        private ArrayList<Titular> mLItems;
+
+
+        public AdaptadorTitulares(Activity a, ArrayList<Titular> it) {
+            try {
+                mActivityAct = a;
+                mLItems = it;
+                mInflater = (LayoutInflater) mActivityAct
+                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            } catch (Exception e) {
+
+            }
+        }
+
+        public class VistaH {
+
+            public TextView nombree;
+            public TextView grupoo;
+        }
+
+        @Override
+        public int getCount() {
+
+            return mLItems.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return position;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View vi = convertView;
+            VistaH vh = null;
+
+            if (vi == null) {
+                vi = mInflater.inflate(R.layout.target_item, null);
+                vh = new VistaH();
+                vh.nombree = (TextView) vi.findViewById(R.id.item_title);
+                vh.grupoo = (TextView) vi.findViewById(R.id.item_counter);
+
+                vi.setTag(vh);
+            }
+
+            vh = (VistaH) vi.getTag();
+
+            Titular notice = mLItems.get(position);
+            vh.nombree.setText(notice.getDate());
+            vh.grupoo.setText(notice.getTitle());
+
+            return vi;
+        }
+
+        @Override
+        public void unregisterDataSetObserver(DataSetObserver observer) {
+            if (observer != null) {
+                super.unregisterDataSetObserver(observer);
+            }
+        }
+
+    }
+
+    private class threadbd extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            myDbHelper.openDataBase();
+
+            db = myDbHelper.getReadableDatabase();
+
+            Cursor c = db.rawQuery("SELECT id FROM lista order by id desc",
+                    null);
+            c.moveToFirst();
+
+            int num = c.getInt(0);
+
+
+
+            mostrar = new ArrayList<String>(num);
+            mostrar2 = new ArrayList<String>(num);
+
+
+            for (int i = 0; i <= num; i++) {
+
+                Cursor d = db.rawQuery(
+                        "SELECT nombre, precio FROM lista WHERE id=" + i + "",
+                        null);
+
+                if (d.moveToFirst()) {
+
+                    mostrar.add(d.getString(0));
+                    mostrar2.add(String.valueOf(d.getDouble(1)));
+
+                }
+
+            }// fin for
+
+            return null;
+        }// end InBackground
+
+        protected void onPostExecute(Void result) {
+
+            Titular titular;
+            ArrayList<Titular> mList = new ArrayList<Titular>();
+
+            for (int i = 0; i < mostrar.size(); i++) {
+                try {
+                    titular = new Titular(mostrar.get(i), mostrar2.get(i));
+                    mList.add(titular);
+                } catch (Exception e) {
+                }
+
+                AdaptadorTitulares actualizaAdapter=new AdaptadorTitulares(getActivity(), mList);
+                list.setAdapter(actualizaAdapter);
+
+            }
+        }
+    }
+}
+</code></pre>
+
+<p><strong>Titular.java</strong></p>
+
+<pre><code>public class Titular {
+
+    private String date;
+    private String title;
+
+    public Titular(String date, String title) {
+        // Recibe el nombre de la canción, grupo y su tiempo
+        this.date = date;
+        this.title = title;
+    }
+
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+}
+</code></pre>
+
+<p><strong>sql.java</strong></p>
+
+<pre><code>public class sql extends SQLiteOpenHelper
+{
+    private static String DB_PATH = "/data/data/com.example.listprueba/databases/";
+
+    private static String DB_NAME = "prueba";
+
+    private final Context myContext;
+    private SQLiteDatabase myDataBase;
+
+    public sql(Context context)
+    {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase(Context contexto) throws IOException
+    {
+        boolean dbExist = checkDataBase();
+
+        if (dbExist)
+        {
+        } else
+        {
+            this.getReadableDatabase();
+            try
+            {
+                copyDataBase();
+
+            } catch (IOException e)
+            {
+                throw new Error("Error copiado Base de datos");
+            }
+        }
+    }
+
+    private boolean checkDataBase()
+    {
+        SQLiteDatabase checkDB = null;
+        try
+        {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e)
+        {
+        }
+        if (checkDB != null)
+        {
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException
+    {
+
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        String outFileName = DB_PATH + DB_NAME;
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0)
+        {
+            myOutput.write(buffer, 0, length);
+        }
+
+        // Liberamos los streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException
+    {
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    public synchronized void close()
+    {
+        if (myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db)
+    {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
+    {
+
+    }
+}
+</code></pre>
+
+<p><strong>activity_mail.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" >
+
+</ListView>
+
+</LinearLayout>
+</code></pre>
+
+<p><strong>target_item.xml</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:background="#F3F3F3">
+
+     <!-- icon -->
+     <ImageView
+         android:id="@+id/item_icon"
+         android:layout_width="32dp"
+         android:layout_height="32dp"
+         android:layout_alignParentLeft="true"
+         android:layout_marginLeft="8dp"
+         android:layout_marginRight="8dp"
+         android:layout_marginTop="8dp"
+         android:src="@drawable/ic_action_help"
+         />
+
+    <!-- title -->
+    <TextView
+         android:id="@+id/item_title"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_toRightOf="@+id/item_icon"
+         android:layout_alignBaseline="@+id/item_counter"
+         android:textSize="18dp" />
+
+        <!-- counter -->
+        <TextView
+            android:id="@+id/item_counter"
+            android:layout_width="50dp"
+            android:layout_height="32dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="8dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/rectangle"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>ERROR</strong></p>
+
+<pre><code>06-08 22:35:31.091: E/AndroidRuntime(1470): FATAL EXCEPTION: main
+06-08 22:35:31.091: E/AndroidRuntime(1470): Process: com.example.listprueba, PID: 1470
+06-08 22:35:31.091: E/AndroidRuntime(1470): java.lang.RuntimeException: Unable to instantiate activity ComponentInfo{com.example.listprueba/com.example.listprueba.MainActivity}: java.lang.ClassCastException: com.example.listprueba.MainActivity cannot be cast to android.app.Activity
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2121)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2245)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.ActivityThread.access$800(ActivityThread.java:135)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.os.Handler.dispatchMessage(Handler.java:102)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.os.Looper.loop(Looper.java:136)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.ActivityThread.main(ActivityThread.java:5017)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at java.lang.reflect.Method.invokeNative(Native Method)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at java.lang.reflect.Method.invoke(Method.java:515)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:779)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:595)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at dalvik.system.NativeStart.main(Native Method)
+06-08 22:35:31.091: E/AndroidRuntime(1470): Caused by: java.lang.ClassCastException: com.example.listprueba.MainActivity cannot be cast to android.app.Activity
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.Instrumentation.newActivity(Instrumentation.java:1061)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2112)
+06-08 22:35:31.091: E/AndroidRuntime(1470):     ... 11 more
+</code></pre>
+
+<p>Do you know where can be the error? Should I change anything?, If I extend the ListActivity class works perfectly.</p>
+
+<p>I dont know How I can extends Fragments instead ListActivity....</p>

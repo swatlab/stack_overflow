@@ -1,0 +1,189 @@
+<p>I am trying to play a media file on my android app.</p>
+
+<pre><code>public class MainActivity extends Activity implements Runnable {
+
+
+    private  static final MediaPlayer mp = new MediaPlayer();
+    //private ProgressBar progressBar;
+    private TextView pauseicon;
+
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        pauseicon = (TextView) findViewById(R.id.textView_PlayPause);
+        //progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        //getActionBar().setDisplayHomeAsUpEnabled(true);
+        pauseicon.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                String res = "https://api.soundcloud.com/tracks/84973999/stream?client_id=cd9d2e5604410d714e32642a4ec0eed4";
+
+                //final MediaPlayer mp = new MediaPlayer();
+                try {
+
+                    mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    mp.setDataSource(res);
+                    mp.prepare();
+
+
+                    //mp.start();
+                    mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            // TODO Auto-generated method stub
+
+                            mp.start();
+
+                        }
+                    });
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                mp.setOnCompletionListener(new OnCompletionListener() {
+                    //When audio is done will change pause to play
+                    public void onCompletion(MediaPlayer mp) {
+                        pauseicon.setText("Play file again");
+                    }
+                });
+
+            }
+        });
+
+
+        /**
+         * Play button click event
+         * plays a song and changes button to pause image
+         * pauses a song and changes button to play image
+         * */
+
+
+
+
+        pauseicon.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                // No need to check if it is pauseicon
+
+                if(mp.isPlaying()){
+                    mp.pause();
+                    ((TextView) v).setText("play");
+
+                } else {
+                    mp.start();
+                    ((TextView) v).setText("pause");
+                }}});
+
+
+
+    }
+
+    /*
+
+    //To update progress bar
+    public void run() {
+        int currentPosition= 0;
+        int total = mp.getDuration();
+        while (mp!=null && currentPosition<=total) {
+            try {
+                Thread.sleep(1000);
+                currentPosition= mp.getCurrentPosition();
+            } catch (InterruptedException e) {
+                return;
+            } catch (Exception e) {
+                return;
+            }            
+            progressBar.setProgress(currentPosition);
+        }
+    }*/
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+
+
+            if (mp != null)
+                if(mp.isPlaying())
+                    mp.stop();
+
+            mp.release();
+
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+
+        }
+    }
+    @Override 
+    public void onBackPressed(){
+        if (mp != null){
+            if(mp.isPlaying())
+                mp.stop();
+
+            mp.release();
+        }
+
+        //there is no reason to call super.finish(); here
+        //call super.onBackPressed(); and it will finish that activity for you
+        super.onBackPressed(); 
+
+    }
+
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
+
+    }}
+</code></pre>
+
+<p>I am getting <code>11-25 15:36:48.319: E/MediaPlayer(11800): Error (-38,0)
+</code></p>
+
+<p><strong>Manisfest</strong></p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.demosc"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="17" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.example.demosc.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+    <permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+</manifest>
+</code></pre>

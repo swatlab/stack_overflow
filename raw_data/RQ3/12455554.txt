@@ -1,0 +1,347 @@
+<p>I have developed an application which draws lines on the screen .I want to use different colors for the lines but all the lines are appearing in same color.</p>
+
+<p>I have a color picker in my code to change the colors and i want to draw lines of different colors each time by selecting colors, but as of now since i am constructing lines and rendering it.When i choose initially red and draw a line, and then later select blue and draw a line , now the older line is also getting changed to blue instead of red, However i want the red to remain as red, and blue as such can any one help?</p>
+
+<p>My code is given below</p>
+
+<p><strong>MyDemo.java:</strong></p>
+
+<pre><code>public class MyDemo extends Activity implements
+        ColorPickerDialog.OnColorChangedListener {
+
+    private LinearLayout root;
+
+    private Button btnReset;
+    private Button btnPickColor;
+    public static int selectedColor = Color.BLACK;
+    MyImageView view;
+    private static final String COLOR_PREFERENCE_KEY = "color";
+
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_my_demo);
+
+        root = (LinearLayout) findViewById(R.id.root);
+        btnReset = (Button) findViewById(R.id.reset);
+        btnPickColor = (Button) findViewById(R.id.pickColor);
+
+        final MyImageView view = new MyImageView(this);
+        view.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.FILL_PARENT));
+        root.addView(view);
+
+        btnReset.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                view.reset();
+            }
+        });
+
+        btnPickColor.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // color picker class call
+                int color = PreferenceManager.getDefaultSharedPreferences(
+                        MyDemo.this).getInt(COLOR_PREFERENCE_KEY, Color.WHITE);
+                new ColorPickerDialog(MyDemo.this, MyDemo.this, color).show();
+
+            }
+        });
+    }
+
+    public void colorChanged(int color) {
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .putInt(COLOR_PREFERENCE_KEY, color).commit();
+        selectedColor = color;
+    }
+
+
+}
+</code></pre>
+
+<p><strong>MyImageView.java:</strong></p>
+
+<pre><code>public class MyImageView extends ImageView implements View.OnTouchListener {
+
+    private int id = -1;
+    private Path path;
+    private List<Path> paths = new ArrayList<Path>();
+    private List<PointF> points = new ArrayList<PointF>();
+    boolean multiTouch = false;
+    MyDemo demo;
+
+    public MyImageView(Context context) {
+        super(context);
+        this.setOnTouchListener(this);
+        Log.d("Constructor", " Control in constructor");
+    }
+
+    public void reset() {
+        paths.clear();
+        points.clear();
+        path = null;
+        id = -1;
+        invalidate();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        int colorPicked = MyDemo.selectedColor;
+        if (colorPicked != Color.BLACK) {
+            Paint paint = createPen(colorPicked);
+            paint.setStyle(Paint.Style.STROKE);
+            for (Path path : paths) {
+                canvas.drawPath(path, paint);
+            }
+            for (int i = 0; i < points.size(); i++) {
+                PointF p = points.get(i);
+                canvas.drawText("" + p.x, p.y, i, createPen(colorPicked));
+            }
+        } else {
+            Paint paint = createPen(colorPicked);
+            paint.setStyle(Paint.Style.STROKE);
+            for (Path path : paths) {
+                canvas.drawPath(path, paint);
+            }}
+            for (int i = 0; i < points.size(); i++) {
+                PointF p = points.get(i);
+                canvas.drawText("" + p.x, p.y, i, createPen(colorPicked));
+            }
+        }
+
+
+    private PointF copy(PointF p) {
+        PointF copy = new PointF();
+        copy.set(p);
+        return copy;
+    }
+
+    public boolean onTouch(View v, MotionEvent event) {
+        int action = event.getAction();
+        switch (action & MotionEvent.ACTION_MASK) {
+        case MotionEvent.ACTION_DOWN:
+            multiTouch = false;
+
+            id = event.getPointerId(0);
+            PointF p = getPoint(event, id);
+            path = new Path();
+            path.moveTo(p.x, p.y);
+            paths.add(path);
+            points.add(copy(p));
+            break;
+        case MotionEvent.ACTION_POINTER_DOWN:
+            multiTouch = true;
+            for (int i = 0; i < event.getPointerCount(); i++) {
+                int tId = event.getPointerId(i);
+                if (tId != id) {
+                    points.add(getPoint(event, i));
+                }
+            }
+            break;
+        case MotionEvent.ACTION_MOVE:
+            if (!multiTouch) {
+                p = getPoint(event, id);
+                path.lineTo(p.x, p.y);
+            }
+            break;
+        }
+        invalidate();
+        return true;
+    }
+
+    private PointF getPoint(MotionEvent event, int i) {
+        int index = 0;
+        return new PointF(event.getX(index), event.getY(index));
+    }
+
+    public Paint createPen(int color) {
+        Paint pen = new Paint();
+        pen.setColor(color);
+        float width = 3;
+        pen.setStrokeWidth(width);
+        return pen;
+    }
+
+}
+</code></pre>
+
+<p><strong>ColorPickerDialog.java:</strong></p>
+
+<pre><code>public class ColorPickerDialog extends Dialog {
+
+    public interface OnColorChangedListener {
+        void colorChanged(int color);
+
+    }
+
+    private final OnColorChangedListener mListener;
+    private final int mInitialColor;
+
+    private static class ColorPickerView extends View {
+        private final Paint mPaint;
+        private final Paint mCenterPaint;
+        private final int[] mColors;
+        private final OnColorChangedListener mListener;
+
+        ColorPickerView(Context c, OnColorChangedListener l, int color) {
+            super(c);
+            mListener = l;
+            mColors = new int[] { 0xFFFF0000, 0xFFFF00FF, 0xFF0000FF,
+                    0xFF00FFFF, 0xFF00FF00, 0xFFFFFF00, 0xFFFF0000 };
+            Shader s = new SweepGradient(0, 0, mColors, null);
+
+            mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mPaint.setShader(s);
+            mPaint.setStyle(Paint.Style.STROKE);
+            mPaint.setStrokeWidth(32);
+
+            mCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mCenterPaint.setColor(color);
+            mCenterPaint.setStrokeWidth(5);
+        }
+
+        private boolean mTrackingCenter;
+        private boolean mHighlightCenter;
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            float r = CENTER_X - mPaint.getStrokeWidth() * 0.5f;
+
+            canvas.translate(CENTER_X, CENTER_X);
+
+            canvas.drawOval(new RectF(-r, -r, r, r), mPaint);
+            canvas.drawCircle(0, 0, CENTER_RADIUS, mCenterPaint);
+
+            if (mTrackingCenter) {
+                int c = mCenterPaint.getColor();
+                mCenterPaint.setStyle(Paint.Style.STROKE);
+
+                if (mHighlightCenter) {
+                    mCenterPaint.setAlpha(0xFF);
+                } else {
+                    mCenterPaint.setAlpha(0x80);
+                }
+                canvas.drawCircle(0, 0, CENTER_RADIUS
+                        + mCenterPaint.getStrokeWidth(), mCenterPaint);
+
+                mCenterPaint.setStyle(Paint.Style.FILL);
+                mCenterPaint.setColor(c);
+            }
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            setMeasuredDimension(CENTER_X * 2, CENTER_Y * 2);
+        }
+
+        private static final int CENTER_X = 100;
+        private static final int CENTER_Y = 100;
+        private static final int CENTER_RADIUS = 32;
+
+        private int ave(int s, int d, float p) {
+            return s + java.lang.Math.round(p * (d - s));
+        }
+
+        private int interpColor(int colors[], float unit) {
+            if (unit <= 0)
+                return colors[0];
+            if (unit >= 1)
+                return colors[colors.length - 1];
+
+            float p = unit * (colors.length - 1);
+            int i = (int) p;
+            p -= i;
+
+            // now p is just the fractional part [0...1) and i is the index
+            int c0 = colors[i];
+            int c1 = colors[i + 1];
+            int a = ave(Color.alpha(c0), Color.alpha(c1), p);
+            int r = ave(Color.red(c0), Color.red(c1), p);
+            int g = ave(Color.green(c0), Color.green(c1), p);
+            int b = ave(Color.blue(c0), Color.blue(c1), p);
+
+            return Color.argb(a, r, g, b);
+        }
+
+        private static final float PI = 3.1415926f;
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            float x = event.getX() - CENTER_X;
+            float y = event.getY() - CENTER_Y;
+            boolean inCenter = java.lang.Math.sqrt(x * x + y * y) <= CENTER_RADIUS;
+
+            switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mTrackingCenter = inCenter;
+                if (inCenter) {
+                    mHighlightCenter = true;
+                    invalidate();
+                    break;
+                }
+            case MotionEvent.ACTION_MOVE:
+                if (mTrackingCenter) {
+                    if (mHighlightCenter != inCenter) {
+                        mHighlightCenter = inCenter;
+                        invalidate();
+                    }
+                } else {
+                    float angle = (float) java.lang.Math.atan2(y, x);
+                    // need to turn angle [-PI ... PI] into unit [0....1]
+                    float unit = angle / (2 * PI);
+                    if (unit < 0) {
+                        unit += 1;
+                    }
+                    mCenterPaint.setColor(interpColor(mColors, unit));
+                    invalidate();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (mTrackingCenter) {
+                    if (inCenter) {
+                        mListener.colorChanged(mCenterPaint.getColor());
+
+                    }
+                    mTrackingCenter = false; // so we draw w/o halo
+                    invalidate();
+                }
+                break;
+            }
+            return true;
+        }
+    }
+
+    public ColorPickerDialog(Context context, OnColorChangedListener listener,
+            int initialColor) {
+        super(context);
+
+        mListener = listener;
+        mInitialColor = initialColor;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        OnColorChangedListener l = new OnColorChangedListener() {
+            public void colorChanged(int color) {
+                mListener.colorChanged(color);
+                dismiss();
+            }
+        };
+
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(10, 10, 10, 10);
+        layout.addView(new ColorPickerView(getContext(), l, mInitialColor),
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT));
+        setContentView(layout);
+        setTitle("Pick a Color");
+    }
+}
+</code></pre>

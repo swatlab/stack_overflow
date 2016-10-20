@@ -1,0 +1,142 @@
+<p>I am testing my App in the Emulator.
+Emulator Device Size - 480 x 854
+Image size - 1280 x 720
+Sample size = 1 (This is from the process explained in the Android reference - <a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html" rel="nofollow">http://developer.android.com/training/displaying-bitmaps/load-bitmap.html</a>)</p>
+
+<p>When I trigger this activity the App goes fine, When I traverse to next activity and come back, the App crashes with OOM. I have followed the process explained in the android manual for loading the bitmap efficiently, but still it fails in the line
+    backgoundImage = getAssetImage(getApplicationContext(),"backgroundhomepage"); 
+Kindly assist.</p>
+
+<p>Question 1 : What will be the minimum heap size for this sized devices ? 
+Question 2 : Do I need to change the sample size ? 
+Question 3 : Any other steps I need to follow ? </p>
+
+<h2>Code:</h2>
+
+<pre><code>    /**************************************************************************************************************************************************************
+    1.  To get the image from asset library
+     **************************************************************************************************************************************************************/ 
+
+    public  Bitmap getAssetImage(Context context, String filename) throws IOException {
+        AssetManager assets = getApplicationContext().getResources().getAssets();
+        InputStream buffer = null;
+        try {
+            buffer = new BufferedInputStream((assets.open("drawable/" + filename + ".png")));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }  
+
+        BitmapFactory.Options options = new BitmapFactory.Options(); 
+        options.inPurgeable = true;  
+
+
+        Log.i("DragDrop", " 1280 x 800 "  + calculateInSampleSize(options, 1280, 800) );
+        Log.i("DragDrop", " 1024 x 600 "  + calculateInSampleSize(options, 1024, 600) );
+        Log.i("DragDrop", " 480 x 800 "  + calculateInSampleSize(options, 480, 800) ); 
+        Log.i("DragDrop", " 480 x 854 "  + calculateInSampleSize(options, 480, 854) ); 
+        Log.i("DragDrop", " 1280 x 720 "  + calculateInSampleSize(options, 1280, 720) );
+        Log.i("DragDrop", " 720 x 1280 "  + calculateInSampleSize(options, 720, 1280) );
+        Log.i("DragDrop", " 240 x 432 "  + calculateInSampleSize(options, 240, 432) ); 
+        Log.i("DragDrop", " 240 x 400 "  + calculateInSampleSize(options, 240, 400) ); 
+        Log.i("DragDrop", " 320 x 480 "  + calculateInSampleSize(options, 320, 480) ); 
+        Log.i("DragDrop", " 240 x 320 "  + calculateInSampleSize(options, 240, 320) ); 
+
+        if (tabletSize) {
+            Log.i("DragDrop", "am tablet");   
+        } else {
+            Log.i("DragDrop", "am phone");  
+            Log.i("DragDrop", "------------------------------------------------------");  
+            Log.i("DragDrop", "dWidth"  + dWidth); 
+            Log.i("DragDrop", "dHeight" + dHeight);  
+            int tempSampleSize = calculateInSampleSize(options, (int)dWidth, (int)dHeight);  
+            Log.i("DragDrop", "sample size" + tempSampleSize + "so options left aside" );  
+            if (tempSampleSize > 1) { 
+                Log.i("DragDrop", "sample size > 1"  + "so options is set to the sample size " + tempSampleSize ); 
+                options.inSampleSize = tempSampleSize;
+            }
+            //options.inSampleSize = 2; 
+        }
+
+
+        Bitmap temp = BitmapFactory.decodeStream(buffer, null, options);
+        Bitmap finalImage = Bitmap.createScaledBitmap(temp, (int) dWidth, (int) dHeight, true);
+        //temp.recycle();
+      //    temp=null; 
+        return finalImage;   
+
+    }
+
+    public int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = 720;
+        final int width = 1280;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            // Calculate ratios of height and width to requested height and width
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+            // Choose the smallest ratio as inSampleSize value, this will guarantee
+            // a final image with both dimensions larger than or equal to the
+            // requested height and width.
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        }
+
+        return inSampleSize;
+    }
+</code></pre>
+
+<h2>LogCat:</h2>
+
+<pre><code>07-07 21:16:17.960: I/DragDrop(694):  1280  800 1
+07-07 21:16:17.960: I/DragDrop(694):  1024  600 1
+07-07 21:16:17.970: I/DragDrop(694):  480  800 1
+07-07 21:16:18.001: I/DragDrop(694):  480  854 1
+07-07 21:16:18.001: I/DragDrop(694):  1280  720 1
+07-07 21:16:18.001: I/DragDrop(694):  720  1280 1
+07-07 21:16:18.040: I/DragDrop(694):  240  432 2
+07-07 21:16:18.040: I/DragDrop(694):  240  400 2
+07-07 21:16:18.040: I/DragDrop(694):  320  480 2
+07-07 21:16:18.060: I/DragDrop(694):  240  320 2
+07-07 21:16:18.122: I/DragDrop(694): am phone
+07-07 21:16:18.122: I/DragDrop(694): ------------------------------------------------------
+07-07 21:16:18.130: I/DragDrop(694): dWidth854.0
+07-07 21:16:18.170: I/DragDrop(694): dHeight480.0
+07-07 21:16:18.170: I/DragDrop(694): sample size1so options left aside
+07-07 21:16:19.080: D/dalvikvm(694): GC_FOR_ALLOC freed 3K, 38% free 9526K/15175K, paused 516ms, total 534ms
+07-07 21:16:19.250: I/dalvikvm-heap(694): Grow heap (frag case) to 12.866MB for 3686416-byte allocation
+07-07 21:16:19.540: D/dalvikvm(694): GC_FOR_ALLOC freed <1K, 14% free 13126K/15175K, paused 280ms, total 280ms
+07-07 21:16:19.990: I/Choreographer(694): Skipped 41 frames!  The application may be doing too much work on its main thread.
+07-07 21:16:20.370: D/dalvikvm(694): GC_CONCURRENT freed <1K, 14% free 13127K/15175K, paused 114ms+120ms, total 830ms
+07-07 21:16:21.150: I/Choreographer(694): Skipped 42 frames!  The application may be doing too much work on its main thread.
+07-07 21:16:21.980: D/dalvikvm(694): GC_FOR_ALLOC freed 17K, 14% free 13112K/15175K, paused 647ms, total 647ms
+07-07 21:16:21.980: I/dalvikvm-heap(694): Forcing collection of SoftReferences for 1639696-byte allocation
+07-07 21:16:22.250: I/mybringback(694): In Pause of mybringback
+07-07 21:16:22.250: D/dalvikvm(694): GC_BEFORE_OOM freed 0K, 14% free 13112K/15175K, paused 262ms, total 262ms
+07-07 21:16:22.263: E/dalvikvm-heap(694): Out of memory on a 1639696-byte allocation.
+07-07 21:16:22.270: I/dalvikvm(694): "Thread-82" prio=5 tid=14 RUNNABLE
+07-07 21:16:22.312: I/dalvikvm(694):   | group="main" sCount=0 dsCount=0 obj=041354480 self=02a1b35c8
+07-07 21:16:22.312: I/dalvikvm(694):   | sysTid=850 nice=0 sched=0/0 cgrp=apps handle=706426136
+07-07 21:16:22.320: I/dalvikvm(694):   | schedstat=( 768726126 3420053317 119 ) utm=62 stm=14 core=0
+07-07 21:16:22.320: I/dalvikvm(694):   at android.graphics.Bitmap.nativeCreate(Native Method)
+07-07 21:16:22.320: I/dalvikvm(694):   at android.graphics.Bitmap.createBitmap(Bitmap.java:640)
+07-07 21:16:22.330: I/dalvikvm(694):   at android.graphics.Bitmap.createBitmap(Bitmap.java:586)
+07-07 21:16:22.340: I/dalvikvm(694):   at android.graphics.Bitmap.createScaledBitmap(Bitmap.java:466)
+07-07 21:16:22.340: I/dalvikvm(694):   at com.eample.funandlearn.DragDrop$MyBringBackSurface.getAssetImage(DragDrop.java:551)
+07-07 21:16:22.340: I/dalvikvm(694):   at com.eample.funandlearn.DragDrop$MyBringBackSurface.run(DragDrop.java:633)
+07-07 21:16:22.350: I/dalvikvm(694):   at java.lang.Thread.run(Thread.java:856)
+07-07 21:16:22.400: W/dalvikvm(694): threadid=14: thread eiting with uncaught eception (group=0
+07-07 21:16:22.480: E/AndroidRuntime(694): FATAL EXCEPTION: Thread-82
+07-07 21:16:22.480: E/AndroidRuntime(694): java.lang.OutOfMemoryError
+07-07 21:16:22.480: E/AndroidRuntime(694): at android.graphics.Bitmap.nativeCreate(Native Method)
+07-07 21:16:22.480: E/AndroidRuntime(694): at android.graphics.Bitmap.createBitmap(Bitmap.java:640)
+07-07 21:16:22.480: E/AndroidRuntime(694): at android.graphics.Bitmap.createBitmap(Bitmap.java:586)
+07-07 21:16:22.480: E/AndroidRuntime(694): at android.graphics.Bitmap.createScaledBitmap(Bitmap.java:466)
+07-07 21:16:22.480: E/AndroidRuntime(694): at com.eample.funandlearn.DragDrop$MyBringBackSurface.getAssetImage(DragDrop.java:551)
+07-07 21:16:22.480: E/AndroidRuntime(694): at com.eample.funandlearn.DragDrop$MyBringBackSurface.run(DragDrop.java:633)
+07-07 21:16:22.480: E/AndroidRuntime(694): at java.lang.Thread.run(Thread.java:856)
+07-07 21:16:30.820: I/Process(694): Sending signal. PID: 694 SIG: 9
+</code></pre>

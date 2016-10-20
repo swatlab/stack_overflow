@@ -1,0 +1,239 @@
+<p>I am creating an Android app in Eclipse, and the section I am having issues with is where I am trying to populate a ListView with data from a SQLite database. </p>
+
+<p>When I run the app and try to open this particular fragment, the app crashes. When I comment out the line <code>newDB.close()</code> on the 4th last line of BreakfastMenuFragment.java, it will load but the listview is not populated. </p>
+
+<p>I have tried to find the issue but no luck, any help will be appreciated.</p>
+
+<p>BreakfastMenuFragment.java</p>
+
+<pre><code>package info.androidhive.slidingmenu;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import android.app.Fragment;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+public class BreakfastMenuFragment extends Fragment {
+
+    public BreakfastMenuFragment(){}
+
+    private ArrayList<String> results = new ArrayList<String>();
+    private String tableName = DBHelper.tableName;
+    private SQLiteDatabase newDB;
+    /** Called when the activity is first created. 
+     * @return */
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, 
+            Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        View rootView = inflater.inflate(R.layout.menu_layout, container, false);
+        ListView listView = (ListView) rootView.findViewById(R.id.menuList);
+
+        try {
+            openAndQueryDatabase();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        displayResultList(listView);        
+return rootView;
+    }
+    private void displayResultList(ListView listView) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getActivity().getApplicationContext(),
+                android.R.layout.simple_list_item_1, results);
+
+        listView.setAdapter(adapter);
+    }
+    private void openAndQueryDatabase() throws IOException {
+        try {
+            DBHelper dbHelper = new DBHelper(this.getActivity().getApplicationContext());
+            newDB = dbHelper.getWritableDatabase();
+            Cursor c = newDB.rawQuery("SELECT itemdesc, itemprice FROM " + tableName +  " WHERE menu LIKE 'Breakfast'", null);
+
+            if (c != null ) {
+                if  (c.moveToFirst()) {
+                    do {
+                        String itemDesc = c.getString(c.getColumnIndex("itemdesc"));
+                        double itemPrice = c.getDouble(c.getColumnIndex("itemprice"));
+                        results.add("" + itemDesc + " - Price: £"+ itemPrice +"");
+                    }while (c.moveToNext());
+                } 
+            }           
+        } catch (SQLiteException se ) {
+            Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+        } finally {
+            if (newDB != null) 
+                newDB.execSQL("DELETE FROM " + tableName);
+                newDB.close();
+        }
+    }
+}
+</code></pre>
+
+<p>DBHelper.java</p>
+
+<pre><code>package info.androidhive.slidingmenu;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+    public SQLiteDatabase DB;
+    public String DBPath;
+    public static String DBName = "orchard.sqlite";
+    public static final int version = '1';
+    public static Context currentContext;
+    public static String tableName = "menuitems";
+
+
+    public DBHelper(Context context) throws IOException {
+        super(context, DBName, null, version);
+        currentContext = context;
+        DBPath = "/data/data/" + context.getPackageName() + "/databases";
+        createDatabase();
+    }
+
+    private void createDatabase() throws IOException {
+        boolean dbExists = checkDbExists();
+
+        if (dbExists) {
+            // do nothing
+        } else {
+                    // Open your local db as the input stream
+                    String dbname = "orchard.sqlite";
+                    InputStream myInput = currentContext.getAssets().open(dbname);
+                    // Path to the just created empty db
+                    String outFileName = currentContext.getFilesDir().getPath() + dbname;
+                    // Open the empty db as the output stream
+                    OutputStream myOutput = new FileOutputStream(outFileName);
+                    // transfer bytes from the inputfile to the outputfile
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = myInput.read(buffer)) > 0) {
+                        myOutput.write(buffer, 0, length);
+                    }
+                    // Close the streams
+                    myOutput.flush();
+                    myOutput.close();
+                    myInput.close();
+
+                }   
+            }       
+
+    private boolean checkDbExists() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DBPath + DBName;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+
+        } catch (SQLiteException e) {
+
+            // database does't exist yet.
+
+        }
+
+        if (checkDB != null) {
+
+            checkDB.close();
+
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+}
+</code></pre>
+
+<p>-------------EDIT--------------------</p>
+
+<pre><code>04-25 03:00:31.485: D/dalvikvm(31817): GC_FOR_ALLOC freed 147K, 15% free 3288K/3828K, paused 20ms, total 20ms
+04-25 03:00:31.805: E/SQLiteLog(31817): (1) no such table: menuitems
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817): Could not create or Open the database
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817): android.database.sqlite.SQLiteException: no such table: menuitems (code 1): , while compiling: SELECT itemdesc, itemprice FROM menuitems WHERE menu LIKE 'Breakfast'
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteDatabase.rawQuery(SQLiteDatabase.java:1253)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at info.androidhive.slidingmenu.BreakfastMenuFragment.openAndQueryDatabase(BreakfastMenuFragment.java:72)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at info.androidhive.slidingmenu.BreakfastMenuFragment.onCreateView(BreakfastMenuFragment.java:38)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.Fragment.performCreateView(Fragment.java:1700)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:890)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1062)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.BackStackRecord.run(BackStackRecord.java:684)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1447)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl$1.run(FragmentManager.java:443)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.os.Handler.handleCallback(Handler.java:733)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.os.Handler.dispatchMessage(Handler.java:95)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.os.Looper.loop(Looper.java:136)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at android.app.ActivityThread.main(ActivityThread.java:5021)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:827)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:643)
+04-25 03:00:31.815: E/BreakfastMenuFragment(31817):     at dalvik.system.NativeStart.main(Native Method)
+04-25 03:05:53.795: E/SQLiteLog(31817): (1) no such table: menuitems
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817): Could not create or Open the database
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817): android.database.sqlite.SQLiteException: no such table: menuitems (code 1): , while compiling: SELECT itemdesc, itemprice FROM menuitems WHERE menu LIKE 'Breakfast'
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:889)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:500)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:588)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:58)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:44)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1314)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.database.sqlite.SQLiteDatabase.rawQuery(SQLiteDatabase.java:1253)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at info.androidhive.slidingmenu.BreakfastMenuFragment.openAndQueryDatabase(BreakfastMenuFragment.java:72)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at info.androidhive.slidingmenu.BreakfastMenuFragment.onCreateView(BreakfastMenuFragment.java:38)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.Fragment.performCreateView(Fragment.java:1700)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:890)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1062)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.BackStackRecord.run(BackStackRecord.java:684)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1447)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.FragmentManagerImpl$1.run(FragmentManager.java:443)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.os.Handler.handleCallback(Handler.java:733)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.os.Handler.dispatchMessage(Handler.java:95)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.os.Looper.loop(Looper.java:136)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at android.app.ActivityThread.main(ActivityThread.java:5021)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at java.lang.reflect.Method.invokeNative(Native Method)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at java.lang.reflect.Method.invoke(Method.java:515)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:827)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:643)
+04-25 03:05:53.795: E/BreakfastMenuFragment(31817):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

@@ -1,0 +1,327 @@
+<p>I am trying to implement Tab + Fragment and each of Fragment includes ListView which does background work as they take out the database values and show them.</p>
+
+<p>I am managing those tabs using a FragmentActivity</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements
+    ActionBar.TabListener {
+
+SectionsPagerAdapter mSectionsPagerAdapter;
+ViewPager mViewPager;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    final ActionBar actionBar = getActionBar();
+    int color = Color.parseColor("#0101DF");
+    actionBar.setBackgroundDrawable((new ColorDrawable(color)));
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    mSectionsPagerAdapter = new SectionsPagerAdapter(
+            getSupportFragmentManager());
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+    mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    actionBar.setSelectedNavigationItem(position);
+                }
+            });
+
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        actionBar.addTab(actionBar.newTab()
+                .setText(mSectionsPagerAdapter.getPageTitle(i))
+                .setTabListener(this));
+    }
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+}
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a DummySectionFragment (defined as a static inner class
+        // below) with the page number as its lone argument.
+        Fragment fragment = null;
+        if(position == 0)
+        {
+            Log.v("ONMESSAGE", "Position 0");
+            fragment = new NewFragment();
+            Bundle args = new Bundle();
+            fragment.setArguments(args);
+        }
+        if(position == 1)
+        {
+            Log.v("ONMESSAGE", "Position 1");
+            fragment = new CalledFragment();
+            Bundle args = new Bundle();
+            fragment.setArguments(args);
+        }
+        if(position == 2)
+        {
+            Log.v("ONMESSAGE", "Position 2");
+            fragment = new SkippedFragment();
+            Bundle args = new Bundle();
+            fragment.setArguments(args);
+        }
+
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 3 total pages.
+        return 3;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return "New";
+        case 1:
+            return "Called";
+        case 2:
+            return "Skipped";
+        }
+        return null;
+    }
+}
+
+
+   }
+</code></pre>
+
+<p>I am giving example of one of those Fragment codes below .</p>
+
+<pre><code>public class CalledFragment extends Fragment{
+View rootView;
+ProgressDialog pDialog;
+private ListView listView1;
+CalledListAdapter adapter;
+private static final String SAMPLE_DB_NAME = "androidData.sqlite";
+private SQLiteDatabase sampleDB;
+ArrayList<Person>list;
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {  
+    rootView = inflater.inflate(R.layout.calledfragment, container, false); 
+    //list = new ArrayList<Person>();
+    //new CallLogDetails().execute();
+    return rootView;
+}
+ public ArrayList<Person> getList()
+ {
+     ArrayList<Person> arr = new ArrayList<Person>();
+     sampleDB= getActivity().openOrCreateDatabase(SAMPLE_DB_NAME, Context.MODE_PRIVATE, null);
+     Cursor cc = sampleDB.rawQuery("SELECT * FROM " +"calldetails", null);      
+     if(cc != null)
+    if(cc.moveToFirst()){
+     do
+     {  // Log.v("Datas",cc.getString(2)+ " " +cc.getString(3) + " " + cc.getString(1) + " " + cc.getInt(4));
+         if(cc.getInt(4) == 2){
+         Person ph = new Person(cc.getString(2), cc.getString(3), cc.getString(1),cc.getInt(4),cc.getInt(0));           
+         arr.add(ph);
+         }
+
+     }while(cc.moveToNext());
+    }
+     sampleDB.close();
+     Log.v("ONMESSAGE","Size at called" + arr.size());
+     return arr;
+ }
+ private class CallLogDetails extends AsyncTask<Void,Void,Void>{
+
+        @Override
+         protected void onPreExecute(){
+            pDialog = new ProgressDialog(getActivity());
+            pDialog.setTitle("Processing");
+            pDialog.setMessage("Loading Called List");
+            pDialog.setIndeterminate(true);
+            pDialog.setCancelable(false);
+            pDialog.show();
+         }
+
+        protected void onPostExecute(Void params){
+            super.onPostExecute(params);
+            pDialog.dismiss();
+            if(list.size() == 0)
+         {
+             list.add(new Person("No Data", "NO Data", "No Data", 0,0));
+         }
+
+         Collections.reverse(list);
+         if(adapter != null)
+         adapter.clear();
+         adapter = new CalledListAdapter(getActivity(), R.layout.calledlist, list);
+         listView1 = (ListView)getActivity().findViewById(R.id.calledlist);         
+         listView1.setOnItemLongClickListener(new OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, final int arg2, long arg3) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Delete Record");
+                builder.setMessage("Do you want to delete the record?");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        // TODO Auto-generated method stub
+                        if(list.size() > 0){
+                            sampleDB=getActivity().openOrCreateDatabase(SAMPLE_DB_NAME, SQLiteDatabase.OPEN_READWRITE, null);
+                             //sampleDB.execSQL("DELETE FROM "+ SAMPLE_DB_NAME + " " + "WHERE callDesc= " + desc);
+                            //sampleDB.execSQL("DELETE FROM calldetails WHERE callDesc='"+desc+"';"); 
+                            Toast.makeText(getActivity(), "Row Deleted", Toast.LENGTH_LONG).show();
+                             sampleDB.close();
+                             new CallLogDetails().execute();
+                        } else
+                            Toast.makeText(getActivity(), "This is a default object. You can not delete this.", Toast.LENGTH_LONG).show();
+
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        // TODO Auto-generated method stub
+                        arg0.cancel();
+
+                    }
+                });
+                builder.show();
+                     return false;
+
+    }
+    });
+
+         listView1.setAdapter(adapter);
+
+
+        }
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            Log.v("ONMESSAGE", "Doing in background");
+            list.clear();
+            list = getList();
+            return null;
+        }
+
+     }
+
+
+   }
+</code></pre>
+
+<p>ArrayAdapter for this Fragment is below</p>
+
+<pre><code>public class CalledListAdapter extends ArrayAdapter<Person> {
+    Context context;
+    SQLiteDatabase sb;
+    private static final String SAMPLE_DB_NAME = "androidData.sqlite";
+    int layoutResourceId;   
+    ArrayList<Person> data = new ArrayList<Person>();
+
+    public CalledListAdapter(Context context, int layoutResourceId, ArrayList<Person> data) {
+        super(context, layoutResourceId,data);
+        this.layoutResourceId = layoutResourceId;
+        this.context = context;
+        this.data = data;
+    }
+    public void refresh(ArrayList<Person>list){         
+        data = list;
+        notifyDataSetChanged();
+    } 
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+     Log.v("ONMESSAGE","call list adapter");
+        convertView = null;
+        View row = convertView;
+        if(row == null && data.get(position).flag == 2){
+            LayoutInflater inflater = ((Activity)context).getLayoutInflater();
+            row = inflater.inflate(layoutResourceId, parent, false);               
+            final WeatherHolder holder = new WeatherHolder();
+            holder.phoneNumber = (TextView)row.findViewById(R.id.callednumber);
+            holder.fname =  (TextView)row.findViewById(R.id.firstname);
+            Person weather = data.get(position);
+            holder.phoneNumber.setText(weather.number);
+            holder.fname.setText(weather.fName);
+            row.setTag(holder);
+        }  
+        return row;
+    }
+
+    static class WeatherHolder
+    {
+        TextView phoneNumber;
+        TextView fname;
+
+    }
+ }
+</code></pre>
+
+<p>If there is one ListView in a Fragment and other two have no List then it works good however if I try to add ListView to other Fragment it gives me following error</p>
+
+<p><strong>Logcat</strong></p>
+
+<pre><code>05-06 09:31:54.410: E/AndroidRuntime(12697): java.lang.NullPointerException
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.widget.ListView.measureScrapChild(ListView.java:1169)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.widget.ListView.measureHeightOfChildren(ListView.java:1252)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.widget.ListView.onMeasure(ListView.java:1161)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.view.View.measure(View.java:12865)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4712)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.widget.FrameLayout.onMeasure(FrameLayout.java:293)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.view.View.measure(View.java:12865)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4712)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.widget.FrameLayout.onMeasure(FrameLayout.java:293)
+05-06 09:31:54.410: E/AndroidRuntime(12697):    at android.view.View.measure(View.java:12865)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):at  android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1451)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.View.measure(View.java:12865)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4712)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.widget.FrameLayout.onMeasure(FrameLayout.java:293)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.View.measure(View.java:12865)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.widget.LinearLayout.measureVertical(LinearLayout.java:822)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.widget.LinearLayout.onMeasure(LinearLayout.java:563)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.View.measure(View.java:12865)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:4712)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.widget.FrameLayout.onMeasure(FrameLayout.java:293)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at com.android.internal.policy.impl.PhoneWindow$DecorView.onMeasure(PhoneWindow.java:2242)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.View.measure(View.java:12865)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1240)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.view.ViewRootImpl.handleMessage(ViewRootImpl.java:2628)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.os.Handler.dispatchMessage(Handler.java:99)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.os.Looper.loop(Looper.java:137)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at android.app.ActivityThread.main(ActivityThread.java:4517)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at java.lang.reflect.Method.invokeNative(Native Method)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at java.lang.reflect.Method.invoke(Method.java:511)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+  05-06 09:31:54.410: E/AndroidRuntime(12697):  at dalvik.system.NativeStart.main(Native Method)
+  05-06 09:32:02.580: I/Process(12697): Sending signal. PID: 12697 SIG: 9
+</code></pre>

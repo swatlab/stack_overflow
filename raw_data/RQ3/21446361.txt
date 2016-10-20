@@ -1,0 +1,382 @@
+<p>I have two list views that are fragments in view pager tabs. When you click on the items in the list view it launches a new activity. But when I press the back-button to get back to the tabbed list view, the list view has doubled and if I open the activity and go back again it doubles again and it will keep doing that. Also I have another tabbed list view with five tabs and when I go two tabs away from one of the views. The items in that view double when I come back to them and this is the same for all the other tabs. The code for the two listviews is identical. I have tried list.clear(), which just clears all of the list items and have played around with the "else" statement in the view holder (recommended by other stack overflow answers). But every time the list view still duplicates. Also unless you haven't noticed already I'm pretty new to android. </p>
+
+<p>here is the code for the list view fragment (Due_Today_Fragment) that is in a two-tabbed activity.</p>
+
+<pre><code>      import java.util.ArrayList;
+import java.util.List;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+
+public class Due_Today_Fragment extends Fragment  {
+    private List<homeworkdue> myhomeworkdue;
+
+    static class ViewHolder {
+        public ImageView imageView;
+        public TextView HomeworkDueText;
+        public TextView DescriptionText;
+        public TextView TeacherText;
+      }
+
+
+    public static final String KEY_HOMEWORK="homework";
+    public static final String KEY_DESC="desc";
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+        return inflater.inflate(R.layout.activity_main, container, false); }
+
+
+    @Override
+    public void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+        myhomeworkdue = new ArrayList<homeworkdue>();
+        populatehomeworkdueList();
+        populateListView();
+        registerClickCallback();
+    }
+
+    private void registerClickCallback() {
+        ListView list = (ListView)getView().findViewById(R.id.listView1);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            public void onItemClick(AdapterView<?> parent, View viewClicked, int position, long id) {
+
+                homeworkdue clickedhomeworkdue = myhomeworkdue.get(position);
+
+                Intent intent = new Intent(getActivity(), homeworkdueDetailsActivity.class);
+                intent.putExtra(KEY_HOMEWORK, clickedhomeworkdue.getHomeworkdue());
+                intent.putExtra(KEY_DESC, clickedhomeworkdue.getDesciption());
+
+                startActivity(intent);
+            }
+        });
+        }
+
+
+    private void populatehomeworkdueList() {
+        myhomeworkdue.add(new homeworkdue("History Homework", "Description 1", R.drawable.global_studies, "Anderson"));
+        myhomeworkdue.add(new homeworkdue("Math Homework", "Description 2", R.drawable.mathematics, "Klein"));
+        myhomeworkdue.add(new homeworkdue("English Homework", "Description 3", R.drawable.english, "Reed"));
+        myhomeworkdue.add(new homeworkdue("Spanish Homework", "Description 4", R.drawable.spanish, "Joya"));
+        myhomeworkdue.add(new homeworkdue("Science Homework", "Description 5", R.drawable.science, "Poole"));
+    }
+
+    private void populateListView() {
+        ArrayAdapter<homeworkdue> adapter = new MyListAdapter();
+        ListView list = (ListView)getView().findViewById(R.id.listView1);
+        list.setAdapter(adapter);
+
+
+    }
+
+
+    public class MyListAdapter extends ArrayAdapter<homeworkdue>  {
+        public MyListAdapter() {
+            super(getActivity(), R.layout.item_view, myhomeworkdue);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder holder;
+
+            if(convertView==null){
+            convertView = getActivity().getLayoutInflater().inflate(R.layout.item_view, parent, false);
+             holder = new ViewHolder();
+
+             holder.imageView = (ImageView)convertView.findViewById(R.id.item_iconclass);
+
+            holder.HomeworkDueText = (TextView) convertView.findViewById(R.id.item_texthomeworkdue);
+
+            holder.DescriptionText = (TextView) convertView.findViewById(R.id.item_textdescription);
+
+            holder.TeacherText = (TextView) convertView.findViewById(R.id.item_textteacher);
+
+            convertView.setTag(holder);
+
+
+            }
+
+        else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        homeworkdue currenthomeworkdue = myhomeworkdue.get(position);
+
+        holder.imageView.setImageResource(currenthomeworkdue.getIconID());
+
+
+        holder.HomeworkDueText.setText(currenthomeworkdue.getHomeworkdue());
+
+
+        holder.DescriptionText.setText(currenthomeworkdue.getDesciption());
+
+
+        holder.TeacherText.setText(currenthomeworkdue.getTeacher());
+
+        return convertView;
+
+    }
+
+        }
+
+
+}
+</code></pre>
+
+<p>Here is the code for the activity launched when a list view item is clicked</p>
+
+<pre><code>    import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.widget.TextView;
+import static com.bernard.beaconportal.Due_Today_Fragment.KEY_HOMEWORK;
+import static com.bernard.beaconportal.Due_Today_Fragment.KEY_DESC;
+
+
+public class homeworkdueDetailsActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_details);
+
+        String homework = "";
+        String desc = "";
+
+        Intent intent = getIntent();
+        if (null != intent) {
+            homework = intent.getStringExtra(KEY_HOMEWORK);
+            desc = intent.getStringExtra(KEY_DESC);
+        }
+
+        TextView headlineTxt = (TextView) findViewById(R.id.texthomeworkdue);
+        headlineTxt.setText(homework);
+
+        TextView pubdateTxt = (TextView) findViewById(R.id.textdescription);
+        pubdateTxt.setText(desc);
+
+    }
+
+
+}
+</code></pre>
+
+<p>Here is the code for tabs fragment</p>
+
+<pre><code>import java.lang.reflect.Field;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.astuetz.PagerSlidingTabStrip;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class Fragments2 extends SherlockFragment {
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.viewpager_main, container, false);
+        // Locate the ViewPager in viewpager_main.xml
+        ViewPager pager = (ViewPager) view.findViewById(R.id.viewPager);
+        // Set the ViewPagerAdapter into ViewPager
+        pager.setAdapter(new ViewPagerAdapter(getChildFragmentManager()));
+        PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) view.findViewById(R.id.pagerTabStrip);
+        tabs.setViewPager(pager);
+
+        return view;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        try {
+            Field childFragmentManager = Fragment.class
+                    .getDeclaredField("mChildFragmentManager");
+            childFragmentManager.setAccessible(true);
+            childFragmentManager.set(this, null);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+</code></pre>
+
+<p>here is where the strings are defined for homework due</p>
+
+<pre><code>public class homeworkdue {
+    private String homework;
+    private String desc;
+    private int IconID;
+    private String teacher;
+
+
+
+    public homeworkdue(String homework, String desc, int IconID, String teacher) {
+
+
+
+        super();
+        this.homework = homework;
+        this.desc = desc;
+        this.IconID = IconID;
+        this.teacher = teacher;
+    }
+
+    public String getHomeworkdue() {
+        return homework;
+    }
+    public String getDesciption() {
+        return desc;
+    }   
+    public int getIconID() {
+        return IconID;
+    }   
+    public String getTeacher() {
+        return teacher;
+    }
+
+
+    }
+</code></pre>
+
+<p>here is the code for the fragment which is contained in five tabs</p>
+
+<pre><code>import java.util.ArrayList;
+import java.util.List;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+
+public class Thursday extends Fragment  {
+
+
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+        return inflater.inflate(R.layout.schedule_list_view, container, false); }
+
+    private List<schedule> myschedule = new ArrayList<schedule>();
+
+
+
+    static class ViewHolder {
+
+        public TextView HomeworkDueText;
+      }
+
+    public void onStart() {
+        super.onStart();
+
+        populatescheduleList();
+        populateListView();
+
+    }
+
+
+    private void populatescheduleList() {
+        myschedule.add(new schedule("E Band"));
+        myschedule.add(new schedule("G Band"));
+        myschedule.add(new schedule("F Band"));
+        myschedule.add(new schedule("H Band"));
+        myschedule.add(new schedule("A Band"));
+        myschedule.add(new schedule("C Band"));
+        myschedule.add(new schedule("D Band"));
+    }
+
+    private void populateListView() {
+        ArrayAdapter<schedule> adapter = new MyListAdapter();
+        ListView list = (ListView)getView().findViewById(R.id.listView2);
+        list.setAdapter(adapter);
+
+    }
+
+
+     public class MyListAdapter extends ArrayAdapter<schedule>  {
+            public MyListAdapter() {
+                super(getActivity(), R.layout.item_view, myschedule);
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                ViewHolder holder;
+
+                if(convertView==null){
+                    convertView = getActivity().getLayoutInflater().inflate(R.layout.schedule_list_item, parent, false);
+                 holder = new ViewHolder();
+
+                 holder.HomeworkDueText = (TextView) convertView.findViewById(R.id.bandText);
+
+                convertView.setTag(holder);
+                }
+
+            else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+                schedule currenthomeworkdue = myschedule.get(position);
+
+                holder.HomeworkDueText.setText(currenthomeworkdue.Band());
+
+            return convertView;
+
+
+        }
+
+        }
+
+}
+</code></pre>
+
+<p>here is where the strings are defined for schedule</p>
+
+<pre><code>public class schedule {
+    private String band;
+
+
+
+
+    public schedule(String band) {
+
+
+
+        super();
+        this.band = band;
+
+    }
+
+    public String Band() {
+        return band;
+
+
+    }
+
+}
+</code></pre>
+
+<p>If you need any more information just ask and thank you in advance for the help</p>
+
+<p>I've been trying to fix this bug for two days and I'm at my wits end.</p>

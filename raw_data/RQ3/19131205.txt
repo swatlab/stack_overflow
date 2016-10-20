@@ -1,0 +1,306 @@
+<p>Please did someone add lots of imageviews in a viewpager before?
+I have an activity that calls the fragment class to create fragments containing images into a viewpager and this fragment class contains methods that caches the image if it doesn't already exist in cache memory and resize the image and let the drawable be executed in an asynctask to decrease the time consumption of the front task...
+but with all these methods to eliminate the out of memory error I am still having this error!!! been two or three days now trying different methods and  none of it worked... so any thoughts please!!</p>
+
+<p>My code is:</p>
+
+<pre><code>import java.lang.ref.WeakReference;
+
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.util.LruCache;
+import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+
+
+public class ScreenSlidePageFragment extends Fragment {
+    /**
+     * The argument key for the page number this fragment represents.
+     */
+    public static final String ARG_PAGE = "page";
+    private LruCache<String, Bitmap> mMemoryCache;
+
+    /**
+     * The fragment's page number, which is set to the argument value for {@link #ARG_PAGE}.
+     */
+    ImageView img;
+    int height;
+    int width;
+    private int mPageNumber;
+    private int[] pics = {R.drawable.intro1, R.drawable.intro2,R.drawable.intro3,R.drawable.intro4,R.drawable.intro5,R.drawable.intro6,R.drawable.intro7,R.drawable.intro8,
+            R.drawable.intro9,R.drawable.intro10,R.drawable.intro11,R.drawable.intro12,R.drawable.intro13,R.drawable.intro14,R.drawable.intro15,R.drawable.intro16,R.drawable.intro17,R.drawable.intro18,
+            R.drawable.intro19,R.drawable.intro20,R.drawable.intro21,R.drawable.intro22,R.drawable.intro23,R.drawable.intro24,R.drawable.intro25,R.drawable.intro26,R.drawable.intro27,R.drawable.intro28,R.drawable.intro29,R.drawable.intro30,
+            R.drawable.intro31,R.drawable.intro32,R.drawable.intro33,R.drawable.intro34,R.drawable.intro35,R.drawable.intro36,R.drawable.intro37,R.drawable.intro38,R.drawable.intro39,R.drawable.intro40,R.drawable.intro41,R.drawable.intro42,
+            R.drawable.intro43,R.drawable.intro44,R.drawable.intro45,R.drawable.intro46,R.drawable.intro47,R.drawable.intro48,R.drawable.intro49,R.drawable.intro50,R.drawable.intro51,R.drawable.intro52,R.drawable.intro53,R.drawable.intro54,
+            R.drawable.intro55,R.drawable.intro56,R.drawable.intro57,R.drawable.intro58,R.drawable.intro59,R.drawable.intro60,R.drawable.intro61,R.drawable.intro62,R.drawable.intro63,R.drawable.intro64,R.drawable.intro65,R.drawable.intro66,
+            R.drawable.intro67,R.drawable.intro68,R.drawable.intro69,R.drawable.intro70,R.drawable.intro71,R.drawable.intro72,R.drawable.intro73};
+    int count=72;//it's the number of the images-1;
+
+
+    /**
+     * Factory method for this fragment class. Constructs a new fragment for the given page number.
+     */
+    public static ScreenSlidePageFragment create(int pageNumber) {
+        ScreenSlidePageFragment fragment = new ScreenSlidePageFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_PAGE, pageNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public ScreenSlidePageFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+     // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        height = displaymetrics.heightPixels;
+        width = displaymetrics.widthPixels;
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getRowBytes()*bitmap.getHeight() / 1024;
+            }
+        };
+
+        mPageNumber = getArguments().getInt(ARG_PAGE);
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {       
+    ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.image_view_layout, container, false);
+    img=(ImageView) rootView.findViewById(R.id.img_pager);
+    final String imageKey = String.valueOf(pics[count-mPageNumber]);
+    final Bitmap bitmap = getBitmapFromMemCache(imageKey);
+            if (bitmap != null) {
+                    img.setImageBitmap(bitmap);
+                } else {
+                    img.setImageResource(pics[count-mPageNumber]);
+                    BitmapWorkerTask task = new BitmapWorkerTask(img);
+                    task.execute(pics[count-mPageNumber]);
+                }
+        return rootView;
+    }
+
+
+
+
+    @Override
+    public void onDetach(){
+         super.onDetach();
+         super.onDetach();
+        Bitmap bitmap = ((BitmapDrawable)img.getDrawable()).getBitmap();
+        bitmap.recycle();       
+        //FragmentManager fragmentManager = getFragmentManager();
+        //FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        //fragmentTransaction.remove(this).commit();
+    }
+
+
+    /**
+     * Returns the page number represented by this fragment object.
+     */
+    public int getPageNumber() {
+        return mPageNumber;
+    }
+
+    class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
+        private final WeakReference<ImageView> imageViewReference;
+
+        public BitmapWorkerTask(ImageView imageView) {
+            // Use a WeakReference to ensure the ImageView can be garbage collected
+            imageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        // Decode image in background.
+        @Override
+        protected Bitmap doInBackground(Integer... params) {
+            final Bitmap bitmap = decodeSampledBitmapFromResource(getResources(), params[0],width,height);
+            addBitmapToMemoryCache(String.valueOf(params[0]), bitmap);
+            return bitmap;
+        }
+
+        // Once complete, see if ImageView is still around and set bitmap.
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (imageViewReference != null && bitmap != null) {
+                final ImageView imageView = imageViewReference.get();
+                if (imageView != null) {
+                    imageView.setImageBitmap(bitmap);
+                }
+            }
+        }
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+            int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+
+}
+</code></pre>
+
+<p>and the activity is:</p>
+
+<pre><code>import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.view.Menu;
+
+
+
+public class Introduction_Activity extends FragmentActivity {
+     private static final int NUM_PAGES = 73;
+
+    private ViewPager mPager;
+
+    /**
+     * The pager adapter, which provides the pages to the view pager widget.
+     */
+    private PagerAdapter mPagerAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_introduction);
+
+
+        // Instantiate a ViewPager and a PagerAdapter.
+        mPager = (ViewPager) findViewById(R.id.imgs_viewpager);
+        mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+        mPager.setAdapter(mPagerAdapter);
+        mPager.setCurrentItem(NUM_PAGES-1,false);    
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.introduction_, menu);
+        return true;
+    }
+
+
+
+    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
+        public ScreenSlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+
+            return ScreenSlidePageFragment.create(position);
+
+            }
+
+        @Override
+        public int getCount() {
+            return NUM_PAGES;
+        }
+
+
+    }
+
+
+}
+</code></pre>
+
+<p>problem:</p>
+
+<pre><code>10-02 06:21:48.230: E/dalvikvm-heap(8944): Out of memory on a 7071376-byte allocation.
+10-02 06:21:48.245: E/AndroidRuntime(8944): FATAL EXCEPTION: AsyncTask #4
+10-02 06:21:48.245: E/AndroidRuntime(8944): java.lang.RuntimeException: An error occured while executing doInBackground()
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.os.AsyncTask$3.done(AsyncTask.java:278)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.FutureTask$Sync.innerSetException(FutureTask.java:273)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.FutureTask.setException(FutureTask.java:124)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:307)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.FutureTask.run(FutureTask.java:137)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.os.AsyncTask$SerialExecutor$1.run(AsyncTask.java:208)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1076)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:569)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.lang.Thread.run(Thread.java:856)
+10-02 06:21:48.245: E/AndroidRuntime(8944): Caused by: java.lang.OutOfMemoryError
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.Bitmap.nativeCreate(Native Method)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.Bitmap.createBitmap(Bitmap.java:605)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.Bitmap.createBitmap(Bitmap.java:551)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.Bitmap.createScaledBitmap(Bitmap.java:437)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.BitmapFactory.finishDecode(BitmapFactory.java:618)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:593)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:445)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.graphics.BitmapFactory.decodeResource(BitmapFactory.java:468)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at packagename.ScreenSlidePageFragment.decodeSampledBitmapFromResource(ScreenSlidePageFragment.java:178)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at packagename.ScreenSlidePageFragment$BitmapWorkerTask.doInBackground(ScreenSlidePageFragment.java:148)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at packagename.ScreenSlidePageFragment$BitmapWorkerTask.doInBackground(ScreenSlidePageFragment.java:1)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at android.os.AsyncTask$2.call(AsyncTask.java:264)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:305)
+10-02 06:21:48.245: E/AndroidRuntime(8944):     ... 5 more
+</code></pre>

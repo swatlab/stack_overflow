@@ -1,0 +1,51 @@
+<p>I am trying to add a simple button to my action bar, but when I try to use the following code, the items are added as items under the overflow menu, not on the actionbar itself.  Any help would be appreciated, </p>
+
+<p>Jacob</p>
+
+<p>Here is my Java:</p>
+
+<pre><code>@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu items for use in the action bar
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.menu_review, menu);
+
+
+    return super.onCreateOptionsMenu(menu);
+}
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle presses on the action bar items
+    switch (item.getItemId()) {
+        case android.R.id.home:
+
+            super.onBackPressed();
+            return true;
+
+
+
+        default:
+            return super.onOptionsItemSelected(item);
+
+    }
+}
+</code></pre>
+
+<p>and my XML:</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yourapp="http://schemas.android.com/apk/res-auto">
+
+
+    <item android:id="@+id/seda"
+        android:icon="@drawable/redpinreal"
+        android:title="Hello Worldh"
+        android:showAsAction="withText|always"/>
+
+</menu>    
+</code></pre>
+
+<p>I also have this enabled: </p>
+
+<pre><code>getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+</code></pre>

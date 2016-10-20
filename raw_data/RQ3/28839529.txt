@@ -1,0 +1,154 @@
+<p>I just copy external database my mydatabase.sqlite and get all existing data  but i get this error at run time    </p>
+
+<pre><code> 03-04 00:08:21.621: E/SQLiteLog(16643): (14) cannot open file at line 30217 of [00bb9c9ce4]
+    03-04 00:08:21.621: E/SQLiteLog(16643): (14) os_unix.c:30217: (2) open(/data/data/com.examle.sqllightdatabase/databases/mydatabase.sqlite) - 
+    03-04 00:08:21.623: E/SQLiteDatabase(16643): Failed to open database '/data/data/com.examle.sqllightdatabase/databases/mydatabase.sqlite'.
+    03-04 00:08:21.623: E/SQLiteDatabase(16643): android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14): Could not open database
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteConnection.nativeOpen(Native Method)
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:209)
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:193)
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:463)
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:185)
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:177)
+    03-04 00:08:21.623: E/SQLiteDatabase(16643):    at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:829)
+</code></pre>
+
+<p>sqlHelper.java</p>
+
+<pre><code>package com.examle.sqllightdatabase;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class SqlHelper extends SQLiteOpenHelper {
+    private static String DB_PATH = "/data/data/com.examle.sqllightdatabase/databases/";
+    private static String DB_NAME = "mydatabase.sqlite";
+    private static int VERSION = 1;
+    private SQLiteDatabase myDataBase;
+    private final Context myContext;
+    private static final String TABLE_RECORD = "student";
+
+    public SqlHelper(Context context) {
+        super(context, DB_NAME, null, VERSION);
+        myContext = context;
+        try {
+            createDatabase();
+        } catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+    }
+
+    public void insertdata(String value) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues v = new ContentValues();
+        v.put("name", value);
+        db.insert(TABLE_RECORD, null, v);
+        db.close();
+    }
+
+    public void createDatabase() throws IOException {
+        boolean dbExist = checkDataBase();
+
+        if (dbExist) {
+            System.out.println("DB EXIST");
+        }
+
+        else {
+            this.getReadableDatabase();
+            this.close();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+
+        }
+    }
+
+    private void copyDataBase() throws IOException {
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+        String outFileName = DB_PATH + DB_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+            System.out.println("Database does't exist yet.");
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+
+    }
+
+    @Override
+    public synchronized void close() {
+        if (myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+    }
+
+    // Getting All records
+    public List<String> getAllRecord() {
+        List<String> studentList = new ArrayList<String>();
+        String selectQuery = "SELECT  * FROM " + TABLE_RECORD;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                studentList.add(cursor.getString(1));
+
+            } while (cursor.moveToNext());
+        }
+        db.close();
+        return studentList;
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre>

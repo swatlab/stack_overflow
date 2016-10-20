@@ -1,0 +1,333 @@
+<p>I'm trying to create an application with a fragment as a menu on the side of the screen.</p>
+
+<p>I successfully managed to do it on one activity and now I want to use the same fragment and menu file for another activity.</p>
+
+<p>My problem is that I can see the button that suppose to open the fragment drawer but when I press it nothing happens.</p>
+
+<p>When I press that button on the other activity it works fine.</p>
+
+<p>This is my activity Java (AddUpdateSale.java) file:</p>
+
+<pre><code>public class AddUpdateSale extends ActionBarActivity implements smallMenu.NavigationDrawerCallbacks {
+
+    int back, userID, permission, action, storeID, saleID;
+    String startDateTime, endDateTime, saleText;
+    boolean startFlag = false;
+    private smallMenu sMenu = new smallMenu();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add_sale);
+        .
+        .
+        .
+
+        sMenu = (smallMenu) getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+
+        sMenu.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
+    }
+
+    public void onNavigationDrawerItemSelected(int position) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.addSaleLayout, new PlaceholderFragment()).commit();
+        if (startFlag) {
+            SharedPreferences prefs = getSharedPreferences("UserData", 0);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear();
+            editor.commit();
+
+            Intent intent = new Intent(this, MainScreen.class);
+            intent.putExtra("UserID", 0);
+            intent.putExtra("Permission", 1);
+            intent.putExtra("StoreID", 0);
+            startActivity(intent);
+            finish();
+        } else {
+            startFlag = true;
+        }
+    }
+    .
+    .
+    .
+}
+</code></pre>
+
+<p>This is my activity's xml (activity_add_sale.xml) file:</p>
+
+<pre><code><RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/addSaleLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="ibuy.ibuy.AddUpdateSale">
+
+    <android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="ibuy.ibuy.AddUpdateSale">
+
+        <FrameLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                .
+                .
+                .
+
+            </RelativeLayout>
+        </FrameLayout>
+
+        <fragment
+            android:id="@+id/navigation_drawer"
+            android:layout_width="@dimen/navigation_drawer_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:name="Menus.smallMenu"
+            tools:layout="@layout/fragment_navigation_drawer"
+            android:alpha="255"/>
+
+    </android.support.v4.widget.DrawerLayout>
+
+</RelativeLayout>
+</code></pre>
+
+<p>This is my menu Java (smallMenu.java) file:</p>
+
+<pre><code>public class smallMenu extends Fragment {
+
+    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+    private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+    private NavigationDrawerCallbacks mCallbacks;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerListView;
+    private View mFragmentContainerView;
+    private int mCurrentSelectedPosition = 0;
+    private boolean mFromSavedInstanceState;
+    private boolean mUserLearnedDrawer;
+
+    public smallMenu() {}
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+        if (savedInstanceState != null) {
+            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+            mFromSavedInstanceState = true;
+        }
+
+        selectItem(mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mDrawerListView = (ListView) inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItem(position);
+            }
+        });
+        mDrawerListView.setAdapter(new ArrayAdapter<String>(
+                getActionBar().getThemedContext(),
+                android.R.layout.simple_list_item_activated_1,
+                android.R.id.text1,
+                new String[]{
+                        getString(R.string.logOut),
+                }));
+        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+        return mDrawerListView;
+    }
+
+    public boolean isDrawerOpen() {
+        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+    }
+
+    public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        mDrawerToggle = new ActionBarDrawerToggle(
+                getActivity(),                    /* host Activity */
+                mDrawerLayout,                    /* DrawerLayout object */
+                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+        ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (!mUserLearnedDrawer) {
+
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager
+                            .getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
+
+                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(mFragmentContainerView);
+        }
+
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    private void selectItem(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerListView != null) {
+            mDrawerListView.setItemChecked(position, true);
+        }
+        if (mDrawerLayout != null) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+        if (mCallbacks != null) {
+            mCallbacks.onNavigationDrawerItemSelected(position);
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mCallbacks = (NavigationDrawerCallbacks) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    private ActionBar getActionBar() {
+        return ((ActionBarActivity) getActivity()).getSupportActionBar();
+    }
+
+    public static interface NavigationDrawerCallbacks {
+        void onNavigationDrawerItemSelected(int position);
+    }
+}
+</code></pre>
+
+<p>This is my drawer xml (fragment_navigation_drawer.xml) file:</p>
+
+<pre><code><ListView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:choiceMode="singleChoice"
+    android:divider="@android:color/transparent"
+    android:dividerHeight="0dp"
+    android:background="#cccc"
+    tools:context="Menus.smallMenu" />
+</code></pre>
+
+<p>This is my PlaceholderFragment.java file:</p>
+
+<pre><code>public class PlaceholderFragment extends Fragment {
+
+    public PlaceholderFragment(){}
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+    }
+}
+</code></pre>
+
+<p>And this is my fragment_main.xml file:</p>
+
+<pre><code><RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="PlaceholderFragment">
+</RelativeLayout>
+</code></pre>
+
+<p>Can someone give me a hint on what am I doing wrong?</p>
+
+<p>Do I need a new java and xml file for each fragment even if they are equal?</p>
+
+<p>Thank you in advance!</p>

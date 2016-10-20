@@ -1,0 +1,40 @@
+<p>I recently started looking at MD5 hashing (in Java) and while I've found algorithms and methods to help me accomplish that, I'm left wondering how it actually works.</p>
+
+<p>For one, I found the following from <a href="http://www.anyexample.com/programming/java/java%5Fsimple%5Fclass%5Fto%5Fcompute%5Fmd5%5Fhash.xml" rel="nofollow">this URL</a>:</p>
+
+<pre><code>private static String convertToHex(byte[] data) {
+    StringBuffer buf = new StringBuffer();
+    for (int i = 0; i < data.length; i++) {
+        int halfbyte = (data[i] >>> 4) & 0x0F;
+        int two_halfs = 0;
+        do {
+            if ((0 <= halfbyte) && (halfbyte <= 9))
+                buf.append((char) ('0' + halfbyte));
+            else
+                buf.append((char) ('a' + (halfbyte - 10)));
+                halfbyte = data[i] & 0x0F;
+            } while(two_halfs++ < 1);
+        }
+    return buf.toString();
+}
+</code></pre>
+
+<p>I haven't found any need to use bit-shifting in Java so I'm a bit rusty on that. Someone kind enough to illustrate (in simple terms) how exactly does the above code does the conversion? ">>>"?</p>
+
+<p>I also found other solutions on StackOverflow, such as <a href="http://stackoverflow.com/questions/415953/generate-md5-hash-in-java">here</a> and <a href="http://stackoverflow.com/questions/304268/using-java-to-get-a-files-md5-checksum">here</a>, which uses BigInteger instead:</p>
+
+<pre><code>try {
+   String s = "TEST STRING";
+   MessageDigest md5 = MessageDigest.getInstance("MD5");
+   md5.update(s.getBytes(),0,s.length());
+   String signature = new BigInteger(1,md5.digest()).toString(16);
+   System.out.println("Signature: "+signature);
+
+} catch (final NoSuchAlgorithmException e) {
+   e.printStackTrace();
+}
+</code></pre>
+
+<p>Why does that work too, and which way is more efficient?</p>
+
+<p>Thanks for your time.</p>

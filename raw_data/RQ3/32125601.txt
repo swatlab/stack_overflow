@@ -1,0 +1,43 @@
+<p>I'm working on an Android project, and we have many many different compound data types that require custom array adapters. There's a bunch of boilerplate type stuff we have to do to back-adapt "generic" behavior, that allows us to send in these compound data types.</p>
+
+<p>I had a look at the implementation of <code>ArrayAdapter</code>, and found this:</p>
+
+<pre><code>private View createViewFromResource(int position, View convertView, ViewGroup parent,
+        int resource) {
+    View view;
+    TextView text;
+
+    if (convertView == null) {
+        view = mInflater.inflate(resource, parent, false);
+    } else {
+        view = convertView;
+    }
+
+    try {
+        if (mFieldId == 0) {
+            //  If no custom field is assigned, assume the whole resource is a TextView
+            text = (TextView) view;
+        } else {
+            //  Otherwise, find the TextView field within the layout
+            text = (TextView) view.findViewById(mFieldId);
+        }
+    } catch (ClassCastException e) {
+        Log.e("ArrayAdapter", "You must supply a resource ID for a TextView");
+        throw new IllegalStateException(
+                "ArrayAdapter requires the resource ID to be a TextView", e);
+    }
+
+    T item = getItem(position);
+    if (item instanceof CharSequence) {
+        text.setText((CharSequence)item);
+    } else {
+        text.setText(item.toString());
+    }
+
+    return view;
+}
+</code></pre>
+
+<p>As you can see, the <code>ArrayAdapter</code> class is geared specifically to creating views with single <code>TextView</code>s. This seems to me a fairly large design flaw since it should have been obvious that not all <code>ArrayAdapter</code>s are going to be dealing solely with text. If I were able to fix it, I would make the current ArrayAdapter implementation (dealing with TextViews) as a specialization of a more generic ArrayAdapter.</p>
+
+<p>Am I missing something? Why was this design decision made? Is there some standard or accepted way around this?</p>

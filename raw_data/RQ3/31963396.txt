@@ -1,0 +1,49 @@
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // TODO Auto-generated method stub
+    switch (item.getItemId()) {
+    case R.id.backicon:
+
+        return true;
+    default:
+        break;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.visitmenu, menu);
+    return true;
+}
+
+private void showFilterPopup(View v) {
+    PopupMenu popup = new PopupMenu(this, v);
+    // Inflate the menu from xml
+    popup.getMenuInflater().inflate(R.menu.popup_filters, popup.getMenu());
+    // Setup menu item selection
+    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+            case R.id.menu_keyword:
+                Toast.makeText(EmployeeVisit.this, "Keyword!",
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.menu_popularity:
+                Toast.makeText(EmployeeVisit.this, "Popularity!",
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                return false;
+            }
+        }
+    });
+
+    popup.show();
+
+}
+</code></pre>
+
+<p>this is my code i want to display popupmenu on actionbar menu click please tell me how to apply click and show popupmenu on buttton click but i am unable to call   case R.id.backicon: showFilterPopup(view v) what i should pass please help me  </p>

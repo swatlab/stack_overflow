@@ -1,0 +1,344 @@
+<p>I create a tabbed activity, and I have set the AD named android:id="@+id/adView" located at the top of screen using android:layout_alignParentTop="true".</p>
+
+<p>After I run the app, I find the four tabs are located at the top of the screen. How can I make the AD located at the above of Tab? Thanks!</p>
+
+<p><strong>Current</strong></p>
+
+<p><img src="http://i.stack.imgur.com/I7Cim.png" alt="enter image description here"></p>
+
+<p><strong>I hope</strong></p>
+
+<p><img src="http://i.stack.imgur.com/i9tqR.png" alt="enter image description here"></p>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        ads:adSize="SMART_BANNER"
+        android:layout_alignParentTop="true"
+        ads:adUnitId="@string/ad_unit_id" />
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/adView"
+        android:layout_above="@+id/linearLayout1"
+        android:paddingTop="12dip"
+        android:paddingLeft="7dip"
+        android:paddingRight="7dip"
+        android:orientation="vertical" >
+
+
+        <android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools" android:id="@+id/pager"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            tools:context=".MainActivity" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:weightSum="4" >
+
+        <Button
+            android:id="@+id/btnClose"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="Close" />
+    </LinearLayout>
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>fragment_main.xml</strong></p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity$PlaceholderFragment">
+
+    <TextView android:id="@+id/section_label1" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Button"
+        android:id="@+id/button"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
+</RelativeLayout>
+</code></pre>
+
+<p><strong>MainActivity.java</strong></p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+
+    private AdView adView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        adView=(AdView) findViewById(R.id.adView);
+        SetAD(adView);
+
+
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
+        }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    public  void SetAD(AdView adView) {
+        if (true) {
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .build();
+            adView.loadAd(adRequest);
+        }else{
+            adView.setVisibility(View.GONE);
+        }
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            //return PlaceholderFragment.newInstance(position + 1);
+
+            Fragment fragment;
+            switch(position){
+                case 0:
+                    fragment = new PlaceholderFragment();
+                    break;
+                case 1:
+                    fragment = new PlaceholderFragment1();
+                    break;
+                case 2:
+                    fragment = new PlaceholderFragment1();
+                    break;
+                case 3:
+                    fragment = new PlaceholderFragment();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid section number");
+            }
+
+            //set args if necessary
+            Bundle args = new Bundle();
+            args.putInt(PlaceholderFragment.ARG_SECTION_NUMBER, position + 1);
+            fragment.setArguments(args);
+
+            return fragment;
+
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 4;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.title_section1).toUpperCase(l);
+                case 1:
+                    return getString(R.string.title_section2).toUpperCase(l);
+                case 2:
+                    return getString(R.string.title_section3).toUpperCase(l);
+                case 3:
+                    return getString(R.string.title_section4).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number1";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+
+            return rootView;
+        }
+    }
+
+
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment1 extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment1 newInstance(int sectionNumber) {
+            PlaceholderFragment1 fragment = new PlaceholderFragment1();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment1() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main1, container, false);
+
+            Button cw= (Button)rootView.findViewById(R.id.buttonAA);
+
+            final LayoutInflater my=inflater;
+            cw.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                     Toast.makeText(my.getContext(), "CW", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            return rootView;
+        }
+    }
+
+}
+</code></pre>

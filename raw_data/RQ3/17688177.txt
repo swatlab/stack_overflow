@@ -1,0 +1,325 @@
+<p>I have got a weird problem with a CVS project I am working on in a group at University. We have an Android project, a simple polling app. At the beginning a user has to log in to the app with a username and a password. It is actually working on all people in that group except for me. The only difference between us is that I am using IntelliJ Idea 12 Community Edition and all other eclipse. In my specific case it just crashes after I have put in the user and pw and push the log in button. It tries to load the app and immediately throws an "Unfortunately 'app' has stopped" exception. </p>
+
+<p>I guess it has something to do with libraries or maybe the .classpath file of eclipse? I dont really know how well the two IDE's work together?! I read its no problem to use both with CVS.</p>
+
+<p>I have set up eclipse, too. The error appears as well?! I have no clues why that doesnt work just for me?! ...</p>
+
+<p>Here is the logcat output (filter on errors and 'feedback'):</p>
+
+<pre><code> 07-16 22:30:35.305: ERROR/AndroidRuntime(2223): FATAL EXCEPTION: main
+    java.lang.RuntimeException: Unable to start activity `enter code here`ComponentInfo{de.unikassel.feedbackclient/de.unikassel.feedbackclient.MainActivity}: `enter code here`java.lang.NullPointerException
+    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2180)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2230)
+    at android.app.ActivityThread.access$600(ActivityThread.java:141)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1234)
+    at android.os.Handler.dispatchMessage(Handler.java:99)
+    at android.os.Looper.loop(Looper.java:137)
+    at android.app.ActivityThread.main(ActivityThread.java:5039)
+    at java.lang.reflect.Method.invokeNative(Native Method)
+    at java.lang.reflect.Method.invoke(Method.java:511)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:793)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:560)
+    at dalvik.system.NativeStart.main(Native Method)
+    Caused by: java.lang.NullPointerException
+    at de.unikassel.feedbackclient.MainActivity.onCreate(MainActivity.java:72)
+    at android.app.Activity.performCreate(Activity.java:5104)
+    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1080)
+    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2144)
+    ... 11 more
+</code></pre>
+
+<p>And AndroidManifest.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="de.unikassel.feedbackclient"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="16" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="de.unikassel.feedbackclient.MainActivity"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="de.unikassel.feedbackclient.LoginActivity"
+            android:label="@string/title_activity_login"
+            android:windowSoftInputMode="adjustResize|stateVisible" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="de.unikassel.feedbackclient.AdminActivity"
+            android:label="@string/title_activity_admin" >
+        </activity>
+        <activity
+            android:name="de.unikassel.feedbackclient.PollActivity"
+            android:label="@string/title_activity_open_poll" >
+        </activity>
+        <activity
+            android:name="de.unikassel.feedbackclient.SettingsActivity"
+            android:label="@string/title_activity_settings" >
+        </activity>
+    </application>
+
+</manifest>
+</code></pre>
+
+<p>and my App.iml</p>
+
+<pre><code><?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager" forced_jdk="true">
+    <conelement value="com.android.ide.eclipse.adt.DEPENDENCIES" />
+    <src_description expected_position="1">
+      <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
+      <src_folder value="file://$MODULE_DIR$/gen" expected_position="1" />
+      <src_folder value="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK" expected_position="2" />
+      <src_folder value="com.android.ide.eclipse.adt.LIBRARIES" expected_position="3" />
+    </src_description>
+  </component>
+  <component name="FacetManager">
+    <facet type="android" name="Android">
+      <configuration />
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/bin/classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="Android 4.2.2 Platform" jdkType="Android SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/libs/android-support-v4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>
+</code></pre>
+
+<p>thx for help...</p>
+
+<p>Edit: according to the logcat and the exception thrown in mainactivity I paste the code of it here too...</p>
+
+<pre><code>package de.unikassel.feedbackclient;
+
+import java.util.Locale;
+
+import de.unikassel.feedbackclient.R;
+import android.app.ActionBar;
+import android.app.FragmentTransaction;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.ListFragment;
+import android.support.v4.view.ViewPager;
+import android.view.Menu;
+
+/**
+ * Main Screen where all polls are shown in a tab layout.
+ * 
+ */
+public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+
+    /**
+     * Define the number of shown tabs in Tab-Bar.
+     */
+    private final int NUMTABS = 3;
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * will keep every loaded fragment in memory. If this becomes too memory
+     * intensive, it may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    SectionsPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    ViewPager mViewPager;
+
+    /**
+     * Method will be called when Activity will be created by
+     * Android OS.
+     * 
+     * @param Bundle savedInstanceState
+     */
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Set up the action bar.
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title defined by
+            // the adapter. Also specify this Activity object, which implements
+            // the TabListener interface, as the callback (listener) for when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
+        }
+    }
+
+    /**
+     * Method is called to create the options menu for given activity.
+     * 
+     * @param Menu menu
+     * @return boolean
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+
+        return true;
+    }
+
+    /**
+     * Method is called if a tab from tab-view is selected.
+     * 
+     * @param ActionBar.Tab tab
+     * @param FragmentTransaction fragmentTransaction
+     */
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // When the given tab is selected, switch to the corresponding page in
+        // the ViewPager.
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    /**
+     * Method is called if a tab from tab-view is unselected (switched to next tab, etc.).
+     * 
+     * @param ActionBar.Tab tab
+     * @param FragmentTransaction fragmentTransaction
+     */
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * Method is called if a tab from tab-view is reselected (switched back from other tab, etc.).
+     * 
+     * @param ActionBar.Tab tab
+     * @param FragmentTransaction fragmentTransaction
+     */
+    @Override
+    public void onTabReselected(ActionBar.Tab tab,
+            FragmentTransaction fragmentTransaction) {
+    }
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        /**
+         * 
+         * @param fm FragmentManager
+         */
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a DummySectionFragment (defined as a static inner class
+            // below) with the page number as its lone argument.
+            ListFragment fragment =  new ListSectionFragment();
+
+            return fragment;
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return NUMTABS;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+            case 0:
+                return getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return getString(R.string.title_section2).toUpperCase(l);
+            case 2:
+                return getString(R.string.title_section3).toUpperCase(l);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A dummy fragment representing a section of the app, but that simply
+     * displays dummy text.
+     */
+    public static class DummySectionFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        public static final String ARG_SECTION_NUMBER = "section_number";
+    }
+}
+</code></pre>
+
+<p>Problem solved... the actionbars caused the problem. Following will fix it...</p>
+
+<p>In MainActivity.java after onCreate has to be:</p>
+
+<pre><code>getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
+    setContentView(R.layout.activity_main);
+</code></pre>

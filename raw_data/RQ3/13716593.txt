@@ -1,0 +1,33 @@
+<p>I have a screen which uses ViewPager + actionbar Sherlock tabs. I have a <code>setOnPageChangeListener</code> set on the pager and it does the following:</p>
+
+<pre><code>@Override
+public void onPageSelected(final int position) {
+    actionBar.setSelectedNavigationItem(position);
+}
+</code></pre>
+
+<p>This works just fine in portrait mode and even in landscape if I only have few tabs and all the tabs are displayed. However if I add few more tabs in landscape, these collapse into a single drop-down widget. When I page through the ViewPager the <code>setSelectedNavigationItem</code> method is executed but now it has no effect on the drop-down selection: it stays at the last selected value. Which is really bad since user is missing a visual clue: tab may say "One" but user is already on page #6. </p>
+
+<p>Is there a way to programmatically change which tab to display based on the position?</p>
+
+<p>P.S. I know why this happens:
+Here's code from com.android.internal.app.ActionBarImpl:</p>
+
+<pre><code>public void setSelectedNavigationItem(int position) {
+    switch (mActionView.getNavigationMode()) {
+    case NAVIGATION_MODE_TABS:
+        selectTab(mTabs.get(position));
+        break;
+    case NAVIGATION_MODE_LIST:
+        mActionView.setDropdownSelectedPosition(position);
+        break;
+    default:
+        throw new IllegalStateException(
+                "setSelectedNavigationIndex not valid for current navigation mode");
+    }
+}
+</code></pre>
+
+<p>And when I step through that I can see that the navigation mode is still NAVIGATION_MODE_TABS though tabs are displayed as list. Now - my knee jerk reaction is to put code into onConfigurationChanged to set navigation mode appropriately but shouldn't this happen automatically?</p>
+
+<p>P.P.S. And there's <a href="https://code.google.com/p/android/issues/detail?id=38500">Android bug</a> filed for it already that contains the patch</p>

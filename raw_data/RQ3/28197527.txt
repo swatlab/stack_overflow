@@ -1,0 +1,121 @@
+<p>I have an <code>Activity</code> with a <code>Fragment</code> containing a <code>ListView</code> with items, on which the user can click and invoke the Contextual Action Mode.</p>
+
+<p>What I like to happen is as the <a href="http://developer.android.com/guide/topics/ui/menus.html#CAB" rel="nofollow">documentation</a> is stating:</p>
+
+<blockquote>
+  <p>The contextual action bar is not necessarily associated with the
+  action bar. They operate independently, even though the contextual
+  action bar <strong>visually overtakes the action bar position</strong>.</p>
+</blockquote>
+
+<p>However, this is the behavior I'm currently experiencing. As of now, the Contextual Action Mode appears <strong>above</strong> the <code>ActionBar</code>, as the figure below shows.</p>
+
+<p><img src="http://i.stack.imgur.com/Gvd5M.jpg" alt="current"></p>
+
+<p>What I've tried so far without success:</p>
+
+<ul>
+<li>Moving the <code>ActionMode</code> logic from the <code>Fragment</code> to the host <code>Activity</code>.</li>
+<li>Setting <code><item name="windowActionModeOverlay">true</item></code> in my theme.</li>
+<li>Call <code>getActivity().getMenuInflater()</code> instead of <code>mode.getMenuInflater()</code>.</li>
+</ul>
+
+<p>This is my code where I invoke the Contextual Action Menu</p>
+
+<pre><code>public class NotesFragment extends Fragment implements View.OnClickListener{
+
+    private ActionMode mActionMode;
+
+    @Override
+    public void checkBoxChecked(Note which) {
+        if (mActionMode == null)
+            mActionMode = getActivity().startActionMode(mActionModeCallback);
+    }
+
+    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+
+        // Called when the action mode is created; startActionMode() was called
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            // Inflate a menu resource providing context menu items
+            MenuInflater inflater = mode.getMenuInflater();
+            inflater.inflate(R.menu.context, menu);
+            return true;
+        }
+
+        // Called each time the action mode is shown. 
+        // Always called after onCreateActionMode, but
+        // may be called multiple times if the mode is invalidated.
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+
+            return false; // Return false if nothing is done
+        }
+
+        // Called when the user selects a contextual menu item
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.context_delete:
+                    //Do work unrelated to topic
+                    mode.finish(); // Action picked, so close the CAB
+                    return true;
+                case R.id.context_move:
+                    //Do work unrelated to topic
+                    mode.finish(); // Action picked, so close the CAB
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        // Called when the user exits the action mode
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            mActionMode = null;
+        }
+    };
+
+}
+</code></pre>
+
+<p>EDIT:
+This is the <code>Activity</code>, in which the <code>Fragment</code> resides:</p>
+
+<pre><code>public class MainActivity extends ActionBarActivity implements DialogFragmentMoveNote.DialogFragmentMoveNoteListener,
+        DialogFragmentRemoveNote.DialogFragmentRemoveNoteListener, DialogFragmentAddNewFolder.DialogFragmentAddNewFolderListener,
+        DialogFragmentDeleteFolder.DialogFragmentDeleteFolderListener {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+
+    @Override
+    public void onAddNewFolderPositiveClick(Folder folder) {
+        //Tell the fragment to do work
+    }
+
+    @Override
+    public void onRemoveNotesPositiveClick() {
+        //Tell the fragment to do work
+    }
+
+    @Override
+    public void onMoveNotePositiveClick(String chosenFolder) {
+        //Tell the fragment to do work
+    }
+
+    @Override
+    public void onDeleteFolderPositiveClick() {
+        //Tell the fragment to do work
+    }
+
+    private void displayNoteDetailsFromWidget(String noteId){
+        //Tell the fragment to do work
+    }
+}
+</code></pre>
+
+<p>Why is the Contextual Action Menu not visually overtaking the <code>ActionBar</code>, as the documentation state is should?</p>

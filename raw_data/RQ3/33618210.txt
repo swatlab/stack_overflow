@@ -1,0 +1,160 @@
+<p>I am attempting to send a <code>string</code> to a <code>PHP</code> file on a remote server using <code>POST</code> and `GET, the PHP then writes the string to a text file. </p>
+
+<p>My code (below) compiles and runs without error, however when the submit button is pressed there is <strong>no action</strong>. I.e. the <code>toast</code> does not display and when I check the <code>text file</code> that is written to from my <code>PHP</code> file on the server, there is nothing.</p>
+
+<p>Am I missing something very <em>obvious</em> that would cause this not to work? (note: "my_url" is there on purpose, that is not the error)</p>
+
+<p><strong>Android Code:</strong></p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+    @Bind(R.id.tvTitle)
+    TextView title;
+    @Bind(R.id.etName)
+    EditText name;
+    @Bind(R.id.etEmail)
+    EditText email;
+    @Bind(R.id.etIdea)
+    EditText idea;
+    @Bind(R.id.btnSubmit)
+    Button submit;
+
+    String toSubmit = "";
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+
+        submit.setOnClickListener(new Button.OnClickListener() {
+                    public void onClick(View v) {
+
+                      try{
+                            new MyTask().execute();
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+                });
+    }
+
+    public static long copyLarge(InputStream input, OutputStream output)
+            throws IOException {
+        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+        long count = 0;
+        int n = 0;
+        while (-1 != (n = input.read(buffer))) {
+            output.write(buffer, 0, n);
+            count += n;
+        }
+        return count;
+    }
+
+    public static int copy(InputStream input, OutputStream output) throws IOException {
+        long count = copyLarge(input, output);
+        if (count > Integer.MAX_VALUE) {
+            return -1;
+        }
+        return (int) count;
+    }
+
+    private class MyTask extends AsyncTask<String, Void, String>
+    {
+        boolean success = false;
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            StringBuilder respData = new StringBuilder();
+            InputStream stream = null;
+            OutputStream os = null;
+            HttpURLConnection httpUrlConnection;
+            URLConnection conn;
+            URL url;
+
+            try {
+
+                url = new URL("my_url/recieveString.php");
+                conn = url.openConnection();
+                httpUrlConnection = (HttpURLConnection) conn;
+
+                httpUrlConnection.setUseCaches(false);
+                //httpUrlConnection.setRequestProperty("User-Agent", "App");
+                httpUrlConnection.setConnectTimeout(30000);
+                httpUrlConnection.setReadTimeout(30000);
+                httpUrlConnection.setRequestMethod("POST");
+                httpUrlConnection.setDoOutput(true);
+                os = httpUrlConnection.getOutputStream();
+
+                toSubmit = "test";
+
+                stream = new ByteArrayInputStream(toSubmit.getBytes(StandardCharsets.UTF_8));
+
+                copy(stream, os);
+
+                httpUrlConnection.connect();
+
+                int responseCode = httpUrlConnection.getResponseCode();
+
+                if (200 == responseCode) {
+                    InputStream is = httpUrlConnection.getInputStream();
+                    InputStreamReader isr = null;
+                    try {
+                        isr = new InputStreamReader(is);
+                        char[] buffer = new char[1024];
+                        int len;
+                        while ((len = isr.read(buffer)) != -1) {
+                            respData.append(buffer, 0, len);
+                        }
+                    } finally {
+                        if (isr != null) {
+                            isr.close();
+                            success = true;
+                        }
+                    }
+                    is.close();
+                } else {
+                    // use below to get error stream
+                    //inputStream = httpUrlConnection.getErrorStream();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                stream.close();
+                os.flush();
+
+                    os.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return "done";
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            Toast toast = Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_SHORT);
+
+        }
+    }
+
+}
+</code></pre>
+
+<p><strong>PHP file:</strong></p>
+
+<pre><code><?php 
+
+$stringRecieved=$_GET["toSubmit"]; 
+
+$file = 'list.txt';
+
+// Write the contents to the file, 
+file_put_contents($file, $stringRecieved, FILE_APPEND | LOCK_EX);
+?>
+</code></pre>

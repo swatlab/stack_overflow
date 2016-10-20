@@ -1,0 +1,60 @@
+<p>I am new to Android and following some tutorials online. However, fragments appeared to have changed since the tutorial was published. Now I am stuck on an error that I cannot seem to resolve. I am getting the error "The return type is incompatible with <code>FragmentPagerAdapter.getItem(int)</code>" on the return type of the <code>getItem</code> method. Any idea why? If I change the return type to <code>FriendsFragment</code>, I get the same error. If I change the return type to Fragment then I get errors inside the method. Please help! Thanks in advanced. Here is my code: </p>
+
+<pre><code>package com.erinkabbash.ribbit;
+
+import java.util.Locale;
+
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.content.Context;
+import android.support.v13.app.FragmentPagerAdapter;
+import android.support.v4.app.ListFragment;
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    protected Context mContext;
+
+    public SectionsPagerAdapter(Context context, FragmentManager fm) {
+        super(fm);
+        mContext = context;
+    }
+
+    @Override
+    public InboxFragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a PlaceholderFragment (defined as a static inner class
+        // below).
+
+        switch(position){
+            case 0:
+                return new InboxFragment();
+            case 1:
+                return new FriendsFragment();
+        }
+
+        return null;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+            case 0:
+                return mContext.getString(R.string.title_section1).toUpperCase(l);
+            case 1:
+                return mContext.getString(R.string.title_section2).toUpperCase(l);
+
+        }
+        return null;
+    }
+}
+</code></pre>

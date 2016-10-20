@@ -1,0 +1,440 @@
+<p>The app works as intended. A stock symbol is entered, enter button is pressed, and the data is pulled from yahoo webservice and is displayed on screen. However, after the first stock symbol is displayed, if i enter a new stock symbol, the app crashes.</p>
+
+<p>MainActivity.java</p>
+
+<pre><code>package com.example.quickstockinfo;
+
+
+import java.io.IOException; 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+ import org.apache.http.HttpResponse;
+ import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+
+
+
+import android.app.Activity;  
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TableRow;
+import android.widget.TextView;
+
+public class MainActivity extends Activity {
+
+EditText stocksymbol;
+String stocksymbolstring;
+
+Button enterbutton;
+
+TextView CompanyName;
+TextView YearLow;
+TextView YearHigh;
+TextView DaysLow;
+TextView DaysHigh;
+TextView LastPrice;
+TextView Change;
+TextView DailyPriceRange;
+
+// XML node keys
+    static final String KEY_ITEM = "quote"; // parent node
+    static final String KEY_NAME = "Name";
+    static final String KEY_YEAR_LOW = "YearLow";
+    static final String KEY_YEAR_HIGH = "YearHigh";
+    static final String KEY_DAYS_LOW = "DaysLow";
+    static final String KEY_DAYS_HIGH = "DaysHigh";
+    static final String KEY_LAST_TRADE_PRICE = "LastTradePriceOnly";
+    static final String KEY_CHANGE = "Change";
+    static final String KEY_DAYS_RANGE = "DaysRange";
+
+    // XML Data to Retrieve
+    String name = "";
+    String yearLow = "";
+    String yearHigh = "";
+    String daysLow = "";
+    String daysHigh = "";
+    String lastTradePriceOnly = "";
+    String change = "";
+    String daysRange = "";
+
+    // Used to make the URL to call for XML data
+    String yahooURLFirst = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quote%20where%20symbol%20in%20(%22";
+    String yahooURLSecond = "%22)&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+
+    // NEW STUFF
+
+    // Holds values pulled from the XML document using XmlPullParser
+    String[][] xmlPullParserArray = {{"AverageDailyVolume", "0"}, {"Change", "0"}, {"DaysLow", "0"},
+            {"DaysHigh", "0"}, {"YearLow", "0"}, {"YearHigh", "0"},
+            {"MarketCapitalization", "0"}, {"LastTradePriceOnly", "0"}, {"DaysRange", "0"},
+            {"Name", "0"}, {"Symbol", "0"}, {"Volume", "0"},
+            {"StockExchange", "0"}};
+
+    int parserArrayIncrement = 0;
+
+    // END OF NEW STUFF
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    stocksymbol = (EditText)findViewById(R.id.stocksymbol);
+
+    enterbutton = (Button)findViewById(R.id.enterbutton);
+
+    CompanyName = (TextView)findViewById(R.id.stockName);
+    YearLow = (TextView)findViewById(R.id.YearLow);
+    YearHigh = (TextView)findViewById(R.id.YearHigh);
+    DaysLow = (TextView)findViewById(R.id.DaysLow);
+    DaysHigh = (TextView)findViewById(R.id.DaysHigh);
+    LastPrice = (TextView)findViewById(R.id.LastPrice);
+    Change = (TextView)findViewById(R.id.Change);
+    DailyPriceRange = (TextView)findViewById(R.id.DailyPriceRange);
+
+    enterbutton.setOnClickListener(enterbuttonlistener);
+
+
+}
+
+public OnClickListener enterbuttonlistener = new OnClickListener(){
+
+    public void onClick(View v) {
+
+        if(stocksymbol.getText().length() > 0){
+
+
+            stocksymbolstring = stocksymbol.getText().toString();
+
+            stocksymbol.setText(""); // Clear EditText box
+
+            // Force the keyboard to close
+            InputMethodManager imm = (InputMethodManager)getSystemService(
+                      Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(stocksymbol.getWindowToken(), 0);
+        } else {
+
+            // Create an alert dialog box
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+            // Set alert title 
+            builder.setTitle("invalid stock symbol");
+
+            // Set the value for the positive reaction from the user
+            // You can also set a listener to call when it is pressed
+            builder.setPositiveButton("ok", null);
+
+            // The message
+            builder.setMessage("missing stock symbol");
+
+            // Create the alert dialog and display it
+            AlertDialog theAlertDialog = builder.create();
+            theAlertDialog.show();
+
+
+
+        }// end else
+
+
+        // Create the YQL query
+        final String yqlURL = yahooURLFirst + stocksymbolstring + yahooURLSecond;
+
+        new MyAsyncTask().execute(yqlURL);
+
+    } //end onClick view v
+
+
+}; //end button click event
+
+
+
+private class MyAsyncTask extends AsyncTask<String, String, String>{
+
+    // String... arg0 is the same as String[] args
+    protected String doInBackground(String... args) {
+
+        // NEW STUFF
+
+        try{
+
+            Log.d("test","In XmlPullParser");
+
+            // It is recommended to use the XmlPullParser because
+            // it is faster and requires less memory then the DOM API
+
+            // XmlPullParserFactory provides you with the ability to 
+            // create pull parsers that parse XML documents
+
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+
+            // Parser supports XML namespaces
+              factory.setNamespaceAware(true);
+
+              // Provides the methods needed to parse XML documents
+              XmlPullParser parser = factory.newPullParser(); 
+
+              // InputStreamReader converts bytes of data into a stream
+              // of characters
+
+              parser.setInput(new InputStreamReader(getUrlData(args[0])));  
+
+              // Passes the parser and the first tag in the XML document
+              // for processing
+
+              beginDocument(parser,"query");
+
+              // Get the currently targeted event type, which starts
+              // as START_DOCUMENT
+
+              int eventType = parser.getEventType();
+
+              do{
+
+                // Cycles through elements in the XML document while
+                // neither a start or end tag are found
+
+                  nextElement(parser);
+
+                  // Switch to the next element
+
+                  parser.next();
+
+                  // Get the current event type
+
+                  eventType = parser.getEventType();
+
+                  // Check if a value was found between 2 tags
+
+                  if(eventType == XmlPullParser.TEXT){
+
+                      // Get the text from between the tags
+
+                      String valueFromXML = parser.getText();
+
+                      // Store it in an array with the corresponding tag
+                      // value
+
+                      xmlPullParserArray[parserArrayIncrement++][1] = valueFromXML;
+
+                  }
+
+              } while (eventType != XmlPullParser.END_DOCUMENT) ;  
+
+        }
+
+        catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (XmlPullParserException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }  
+
+        finally {
+        }
+
+        // END OF NEW STUFF
+
+        return null;
+    }
+
+    // NEW STUFF
+
+    public InputStream getUrlData(String url) throws URISyntaxException, 
+    ClientProtocolException, IOException {
+
+        // Used to get access to HTTP resources
+
+        DefaultHttpClient client = new DefaultHttpClient();
+
+        // Retrieves information from the URL
+
+        HttpGet method = new HttpGet(new URI(url));
+
+        // Gets a response from the client on whether the 
+        // connection is stable
+
+        HttpResponse res = client.execute(method);
+
+        // An HTTPEntity may be returned using getEntity() which tells 
+        // the system where the content is coming from
+
+        return res.getEntity().getContent();
+    }
+
+    public final void beginDocument(XmlPullParser parser, String firstElementName) throws XmlPullParserException, IOException
+    {
+        int type;
+
+        // next() advances to the next element in the XML
+        // document being a starting or ending tag, or a value
+        // or the END_DOCUMENT
+
+        while ((type=parser.next()) != parser.START_TAG
+                       && type != parser.END_DOCUMENT) {
+                ;
+        }
+
+        // Throw an error if a start tag isn't found
+
+        if (type != parser.START_TAG) {
+            throw new XmlPullParserException("No start tag found");
+        }
+
+        // Verify that the tag passed in is the first tag in the XML
+        // document
+
+        if (!parser.getName().equals(firstElementName)) {
+                throw new XmlPullParserException("Unexpected start tag: found " + parser.getName() +
+                        ", expected " + firstElementName);
+        }
+    }
+
+    public final void nextElement(XmlPullParser parser) throws XmlPullParserException, IOException
+    {
+        int type;
+
+        // Cycles through elements in the XML document while
+        // neither a start or end tag are found
+
+        while ((type=parser.next()) != parser.START_TAG
+                       && type != parser.END_DOCUMENT) {
+                ;
+        }
+    }
+
+    // END OF NEW STUFF
+
+    // Changes the values for a bunch of TextViews on the GUI
+    protected void onPostExecute(String result){
+
+        CompanyName.setText(xmlPullParserArray[9][1]);
+        YearLow.setText("Year Low: " + xmlPullParserArray[4][1]);
+        YearHigh.setText("Year High: " + xmlPullParserArray[5][1]);
+        DaysLow.setText("Days Low: " + xmlPullParserArray[2][1]);
+        DaysHigh.setText("Days High: " + xmlPullParserArray[3][1]);
+        LastPrice.setText("Last Price: " + xmlPullParserArray[7][1]);
+        Change.setText("Change: " + xmlPullParserArray[1][1]);
+        DailyPriceRange.setText("Daily Price Range: " + xmlPullParserArray[8][1]);
+
+    }
+
+}
+
+}
+</code></pre>
+
+<p>LogCat:</p>
+
+<blockquote>
+  <p>07-20 15:29:02.914: W/asset(26417): Copying FileAsset 0x727a6928
+  (zip:/data/app/com.example.quickstockinfo-2.apk:/resources.arsc) to
+  buffer size 103468 to make it aligned. 07-20 15:29:03.064:
+  I/Adreno-EGL(26417): : EGL 1.4 QUALCOMM
+  build:
+  AU_LINUX_ANDROID_KK_3.5_RB1.04.04.02.006.066_msm8974_refs/tags/AU_LINUX_ANDROID_KK_3.5_RB1.04.04.02.006.066__release_AU
+  () 07-20 15:29:03.064: I/Adreno-EGL(26417): OpenGL ES Shader Compiler
+  Version: E031.24.00.06 07-20 15:29:03.064: I/Adreno-EGL(26417): Build
+  Date: 02/06/14 Thu 07-20 15:29:03.064: I/Adreno-EGL(26417): Local
+  Branch:  07-20 15:29:03.064: I/Adreno-EGL(26417): Remote Branch:
+  refs/tags/AU_LINUX_ANDROID_KK_3.5_RB1.04.04.02.006.066 07-20
+  15:29:03.064: I/Adreno-EGL(26417): Local Patches: NONE 07-20
+  15:29:03.064: I/Adreno-EGL(26417): Reconstruct Branch: NOTHING 07-20
+  15:29:04.734: I/InputMethodManager(26417): [startInputInner]
+  EditorInfo { packageName=com.example.quickstockinfo,
+  inputType=0x20001, imeOptions=0x40000006, privateImeOptions=null },
+  windowGainingFocus=android.view.ViewRootImpl$W@41b654b8,
+  mServedView=android.widget.EditText{41b47ae0 VFED..CL .F....ID
+  574,0-1080,118 #7f05003d app:id/stocksymbol} 07-20 15:29:07.674:
+  I/InputMethodManager(26417): [startInputInner] EditorInfo {
+  packageName=com.example.quickstockinfo, inputType=0x20001,
+  imeOptions=0x40000006, privateImeOptions=null },
+  windowGainingFocus=null, mServedView=android.widget.EditText{41b47ae0
+  VFED..CL .F...... 574,0-1080,118 #7f05003d app:id/stocksymbol} 07-20
+  15:29:07.704: D/test(26417): In XmlPullParser 07-20 15:29:07.914:
+  D/libc(26417): [NET] getaddrinfo+,hn 19(0x71756572792e79),sn(),family
+  0,flags 4 07-20 15:29:07.914: D/libc(26417): [NET] getaddrinfo-,err=8
+  07-20 15:29:07.914: D/libc(26417): [NET] getaddrinfo+,hn
+  19(0x71756572792e79),sn(),family 0,flags 1024 07-20 15:29:07.914:
+  D/libc(26417): [NET] getaddrinfo-, 1 07-20 15:29:07.914:
+  D/libc(26417): [NET] getaddrinfo_proxy+ 07-20 15:29:07.934:
+  D/libc(26417): [NET] getaddrinfo_proxy-, success 07-20 15:29:07.934:
+  I/global(26417): call createSocket() return a new socket. 07-20
+  15:29:07.934: D/libc(26417): [NET] getaddrinfo+,hn
+  14(0x39382e3133372e),sn(),family 0,flags 4 07-20 15:29:07.934:
+  D/libc(26417): [NET] getaddrinfo-, SUCCESS 07-20 15:29:20.114:
+  I/InputMethodManager(26417): [startInputInner] EditorInfo {
+  packageName=com.example.quickstockinfo, inputType=0x20001,
+  imeOptions=0x40000006, privateImeOptions=null },
+  windowGainingFocus=null, mServedView=android.widget.EditText{41b47ae0
+  VFED..CL .F...... 574,0-1080,118 #7f05003d app:id/stocksymbol} 07-20
+  15:29:20.174: D/test(26417): In XmlPullParser 07-20 15:29:20.204:
+  D/libc(26417): [NET] getaddrinfo+,hn 19(0x71756572792e79),sn(),family
+  0,flags 4 07-20 15:29:20.204: D/libc(26417): [NET] getaddrinfo-,err=8
+  07-20 15:29:20.204: D/libc(26417): [NET] getaddrinfo+,hn
+  19(0x71756572792e79),sn(),family 0,flags 1024 07-20 15:29:20.204:
+  D/libc(26417): [NET] getaddrinfo-, 1 07-20 15:29:20.204:
+  D/libc(26417): [NET] getaddrinfo_proxy+ 07-20 15:29:20.214:
+  D/libc(26417): [NET] getaddrinfo_proxy-, success 07-20 15:29:20.214:
+  I/global(26417): call createSocket() return a new socket. 07-20
+  15:29:20.214: D/libc(26417): [NET] getaddrinfo+,hn
+  14(0x39382e3133372e),sn(),family 0,flags 4 07-20 15:29:20.214:
+  D/libc(26417): [NET] getaddrinfo-, SUCCESS 07-20 15:29:20.374:
+  W/dalvikvm(26417): threadid=12: thread exiting with uncaught exception
+  (group=0x416ebe18) 07-20 15:29:20.374: E/AndroidRuntime(26417): FATAL
+  EXCEPTION: AsyncTask #2 07-20 15:29:20.374: E/AndroidRuntime(26417):
+  Process: com.example.quickstockinfo, PID: 26417 07-20 15:29:20.374:
+  E/AndroidRuntime(26417): java.lang.RuntimeException: An error occured
+  while executing doInBackground() 07-20 15:29:20.374:
+  E/AndroidRuntime(26417):  at
+  android.os.AsyncTask$3.done(AsyncTask.java:300) 07-20 15:29:20.374:
+  E/AndroidRuntime(26417):  at
+  java.util.concurrent.FutureTask.finishCompletion(FutureTask.java:355)
+  07-20 15:29:20.374: E/AndroidRuntime(26417):  at
+  java.util.concurrent.FutureTask.setException(FutureTask.java:222)
+  07-20 15:29:20.374: E/AndroidRuntime(26417):  at
+  java.util.concurrent.FutureTask.run(FutureTask.java:242) 07-20
+  15:29:20.374: E/AndroidRuntime(26417):    at
+  android.os.AsyncTask$SerialExecutor$1.run(AsyncTask.java:231) 07-20
+  15:29:20.374: E/AndroidRuntime(26417):    at
+  java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1112)
+  07-20 15:29:20.374: E/AndroidRuntime(26417):  at
+  java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:587)
+  07-20 15:29:20.374: E/AndroidRuntime(26417):  at
+  java.lang.Thread.run(Thread.java:864) 07-20 15:29:20.374:
+  E/AndroidRuntime(26417): Caused by:
+  java.lang.ArrayIndexOutOfBoundsException: length=13; index=13 07-20
+  15:29:20.374: E/AndroidRuntime(26417):    at
+  com.example.quickstockinfo.MainActivity$MyAsyncTask.doInBackground(MainActivity.java:231)
+  07-20 15:29:20.374: E/AndroidRuntime(26417):  at
+  com.example.quickstockinfo.MainActivity$MyAsyncTask.doInBackground(MainActivity.java:1)
+  07-20 15:29:20.374: E/AndroidRuntime(26417):  at
+  android.os.AsyncTask$2.call(AsyncTask.java:288) 07-20 15:29:20.374:
+  E/AndroidRuntime(26417):  at
+  java.util.concurrent.FutureTask.run(FutureTask.java:237) 07-20
+  15:29:20.374: E/AndroidRuntime(26417):    ... 4 more</p>
+</blockquote>

@@ -1,0 +1,74 @@
+<p>I have the maniactivity which extends FragmentActivity(2 tabs with fragment).  I need to put the following listview acitivity in a fragment . Or please tell me how to how can I make a list fragment with these kind of resources.</p>
+
+<pre><code>public class MainActivity extends Activity {
+    private static final String TAG = MainActivity.class.getSimpleName();
+
+    private ListView List;
+    // Navigation drawer title
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+    private List<Category> albumsList;
+    private ArrayList<NavDrawerItem> navDrawerItems;
+    private NavDrawerListAdapter adapter;
+
+    @SuppressLint("NewApi")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+
+        List = (ListView) findViewById(R.id.list_album);
+
+        navDrawerItems = new ArrayList<NavDrawerItem>();
+
+
+        // Getting the albums from shared preferences
+        albumsList = AppController.getInstance().getPrefManger().getCategories();
+
+
+         // Insert "Recently Added" in navigation drawer first position
+        Category recentAlbum = new Category(null,
+                getString(R.string.nav_drawer_recently_added));
+
+        albumsList.add(0, recentAlbum);
+
+        // Loop through albums in add them to navigation drawer adapter
+        for (Category a : albumsList) {
+            navDrawerItems.add(new NavDrawerItem(a.getId(), a.getTitle()));
+        }
+
+        // Setting the nav drawer list adapter
+        adapter = new NavDrawerListAdapter(getApplicationContext(),
+                navDrawerItems);
+        List.setAdapter(adapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    /**
+     * On menu item selected
+     * */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // toggle nav drawer on selecting action bar app icon/title
+
+        // Handle action bar actions click
+        switch (item.getItemId()) {
+        case R.id.action_settings:
+            // Selected settings menu item
+            // launch Settings activity
+            Intent intent = new Intent(MainActivity.this,
+                    SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>

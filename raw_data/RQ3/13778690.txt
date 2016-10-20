@@ -1,0 +1,78 @@
+<p>Below is my xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="5dp" xmlns:app="http://schemas.android.com/apk/res/com.infibeam.allthingsd.apps.spinr">
+
+   <com.asyncimagewidget.AsyncImageView
+        android:id="@+id/discover_list_icon"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerHorizontal="true"
+        app:progressId="@+id/asyncLoadingProgress"
+         />
+    <ProgressBar
+        android:id="@+id/asyncLoadingProgress"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerHorizontal="true"
+     />
+</RelativeLayout>
+</code></pre>
+
+<p>You can see </p>
+
+<blockquote>
+  <p>app:progressId="@+id/asyncLoadingProgress"</p>
+</blockquote>
+
+<p>Which is a custom attribute I had defined in the attrs.xml which is as follows.</p>
+
+
+
+<pre><code><resources>
+    <declare-styleable name="AsyncImageView">
+        <attr name="defaultSrc" format="reference" />
+        <attr name="parentId" format="reference" />
+        <attr name="progressId" format="reference" />
+        <attr name="url" format="string" />
+        <attr name="inDensity">
+            <enum name="ldpi" value="120" />
+            <enum name="mdpi" value="160" />
+            <enum name="hdpi" value="240" />
+            <enum name="xhdpi" value="320" />
+        </attr>
+    </declare-styleable>
+</resources>
+</code></pre>
+
+<p><strong>Now My question is I want to obtain the resource identifier of Progressbar in constructor of AsyncImageView which is as follows.</strong></p>
+
+<pre><code>public AsyncImageView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
+        initializeDefaultValues();
+
+        TypedArray a = context.obtainStyledAttributes(attrs,
+                R.styleable.AsyncImageView, defStyle, 0);
+
+        Drawable d = a.getDrawable(R.styleable.AsyncImageView_defaultSrc);
+        if (d != null) {
+            setDefaultImageDrawable(d);
+        }
+
+        final int inDensity = a
+                .getInt(R.styleable.AsyncImageView_inDensity, -1);
+        if (inDensity != -1) {
+            setInDensity(inDensity);
+        }
+
+        setUrl(a.getString(R.styleable.AsyncImageView_url));
+
+        a.recycle();
+
+    }
+</code></pre>

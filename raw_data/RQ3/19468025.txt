@@ -1,0 +1,350 @@
+<p>This is my first experience with android. I'm trying to add items to my ListView.
+I use Tabs, and the only way to see that the item was added is to change tab and then come back to the first tab.</p>
+
+<p>I searched around, and I've always found</p>
+
+<pre><code>adapter.notifyDataSetChanged();
+</code></pre>
+
+<p>but doesn't work for me.</p>
+
+<p>I have created the project with, as I said, Fixed Tabs + Swipe.
+I simply want to have listviews which rows have an EditText, a Spinner and a Button.
+On the bottom of the Fragment used for the tab, I have an ImageButton. I want to click on it and have a new Row.</p>
+
+<p>my custom Adapter:</p>
+
+<pre><code>package com.andreapivetta.uconverter;
+
+import java.util.ArrayList;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+
+public class CustomAdapter extends ArrayAdapter<String> {
+private final Context context;
+private final int resourceID;
+
+    public CustomAdapter(Context context, int resource, ArrayList<String> bah) {
+        super(context, resource, bah);
+
+        this.context = context;
+        this.resourceID = resource;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View rowView = inflater.inflate(resourceID, parent, false);
+
+        return rowView;
+    }
+}
+</code></pre>
+
+<p>fragment_main_dummy.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:paddingBottom="@dimen/activity_vertical_margin"
+android:paddingLeft="@dimen/activity_horizontal_margin"
+android:paddingRight="@dimen/activity_horizontal_margin"
+android:paddingTop="@dimen/activity_vertical_margin"
+tools:context=".MainActivity$DummySectionFragment" >
+
+<ListView
+    android:id="@+id/unitListView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+</ListView>
+
+<ImageButton
+    android:id="@+id/moreImageButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentRight="true"
+
+    android:contentDescription="@string/image_button_delete"
+    android:src="@android:drawable/ic_input_add" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>Row.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+<TextView
+    android:id="@+id/textView1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true" />
+
+<EditText
+    android:id="@+id/unitEditText"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/textView1"
+    android:ems="10"
+    android:inputType="numberDecimal" >
+
+    <requestFocus />
+</EditText>
+
+<Spinner
+    android:id="@+id/unitSpinner"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@+id/imageButton1"
+    android:layout_marginBottom="15dp"
+    android:layout_toRightOf="@+id/unitEditText" />
+
+<ImageButton
+    android:id="@+id/imageButton1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@+id/unitEditText"
+    android:layout_alignParentRight="true"
+
+    android:onClick="removeItem"
+
+    android:contentDescription="@string/image_button_delete"
+    android:src="@android:drawable/ic_menu_delete" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>MainActivity...</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements
+    ActionBar.TabListener {
+
+/**
+ * The {@link android.support.v4.view.PagerAdapter} that will provide
+ * fragments for each of the sections. We use a
+ * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+ * will keep every loaded fragment in memory. If this becomes too memory
+ * intensive, it may be best to switch to a
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+ */
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+/**
+ * The {@link ViewPager} that will host the section contents.
+ */
+ViewPager mViewPager;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    // Set up the action bar.
+    final ActionBar actionBar = getActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+    // Create the adapter that will return a fragment for each of the three
+    // primary sections of the app.
+    mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+    // Set up the ViewPager with the sections adapter.
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+    mViewPager.setAdapter(mSectionsPagerAdapter);
+
+    // When swiping between different sections, select the corresponding
+    // tab. We can also use ActionBar.Tab#select() to do this if we have
+    // a reference to the Tab.
+    mViewPager
+            .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    actionBar.setSelectedNavigationItem(position);
+                }
+            });
+
+    // For each of the sections in the app, add a tab to the action bar.
+    for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        // Create a tab with text corresponding to the page title defined by
+        // the adapter. Also specify this Activity object, which implements
+        // the TabListener interface, as the callback (listener) for when
+        // this tab is selected.
+        actionBar.addTab(actionBar.newTab()
+                .setText(mSectionsPagerAdapter.getPageTitle(i))
+                .setTabListener(this));
+    }
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+    // When the given tab is selected, switch to the corresponding page in
+    // the ViewPager.
+    mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+}
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a DummySectionFragment (defined as a static inner class
+        // below) with the page number as its lone argument.
+        Fragment fragment = new DummySectionFragment();
+        Bundle args = new Bundle();
+        args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        // Show 4 total pages.
+        return 4;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.title_section1).toUpperCase(l);
+        case 1:
+            return getString(R.string.title_section2).toUpperCase(l);
+        case 2:
+            return getString(R.string.title_section3).toUpperCase(l);
+        case 3:
+            return getString(R.string.title_section4).toUpperCase(l);
+        }
+        return null;
+    }
+}
+
+/**
+ * A dummy fragment representing a section of the app, but that simply
+ * displays dummy text.
+ */
+public static class DummySectionFragment extends Fragment {
+    /**
+     * The fragment argument representing the section number for this
+     * fragment.
+     */
+    ArrayList<String> myStringArray1 =  new ArrayList<String>();//new String[]{"Egzo","Eg","Egzona"};
+    String[] myStringArray2 = new String[]{"aaa","bbb","ccc"};
+    String[] myStringArray3 = new String[]{"ddd","eeee"};
+    String[] myStringArray4 = new String[]{"Cia","ci","Ciao"};
+    public static ArrayAdapter<String> adapter;
+
+    public static final String ARG_SECTION_NUMBER = "section_number";
+
+    public DummySectionFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main_dummy,container, false);
+        //TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
+        //dummyTextView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+
+        // ListView
+        ListView unitListView = (ListView) rootView.findViewById(R.id.unitListView);
+
+        switch(getArguments().getInt(ARG_SECTION_NUMBER)) {
+        case 1:
+            myStringArray1.add("mmm");
+
+            adapter = new CustomAdapter(getActivity(), R.layout.row, myStringArray1);
+            unitListView.setAdapter(adapter);
+            break;
+        case 2:
+            adapter = new ArrayAdapter<String>(getActivity(), R.layout.row, R.id.textView1, myStringArray2);
+            unitListView.setAdapter(adapter);
+            break;
+        case 3:
+            adapter = new ArrayAdapter<String>(getActivity(), R.layout.row, R.id.textView1, myStringArray3);
+            unitListView.setAdapter(adapter);
+            break;
+        case 4:
+            adapter = new ArrayAdapter<String>(getActivity(), R.layout.row, R.id.textView1, myStringArray4);
+            unitListView.setAdapter(adapter);
+            break;
+        }
+        unitListView.setOnItemClickListener(listViewOnClickListener);
+
+        // ImageButton
+        ImageButton moreImageButton = (ImageButton) rootView.findViewById(R.id.moreImageButton);
+        moreImageButton.setOnClickListener(moreListener);
+
+
+        return rootView;
+    }
+
+    public OnClickListener moreListener = new OnClickListener(){
+
+        @Override
+        public void onClick(View v) {
+            // TODO Auto-generated method stub
+
+            myStringArray1.add("Andrea");
+            adapter.clear();
+            adapter.addAll(myStringArray1);
+            adapter.notifyDataSetChanged();
+        }
+
+    };
+
+    public OnItemClickListener listViewOnClickListener = new OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                long arg3) {
+            // TODO Auto-generated method stub
+
+        }
+
+    };
+}
+
+}
+</code></pre>
+
+<p>Note that I'm working only with the first tab right now...</p>
+
+<p>What am I doing wrong? :)</p>

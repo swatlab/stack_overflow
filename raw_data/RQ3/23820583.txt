@@ -1,0 +1,147 @@
+<p>My model is</p>
+
+<pre><code>import javax.annotation.Nonnull;
+import javax.persistence.Entity;
+
+import org.joda.time.DateTime;
+
+@Entity
+public class Network extends AbstractEntity {
+    private long networkId;
+
+    private String name;
+
+    private boolean active;
+
+    private DateTime createdAt;
+
+    private String createdBy;
+
+    private DateTime updatedAt;
+
+    private String updatedBy;
+    ...
+}
+</code></pre>
+
+<p><code>AbstractEntity</code> is</p>
+
+<pre><code>@MappedSuperclass
+public class AbstractEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        final AbstractEntity abstractEntity = (AbstractEntity) obj;
+
+        return id.equals(abstractEntity.id);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return id == null ? 0 : id.hashCode();
+    }
+}
+</code></pre>
+
+<p>I have <code>Repository</code> where I want to add entity. I do</p>
+
+<pre><code>@Repository
+public class NetworkRepositoryImpl implements NetworkRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    @Nonnull
+    public List<Network> findAll() {
+        //noinspection JpaQlInspection
+        final Query query = entityManager.createQuery("SELECT e FROM Network e");
+        return (List<Network>)query.getResultList();
+    }
+
+    @Nonnull
+    @Override
+    @Transactional
+    public Network save(@Nonnull final Network network) {
+        if (network.getId() == null) {
+            entityManager.persist(network);
+            return network;
+        } else {
+            return entityManager.merge(network);
+        }
+    }
+}
+</code></pre>
+
+<p>and I <code>Test</code> it as</p>
+
+<pre><code>@Test
+public void testAllNetworks() {
+    final Network network = new Network(1, "US", true, DateTime.now());
+    final Network networkInDb = networkRepository.save(network);
+    assertNotNull(networkInDb.getId());
+    final List<Network> networks = networkRepository.findAll();
+    assertTrue(networks.isEmpty());
+}
+</code></pre>
+
+<p>my <code>ApplicationConfig</code> looks like  </p>
+
+<pre><code>@Configuration
+@ComponentScan
+@EnableJpaRepositories
+public class ApplicationConfig {
+    @Bean
+    public DataSource dataSource() {
+        final EmbeddedDatabaseBuilder embeddedDatabaseBuilder = new EmbeddedDatabaseBuilder();
+        embeddedDatabaseBuilder.setType(EmbeddedDatabaseType.H2);
+        return embeddedDatabaseBuilder.build();
+    }
+
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+        final HibernateJpaVendorAdapter jpaVendorAdapter = new HibernateJpaVendorAdapter();
+        jpaVendorAdapter.setDatabase(Database.H2);
+        jpaVendorAdapter.setGenerateDdl(true);
+
+        final LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+        localContainerEntityManagerFactoryBean.setJpaVendorAdapter(jpaVendorAdapter);
+        localContainerEntityManagerFactoryBean.setPackagesToScan("com.org.comma.persistence");
+        localContainerEntityManagerFactoryBean.setDataSource(dataSource());
+        localContainerEntityManagerFactoryBean.setPersistenceUnitName("test-comma-pu");
+
+        return localContainerEntityManagerFactoryBean;
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager() {
+        final JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+        return transactionManager;
+    }
+}
+</code></pre>
+
+<p>My test fails on line </p>
+
+<pre><code>    assertNotNull(networkInDb.getId());
+</code></pre>
+
+<p>meaning the entity is not persisted</p>
+
+<p>What I am doing wrong here?</p>

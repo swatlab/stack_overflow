@@ -1,0 +1,333 @@
+<p>I do not get any error here but i am failing to display anything on the screen
+i have 2 XML file main.xml has a list view with id @id/android:list and another xml has a relative layout with 3 text views i am trying to display the data from the database but nothing seems to come. I tried the simple list layout and then i was able to display the content of one of the columns in the database. But when i try this for a custom layout nothing is displayed except blank lines.</p>
+
+<p>This is the main activity that starts when the applicaton is launched.</p>
+
+<pre><code>public class Db extends ListActivity {
+private SQLiteDatabase newDb;
+DataBaseHelper myDbHelper = new DataBaseHelper(this);
+public ListAdapter adapter;
+private ArrayList<String> results = new ArrayList<String>();
+
+
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+setContentView(R.layout.main);
+    openDatabase();
+    newDb = myDbHelper.getReadableDatabase();   
+    Cursor c = newDb.rawQuery("SELECT _id, organisation, address, postcode FROM shoplist", null);
+    int i_organisation = c.getColumnIndex("organisation");
+    int i_id = c.getColumnIndex("_id");
+    int i_address = c.getColumnIndex("address");
+    int i_postcode = c.getColumnIndex("postcode");
+
+    //int count = c.getCount();
+    //String data[] = new String[count];
+    //int i= 0;
+    for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext())
+    {
+        String i1 = c.getString(c.getColumnIndex("_id"));
+        String i2 = c.getString(c.getColumnIndex("organisation"));
+        String i3 = c.getString(c.getColumnIndex("address"));
+        results.add(i1);
+
+        //i++;
+    }
+    customAdapter adapter = new customAdapter(getApplicationContext(),
+            R.layout.main, results, results, results);
+    setListAdapter(adapter);
+
+
+
+
+
+}
+
+private long inserttodata() {
+    // TODO Auto-generated method stub
+    ContentValues cv = new ContentValues();
+    cv.put("id", "112");
+    cv.put("organisation","test" );
+     return newDb.insert("shoplist", null, cv);
+}
+
+private void openDatabase() {
+
+    try {
+
+        myDbHelper.createDataBase();
+
+    } catch (IOException ioe) {
+
+        throw new Error("Unable to create database");
+
+    }
+
+    try {
+
+        myDbHelper.openDataBase();
+
+
+    } catch (SQLException sqle) {
+System.out.println("failed to open");
+        throw sqle;
+
+    }
+    //String[] columns= new String[]{"_id", "Organisation"};
+    //cursor = newDb.query("Shop", columns, null, null, null, null, null);
+
+}
+
+}
+</code></pre>
+
+<p>My database helper class</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+//The Android's default system path of your application database.
+private static String DB_PATH = "/data/data/calc.three/databases/";
+
+private static String DB_NAME = "charity.db";
+
+private SQLiteDatabase myDataBase; 
+
+private final Context myContext;
+
+
+public DataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 1);
+    this.myContext = context;
+}   
+
+
+public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }else{
+
+        //By calling this method and empty database will be created into the default system path
+           //of your application so we are gonna be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each time you open the application.
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase(){
+
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = DB_PATH + DB_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transfering bytestream.
+ * */
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[2048];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    SQLiteDatabase.CursorFactory c = null;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, c , SQLiteDatabase.OPEN_READWRITE);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+}}
+</code></pre>
+
+<p>My custom adapter class</p>
+
+<pre><code> public class customAdapter extends ArrayAdapter<String> {
+static List<String> serialNo = new ArrayList<String>();
+static List<String> name = new ArrayList<String>();  
+static List<String> address = new ArrayList<String>();
+
+Context myContext;
+
+public customAdapter(Context context, int resource, List<String> c_serialNo,
+    List<String> c_name, List<String> c_address) {
+
+super(context, resource, c_serialNo);
+
+myContext = context;
+serialNo = c_serialNo;
+name = c_name;
+address = c_address;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+View v = convertView;
+if (v == null) {
+    LayoutInflater vi = (LayoutInflater) myContext
+            .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    v = vi.inflate(R.layout.main, null);
+}
+
+TextView tv_serialNo = (TextView) v.findViewById(R.id.serialNo);
+TextView tv_name = (TextView) v.findViewById(R.id.name);
+TextView tv_address = (TextView) v.findViewById(R.id.address);
+
+if (tv_serialNo != null) {
+    tv_serialNo.setText(serialNo.get(position));
+}
+if (tv_name != null) {
+    tv_name.setText(name.get(position));
+}
+if (tv_address!= null) {
+    tv_address.setText(address.get(position));
+}
+
+return v; }}
+</code></pre>
+
+<p>The main.xml file</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent">
+
+   <ListView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@id/android:list"></ListView>
+
+
+</LinearLayout>
+</code></pre>
+
+<p>The custom_list.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent">
+
+
+
+        <RelativeLayout android:layout_width="fill_parent" android:layout_height="80dp" >
+            <TextView android:id="@+id/serialNo"
+                android:layout_height="38dp"
+                android:layout_width="40dp"
+                android:padding="1dip"
+                android:gravity="top"                    
+                android:text="sn"
+                                    />
+            <TextView android:id="@+id/name"
+                android:layout_height="38dp"
+                android:layout_width="240dp"
+                android:padding="1dip"
+                android:gravity="top"                    
+                android:text="name"
+                android:layout_toRightOf="@id/serialNo"
+                                    />
+
+            <ImageButton
+                android:id="@+id/fav"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@+id/name"
+                android:src="@drawable/ic_launcher" />
+            <TextView android:id="@+id/address"
+                android:layout_height="40dp"
+                android:layout_width="300dp"
+                android:padding="1dip"
+
+                android:text="name"
+                android:layout_below="@id/serialNo"
+                                    />
+
+            <ImageView
+                android:id="@+id/source"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignBottom="@+id/address"
+                android:layout_toRightOf="@+id/address"
+                android:src="@drawable/pg" />
+
+        </RelativeLayout>
+
+
+</LinearLayout> 
+</code></pre>

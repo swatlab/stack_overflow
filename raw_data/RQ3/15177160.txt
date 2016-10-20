@@ -1,0 +1,59 @@
+<p>I'm new to Java/ Android development (I started learning last night) so it is entirely possible I'm doing something horrendously stupid. However, after more than an hour Googling I've come up with nothing. I'm using Eclipse as my editor.</p>
+
+<p>I'm reading the docs <a href="http://developer.android.com/reference/android/app/DialogFragment.html" rel="nofollow">here</a> for <code>AlertDialog</code>, which gives an example:</p>
+
+<pre><code>public static class MyAlertDialogFragment extends DialogFragment {
+
+    public static MyAlertDialogFragment newInstance(int title) {
+        MyAlertDialogFragment frag = new MyAlertDialogFragment();
+        Bundle args = new Bundle();
+        args.putInt("title", title);
+        frag.setArguments(args);
+        return frag;
+    }
+
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        int title = getArguments().getInt("title");
+
+        return new AlertDialog.Builder(getActivity())
+                .setIcon(R.drawable.alert_dialog_icon)
+                .setTitle(title)
+                .setPositiveButton(R.string.alert_dialog_ok,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            ((FragmentAlertDialog)getActivity()).doPositiveClick();
+                        }
+                    }
+                )
+                .setNegativeButton(R.string.alert_dialog_cancel,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            ((FragmentAlertDialog)getActivity()).doNegativeClick();
+                        }
+                    }
+                )
+                .create();
+    }
+}
+</code></pre>
+
+<p>I originally re-wrote it so I can start committing some of the methods to memory, but got an error <em>"FragmentAlertDialog cannot be resolved to a type"</em>. I hit <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> to make sure I had the proper imports, but still it didn't go away.</p>
+
+<p>So I copied/ pasted the example code and did the following, in this order:</p>
+
+<ol>
+<li>Hit <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> to get the imports right (using <code>android.app.DialogFragment</code>, not <code>android.support.v4.app.DialogFragment</code>)</li>
+<li>Declared my package at the top</li>
+<li>Replaced <code>R.string.alert_dialog_ok</code> and <code>R.string.alert_dialog_cancel</code> with <code>android.R.string.ok</code> and <code>android.R.string.cancel</code> respectively</li>
+<li>Removed <code>setIcon()</code>, as I don't have an icon to put in yet</li>
+</ol>
+
+<p>I'm still getting errors:</p>
+
+<ol>
+<li><code>FragmentAlertDialog</code> cannot be resolved to a type (x4)</li>
+<li>Illegal modifier for the class <code>MyAlertDialogFragment</code>; only <code>public</code>, <code>abstract</code> & <code>final</code> are permitted</li>
+</ol>
+
+<p>Am I doing something wrong, or is there something wrong with the example code?</p>

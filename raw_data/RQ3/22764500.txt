@@ -1,0 +1,124 @@
+<p>I am a newbie in Facebook integration with Android. I have integrated <code>Facebook</code> with <code>Android</code> in which I have to move on to another activity after successful Facebook login. I tested my app on the emulator and it runs fine. But when I run it on a mobile phone, the Facebook login page appears and I enter the username and password, and next nothing happens. 
+My code is as follows:</p>
+
+<pre><code>public class Login extends Activity {
+private static final String URL_PREFIX_FRIENDS = "https://graph.facebook.com/me/friends?access_token=";
+private ImageButton buttonLoginLogout;
+public static final String PREFS_PRIVATE = "PREFS_PRIVATE";
+private Button b;
+private Session.StatusCallback statusCallback = new SessionStatusCallback();
+Databasehandler db=new Databasehandler(this);
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.login);
+    buttonLoginLogout = (ImageButton)findViewById(R.id.imageButton1);
+    Settings.addLoggingBehavior(LoggingBehavior.INCLUDE_ACCESS_TOKENS);
+
+    Session session = Session.getActiveSession();
+    if (session == null) {
+        if (savedInstanceState != null) {
+            session = Session.restoreSession(this, null, statusCallback, savedInstanceState);
+        }
+        if (session == null) {
+            session = new Session(this);
+        }
+        Session.setActiveSession(session);
+        if (session.getState().equals(SessionState.CREATED_TOKEN_LOADED)) {
+            session.openForRead(new Session.OpenRequest(this).setCallback(statusCallback));
+        }
+    }
+
+    updateView();
+}
+
+@Override
+public void onStart() {
+    super.onStart();
+    Session.getActiveSession().addCallback(statusCallback);
+}
+
+@Override
+public void onStop() {
+    super.onStop();
+    Session.getActiveSession().removeCallback(statusCallback);
+}
+
+@Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    Session session = Session.getActiveSession();
+    Session.saveSession(session, outState);
+}
+@Override
+protected void onDestroy() {
+
+    super.onDestroy();
+
+}
+private void updateView() {
+    Session session = Session.getActiveSession();
+    if (session.isOpened()) {
+        Request.executeMeRequestAsync(session,new Request.GraphUserCallback() {
+
+            @Override
+            public void onCompleted(GraphUser user, Response response) {
+                // TODO Auto-generated method stub
+                final String t1=user.getId();
+                final String t2=user.getName();
+                 // SharedPreferences myPrefs =getSharedPreferences("myprefs",MODE_WORLD_READABLE);
+                int count=db.getme();
+                if(count==0)
+                {
+                map.put("uid",t1.toString());
+                map.put("name",t2.toString());
+                db.insertnewuser(map);
+                }
+            }
+        });
+
+
+        Intent ik=new Intent(Login.this,MainActivity.class);
+
+        ik.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(ik);
+
+
+    } else {
+
+        buttonLoginLogout.setOnClickListener(new OnClickListener() {
+            public void onClick(View view) { onClickLogin(); }
+        });
+    }
+}
+
+private void onClickLogin() {
+    Session session = Session.getActiveSession();
+    if (!session.isOpened() && !session.isClosed()) {
+        session.openForRead(new Session.OpenRequest(this).setCallback(statusCallback));
+    } else {
+        Session.openActiveSession(this, true, statusCallback);
+    }
+}
+
+
+private class SessionStatusCallback implements Session.StatusCallback {
+    @Override
+    public void call(Session session, SessionState state, Exception exception) {
+        updateView();
+    }
+}
+}
+</code></pre>
+
+<p>Error log:</p>
+
+<pre><code>         03-31 20:17:09.743: E/chromium(28558): external/chromium/net/socket/ssl_client_socket_openssl.cc:792: [0331/201709:ERROR:ssl_client_socket_openssl.cc(792)] handshake failed; returned 0, SSL error code 5, net_error -107
+</code></pre>

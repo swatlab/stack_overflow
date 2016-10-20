@@ -1,0 +1,138 @@
+<p>I removed my app from my device. Now when I try to run the app my preloaded SQLite database does not build and returns the error "no such table". Is this a problem with the device? Please help, I've been looking through thread on the blog <a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">reigndesign.com</a> where the original code came from with no avail.</p>
+
+<pre><code>// Class is used to create new instance of SQlite database and overwrite it with exisitng database in /assets.
+//  *Open Source code*
+
+public class DataBaseHelper extends SQLiteOpenHelper{
+
+    //The Android default system path of database .
+    private static String DB_PATH = "/data/data/com.myapps.creativeapp/databases/";
+    private static String DB_NAME = "wordlist";
+    private SQLiteDatabase myDataBase; 
+    private final Context myContext;
+    private static final String TAG = DataBaseHelper.class.getSimpleName();
+
+    /**
+     * Constructor
+     * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+     * @param context
+     */
+    public DataBaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }   
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+        Log.d(TAG, "into createDataBase() in DataBaseHelper class");
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            copyDataBase();//do nothing - database already exist
+        }else{
+            //empty database will be created into the default system path to be over written with database in /assets
+
+            this.getReadableDatabase();
+
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+            this.close();
+        }
+
+    }
+
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+        Log.d(TAG, "into checkDataBase() in DataBaseHelper class");
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+            //database does't exist yet.
+        }
+
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null;
+    }
+
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+        Log.d(TAG, "into copyDataBase() in DataBaseHelper class");
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException{
+        Log.d(TAG, "into openDataBase() in DataBaseHelper class");
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    }
+
+    @Override
+    public synchronized void close() {
+        Log.d(TAG, "close() database in DataBaseHelper class");
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        Log.d(TAG, "into onCreate() in DataBaseHelper class");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+}
+</code></pre>
+
+<p>Logcat:</p>
+
+<pre><code>06-07 07:24:00.144: ERROR/AndroidRuntime(12489): android.database.sqlite.SQLiteException: no such table: words: , while compiling: SELECT vrb FROM words ORDER BY RANDOM() LIMIT 1
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteCompiledSql.native_compile(Native Method)
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteCompiledSql.<init>(SQLiteCompiledSql.java:68)
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteProgram.compileSql(SQLiteProgram.java:143)
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteProgram.compileAndbindAllArgs(SQLiteProgram.java:361)
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:127)
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:94)
+06-07 07:24:00.144: ERROR/AndroidRuntime(12489):     at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:53)
+</code></pre>

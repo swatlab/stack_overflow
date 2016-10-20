@@ -1,0 +1,29 @@
+<p>Hi I have custom adapter which add ti gridview image</p>
+
+<p><img src="http://i.stack.imgur.com/7gxdg.png" alt="enter image description here"></p>
+
+<p>adapter code </p>
+
+<pre><code>public View getView(int position,  View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams((tools.getWidth(mContext) - 30) / 3, (tools.getWidth(mContext) - 30) / 3));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        //    imageView.setPadding(8, 8, 8, 8);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+
+        imageView.setImageBitmap(static_file[position]);
+        imageView.setTag(p[position]);
+
+        return imageView;
+    }
+</code></pre>
+
+<p>In minimap I have image </p>
+
+<p><img src="http://i.stack.imgur.com/KIbi6.png" alt="play button"></p>
+
+<p>Help me please how I can programmatically add 2-rd image in 1-st<img src="http://i.stack.imgur.com/FSJ6w.png" alt="final image "></p>

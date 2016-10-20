@@ -1,0 +1,171 @@
+<p>I use this tutorial:
+<a href="http://www.reigndesign.com/blog/using-your-own-sqlite-database-in-android-applications/" rel="nofollow">Tutorial Custom database</a></p>
+
+<p>I copy database from assets folder and copy it to my device(or emulator). Everything is correct. I see my database in DDMS perspective. But I want aslo upgrade my database sometimes so i did:</p>
+
+<pre><code>super(context, DB_NAME, null, 2); //changed version from 1 to 2
+</code></pre>
+
+<p>and modify onUpgrade method:</p>
+
+<pre><code>@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    if(newVersion > oldVersion){
+        this.myContext.deleteDatabase(DB_NAME);
+        try {
+            this.copyDataBase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+</code></pre>
+
+<p>But after run I have still old version of database on my device. How I can delete old version of database and copy new. DB_NAME is my database name(with format, but not path) and copyDataBase() is method that copy database to device(and it's work).  </p>
+
+<p>I paste my all code:</p>
+
+<pre><code>public class DataBaseHelper extends SQLiteOpenHelper{
+
+    private static String DB_PATH = "/data/data/sitcom.quiz/databases/";
+
+    private static String DB_NAME = "sitcoms.sqlite";
+
+    private SQLiteDatabase myDataBase; 
+
+    private final Context myContext;
+
+    public DataBaseHelper(Context context) {
+
+        super(context, DB_NAME, null, 4);
+        this.myContext = context;
+    }   
+
+    public void createDataBase() throws IOException{
+
+        boolean dbExist = checkDataBase();
+
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            this.getReadableDatabase();
+
+            try {
+
+                copyDataBase();
+
+            } catch (IOException e) {
+
+                throw new Error("Error copying database");
+
+            }
+        }
+
+    }
+
+    private boolean checkDataBase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+            //database does't exist yet.
+        }
+
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+            if(myDataBase != null)
+                myDataBase.close();
+
+            super.close();
+
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.d("adas", "dasd");
+
+        if(newVersion > oldVersion){
+            String myPath = DB_PATH + DB_NAME;
+            this.myContext.deleteDatabase(myPath);
+            try {
+                this.copyDataBase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+}
+</code></pre>
+
+<p>and my activity:</p>
+
+<pre><code>DataBaseHelper myDbHelper = new DataBaseHelper(this);
+        myDbHelper = new DataBaseHelper(this);
+
+        try {
+            myDbHelper.createDataBase();
+        } catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+        try {
+            myDbHelper.openDataBase();
+        }catch(SQLException sqle){
+            throw sqle;
+        }
+</code></pre>
+
+<p>Thanks if you can give me reason or only hint why this don' t work.</p>

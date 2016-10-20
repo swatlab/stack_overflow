@@ -1,0 +1,43 @@
+<p>I'm new to Android development so please bare with me.</p>
+
+<p>In my <code>MainActivity</code> I have 5 buttons, 4 of wich open a <code>WebViewActivity</code> to display static HTML-content. The 5th button goes to <code>PumpsActivity</code> which contains additional 5 buttons that also open the <code>WebViewActivity</code> to display static HTML-pages.</p>
+
+<h3>Now to the problem:</h3>
+
+<p>I'd like to be able to "navigate up" from the <code>WebViewActivity</code> to the appropriate parent activity. For instance: if the <code>WebViewActivity</code> was called from <code>MainActivity</code> than navigating up should take the user to <code>MainActivity</code>. This is easy implemented following the guide on <a href="http://developer.android.com/training/implementing-navigation/ancestral.html" rel="nofollow">android.developer.com</a>.
+But how do I get the <code>WebViewActivity</code> to navigate up to the <code>PumpsActivity</code>? <strong>How can I check from which activity the <code>WebViewActivity</code> was started?</strong></p>
+
+<p>Relevant code from my <code>WebViewActivity</code> (basically the same as in the <a href="http://developer.android.com/training/implementing-navigation/ancestral.html" rel="nofollow">guide</a>):</p>
+
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_web_view);
+
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    Intent intent = getIntent();
+    setTitle(intent.getStringExtra("WEBVIEW_TITLE"));
+
+    webview = (WebView) findViewById(R.id.wvMyWebView);
+    WebSettings webSettings = webview.getSettings();
+    webSettings.setJavaScriptEnabled(true);
+    webview.loadUrl(intent.getStringExtra("WEBVIEW_URL"));
+}
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+        case android.R.id.home:
+            // This is called when the Home (Up) button is pressed
+            // in the Action Bar.
+            Intent parentActivityIntent = new Intent(this, MainActivity.class);
+
+            parentActivityIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(parentActivityIntent);
+            finish();
+            return true;
+    }
+    return super.onOptionsItemSelected(item);
+}
+</code></pre>

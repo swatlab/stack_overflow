@@ -1,0 +1,126 @@
+<p>I need home button and 2 views to appear on my ActionBar. My textView is not exactly where it should be placed and home button disappears. Here is what I get:
+<a href="http://i.stack.imgur.com/GdXyg.png" rel="nofollow"><img src="http://i.stack.imgur.com/GdXyg.png" alt="enter image description here"></a></p>
+
+<p>This is what I need:
+<a href="http://i.stack.imgur.com/rQAUh.png" rel="nofollow"><img src="http://i.stack.imgur.com/rQAUh.png" alt="enter image description here"></a></p>
+
+<p>Code I used:</p>
+
+<pre><code>package com.example.trythis;
+
+import android.annotation.TargetApi;
+import android.app.ActionBar;
+import android.app.Activity;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.view.MenuItem;
+
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+public class BeginGameActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) 
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main_try);
+
+    }
+
+     @Override
+        public boolean onOptionsItemSelected(MenuItem item) 
+        {
+            switch (item.getItemId()) 
+            {
+            case android.R.id.home:
+                if(NavUtils.getParentActivityName(this) != null)
+                {
+                    NavUtils.navigateUpFromSameTask(this);
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
+
+
+     public boolean onCreateOptionsMenu(android.view.Menu menu) {
+            getMenuInflater().inflate(R.menu.main, menu);
+
+            android.app.ActionBar actionBar = getActionBar();
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+            actionBar.setDisplayShowHomeEnabled(false);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(true);
+            actionBar.setTitle("Назад");
+            actionBar.setDisplayUseLogoEnabled(false);
+            actionBar.setCustomView(R.layout.actionbar);
+
+            return true;
+        }
+
+
+
+}
+</code></pre>
+
+<p>main_try.xml:</p>
+
+<pre><code><RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android" 
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" 
+    android:layout_height="match_parent" >
+    <LinearLayout 
+        android:orientation="vertical"
+        android:layout_width="match_parent" 
+        android:layout_height="wrap_content" 
+        android:id="@+id/main_container" 
+        android:layout_centerInParent="true">
+
+
+    </LinearLayout> 
+ </RelativeLayout>
+</code></pre>
+
+<p>actionbar.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="fill_horizontal"
+        android:orientation="horizontal"
+
+        >
+        <TextView 
+
+            android:layout_toRightOf="@+id/minesLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/minesLeftCounter"
+            android:text="asd"      />
+
+        <Button
+            android:layout_alignParentRight="true"
+            android:id="@+id/refresh_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_centerVertical="true"
+            android:text="@string/refresh" />
+
+        <TextView
+            android:id="@+id/minesLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:text="@string/minesLeft" />
+
+    </RelativeLayout>
+</code></pre>
+
+<p>What do I need to change? Any help would be appreciated. Thank you.</p>

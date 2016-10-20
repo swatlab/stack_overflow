@@ -1,0 +1,211 @@
+<p>I am working on an Android app that lets users scan their contracts using their phone's camera. When I want the user to add a new contract I start an activity that lets them take a number of pictures (which that second activity does by in turn using the <code>MediaStore.ACTION_IMAGE_CAPTURE</code> intent) of different pages of the contract. That seems to work fine and I try to return the completed contract object via <code>setResult()</code> and retrieve it in the MainActivity via <code>onActivityResult()</code>:</p>
+
+<pre><code>@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent intent)
+{
+    if ((requestCode == REQUEST_CONTRACT) && (resultCode == RESULT_OK))
+    {
+        this.contract = (Contract) intent.getSerializableExtra(ContractActivity.EXTRA_CONTRACT);
+    }
+}
+</code></pre>
+
+<p>However, the <code>Contract</code> object is not correctly deserialized, which leads the app to crash with a ClassCastException (in the line where I cast it to <code>Contract</code>) when it returns to the <code>MainActivity</code>:</p>
+
+<pre><code>02-06 23:10:53.891: W/dalvikvm(15398): threadid=1: thread exiting with uncaught exception (group=0x41910700)
+02-06 23:10:53.907: E/AndroidRuntime(15398): FATAL EXCEPTION: main
+02-06 23:10:53.907: E/AndroidRuntime(15398): java.lang.RuntimeException: Failure delivering result ResultInfo{who=null, request=1, result=-1, data=Intent { (has extras) }} to activity {myapp/myapp.EndkundenMainActivity}: java.lang.ClassCastException: java.util.ArrayList cannot be cast to mylib.model.Contract
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.ActivityThread.deliverResults(ActivityThread.java:3367)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.ActivityThread.handleSendResult(ActivityThread.java:3410)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.ActivityThread.access$1100(ActivityThread.java:141)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1304)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.os.Handler.dispatchMessage(Handler.java:99)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.os.Looper.loop(Looper.java:137)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.ActivityThread.main(ActivityThread.java:5103)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at java.lang.reflect.Method.invokeNative(Native Method)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at java.lang.reflect.Method.invoke(Method.java:525)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:737)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at dalvik.system.NativeStart.main(Native Method)
+02-06 23:10:53.907: E/AndroidRuntime(15398): Caused by: java.lang.ClassCastException: java.util.ArrayList cannot be cast to mylib.model.Contract
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at de.kreditpruefen.lib.MainActivity.onActivityResult(MainActivity.java:232)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.Activity.dispatchActivityResult(Activity.java:5322)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    at android.app.ActivityThread.deliverResults(ActivityThread.java:3363)
+02-06 23:10:53.907: E/AndroidRuntime(15398):    ... 11 more
+</code></pre>
+
+<p>My <code>Contract</code> object is just a collection of <code>ContractPage</code>s so I declared it to implement <code>List<ContractPage></code> like so:</p>
+
+<pre><code>public class Contract implements Serializable, List<ContractPage>
+</code></pre>
+
+<p>Therefore, I think something goes wrong with the serialization and Android serializes my <code>Contract</code> object incorrectly as an <code>ArrayList</code> which it then deserializes as an <code>ArrayList</code> again, which obviously cannot be cast to a <code>Contract</code>. </p>
+
+<p>Im rather confused why that is. Had I extended ArrayList, I would have thought that it might be due to the superclass messing up the serialization, but the only superclass here is <code>Object</code> and implementing the interfaces shouldn't affect the serialization, should it?</p>
+
+<p>Also, I save the <code>Contract</code> object in <code>onSaveInstanceState()</code> like this:</p>
+
+<pre><code>@Override
+protected void onSaveInstanceState(Bundle outState)
+{
+    outState.putSerializable(EXTRA_CONTRACT, this.contract);
+    super.onSaveInstanceState(outState);
+}
+</code></pre>
+
+<p>and restore it like this:</p>
+
+<pre><code>protected void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    if (savedInstanceState != null)
+    {
+        this.contract = (Contract) savedInstanceState.get(EXTRA_CONTRACT);
+    }
+}
+</code></pre>
+
+<p><strong>Shouldn't that cause it to be serialized and deserialized as well? Why does it work in that case but not when I transfer the object between activities?</strong></p>
+
+<p><em>Complete parts of the relevant code below:</em></p>
+
+<p><code>MainActivity.java</code></p>
+
+<pre><code>public class MainActivity extends Activity
+{
+    private static final int REQUEST_CONTRACT = 1;
+
+    private Contract contract;
+
+    public void addContract(View view)
+    {
+        Intent intent = new Intent(this, ContractActivity.class);
+        intent.putExtra(ContractActivity.EXTRA_CONTRACT, this.contract);
+        startActivityForResult(intent, MainActivity.REQUEST_CONTRACT);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent)
+    {
+        if ((requestCode == REQUEST_CONTRACT) && (resultCode == RESULT_OK))
+        {
+            this.contract = (Contract) intent.getSerializableExtra(ContractActivity.EXTRA_CONTRACT);   
+        }
+        super.onActivityResult(requestCode, resultCode, intent);
+    }
+}
+</code></pre>
+
+<p><code>ContractActivity.java</code></p>
+
+<pre><code>public class ContractActivity extends Activity
+{
+    public static final String EXTRA_CONTRACT = "ContractKey";
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null)
+        {
+            this.contract = (Contract) savedInstanceState.get(EXTRA_CONTRACT);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState)
+    {
+        outState.putSerializable(EXTRA_CONTRACT, this.contract);
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Set up the {@link android.app.ActionBar}.
+     */
+    private void setupActionBar()
+    {
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.contract, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
+            case android.R.id.home:
+                // This ID represents the Home or Up button. In the case of this
+                // activity, the Up button is shown. Use NavUtils to allow users
+                // to navigate up one level in the application structure. For
+                // more details, see the Navigation pattern on Android Design:
+                //
+                // http://developer.android.com/design/patterns/navigation.html#up-vs-back
+                //
+
+                Intent result = new Intent();
+                result.putExtra(EXTRA_CONTRACT, this.contract);
+                setResult(Activity.RESULT_OK, result);
+                // use finish instead of navigateUp which ensures the same instance
+                // of the calling activity is restarted which should cause the form
+                // in the MainActivity to retain entered text etc.
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    // [...]
+    // other methods that add pages to this.contract
+}
+</code></pre>
+
+<p><code>Contract.java</code></p>
+
+<pre><code>public class Contract implements Serializable, List<ContractPage>
+{
+    private List<ContractPage> pages;
+
+    private static final long serialVersionUID = -708359261524732081L;
+
+    public Contract()
+    {
+        this.pages = new ArrayList<ContractPage>();
+    }
+
+    // [...]
+    // implementations of all the other methods required by the List interface by delegating the method calls to this.pages
+}
+</code></pre>
+
+<p><code>ContractPage.java</code></p>
+
+<pre><code>public class ContractPage implements Serializable
+{
+
+    private static final long serialVersionUID = 2721152546839021601L;
+
+    private transient Bitmap image;
+    private File imagePath;
+    private transient Bitmap thumbnail;
+    private int thumbnailWidthAndHeight;
+
+    public ContractPage(File imagePath, int thumbnailWidthAndHeight)
+    {
+        this.imagePath = imagePath;
+        this.thumbnailWidthAndHeight = thumbnailWidthAndHeight;
+    }
+
+    // [...]
+    // getters and setters for the instance variables. image and thumbnail are lazy loaded from the imagePath.
+}
+</code></pre>
+
+<p><strong>Update:</strong></p>
+
+<p>The problem also exists the other way round, when I put a non-null contract object in the extra-data of the intent to start the <code>ContractActivity</code>. In that case it fails in the same way, when trying to retrieve the contact object from the extra-data and casting it to a contract, which fails because the object is actually an <code>ArrayList</code>. So at least in that case it is consistent.</p>

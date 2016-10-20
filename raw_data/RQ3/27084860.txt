@@ -1,0 +1,495 @@
+<p>I'm trying to apply a custom layout for my navigation drawer, i have created a custom adapter which extends of baseAdapter, but i'm always getting the same error, i can't fix it. Please help me, I'm really stuck and i need it.</p>
+
+<p>Log error</p>
+
+<pre><code>FATAL EXCEPTION: main
+Process: com.cervezaya.cervezaya, PID: 21390
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.cervezaya.cervezaya/com.cervezaya.cervezaya.Inicio}: android.view.InflateException: Binary XML file line #25: Error inflating class fragment
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2198)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2257)
+        at android.app.ActivityThread.access$800(ActivityThread.java:139)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:136)
+        at android.app.ActivityThread.main(ActivityThread.java:5086)
+        at java.lang.reflect.Method.invokeNative(Native Method)
+        at java.lang.reflect.Method.invoke(Method.java:515)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+        at dalvik.system.NativeStart.main(Native Method)
+ Caused by: android.view.InflateException: Binary XML file line #25: Error inflating class fragment
+        at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:713)
+        at android.view.LayoutInflater.rInflate(LayoutInflater.java:755)
+        at android.view.LayoutInflater.inflate(LayoutInflater.java:492)
+        at android.view.LayoutInflater.inflate(LayoutInflater.java:397)
+        at android.view.LayoutInflater.inflate(LayoutInflater.java:353)
+        at com.android.internal.policy.impl.PhoneWindow.setContentView(PhoneWindow.java:290)
+        at android.app.Activity.setContentView(Activity.java:1937)
+        at com.cervezaya.cervezaya.Inicio.onCreate(Inicio.java:26)
+        at android.app.Activity.performCreate(Activity.java:5248)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1110)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2162)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2257)
+            at android.app.ActivityThread.access$800(ActivityThread.java:139)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5086)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+            at dalvik.system.NativeStart.main(Native Method)
+ Caused by: java.lang.IllegalStateException: Fragment NavigationDrawerFragment{42304e20} not attached to Activity
+        at android.app.Fragment.getResources(Fragment.java:767)
+        at android.app.Fragment.getString(Fragment.java:789)
+        at com.cervezaya.cervezaya.NavigationDrawerFragment.<init>(NavigationDrawerFragment.java:40)
+        at java.lang.Class.newInstanceImpl(Native Method)
+        at java.lang.Class.newInstance(Class.java:1208)
+        at android.app.Fragment.instantiate(Fragment.java:590)
+        at android.app.Fragment.instantiate(Fragment.java:561)
+        at android.app.Activity.onCreateView(Activity.java:4795)
+        at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:689)
+            at android.view.LayoutInflater.rInflate(LayoutInflater.java:755)
+            at android.view.LayoutInflater.inflate(LayoutInflater.java:492)
+            at android.view.LayoutInflater.inflate(LayoutInflater.java:397)
+            at android.view.LayoutInflater.inflate(LayoutInflater.java:353)
+            at com.android.internal.policy.impl.PhoneWindow.setContentView(PhoneWindow.java:290)
+            at android.app.Activity.setContentView(Activity.java:1937)
+            at com.cervezaya.cervezaya.Inicio.onCreate(Inicio.java:26)
+            at android.app.Activity.performCreate(Activity.java:5248)
+            at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1110)
+            at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2162)
+            at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2257)
+            at android.app.ActivityThread.access$800(ActivityThread.java:139)
+            at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1210)
+            at android.os.Handler.dispatchMessage(Handler.java:102)
+            at android.os.Looper.loop(Looper.java:136)
+            at android.app.ActivityThread.main(ActivityThread.java:5086)
+            at java.lang.reflect.Method.invokeNative(Native Method)
+            at java.lang.reflect.Method.invoke(Method.java:515)
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+            at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>MainActivity.class</p>
+
+<pre><code>public class Inicio extends Activity
+    implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+
+
+private NavigationDrawerFragment mNavigationDrawerFragment;
+
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_inicio);
+    configureNavigationDrawer();
+}
+
+
+
+@Override
+public void onNavigationDrawerItemSelected(int position) {
+
+    if (position == 0){
+
+            //Llamada a sí mismo
+
+    }else{
+            if (position == 1){
+
+                Intent intentFavoritos = new Intent(Inicio.this, Favoritos.class);
+                startActivity(intentFavoritos);
+
+            }else{
+                if (position == 2){
+
+                    Intent intentHistorial = new Intent(Inicio.this, Historial.class);
+                    startActivity(intentHistorial);
+
+                }else{
+
+                    Intent intentFeedback = new Intent(Inicio.this, Feedback.class);
+                    startActivity(intentFeedback);
+                }
+            }
+
+        }
+}
+
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+
+    getMenuInflater().inflate(R.menu.menu_inicio, menu);
+    return super.onCreateOptionsMenu(menu);
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+
+    if (id == R.id.action_map) {
+        Intent intenVistaMapa = new Intent(Inicio.this, VistaMapa.class);
+        startActivity(intenVistaMapa);
+        return true;
+    }else{
+
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+public void configureNavigationDrawer(){
+
+    mNavigationDrawerFragment = (NavigationDrawerFragment)
+            getFragmentManager().findFragmentById(R.id.navigation_drawer);
+    mNavigationDrawerFragment.setUp(
+            R.id.navigation_drawer,
+            (DrawerLayout) findViewById(R.id.drawer_layout));
+}
+
+
+
+}
+</code></pre>
+
+<p>NavigationDrawerFragment.class</p>
+
+<pre><code>  public class NavigationDrawerFragment extends Fragment {
+
+
+    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+    private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+    private NavigationDrawerCallbacks mCallbacks;
+
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerListView;
+    private View mFragmentContainerView;
+
+    private String[] sidebar_items = {getString(R.string.title_drawer1), getString(R.string.title_drawer2), getString(R.string.title_drawer3), getString(R.string.title_drawer4)};
+    private int[] sidebar_images_on = {R.drawable.inicio_on, R.drawable.favoritos_on, R.drawable.historial_on, R.drawable.enviar_opinion_on};
+    //private int[] sidebar_images_off = {R.drawable.inicio_off, R.drawable.favoritos_off, R.drawable.historial_off, R.drawable.enviar_opinion_off};
+
+    private int mCurrentSelectedPosition;
+    private boolean mFromSavedInstanceState;
+    private boolean mUserLearnedDrawer;
+
+    public NavigationDrawerFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Read in the flag indicating whether or not the user has demonstrated awareness of the
+        // drawer. See PREF_USER_LEARNED_DRAWER for details.
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+
+
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        mDrawerListView = (ListView) inflater.inflate(
+                R.layout.sidebar, container, false);
+        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItem(position);
+            }
+        });
+
+
+        //the problem is when I try to apply the adapter
+
+        mDrawerListView.setAdapter(new SidebarAdapter(getActionBar().getThemedContext(),sidebar_items,sidebar_images_on ));
+        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+        return mDrawerListView;
+
+
+    }
+
+    public boolean isDrawerOpen() {
+        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+    }
+
+    public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mDrawerLayout = drawerLayout;
+
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        mDrawerToggle = new ActionBarDrawerToggle(
+                getActivity(),                    /* host Activity */
+                mDrawerLayout,                    /* DrawerLayout object */
+                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+        ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                getActivity().invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (!mUserLearnedDrawer) {
+
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager
+                            .getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
+
+                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+
+        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+            mDrawerLayout.openDrawer(mFragmentContainerView);
+        }
+
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    private void selectItem(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerListView != null) {
+            mDrawerListView.setItemChecked(position, true);
+        }
+        if (mDrawerLayout != null) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+        if (mCallbacks != null) {
+            mCallbacks.onNavigationDrawerItemSelected(position);
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mCallbacks = (NavigationDrawerCallbacks) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+    private ActionBar getActionBar() {
+        return getActivity().getActionBar();
+    }
+
+    public static interface NavigationDrawerCallbacks {
+
+    void onNavigationDrawerItemSelected(int position);
+}
+    }
+</code></pre>
+
+<p>SidebarAdapter.class</p>
+
+<pre><code>    public class SidebarAdapter extends BaseAdapter {
+
+    String[] elements;
+    int[] images;
+    Context context;
+    LayoutInflater inflater;
+    ImageView icon;
+    TextView title;
+
+    SidebarAdapter(Context context, String[] elements, int[] images){
+
+        this.context=context;
+        this.elements = elements;
+        this.images = images;
+        inflater = LayoutInflater.from(context);
+
+    }
+
+    @Override
+    public int getCount() {
+        return elements.length;
+    }
+
+    @Override
+    public Object getItem(int i) {
+        return elements[i];
+    }
+
+    @Override
+    public long getItemId(int i) {
+        return i;
+    }
+
+    @Override
+    public View getView(int i, View view, ViewGroup viewGroup) {
+        View row = null;
+
+        if(view == null){
+
+            row = inflater.inflate(R.layout.sidebar_items,viewGroup,false);
+
+            icon = (ImageView) row.findViewById(R.id.sidebar_icon);
+            title = (TextView) row.findViewById(R.id.sidebar_text);
+
+        }else{
+            row = view;
+        }
+
+        icon.setImageResource(images[i]);
+        title.setText(elements[i]);
+
+        return row;
+    }
+}
+</code></pre>
+
+<p>activity_inicio.xml</p>
+
+<pre><code><android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/drawer_layout"
+    android:layout_width="match_parent" android:layout_height="match_parent" tools:context=".Login">
+
+    <RelativeLayout
+         android:id="@+id/Relative_layout_inicio"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Inicio_activity"
+            android:id="@+id/textView"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
+
+    </RelativeLayout>
+
+
+
+
+    <fragment android:id="@+id/navigation_drawer"
+        android:layout_width="@dimen/navigation_drawer_width" android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:name="com.cervezaya.cervezaya.NavigationDrawerFragment"
+        tools:layout="@layout/sidebar" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p>sidebar.xml</p>
+
+<pre><code><ListView xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+android:layout_height="match_parent" android:choiceMode="singleChoice"
+android:divider="@android:color/transparent" android:dividerHeight="0dp"
+android:background="#F7F7F7" tools:context=".NavigationDrawerFragment" />
+</code></pre>
+
+<p>sidebar_items.xml</p>
+
+<pre><code>    <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/sidebar_icon"
+        android:src="@drawable/inicio_on"
+        android:layout_marginTop="22dp"
+        android:layout_marginBottom="22dp"
+        android:layout_marginLeft="22dp"
+        android:layout_marginRight="18dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Inicio"
+        android:id="@+id/sidebar_text"
+        android:layout_marginTop="8dp"
+        android:layout_toEndOf="@+id/sidebar_icon"
+        android:layout_alignTop="@+id/sidebar_icon"
+        android:layout_toRightOf="@+id/sidebar_icon" />
+</RelativeLayout>
+</code></pre>

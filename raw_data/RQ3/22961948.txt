@@ -1,0 +1,147 @@
+<p>I am new to android programming so please help me. I have created database using SQLite browser, I am try to connecting my app with this database file, but it is not working, the error log say that "no such table : datasaya". How could this happen while in the database I created there is only 1 table.</p>
+
+<p><strong>This my sqlite helper class:</strong></p>
+
+<pre><code>public class SQLiteHelper extends SQLiteOpenHelper {
+
+
+private static String DB_PATH="/data/data/com.example.latihandbsqlite/databases/"; 
+private static String DB_NAME = "cekdatabase.sqlite"; 
+private static int VERSION =1; 
+private SQLiteDatabase myDataBase; 
+private final Context myContext; 
+
+
+public SQLiteHelper(Context context) { 
+
+    super(context, DB_NAME, null, VERSION); 
+    myContext = context; 
+
+    try { 
+
+        createDatabase(); 
+        } catch (IOException ioe) { 
+
+            throw new Error("Unable to create database"); 
+            } 
+    } 
+
+public void createDatabase() throws IOException { 
+
+    boolean dbExist = checkDataBase(); 
+
+    if (dbExist) { 
+        System.out.println("DB EXIST"); 
+        } else { 
+            this.getReadableDatabase(); 
+            this.close(); 
+            copyDataBase(); 
+            } 
+    } 
+
+
+private void copyDataBase() throws IOException { 
+
+    InputStream myInput = myContext.getAssets().open(DB_NAME); 
+
+    String outFileName = DB_PATH + DB_NAME; 
+    OutputStream myOutput = new FileOutputStream(outFileName); 
+
+    byte[] buffer = new byte[1024]; 
+    int length; 
+    while ((length = myInput.read(buffer)) > 0) {
+
+        myOutput.write(buffer, 0, length); 
+        } 
+
+    myOutput.flush(); 
+    myOutput.close(); 
+    myInput.close(); 
+    } 
+
+private boolean checkDataBase() { 
+
+    SQLiteDatabase checkDB = null; 
+
+    try { 
+
+        String myPath = DB_PATH + DB_NAME; 
+        checkDB = SQLiteDatabase.openDatabase(myPath, 
+                null, SQLiteDatabase.OPEN_READONLY); 
+        } catch (SQLiteException e) { 
+
+            System.out.println("Database does't exist yet."); 
+            } 
+
+    if (checkDB != null) { 
+
+        checkDB.close(); } 
+
+    return checkDB != null ? true : false; 
+    } 
+
+@Override 
+
+    public synchronized void close() {
+
+        if (myDataBase != null) myDataBase.close(); 
+
+        super.close(); 
+
+    } @Override 
+
+    public void onCreate(SQLiteDatabase arg0) { 
+
+
+    } @Override 
+
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { 
+
+
+    }
+
+            }
+</code></pre>
+
+<p><strong>This my SQLiteConnector class:</strong></p>
+
+<pre><code>     public class SQLiteConnector {
+
+private SQLiteDatabase database; 
+private SQLiteHelper sqlHelper; 
+private Cursor cursor; 
+
+private static final String TABLE_RECORD = "datasaya"; 
+
+public SQLiteConnector(Context context) { 
+
+    sqlHelper = new SQLiteHelper(context); 
+
+} // Getting All records 
+
+
+public List<String> getAllRecord() { 
+
+    List<String> namagambar = new ArrayList<String>(); 
+    String selectQuery = "SELECT * FROM " + TABLE_RECORD; 
+
+    database = sqlHelper.getReadableDatabase(); 
+    cursor = database.rawQuery(selectQuery, null); 
+
+    if (cursor.moveToFirst()) { 
+
+        do { 
+
+            namagambar.add(cursor.getString(1)); 
+            } while (cursor.moveToNext()); 
+
+    } 
+    database.close(); 
+    return namagambar; 
+
+} 
+
+}
+</code></pre>
+
+<p>How can i resolve this problem ?</p>

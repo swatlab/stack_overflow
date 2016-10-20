@@ -1,0 +1,516 @@
+<p>anyone knows why i get this error? I wanted to make a customList for my ListFragment inside my tabbed activity.</p>
+
+<p>Here are all my classes:</p>
+
+<p>ListViewDemoAdapter:</p>
+
+<pre><code>public class ListViewDemoAdapter extends ArrayAdapter<ListViewItem> {
+
+public ListViewDemoAdapter(Context context, List<ListViewItem> items) {
+super(context, R.layout.listview_item, items);
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+ViewHolder viewHolder;
+if(convertView == null) {
+// inflate the GridView item layout
+LayoutInflater inflater = LayoutInflater.from(getContext());
+convertView = inflater.inflate(R.layout.listview_item, parent, false);
+// initialize the view holder
+viewHolder = new ViewHolder();
+viewHolder.ivIcon = (ImageView) convertView.findViewById(R.id.ivIcon);
+viewHolder.tvTitle = (TextView) convertView.findViewById(R.id.tvTitle);
+viewHolder.tvDescription = (TextView) convertView.findViewById(R.id.tvDescription);
+convertView.setTag(viewHolder);
+} else {
+// recycle the already inflated view
+viewHolder = (ViewHolder) convertView.getTag();
+}
+// update the item view
+ListViewItem item = getItem(position);
+viewHolder.ivIcon.setImageDrawable(item.icon);
+viewHolder.tvTitle.setText(item.title);
+viewHolder.tvDescription.setText(item.description);
+return convertView;
+}
+/**
+* The view holder design pattern prevents using findViewById()
+* repeatedly in the getView() method of the adapter.
+*
+//* @see http://developer.android.com/training/improving-layouts/smooth-scrolling.html#ViewHolder
+*/
+private static class ViewHolder {
+ImageView ivIcon;
+TextView tvTitle;
+TextView tvDescription;
+}
+}
+</code></pre>
+
+<p>ListViewItem:</p>
+
+<pre><code>public class ListViewItem {
+public final Drawable icon; // the drawable for the ListView item ImageView
+public final String title; // the text for the ListView item title
+public final String description; // the text for the ListView item description
+public ListViewItem(Drawable icon, String title, String description) {
+this.icon = icon;
+this.title = title;
+this.description = description;
+}
+</code></pre>
+
+<p>MainActivity:</p>
+
+<pre><code>import java.util.Locale;
+import java.util.Scanner;
+
+import android.net.Uri;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+
+public class MainActivity extends ActionBarActivity implements ActionBar.TabListener, ScoutLogFragment.OnScoutLogInteractionListener {
+
+/**
+* The {@link android.support.v4.view.PagerAdapter} that will provide
+* fragments for each of the sections. We use a
+* {@link FragmentPagerAdapter} derivative, which will keep every
+* loaded fragment in memory. If this becomes too memory intensive, it
+* may be best to switch to a
+* {@link android.support.v4.app.FragmentStatePagerAdapter}.
+*/
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+/**
+* The {@link ViewPager} that will host the section contents.
+*/
+ViewPager mViewPager;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_main);
+
+// Set up the action bar.
+final ActionBar actionBar = getSupportActionBar();
+actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+// Create the adapter that will return a fragment for each of the three
+// primary sections of the activity.
+mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+// Set up the ViewPager with the sections adapter.
+mViewPager = (ViewPager) findViewById(R.id.pager);
+mViewPager.setAdapter(mSectionsPagerAdapter);
+
+// When swiping between different sections, select the corresponding
+// tab. We can also use ActionBar.Tab#select() to do this if we have
+// a reference to the Tab.
+mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+@Override
+public void onPageSelected(int position) {
+actionBar.setSelectedNavigationItem(position);
+}
+});
+
+// For each of the sections in the app, add a tab to the action bar.
+for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+// Create a tab with text corresponding to the page title defined by
+// the adapter. Also specify this Activity object, which implements
+// the TabListener interface, as the callback (listener) for when
+// this tab is selected.
+actionBar.addTab(
+actionBar.newTab()
+.setText(mSectionsPagerAdapter.getPageTitle(i))
+.setTabListener(this));
+}
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+// Inflate the menu; this adds items to the action bar if it is present.
+getMenuInflater().inflate(R.menu.menu_main, menu);
+return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+// Handle action bar item clicks here. The action bar will
+// automatically handle clicks on the Home/Up button, so long
+// as you specify a parent activity in AndroidManifest.xml.
+int id = item.getItemId();
+
+//noinspection SimplifiableIfStatement
+if (id == R.id.action_settings) {
+return true;
+}
+
+return super.onOptionsItemSelected(item);
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+// When the given tab is selected, switch to the corresponding page in
+// the ViewPager.
+mViewPager.setCurrentItem(tab.getPosition());
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void OnScoutLogInteraction(String id) {
+
+}
+
+
+/**
+* A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+* one of the sections/tabs/pages.
+*/
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+public SectionsPagerAdapter(FragmentManager fm) {
+super(fm);
+}
+
+@Override
+public Fragment getItem(int position) {
+// getItem is called to instantiate the fragment for the given page.
+// Return a PlaceholderFragment (defined as a static inner class below).
+
+switch(position){
+case 0:
+return ScoutLogFragment.newInstance("a","b");
+case 1:
+return BlankFragment.newInstance("a","b");
+case 2:
+return PlaceholderFragment.newInstance(position + 1);
+default:
+return PlaceholderFragment.newInstance(position + 1);
+}
+
+
+}
+
+@Override
+public int getCount() {
+// Show 3 total pages.
+return 3;
+}
+
+@Override
+public CharSequence getPageTitle(int position) {
+Locale l = Locale.getDefault();
+switch (position) {
+case 0:
+return getString(R.string.title_section1).toUpperCase(l);
+case 1:
+return getString(R.string.title_section2).toUpperCase(l);
+case 2:
+return getString(R.string.title_section3).toUpperCase(l);
+}
+return null;
+}
+}
+
+/**
+* A placeholder fragment containing a simple view.
+*/
+public static class PlaceholderFragment extends Fragment {
+/**
+* The fragment argument representing the section number for this
+* fragment.
+*/
+private static final String ARG_SECTION_NUMBER = "section_number";
+
+/**
+* Returns a new instance of this fragment for the given section
+* number.
+*/
+public static PlaceholderFragment newInstance(int sectionNumber) {
+PlaceholderFragment fragment = new PlaceholderFragment();
+Bundle args = new Bundle();
+args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+fragment.setArguments(args);
+return fragment;
+}
+
+public PlaceholderFragment() {
+}
+
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+Bundle savedInstanceState) {
+View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+return rootView;
+}
+}
+
+}
+</code></pre>
+
+<p>DemoFragment:</p>
+
+<pre><code>import android.app.Activity;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.support.v4.app.ListFragment;
+import android.view.View;
+import android.widget.ListView;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import de.dskupnjak.myapplication.dummy.DummyContent;
+
+/**
+* A fragment representing a list of Items.
+* <p/>
+* <p/>
+* Activities containing this fragment MUST implement the {@link OnScoutLogInteractionListener}
+* interface.
+*/
+public class DemoFragment extends ListFragment {
+
+// TODO: Rename parameter arguments, choose names that match
+// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+private static final String ARG_PARAM1 = "param1";
+private static final String ARG_PARAM2 = "param2";
+private List<ListViewItem> mItems; // ListView items list
+
+// TODO: Rename and change types of parameters
+private String mParam1;
+private String mParam2;
+
+private OnScoutLogInteractionListener mListener;
+
+// TODO: Rename and change types of parameters
+public static DemoFragment newInstance(String param1, String param2) {
+DemoFragment fragment = new DemoFragment();
+Bundle args = new Bundle();
+args.putString(ARG_PARAM1, param1);
+args.putString(ARG_PARAM2, param2);
+fragment.setArguments(args);
+return fragment;
+}
+
+/**
+* Mandatory empty constructor for the fragment manager to instantiate the
+* fragment (e.g. upon screen orientation changes).
+*/
+public DemoFragment() {
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+
+if (getArguments() != null) {
+mParam1 = getArguments().getString(ARG_PARAM1);
+mParam2 = getArguments().getString(ARG_PARAM2);
+}
+
+super.onCreate(savedInstanceState);
+// initialize the items list
+mItems = new ArrayList<ListViewItem>();
+Resources resources = getResources();
+mItems.add(new ListViewItem(resources.getDrawable(R.drawable.aim),"aim", "aim desc"));
+mItems.add(new ListViewItem(resources.getDrawable(R.drawable.bebo), "bebo", "bebo desc"));
+mItems.add(new ListViewItem(resources.getDrawable(R.drawable.youtube), "youtube", "youtube desc"));
+// initialize and set the list adapter
+setListAdapter(new ListViewDemoAdapter(getActivity(), mItems));
+
+/*// TODO: Change Adapter to display your content
+List<ScoutLog> scoutLogList = new ArrayList<ScoutLog>();
+scoutLogList.add(new ScoutLog("Inhalt der scoutLogList"));
+setListAdapter(new ArrayAdapter<ScoutLog>(getActivity(),
+android.R.layout.simple_list_item_1, android.R.id.text1, scoutLogList));*/
+
+}
+
+
+@Override
+public void onAttach(Activity activity) {
+super.onAttach(activity);
+try {
+mListener = (OnScoutLogInteractionListener) activity;
+} catch (ClassCastException e) {
+throw new ClassCastException(activity.toString()
++ " must implement OnScoutLogInteractionListener");
+}
+}
+
+@Override
+public void onDetach() {
+super.onDetach();
+mListener = null;
+}
+
+
+@Override
+public void onListItemClick(ListView l, View v, int position, long id) {
+super.onListItemClick(l, v, position, id);
+
+if (null != mListener) {
+// Notify the active callbacks interface (the activity, if the
+// fragment is attached to one) that an item has been selected.
+mListener.OnScoutLogInteraction(DummyContent.ITEMS.get(position).id);
+}
+}
+
+/**
+* This interface must be implemented by activities that contain this
+* fragment to allow an interaction in this fragment to be communicated
+* to the activity and potentially other fragments contained in that
+* activity.
+* <p/>
+* See the Android Training lesson <a href=
+* "http://developer.android.com/training/basics/fragments/communicating.html"
+* >Communicating with Other Fragments</a> for more information.
+*/
+public interface OnScoutLogInteractionListener {
+// TODO: Update argument type and name
+public void OnScoutLogInteraction(String id);
+}
+
+}
+</code></pre>
+
+<p>listViewItem.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<!-- the parent view - provides the gray listfragment background color -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:layout_gravity="center"
+android:gravity="center_vertical"
+android:background="@color/frame_background"
+android:padding="5dp" >
+<!-- the innner view - provides the white rectangle -->
+<RelativeLayout android:layout_width="fill_parent"
+android:layout_height="wrap_content"
+android:background="@drawable/frame" >
+<!-- the icon view -->
+<ImageView android:id="@+id/ivIcon"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:padding="5dp"
+android:contentDescription="test"
+android:scaleType="fitXY"
+android:layout_alignParentLeft="true" />
+<!-- the container view for the title and description -->
+<RelativeLayout android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_toRightOf="@id/ivIcon"
+android:layout_centerVertical="true" >
+<!-- the title view -->
+<TextView android:id="@+id/tvTitle"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:textAppearance="@android:style/TextAppearance.Medium" />
+<!-- the description view -->
+<TextView android:id="@+id/tvDescription"
+android:layout_below="@id/tvTitle"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:textAppearance="@android:style/TextAppearance.Small" />
+</RelativeLayout>
+</RelativeLayout>
+</RelativeLayout
+</code></pre>
+
+<p>thats the error i get: (i also tried to input background color to the 3rd relative Layout since i read that this could throw a error but it didnt help)</p>
+
+<pre><code>01-16 10:04:24.040 1550-1550/de.dskupnjak.myapplication E/AndroidRuntime﹕ FATAL EXCEPTION: main
+Process: de.dskupnjak.myapplication, PID: 1550
+android.view.InflateException: Binary XML file line #3: Error inflating class android.widget.RelativeLayout
+at android.view.LayoutInflater.createView(LayoutInflater.java:621)
+at com.android.internal.policy.impl.PhoneLayoutInflater.onCreateView(PhoneLayoutInflater.java:56)
+at android.view.LayoutInflater.onCreateView(LayoutInflater.java:670)
+at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:695)
+at android.view.LayoutInflater.inflate(LayoutInflater.java:469)
+at android.view.LayoutInflater.inflate(LayoutInflater.java:397)
+at de.dskupnjak.myapplication.ListViewDemoAdapter.getView(ListViewDemoAdapter.java:25)
+at android.widget.AbsListView.obtainView(AbsListView.java:2263)
+at android.widget.ListView.makeAndAddView(ListView.java:1790)
+at android.widget.ListView.fillDown(ListView.java:691)
+at android.widget.ListView.fillFromTop(ListView.java:752)
+at android.widget.ListView.layoutChildren(ListView.java:1630)
+at android.widget.AbsListView.onLayout(AbsListView.java:2091)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.support.v4.view.ViewPager.onLayout(ViewPager.java:1594)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.support.v7.internal.widget.ActionBarOverlayLayout.onLayout(ActionBarOverlayLayout.java:502)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.LinearLayout.setChildFrame(LinearLayout.java:1671)
+at android.widget.LinearLayout.layoutVertical(LinearLayout.java:1525)
+at android.widget.LinearLayout.onLayout(LinearLayout.java:1434)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.widget.FrameLayout.layoutChildren(FrameLayout.java:453)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:388)
+at android.view.View.layout(View.java:14817)
+at android.view.ViewGroup.layout(ViewGroup.java:4631)
+at android.view.ViewRootImpl.performLayout(ViewRootImpl.java:1987)
+at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:1744)
+at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1000)
+at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:5670)
+at android.view.Choreographer$CallbackRecord.run(Choreographer.java:761)
+at android.view.Choreographer.doCallbacks(Choreographer.java:574)
+at android.view.Choreographer.doFrame(Choreographer.java:544)
+at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:747)
+at android.os.Handler.handleCallback(Handler.java:733)
+at android.os.Handler.dispatchMessage(Handler.java:95)
+at android.os.Looper.loop(Looper.java:136)
+at android.app.ActivityThread.main(ActivityThread.java:5017)
+at java
+</code></pre>
+
+<p>anyone has a solution?:S </p>

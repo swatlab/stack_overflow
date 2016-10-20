@@ -1,0 +1,339 @@
+<p>I have an activity with 2 fragments. I've decided to use a PageAdapter to swipe between the two views, but, to stay close to the android design best practices, i've also decided to use the action bar tabs (fixed ones). I'm using ActionBarSherlock and some code from the <a href="http://developer.android.com/reference/android/app/ActionBar.html#newTab%28%29" rel="nofollow">here</a> to implement the tabs.
+With just the pageadapter the activity worked wonderfully, now i'm having two issues:
+1) the first fragment (MatchRugbyButtonFragment) superimpress an image of himself, so if i touch it and move or change something, i see the image above the working fragment.
+2) when i go to the second fragment, the first lose all the variables (timer reset, counters reset, ecc).
+I had to create to tablistener because one fragment is a SherlockFragment and the other one is a SherlockListFragment and that caused an error where it couldn't cast the fragment to a SherlockListFragment.
+Here is the Activity:</p>
+
+<pre><code>  import java.util.ArrayList;
+  import java.util.Arrays;
+   import java.util.List;
+    import java.util.Vector;
+
+    import android.content.Intent;
+    import android.os.Bundle;
+     import android.support.v4.app.Fragment;
+    import android.support.v4.app.FragmentManager;
+     import android.support.v4.app.FragmentTransaction;
+    import android.support.v4.app.ListFragment;
+    import android.support.v4.view.ViewPager;
+    import android.view.View;
+    import android.widget.ArrayAdapter;
+    import android.widget.Toast;
+
+      import com.actionbarsherlock.app.ActionBar;
+    import com.actionbarsherlock.app.ActionBar.Tab;
+    import com.actionbarsherlock.app.SherlockFragment;
+    import com.actionbarsherlock.app.SherlockFragmentActivity;
+    import com.actionbarsherlock.view.Menu;
+    import com.actionbarsherlock.view.MenuInflater;
+    import com.actionbarsherlock.view.MenuItem;
+
+
+    public class MatchRugbyFragments extends SherlockFragmentActivity implements View.OnClickListener, View.OnLongClickListener{
+
+
+public static ArrayList<String> commentary;
+
+public static ArrayAdapter<String> adapter;
+
+
+
+// list contains fragments to instantiate in the viewpager
+static List<Fragment> fragments = new Vector<Fragment>();
+// page adapter between fragment list and view pager
+private MyPagerAdapter mPagerAdapter;
+// view pager
+private ViewPager mPager;
+
+
+
+
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);     
+    setContentView(R.layout.fragments_rugby);
+
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+    MatchRugbyButtonFragment buttonFrag = new MatchRugbyButtonFragment();
+    MatchRugbySummaryFragment listFrag = new MatchRugbySummaryFragment();
+    fragmentTransaction.add(R.id.pager, buttonFrag);
+    fragmentTransaction.add(R.id.pager, listFrag);
+    fragmentTransaction.commit();
+
+
+    // creating fragments and adding to list
+    fragments.add(buttonFrag);
+    fragments.add(listFrag);
+
+
+    // creating adapter and linking to view pager
+    this.mPagerAdapter = new MyPagerAdapter(super.getSupportFragmentManager(),fragments);
+    mPager = (ViewPager) super.findViewById(R.id.pager);
+    mPager.setAdapter(this.mPagerAdapter);
+
+
+    String[] array = {""}; 
+    commentary = new ArrayList<String>();
+    commentary.addAll(Arrays.asList(array));
+
+    adapter = new ArrayAdapter<String>(this,
+            R.layout.list_item_commentary,  commentary);
+
+
+
+
+
+    final ActionBar bar = getSupportActionBar();
+    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+    bar.setHomeButtonEnabled(true);
+
+    bar.addTab(bar.newTab()
+            .setText("Comandi")
+            .setTabListener(new TabListener<MatchRugbyButtonFragment>(
+                    this, "comandi", MatchRugbyButtonFragment.class)));
+    bar.addTab(bar.newTab()
+            .setText("Riassunto")
+            .setTabListener(new TabListenerList<MatchRugbySummaryFragment>(
+                    this, "riassunto", MatchRugbySummaryFragment.class)));
+
+
+    if (savedInstanceState != null) {
+        bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
+    }
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt("tab", getActionBar().getSelectedNavigationIndex());
+}
+
+//Comandi per il click prolungato
+public boolean onLongClick(View view) {
+
+    return false;
+}
+
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getSupportMenuInflater();
+    inflater.inflate(R.menu.rugby_match_menu, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        // app icon in action bar clicked; go home
+        Intent intent = new Intent(this, SportScoutActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+public static void addCommentaryRow(String s){
+    adapter.add(s);
+    MatchRugbySummaryFragment f2 = (MatchRugbySummaryFragment) fragments.get(1);
+    f2.setListAdapter(adapter);
+}
+
+public static String commentaryToString(){
+    String sAdapter= adapter.toString();
+    return sAdapter;
+}
+
+public void onClick(View arg0) {
+
+
+}
+
+
+
+/**
+ * @return the commentary
+ */
+public  ArrayList<String> getCommentary() {
+    return commentary;
+}
+
+
+
+/**
+ * @param commentary the commentary to set
+ */
+public void setCommentary(ArrayList<String> commentary) {
+    MatchRugbyFragments.commentary = commentary;
+}
+
+
+
+/**
+ * @return the adapter
+ */
+public ArrayAdapter<String> getAdapter() {
+    return adapter;
+}
+
+
+
+/**
+ * @param adapter the adapter to set
+ */
+public void setAdapter(ArrayAdapter<String> adapter) {
+    MatchRugbyFragments.adapter = adapter;
+}
+
+// page 1 fragment listener implementation
+public void onPage1(String s) {    
+
+
+
+    // page 2 fragment update
+
+
+}
+
+public static class TabListener<T> implements ActionBar.TabListener {
+    private final SherlockFragmentActivity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+    private final Bundle mArgs;
+    private android.support.v4.app.Fragment mFragment;
+
+    public TabListener(SherlockFragmentActivity activity, String tag, Class<T> clz) {
+        this(activity, tag, clz, null);
+    }
+
+    public TabListener(SherlockFragmentActivity activity, String tag, Class<T> clz, Bundle args) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+        mArgs = args;
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        mFragment = mActivity.getSupportFragmentManager().findFragmentByTag(mTag);
+        if (mFragment != null && !mFragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+            ft.detach(mFragment);
+            ft.commit();
+        }
+    }
+
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        if (mFragment == null) {
+            mFragment = (SherlockFragment) Fragment.instantiate(mActivity, mClass.getName(), mArgs);
+            ft.add(android.R.id.content, mFragment, mTag);
+        } else {
+            ft.attach(mFragment);
+        }
+    }
+
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        if (mFragment != null) {
+            ft.detach(mFragment);
+        }
+    }
+
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
+    }
+
+
+}
+
+public static class TabListenerList<T> implements ActionBar.TabListener {
+    private final SherlockFragmentActivity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+    private final Bundle mArgs;
+    private android.support.v4.app.ListFragment mFragment;
+
+    public TabListenerList(SherlockFragmentActivity activity, String tag, Class<T> clz) {
+        this(activity, tag, clz, null);
+    }
+
+    public TabListenerList(SherlockFragmentActivity activity, String tag, Class<T> clz, Bundle args) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+        mArgs = args;
+
+        // Check to see if we already have a fragment for this tab, probably
+        // from a previously saved state.  If so, deactivate it, because our
+        // initial state is that a tab isn't shown.
+        mFragment = (ListFragment) mActivity.getSupportFragmentManager().findFragmentByTag(mTag);
+        if (mFragment != null && !mFragment.isDetached()) {
+            FragmentTransaction ft = mActivity.getSupportFragmentManager().beginTransaction();
+            ft.detach(mFragment);
+            ft.commit();
+        }
+    }
+
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        if (mFragment == null) {
+            mFragment = (ListFragment) Fragment.instantiate(mActivity, mClass.getName(), mArgs);
+            ft.add(android.R.id.content, mFragment, mTag);
+        } else {
+            ft.attach(mFragment);
+        }
+    }
+
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        if (mFragment != null) {
+            ft.detach(mFragment);
+        }
+    }
+
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
+    }
+
+
+}
+    }
+</code></pre>
+
+<p>Here is the pageadapter class:</p>
+
+<pre><code>    package com.gmail.david.corsalini.sportscout;
+
+    import java.util.List;
+
+     import android.support.v4.app.Fragment;
+    import android.support.v4.app.FragmentManager;
+    import android.support.v4.app.FragmentPagerAdapter;
+
+    public class MyPagerAdapter extends FragmentPagerAdapter {
+
+    // fragments to instantiate in the viewpager
+    private List<Fragment> fragments;
+
+    // constructor
+    public MyPagerAdapter(FragmentManager fm,List<Fragment> fragments) {
+        super(fm);
+        this.fragments = fragments;
+    }
+
+    // return access to fragment from position, required override
+    @Override
+    public Fragment getItem(int position) {
+        return this.fragments.get(position);
+    }
+
+    // number of fragments in list, required override
+    @Override
+    public int getCount() {
+        return this.fragments.size();
+    }
+
+}
+</code></pre>

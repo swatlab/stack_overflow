@@ -1,0 +1,152 @@
+<p>I have a gridviewImages dispalyed on Android screen.
+My Requirement is to Slide the FullScreen Images</p>
+
+<p>Here My code:</p>
+
+<p><strong>ImageAdapter :</strong></p>
+
+<pre><code>public class ImageAdapter extends BaseAdapter {
+   private Context mContext;
+
+   // Constructor
+   public ImageAdapter(Context c) {
+      mContext = c;
+   }
+
+   public int getCount() {
+      return mThumbIds.length;
+   }
+
+   public Object getItem(int position) {
+      return null;
+   }
+
+   public long getItemId(int position) {
+      return 0;
+   }
+
+   // create a new ImageView for each item referenced by the Adapter
+   public View getView(int position, View convertView, ViewGroup parent) {
+      ImageView imageView;
+      if (convertView == null) {
+      imageView = new ImageView(mContext);
+      imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+      imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+      imageView.setPadding(8, 8, 8, 8);
+      } else {
+      imageView = (ImageView) convertView;
+      }
+
+      imageView.setImageResource(mThumbIds[position]);
+      return imageView;
+   }
+
+   // Keep all Images in array
+   public Integer[] mThumbIds = {
+      R.drawable.cn1, R.drawable.cn2,
+      R.drawable.cn3, R.drawable.cn4,
+      R.drawable.cn5, R.drawable.cn6,
+      R.drawable.cn7, R.drawable.cn8,
+      R.drawable.cn9, R.drawable.cn10,
+      R.drawable.cn11, R.drawable.cn12
+
+   };
+}   
+</code></pre>
+
+<p><strong>MainActivity:</strong></p>
+
+<pre><code>public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+          gridview.setAdapter(new ImageAdapter(this));
+          gridview.setOnItemClickListener(new OnItemClickListener() {
+              public void onItemClick(AdapterView<?> parent, View v,
+                      int position, long id) {
+
+                  // Send intent to SingleViewActivity
+                  Intent i = 
+                  new Intent(getApplicationContext(), SingleViewActivity.class);
+                  // Pass image index
+                  i.putExtra("id", position);
+                  Log.d("onCreateMain>>","OnCreateMain");
+
+                  startActivity(i);
+              }
+          });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+}
+</code></pre>
+
+<p><strong>SingleViewActivity:</strong></p>
+
+<pre><code>public class SingleViewActivity extends Activity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.single_view);
+        Log.d("onCreate>>","OnCreate");
+
+        // Get intent data
+        Intent i = getIntent();
+
+        // Selected image id
+        int position = i.getExtras().getInt("id");
+
+        Log.d("Position>>>","Position"+position);
+        ImageAdapter imageAdapter = new ImageAdapter(this);
+
+        ImageView imageView = (ImageView) findViewById(R.id.SingleView);
+        imageView.setImageResource(imageAdapter.mThumbIds[position]);
+    }
+
+}
+</code></pre>
+
+<p>Layout XMl Files:</p>
+
+<p>activity_main.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android" 
+   android:id="@+id/gridview"
+   android:layout_width="fill_parent" 
+   android:layout_height="fill_parent"
+   android:columnWidth="90dp"
+   android:numColumns="auto_fit"
+   android:verticalSpacing="10dp"
+   android:horizontalSpacing="10dp"
+   android:stretchMode="columnWidth"
+   android:gravity="center"
+/>
+</code></pre>
+
+<p>single_view.xml:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+   <ImageView android:id="@+id/SingleView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"/>
+
+</LinearLayout>
+</code></pre>
+
+<p>My Requirement is to Slide the FullScreen Images,Could any one help?</p>

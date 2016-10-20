@@ -1,0 +1,319 @@
+<p>Well, Consider I have have two fragments <strong>FragmentTab1</strong> & <strong>ShowAllContactFragment</strong>. <strong>FragmentTab1</strong> consists a <strong>list-view</strong> & and a <strong>button</strong>. When the button is clicked I replace ShowAllContactFragment in my viewpager. When shows <strong>ShowAllContactFragment</strong>, user can select several contacts by selecting check-box in a list-view & it also has a <strong>ADD</strong> contact button. </p>
+
+<p><strong>What I need</strong>: I want to update existing listview in FragmentTab1 , when user pressing <strong>ADD</strong> button in ShowAllContactFragment, after selecting some contacts in this list-view. I also remove ShowAllContactFragment, and show FragmentTab1 when this will occur. </p>
+
+<p><strong>My Solving Status</strong>: I follow the the <a href="http://developer.android.com/training/basics/fragments/communicating.html#Deliver" rel="nofollow">android developers</a> forum to communicate data between fragment via Activity. I'm almost done. I create Interface OnContactSelectedListener in ShowAllContactFragment & Implements in MainActivity. Everything is ok! . After debugging, I check my callback methods that I have data in <strong>MainActivity</strong> but I can't replace the ShowAllContactFragment & can't show the previous fragment FragmentTab1 & update it's list-view.</p>
+
+<p>To open ShowAllContactFragment from FragmentTab1, I wrote like:</p>
+
+<pre><code>ShowAllContactFragment allContactsFragment = new ShowAllContactFragment();
+
+            FragmentTransaction transaction = getFragmentManager()
+                    .beginTransaction();
+            transaction.addToBackStack(null);
+            transaction.add(R.id.fragmentTabLayout1, allContactsFragment);
+            transaction.commit();
+</code></pre>
+
+<p>My MainActivity & FragmentAdapter Looks :</p>
+
+<pre><code>public class MainActivity extends SherlockFragmentActivity implements
+        ShowAllContactFragment.OnContactSelectedListener {
+
+    ActionBar.Tab Tab1, Tab2, Tab3, Tab4;
+    private Context context = this;
+    // view pager
+    // Declare Variables
+    ActionBar actionBar;
+    ViewPager mPager;
+    Tab tab;
+    FragmentAdapter mAdapter;
+    List<Fragment> fragmentList = new ArrayList<Fragment>();
+    ArrayList<Person> blackListPersonList;
+
+    private final static String TAG_FRAGMENT = "TAG_FRAGMENT";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        // set application in portrait mode
+        ActivityHelper.initialize(this);
+
+        actionBar = getSupportActionBar();
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        addFragmentsInList();
+        // Locate ViewPager in activity_main.xml
+        mPager = (ViewPager) findViewById(R.id.pager);
+        // add an adapter to pager
+        mAdapter = new FragmentAdapter(getSupportFragmentManager(), mPager,
+                actionBar, fragmentList);
+        mPager.setAdapter(mAdapter);
+        addActionBarTabs();
+
+    }
+
+    public void addFragmentsInList() {
+
+        FragmentTab1 aFragmentTab1 = new FragmentTab1();
+
+        fragmentList.add(new FragmentTab1());
+        fragmentList.add(new FragmentTab2());
+        fragmentList.add(new FragmentTab3());
+
+    }
+
+    private void addActionBarTabs() {
+
+        String[] tabs = { "Tab 1", "Tab 2", "Tab 3" };
+        for (String tabTitle : tabs) {
+            ActionBar.Tab tab = actionBar.newTab().setText(tabTitle)
+                    .setTabListener(tabListener);
+            actionBar.addTab(tab);
+
+        }
+
+    }
+
+    private ActionBar.TabListener tabListener = new ActionBar.TabListener() {
+        @Override
+        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+            mPager.setCurrentItem(tab.getPosition());
+        }
+
+        @Override
+        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        }
+
+        @Override
+        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        }
+    };
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // add action menu here
+        MenuInflater inflater = getSupportMenuInflater();
+        inflater.inflate(R.menu.activity_itemlist, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle presses on the action bar items
+        switch (item.getItemId()) {
+        case R.id.add_item:
+            // openSearch();
+            Toast.makeText(context, " add_item  ", Toast.LENGTH_SHORT).show();
+            return true;
+        case R.id.about:
+            // composeMessage();
+            Toast.makeText(context, "   about", Toast.LENGTH_SHORT).show();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    class FragmentAdapter extends FragmentPagerAdapter implements
+            ViewPager.OnPageChangeListener {
+
+        private ViewPager mViewPager;
+        final int TOTAL_PAGES = 3;
+        private List<Fragment> fragments;
+        SparseArray<Fragment> registeredFragments = new SparseArray<Fragment>();
+
+        public FragmentAdapter(FragmentManager fm, ViewPager pager,
+                ActionBar actionBar, List<Fragment> fragmentsList) {
+            super(fm);
+            this.mViewPager = pager;
+            this.mViewPager.setOnPageChangeListener(this);
+            this.fragments = fragmentsList;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // switch (position) {
+            // case 0:
+            // return FragmentTab1.newInstance();
+            // case 1:
+            // return FragmentTab2.newInstance();
+            // case 2:
+            // return FragmentTab3.newInstance();
+            // default:
+            // throw new IllegalArgumentException(
+            // "The item position should be less or equal to:"
+            // + TOTAL_PAGES);
+            // }
+
+            return this.fragments.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            // return TOTAL_PAGES;
+            return this.fragments.size();
+
+        }
+
+        public ViewPager getViewPager() {
+
+            return mViewPager;
+        }
+
+        // added newly
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment fragment = (Fragment) super.instantiateItem(container,
+                    position);
+            registeredFragments.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            registeredFragments.remove(position);
+            super.destroyItem(container, position, object);
+        }
+
+        public Fragment getRegisteredFragment(int position) {
+            return registeredFragments.get(position);
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int arg0) {
+
+        }
+
+        @Override
+        public void onPageScrolled(int arg0, float arg1, int arg2) {
+
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            actionBar.setSelectedNavigationItem(position);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        Log.e(TAG_FRAGMENT, "onBackPressed");
+
+        FragmentManager fm = getSupportFragmentManager();
+        if (fm.getBackStackEntryCount() > 0) {
+            Log.i("MainActivity", "popping backstack");
+            fm.popBackStack();
+        } else {
+            Log.i("MainActivity", "nothing on backstack, calling super");
+            super.onBackPressed();
+        }
+
+    }
+
+
+    @Override
+    public void onContactSelected(ArrayList<Person> contactNumberlist) {
+        // data comes here, no problem.
+        this.blackListPersonList = contactNumberlist;
+        Log.d("onContactSelected", "onContactSelected");
+
+        // get error here
+        FragmentTab1 aFragmentTab1 = (FragmentTab1) mAdapter.getItem(0);
+
+        if (aFragmentTab1 != null) {
+            aFragmentTab1.updateFragment1(blackListPersonList);
+        }
+        FragmentTransaction transaction = getSupportFragmentManager()
+                .beginTransaction();
+
+        transaction.add(R.id.fragment_all_contacts_layout, aFragmentTab1);
+        transaction.commit();
+
+    }
+
+    public ArrayList<Person> getBlackListContacts() {
+
+        return blackListPersonList;
+    }
+
+    // public Fragment getFragment(ViewPager pager){
+    // Fragment theFragment = fragments.get(pager.getCurrentItem());
+    // return theFragment;
+    // }
+
+}
+</code></pre>
+
+<p>FrgmentTab1 looks :</p>
+
+<pre><code>  public class FragmentTab1 extends SherlockFragment implements OnClickListener {
+
+    Button btnTest;
+    ViewPager pager;
+    LinearLayout layoutBlockNumbers;
+    LinearLayout layoutContact, layoutCallLog, layoutSMSLog, layoutManually;
+    public Context mContext;
+    CustomizedDialog dialog;
+    private static final int CONTACT_PICKER_RESULT = 1001;
+    private static final String DEBUG_TAG = "Contact List";
+    private static final double RESULT_OK = -1;
+
+    ListView listViewOnlyBlackListNumber;
+    ArrayList<Person> personList;
+    BlackListAdapter aBlackListAdapter;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+
+        View rootView = inflater.inflate(R.layout.fragmenttab1, container,
+                false);
+
+        layoutBlockNumbers = (LinearLayout) rootView
+                .findViewById(R.id.layoutAddBlockNumbers);
+        layoutBlockNumbers.setOnClickListener(this);
+
+        listViewOnlyBlackListNumber = (ListView) rootView
+                .findViewById(R.id.listViewOnlyBlackListNumber);
+
+        personList = ((MainActivity) getActivity()).getBlackListContacts();
+
+        if (personList != null) {
+            aBlackListAdapter = new BlackListAdapter(getActivity(), personList,
+                    m_onSelectedEventCalender);
+            listViewOnlyBlackListNumber.setAdapter(aBlackListAdapter);
+
+        } else {
+            listViewOnlyBlackListNumber.setEmptyView(container);
+        }
+
+        return rootView;
+
+    }
+
+    public void updateFragment1(ArrayList<Person> personList) {
+
+        // trying to update when came back here
+        aBlackListAdapter = new BlackListAdapter(getActivity(), personList,
+                m_onSelectedEventCalender);
+
+        listViewOnlyBlackListNumber.setAdapter(aBlackListAdapter);
+        aBlackListAdapter.notifyDataSetChanged();
+    }
+}
+</code></pre>
+
+<p>Get Error In onContactSelected, inside MainActivity</p>
+
+<pre><code>       10-30 00:22:29.674: E/AndroidRuntime(26834): FATAL EXCEPTION: main
+     java.lang.IllegalStateException: Can't change container ID of fragment FragmentTab1{42d27380 #0 id=0x7f040032 android:switcher:2130968626:0}: was 2130968626 now 2130968638
+   E/AndroidRuntime(26834):     at android.support.v4.app.BackStackRecord.doAddOp(BackStackRecord.java:407)
+     E/AndroidRuntime(26834):   at android.support.v4.app.BackStackRecord.add(BackStackRecord.java:384)
+     E/AndroidRuntime(26834):   at com.mobigic.callblocker.MainActivity.onContactSelected(MainActivity.java:240)
+</code></pre>
+
+<p>Hope, Somebody help me.</p>

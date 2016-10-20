@@ -1,0 +1,77 @@
+<p>I am attempting to select an item within a list Fragment <code>onCreateView</code>. I do this as follows: <code>listView.setItemChecked(position, true);</code>.  Unfortunately the view is not activated, as in my <code>ArrayAdapter</code> <code>getView</code> is never called so I am unable to modify the checked item.  Any suggestions or links are appreciated!</p>
+
+<p><b>Fragment onCreateView</b>:</p>
+
+<pre><code>@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        Bundle savedInstanceState) {
+
+    View layout=  inflater.inflate(
+            R.layout.fragment, container, false);
+
+    mListView= (ListView) layout.findViewById(R.id.navigation_list);
+
+
+    mListView.setAdapter(new Adapter(
+            this,
+            R.layout.list_item,
+            titles));
+    mListView.setItemChecked(mCurrentSelectedPosition, true);
+
+    return layout;
+}
+</code></pre>
+
+<p><b>ArrayAdapter</b></p>
+
+<pre><code>public class Adapter extends ArrayAdapter<String> {
+
+private Activity mActivity;
+private int mResource;
+
+public Adapter(Fragment fragment, int resource, ArrayList<String> titles) {
+    super(fragment.getActivity(), resource, titles);
+    mActivity = fragment.getActivity();
+    mResource = resource;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent){
+    ViewHolder holder;
+
+    if(convertView == null){
+        convertView = mActivity.getLayoutInflater().inflate(mResource, parent, false);
+
+        holder = new ViewHolder();
+        holder.title = (TextView)convertView.findViewById(R.id.title);
+
+        convertView.setTag(holder);
+    }
+    else{
+        holder = (ViewHolder)convertView.getTag();
+    }
+
+    holder.title.setText(getItem(position));
+    holder.title.setTypeface(null, convertView.isActivated() ? Typeface.BOLD : Typeface.NORMAL);
+
+    return convertView;
+}
+
+private class ViewHolder{
+    private TextView title;
+}
+}
+</code></pre>
+
+<p><b>EDIT</b>
+The following code works fine for some reason in detecting an activation, why is it that my custom adapter won't work?</p>
+
+<pre><code>listView.setAdapter(new ArrayAdapter<String>(
+            getActionBar().getThemedContext(),
+            android.R.layout.simple_list_item_activated_1,
+            android.R.id.text1,
+            new String[]{
+                    "ONE",
+                    "TWO"
+            }));
+</code></pre>

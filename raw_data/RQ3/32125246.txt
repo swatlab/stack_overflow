@@ -1,0 +1,170 @@
+<p>Even the most simple code in my spelling as I mentioned in the title of what I do , I get this error Have the necessary bi INFORMATION What is the line ?   </p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+    GridView gridView;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.anasayfa);
+
+        gridView = (GridView)findViewById(R.id.gridview);
+
+       gridView.setAdapter(new ImageAdapter(this));
+        gridView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri link = Uri.parse("https://www.google.com.tr");
+                Intent tara = new Intent(Intent.ACTION_DEFAULT, link);
+                startActivity(tara);
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private class ImageAdapter extends BaseAdapter {
+
+        private Context mContext;
+
+        public ImageAdapter(Context c){
+            mContext =c;
+        }
+        @Override
+        public int getCount() {
+            return mThumbIds.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ImageView imageView;
+            if(convertView==null){
+                imageView = new ImageView(mContext);
+                imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setPadding(8,8,8,8);
+            }else{
+                imageView=(ImageView) convertView;
+            }
+            imageView.setImageResource(mThumbIds[position]);
+            return imageView;
+        }
+
+        private Integer [] mThumbIds={
+                R.drawable.sondakika,R.drawable.yoklogo,R.drawable.universiteler,R.drawable.sondakika
+        };
+    }
+}
+</code></pre>
+
+<p>Logcat</p>
+
+<pre><code>    08-20 13:57:40.821    7257-7257/? D/dalvikvm﹕ Late-enabling CheckJNI
+    08-20 13:57:41.425    7257-7257/com.example.abdullah.deneme I/dalvikvm﹕ Could not find method android.content.res.TypedArray.getChangingConfigurations, referenced from method android.support.v7.internal.widget.TintTypedArray.getChangingConfigurations
+    08-20 13:57:41.429    7257-7257/com.example.abdullah.deneme W/dalvikvm﹕ VFY: unable to resolve virtual method 406: Landroid/content/res/TypedArray;.getChangingConfigurations ()I
+    08-20 13:57:41.433    7257-7257/com.example.abdullah.deneme D/dalvikvm﹕ VFY: replacing opcode 0x6e at 0x0002
+    08-20 13:57:41.437    7257-7257/com.example.abdullah.deneme I/dalvikvm﹕ Could not find method android.content.res.TypedArray.getType, referenced from method android.support.v7.internal.widget.TintTypedArray.getType
+    08-20 13:57:41.441    7257-7257/com.example.abdullah.deneme W/dalvikvm﹕ VFY: unable to resolve virtual method 428: Landroid/content/res/TypedArray;.getType (I)I
+    08-20 13:57:41.445    7257-7257/com.example.abdullah.deneme D/dalvikvm﹕ VFY: replacing opcode 0x6e at 0x0002
+    08-20 13:57:41.561    7257-7257/com.example.abdullah.deneme D/dalvikvm﹕ GC_FOR_ALLOC freed 147K, 6% free 3684K/3892K, paused 34ms, total 40ms
+    08-20 13:57:41.605    7257-7257/com.example.abdullah.deneme D/dalvikvm﹕ GC_FOR_ALLOC freed 4K, 6% free 3901K/4116K, paused 16ms, total 18ms
+    08-20 13:57:41.693    7257-7257/com.example.abdullah.deneme I/dalvikvm-heap﹕ Grow heap (frag case) to 6.286MB for 2536932-byte allocation
+    08-20 13:57:41.701    7257-7268/com.example.abdullah.deneme D/dalvikvm﹕ GC_FOR_ALLOC freed <1K, 4% free 6378K/6596K, paused 5ms, total 5ms
+    08-20 13:57:41.725    7257-7257/com.example.abdullah.deneme D/AndroidRuntime﹕ Shutting down VM
+    08-20 13:57:41.729    7257-7257/com.example.abdullah.deneme W/dalvikvm﹕ threadid=1: thread exiting with uncaught exception (group=0xa4d2db20)
+    08-20 13:57:41.733    7257-7257/com.example.abdullah.deneme E/AndroidRuntime﹕ FATAL EXCEPTION: main
+        Process: com.example.abdullah.deneme, PID: 7257
+        java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.abdullah.deneme/com.example.abdullah.deneme.MainActivity}: java.lang.RuntimeException: Don't call setOnClickListener for an AdapterView. You probably want setOnItemClickListener instead
+                at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2184)
+                at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2233)
+                at android.app.ActivityThread.access$800(ActivityThread.java:135)
+                at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+                at android.os.Handler.dispatchMessage(Handler.java:102)
+                at android.os.Looper.loop(Looper.java:136)
+                at android.app.ActivityThread.main(ActivityThread.java:5001)
+                at java.lang.reflect.Method.invokeNative(Native Method)
+                at java.lang.reflect.Method.invoke(Method.java:515)
+                at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+                at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+                at dalvik.system.NativeStart.main(Native Method)
+         Caused by: java.lang.RuntimeException: Don't call setOnClickListener for an AdapterView. You probably want setOnItemClickListener instead
+                at android.widget.AdapterView.setOnClickListener(AdapterView.java:774)
+                at com.example.abdullah.deneme.MainActivity.onCreate(MainActivity.java:28)
+                at android.app.Activity.performCreate(Activity.java:5231)
+                at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+                at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2148)
+                at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2233)
+                at android.app.ActivityThread.access$800(ActivityThread.java:135)
+                at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+                at android.os.Handler.dispatchMessage(Handler.java:102)
+                at android.os.Looper.loop(Looper.java:136)
+                at android.app.ActivityThread.main(ActivityThread.java:5001)
+                at java.lang.reflect.Method.invokeNative(Native Method)
+                at java.lang.reflect.Method.invoke(Method.java:515)
+                at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+                at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+                at dalvik.system.NativeStart.main(Native Method)
+    08-20 13:57:45.065    7257-7257/com.example.abdullah.deneme I/Process﹕ Sending signal. PID: 7257 SIG: 9
+
+        Process: com.example.abdullah.deneme, PID: 7257
+        java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.abdullah.deneme/com.example.abdullah.deneme.MainActivity}: java.lang.RuntimeException: Don't call setOnClickListener for an AdapterView. You probably want setOnItemClickListener instead
+                at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2184)
+                at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2233)
+                at android.app.ActivityThread.access$800(ActivityThread.java:135)
+                at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+                at android.os.Handler.dispatchMessage(Handler.java:102)
+                at android.os.Looper.loop(Looper.java:136)
+                at android.app.ActivityThread.main(ActivityThread.java:5001)
+                at java.lang.reflect.Method.invokeNative(Native Method)
+                at java.lang.reflect.Method.invoke(Method.java:515)
+                at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+                at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+                at dalvik.system.NativeStart.main(Native Method)
+         Caused by: java.lang.RuntimeException: Don't call setOnClickListener for an AdapterView. You probably want setOnItemClickListener instead
+                at android.widget.AdapterView.setOnClickListener(AdapterView.java:774)
+                at com.example.abdullah.deneme.MainActivity.onCreate(MainActivity.java:28)
+                at android.app.Activity.performCreate(Activity.java:5231)
+                at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1087)
+                at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2148)
+                at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2233)
+                at android.app.ActivityThread.access$800(ActivityThread.java:135)
+                at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1196)
+                at android.os.Handler.dispatchMessage(Handler.java:102)
+                at android.os.Looper.loop(Looper.java:136)
+                at android.app.ActivityThread.main(ActivityThread.java:5001)
+                at java.lang.reflect.Method.invokeNative(Native Method)
+                at java.lang.reflect.Method.invoke(Method.java:515)
+                at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:785)
+                at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:601)
+                at dalvik.system.NativeStart.main(Native Method)
+</code></pre>

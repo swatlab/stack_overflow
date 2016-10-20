@@ -1,0 +1,141 @@
+<p>I've downloaded the Navigation Drawer example from the developers guide, I try to implement a GridView into an Activity of one of the options of the Drawer, but in execution time the GridView doesn't appears, the IDE doesn't show me any errors and in an example apart I can do it de GridView successfuly, How do I correct this problem?</p>
+
+<p>My code is here:</p>
+
+<p>In the MainActivity I use the same like the example with</p>
+
+<pre><code>Fragment fragment;
+FragmentManager fragmentManager;
+fragment = new inicioFragment(R.layout.inicio);
+fragmentManager = getFragmentManager();
+fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+</code></pre>
+
+<p>InicioActivity.java</p>
+
+<pre><code>import android.app.Activity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.GridView;
+import android.widget.TextView;
+public class InicioActivity extends Activity {
+    TextView tv1;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.inicio);    
+        tv1=(TextView)findViewById(R.id.tv1);
+        GridView gv = (GridView)findViewById(R.id.gridView1); 
+        gv.setAdapter(new ImageAdapter(this.getApplicationContext()));
+        gv.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id){              
+                String g=Integer.toString(position);
+                tv1.setText(g);
+            }
+        });
+    }
+}
+</code></pre>
+
+<p>ImageAdapter.java</p>
+
+<pre><code>import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+public class ImageAdapter extends BaseAdapter {
+private Context mContext;
+    public ImageAdapter(Context c) {
+        mContext = c;
+    }
+    public int getCount() {
+        return mThumbIds.length;
+    }
+    public Object getItem(int position) {
+        return null;
+    }
+    public long getItemId(int position) {
+        return 0;
+    }
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
+        if (convertView == null) {  // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(13, 13, 13, 13);
+        } else {
+            imageView = (ImageView) convertView;
+        }
+        imageView.setImageResource(mThumbIds[position]);
+        return imageView;
+    }
+    private Integer[] mThumbIds = {
+            R.drawable.image_2, R.drawable.image_3,
+            R.drawable.image_4, R.drawable.image_5,
+            R.drawable.image_6, R.drawable.image_7,
+            R.drawable.image_0, R.drawable.image_1,
+            R.drawable.image_2, R.drawable.image_3,
+            R.drawable.image_4, R.drawable.image_5,
+            R.drawable.image_6, R.drawable.image_7,
+            R.drawable.image_0, R.drawable.image_1,
+            R.drawable.image_2, R.drawable.image_3,
+            R.drawable.image_4, R.drawable.image_5,
+            R.drawable.image_6, R.drawable.image_7
+    };
+}
+</code></pre>
+
+<p>inicio.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="230dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/linearLayout1"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/tv2"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Aqui van las notificaciones push de facebook" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="230dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal" >
+
+        <GridView
+            android:id="@+id/gridView1"
+            android:layout_width="156dp"
+            android:layout_height="192dp"
+            android:numColumns="2" >
+        </GridView>
+
+        <TextView
+            android:id="@+id/tv1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:gravity="center_horizontal|center_vertical"
+            android:text="Información" />
+    </LinearLayout>
+</RelativeLayout>
+</code></pre>
+
+<p>Thanks for your collaboration!!</p>

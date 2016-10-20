@@ -1,0 +1,239 @@
+<p>Hi im creating an app that retrieves sqlite database in the assets folder. When i run the program, it says no such table: students while compiling SELECT * FROM students. The assets folder has students.sqlite and has a table name students that composed of id,name and gender. I'll show my codes below.</p>
+
+<blockquote>
+  <p>DatabaseHelper class</p>
+</blockquote>
+
+<pre><code>public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static String DB_PATH = "/data/data/com.example.user.students/databases/";
+    private static String DB_NAME = "students.sqlite";
+    private SQLiteDatabase myDataBase;
+    private Context myContext = null;
+
+
+    public DatabaseHelper(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.myContext = context;
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = this.checkDataBase();
+        if (!dbExist) {
+            this.getReadableDatabase();
+
+            try {
+                this.copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error");
+            }
+        }
+    }
+
+    public void copyDataBase() throws IOException {
+        InputStream myInput = this.myContext.getAssets().open(DB_NAME);
+        String outFileName = DB_PATH + DB_NAME;
+        FileOutputStream myOutput = new FileOutputStream(outFileName);
+        byte[] buffer = new byte[1024];
+
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+
+        try {
+            String e = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(e, null, 0);
+        } catch (SQLiteException e) {
+            ;
+        }
+
+        if (checkDB != null) {
+            checkDB.close();
+        }
+
+        return checkDB != null;
+    }
+
+    public void openDataBase() throws SQLException {
+        String myPath = DB_PATH + DB_NAME;
+        this.myDataBase = SQLiteDatabase.openDatabase(myPath, null, 0);
+    }
+
+    public synchronized void close() {
+        if (this.myDataBase != null) {
+            this.myDataBase.close();
+        }
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+    public List<Students> getAll() {
+        List<Students> sList = new ArrayList<Students>();
+        {
+            String selectQuery =
+                    "SELECT * FROM students";
+            Log.e("students query: ", selectQuery);
+            SQLiteDatabase db = this.getWritableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
+
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    Students si = new Students();
+                    si.setid(Integer.parseInt(cursor.getString(0)));
+                    si.setname(cursor.getString(1));
+                    si.setgender(cursor.getString(2));
+
+                    sList.add(si);
+                } while (cursor.moveToNext());
+            }
+
+            db.close();
+        }
+        return sList;
+    }
+}
+</code></pre>
+
+<blockquote>
+  <p>Students class</p>
+</blockquote>
+
+<pre><code>public class Students {
+
+    //private variables
+    int id;
+    String name;
+    String gender;
+
+    // Empty constructor
+    public Students(){
+
+    }
+    // constructor
+    public Students(int id, String name, String gender){
+
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+
+    }
+
+    // getting ID
+    public int getid(){
+        return this.id;
+    }
+
+    // setting id
+    public void setid(int id){
+        this.id = id;
+    }
+
+    // getting name
+    public String getname(){
+        return this.name;
+    }
+
+    // setting name
+    public void setname(String name){
+        this.name = name;
+    }
+
+    // getting gender
+    public String getgender(){
+        return this.gender;
+    }
+
+    // setting gender
+    public void setgender(String gender){
+        this.gender = gender;
+    }
+
+
+
+}
+</code></pre>
+
+<blockquote>
+  <p>Main Activity class</p>
+</blockquote>
+
+<pre><code>public class MainActivity extends Activity {
+
+    List<Students> GetAll;
+    DatabaseHelper db = new DatabaseHelper(this);
+
+    Context context = this;
+    ListView list_doctors;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        list_students = (ListView) findViewById(R.id.list);
+        GetAll = db.getAll();
+        list_students.setAdapter(new ViewAdapter());
+    }
+
+
+
+    public class ViewAdapter extends BaseAdapter {
+
+        LayoutInflater mInflater;
+
+        public ViewAdapter() {
+            mInflater = LayoutInflater.from(context);
+        }
+
+        @Override
+        public int getCount() {
+            return GetAll.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent) {
+
+            if (convertView == null) {
+                convertView = mInflater.inflate(R.layout.list_item,null);
+            }
+
+            final TextView names = (TextView) convertView.findViewById(R.id.name);
+            final TextView gender = (TextView) convertView.findViewById(R.id.gender);
+
+            names.setText(GetAll.get(position).getname());
+            gender.setText(GetAll.get(position).getgender());
+
+            return convertView;
+        }
+
+    }
+</code></pre>
+
+<p>}</p>

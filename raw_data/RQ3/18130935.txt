@@ -1,0 +1,263 @@
+<p>So I have a ListView and a custom adapter for it 
+I am adding valued to the database and then repopulating the list 
+so I added items in the following way : q, w,e,r,t,y,u,i,o,p
+the listview populated as follows : q,w,e,r,t,y,q,q,q</p>
+
+<p>This is the custom adapter </p>
+
+<pre><code>public class TestListAdapter extends BaseAdapter {
+    private static ArrayList<FlashCard> flashCardItems;
+
+    private LayoutInflater mInflater;
+    private Context context; 
+    public TestListAdapter(Context context, ArrayList<FlashCard> results) {
+        this.context = context;
+        flashCardItems = results;
+        mInflater = LayoutInflater.from(context);
+
+    }
+
+    public int getCount() {
+        return flashCardItems.size();
+    }
+
+    public Object getItem(int position) {
+        return flashCardItems.get(position);
+    }
+
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = mInflater.inflate(R.layout.flashcard, null);
+            holder = new ViewHolder();
+            holder.flipper = (ViewFlipper) convertView.findViewById(R.id.flashcard);
+            convertView.setTag(holder);
+        }
+        else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        holder.flipper.addView(FlashCard.createQuestionCard(context,flashCardItems.get(position).getQuestion()));
+
+
+        return convertView;
+    }
+
+    static class ViewHolder {
+        ViewFlipper flipper;
+    }
+
+}
+</code></pre>
+
+<p>This is the Database Handler </p>
+
+<pre><code>public class DatabaseHandler extends SQLiteOpenHelper {
+
+    // All Static variables
+    // Database Version
+    private static final int DATABASE_VERSION = 1;
+
+    // Database Name
+    private static final String DATABASE_NAME = "mySchoolDB";
+
+    // Flashcards table name
+    private static final String TABLE_FLASHCARDS = "flashcards";
+
+    // Flashcards Table Columns names
+    private static final String KEY_ID = "id";
+    private static final String QUESTION = "question";
+    private static final String ANSWER = "answer";
+
+    public DatabaseHandler(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    // Creating Tables
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        String CREATE_FLASHCARDS_TABLE = "CREATE TABLE " + TABLE_FLASHCARDS + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + QUESTION + " TEXT,"
+                + ANSWER + " TEXT" + ")";
+        db.execSQL(CREATE_FLASHCARDS_TABLE);
+    }
+
+    // Upgrading database
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Drop older table if existed
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_FLASHCARDS);
+
+        // Create tables again
+        onCreate(db);
+    }
+
+    /**
+     * All CRUD(Create, Read, Update, Delete) Operations
+     */
+
+    // Adding new Flashcard
+    public void addFlashcard(FlashCard flashcard) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(QUESTION, flashcard.getQuestion()); // flashcard Name
+        values.put(ANSWER, flashcard.getAnswer()); // flashcard Phone
+
+        // Inserting Row
+        db.insert(TABLE_FLASHCARDS, null, values);
+        db.close(); // Closing database connection
+    }
+
+    // Getting single FlashCard
+    public FlashCard getFlashcard(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_FLASHCARDS, new String[] { KEY_ID,
+                QUESTION, ANSWER }, KEY_ID + "=?",
+                new String[] { String.valueOf(id) }, null, null, null, null);
+        if (cursor != null)
+            cursor.moveToFirst();
+
+        FlashCard flashcard= new FlashCard(Integer.parseInt(cursor.getString(0)),
+                cursor.getString(1), cursor.getString(2));
+        cursor.close();
+        db.close();
+        // return FlashCard
+        return flashcard;
+    }
+
+    // Getting All Flashcards
+    public ArrayList<FlashCard> getAllFlashcards() {
+        ArrayList<FlashCard> FlashcardList = new ArrayList<FlashCard>();
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_FLASHCARDS;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                FlashCard flashcard = new FlashCard(Integer.parseInt(cursor.getString(0)),cursor.getString(1),cursor.getString(2));
+
+                // Adding Flashcard to list
+                FlashcardList.add(flashcard);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        // return Flashcard list
+        return FlashcardList;
+    }
+
+    // Updating single Flashcard
+    public int updateFlashcard(FlashCard flashcard) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(QUESTION, flashcard.getQuestion());
+        values.put(ANSWER, flashcard.getAnswer());
+        db.close();
+        // updating row
+        return db.update(TABLE_FLASHCARDS, values, KEY_ID + " = ?",
+                new String[] { String.valueOf(flashcard.getID()) });
+
+    }
+
+    // Deleting single Flashcard
+    public void deleteFlashcard(FlashCard flashcard) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_FLASHCARDS, KEY_ID + " = ?",
+                new String[] { String.valueOf(flashcard.getID()) });
+        db.close();
+    }
+
+
+    // Getting Flashcards Count
+    public int getFlashcardsCount() {
+        String countQuery = "SELECT  * FROM " + TABLE_FLASHCARDS;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        cursor.close();
+
+        // return count
+        return cursor.getCount();
+    }
+
+
+    public void deleteAllFlashCards(){
+        SQLiteDatabase sdb= this.getWritableDatabase();
+        sdb.delete(TABLE_FLASHCARDS, null, null);
+        sdb.close();
+    }
+
+
+
+}
+</code></pre>
+
+<p>and this is the listview </p>
+
+<pre><code>public class TestList extends ListView
+{
+    private Context context;
+    private ArrayList<FlashCard> stringArray = new ArrayList<FlashCard>();
+
+    public TestList(Context context) {
+        super(context);
+        this.context = context;
+        setResults();
+    }
+
+    public void setResults() {
+        DatabaseHandler db = new DatabaseHandler(context);
+        stringArray = db.getAllFlashcards();
+
+        setAdapter(new TestListAdapter(context, stringArray));
+    }
+
+    public TestList(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+    }
+
+    public void addFlashCardDialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Add flashcard");
+        final EditText question = new EditText(context);
+        question.setHint("Question");
+        final EditText answer = new EditText(context);
+        answer.setHint("Answer");
+        LinearLayout qa = new LinearLayout(context);
+        qa.setOrientation(LinearLayout.VERTICAL);
+        qa.addView(question);
+        qa.addView(answer);
+        builder.setView(qa);
+
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                FlashCard f = new FlashCard(question.getText().toString(), answer.getText().toString());
+                DatabaseHandler db = new DatabaseHandler(context);
+                db.addFlashcard(f);
+                setResults();
+
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.show(); 
+    }
+}
+</code></pre>

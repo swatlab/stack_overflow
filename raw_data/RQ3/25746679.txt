@@ -1,0 +1,89 @@
+<p>Somehow I've got an error of copying a .db file in Log (as you see log in the code)
+The napoleon.db file is in the assets folder, so as I assume everything should work, but it doesn't</p>
+
+<p>Why doesn't it find it?</p>
+
+<p>I'm doing it by example, but it doesn't work.
+Any thoughts?</p>
+
+<pre><code>public class MySqLiteOpenHelper extends SQLiteOpenHelper{
+    private static String DATABASE_NAME = "napoleon.db";
+    public final static String DATABASE_PATH = "/data/data/com.example.task/databases/";
+    private static final int DATABASE_VERSION = 1;
+
+    private SQLiteDatabase dataBase;
+    private final Context dbContext;
+
+    public MySqLiteOpenHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.dbContext = context;
+        // checking database and open it if exists
+        if (checkDataBase()) {
+            openDataBase();
+        } else
+        {
+            try {
+                this.getReadableDatabase();
+                copyDataBase();
+                this.close();
+                openDataBase();
+
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+            Toast.makeText(context, "Initial database is created", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void copyDataBase() throws IOException{
+        InputStream myInput = dbContext.getAssets().open(DATABASE_NAME);
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+        String dbPath = DATABASE_PATH + DATABASE_NAME;
+        dataBase = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE);
+    }
+
+    private boolean checkDataBase() {
+        SQLiteDatabase checkDB = null;
+        boolean exist = false;
+        try {
+            String dbPath = DATABASE_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(dbPath, null,
+                    SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+            Log.v("MyLog", "database does't exist");
+        }
+
+        if (checkDB != null) {
+            exist = true;
+            checkDB.close();
+        }
+        return exist;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+        // TODO Auto-generated method stub
+
+    }
+}
+</code></pre>

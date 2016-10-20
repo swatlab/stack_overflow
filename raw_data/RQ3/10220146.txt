@@ -1,0 +1,313 @@
+<p>I am trying to use a database with multiple tables pre-populated with data. In one column of all the tables has a list of drinks. I am trying to get that list of drinks into a ListView of my activity. I have looked up Vogel's site on ListView, I have also read a tutorial from a book that I basically copied the code, I have also read Fluxa's tutorial about using your own database. I don't know if my code is incorrect or not, but it won't load the list of drinks that I am looking for. Could someone look at my code and possibly point out any errors that I might be missing or not seeing?</p>
+
+<p>HotEspresso.java</p>
+
+<pre><code>public class HotEspresso extends ListActivity {
+
+    private DrinkDbAdapter mDbHelper;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.hot_espresso);
+        mDbHelper = new DrinkDbAdapter(this);
+        mDbHelper.openToRead();
+        fillData();
+        }
+
+    private void fillData() {
+        Cursor drinkCursor  = mDbHelper.getHotTitles();
+        startManagingCursor(drinkCursor);
+
+        String[] from = new String[]{DrinkDbAdapter.KEY_DRINK};
+        int[] to = new int[] {R.id.hot_espresso_row};
+        SimpleCursorAdapter drinks = new SimpleCursorAdapter(this, R.layout.hot_espresso_list, drinkCursor, from, to);
+        setListAdapter(drinks);
+
+    }
+}
+</code></pre>
+
+<p>DrinkDbAdapter.java</p>
+
+<pre><code>public class DrinkDbAdapter extends Activity {
+private static final String DATABASE_NAME = "drinks";
+private static final String DATABASE_TABLE_HOT = "hot";
+private static final String DATABASE_TABLE_COFFEE = "coffee";
+private static final String DATABASE_TABLE_HOTTEA = "hottea";
+private static final String DATABASE_TABLE_COLD = "cold";
+private static final String DATABASE_TABLE_BLENDED = "blended";
+private static final String DATABASE_TABLE_COLDTEA = "coldtea";
+private static final int DATABASE_VERSION = 1;
+
+public static final String KEY_ROWID = "_id";
+public static final String KEY_DRINK = "drink";
+public static final String KEY_CATEGORY = "category";
+public static final String KEY_LIQUID = "liquid";
+public static final String KEY_LIQUID_AMOUNT = "liquid_amount";
+public static final String KEY_POWDER = "powder";
+public static final String KEY_POWDER_AMOUNT = "powder_amount";
+public static final String KEY_SHOTS = "shots";
+public static final String KEY_ADDITIVE1 = "add1";
+public static final String KEY_ADDITIVE1_AMOUNT = "add1_amount";
+public static final String KEY_ADDITIVE2 = "add2";
+public static final String KEY_ADDITIVE2_AMOUNT = "add2_amount";
+
+private static final String TAG = "DrinkDbAdapter";
+private DatabaseHelper myDbHelper;
+private SQLiteDatabase myDbDrinks;
+
+private static final String DATABASE_CREATE_HOT =
+        "create table " + DATABASE_TABLE_HOT + " (" + KEY_ROWID
+        + " integer primary key autoincrement, " + KEY_DRINK + " text not null, " 
+        + KEY_CATEGORY + " text not null, " + KEY_LIQUID + " text not null, "
+        + " text not null, " + KEY_LIQUID_AMOUNT + " text not null, " 
+        + KEY_POWDER + " text not null, " + KEY_POWDER_AMOUNT
+        + " text not null, " + KEY_SHOTS + " text not null, " + KEY_ADDITIVE1
+        + " text not null, " + KEY_ADDITIVE1_AMOUNT + " text not null, " 
+        + KEY_ADDITIVE2 + " text not null, " + KEY_ADDITIVE2_AMOUNT + " text not null);"; 
+private static final String DATABASE_CREATE_COFFEE =
+        "create table " + DATABASE_TABLE_COFFEE + " (" + KEY_ROWID
+        + " integer primary key autoincrement, " + KEY_DRINK + " text not null, " 
+        + KEY_CATEGORY + " text not null, " + KEY_LIQUID + " text not null, "
+        + " text not null, " + KEY_LIQUID_AMOUNT + " text not null, " 
+        + KEY_POWDER + " text not null, " + KEY_POWDER_AMOUNT
+        + " text not null, " + KEY_SHOTS + " text not null, " + KEY_ADDITIVE1
+        + " text not null, " + KEY_ADDITIVE1_AMOUNT + " text not null, " 
+        + KEY_ADDITIVE2 + " text not null, " + KEY_ADDITIVE2_AMOUNT + " text not null);";
+private static final String DATABASE_CREATE_HOTTEA =
+        "create table " + DATABASE_TABLE_HOTTEA + " (" + KEY_ROWID
+        + " integer primary key autoincrement, " + KEY_DRINK + " text not null, " 
+        + KEY_CATEGORY + " text not null, " + KEY_LIQUID + " text not null, "
+        + " text not null, " + KEY_LIQUID_AMOUNT + " text not null, " 
+        + KEY_POWDER + " text not null, " + KEY_POWDER_AMOUNT
+        + " text not null, " + KEY_SHOTS + " text not null, " + KEY_ADDITIVE1
+        + " text not null, " + KEY_ADDITIVE1_AMOUNT + " text not null, " 
+        + KEY_ADDITIVE2 + " text not null, " + KEY_ADDITIVE2_AMOUNT + " text not null);";
+private static final String DATABASE_CREATE_COLD =
+        "create table " + DATABASE_TABLE_COLD + " (" + KEY_ROWID
+        + " integer primary key autoincrement, " + KEY_DRINK + " text not null, " 
+        + KEY_CATEGORY + " text not null, " + KEY_LIQUID + " text not null, "
+        + " text not null, " + KEY_LIQUID_AMOUNT + " text not null, " 
+        + KEY_POWDER + " text not null, " + KEY_POWDER_AMOUNT
+        + " text not null, " + KEY_SHOTS + " text not null, " + KEY_ADDITIVE1
+        + " text not null, " + KEY_ADDITIVE1_AMOUNT + " text not null, " 
+        + KEY_ADDITIVE2 + " text not null, " + KEY_ADDITIVE2_AMOUNT + " text not null);";
+private static final String DATABASE_CREATE_BLENDED =
+        "create table " + DATABASE_TABLE_BLENDED + " (" + KEY_ROWID
+        + " integer primary key autoincrement, " + KEY_DRINK + " text not null, " 
+        + KEY_CATEGORY + " text not null, " + KEY_LIQUID + " text not null, "
+        + " text not null, " + KEY_LIQUID_AMOUNT + " text not null, " 
+        + KEY_POWDER + " text not null, " + KEY_POWDER_AMOUNT
+        + " text not null, " + KEY_SHOTS + " text not null, " + KEY_ADDITIVE1
+        + " text not null, " + KEY_ADDITIVE1_AMOUNT + " text not null, " 
+        + KEY_ADDITIVE2 + " text not null, " + KEY_ADDITIVE2_AMOUNT + " text not null);";
+private static final String DATABASE_CREATE_COLDTEA =
+        "create table " + DATABASE_TABLE_COLDTEA + " (" + KEY_ROWID
+        + " integer primary key autoincrement, " + KEY_DRINK + " text not null, " 
+        + KEY_CATEGORY + " text not null, " + KEY_LIQUID + " text not null, "
+        + " text not null, " + KEY_LIQUID_AMOUNT + " text not null, " 
+        + KEY_POWDER + " text not null, " + KEY_POWDER_AMOUNT
+        + " text not null, " + KEY_SHOTS + " text not null, " + KEY_ADDITIVE1
+        + " text not null, " + KEY_ADDITIVE1_AMOUNT + " text not null, " 
+        + KEY_ADDITIVE2 + " text not null, " + KEY_ADDITIVE2_AMOUNT + " text not null);";
+
+private final Context mCtx;
+
+private static class DatabaseHelper extends SQLiteOpenHelper {
+
+    //The Android's default system path of your application database.
+    private static String DB_PATH = "/data/data/com.miskitup.CoffeeNutrition/databases/";
+    private static String DB_NAME = "drinks";
+    private SQLiteDatabase myDataBase; 
+    private final Context myContext;
+
+    //Constructor
+    //Takes and keeps a reference of the passed context in order to access to the application assets and resources.
+    //@param context
+
+    DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.myContext = context;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(DATABASE_CREATE_HOT);
+        db.execSQL(DATABASE_CREATE_COFFEE);
+        db.execSQL(DATABASE_CREATE_HOTTEA);
+        db.execSQL(DATABASE_CREATE_COLD);
+        db.execSQL(DATABASE_CREATE_BLENDED);
+        db.execSQL(DATABASE_CREATE_COLDTEA);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+                + newVersion + ", which will destroy all old data");
+        db.execSQL("DROP TABLE IF EXISTS notes");
+        onCreate(db);
+    }
+
+     //Creates a empty database on the system and rewrites it with your own database.
+
+    public void createDataBase() throws IOException{
+        boolean dbExist = checkDataBase();
+        if(dbExist){
+            //do nothing - database already exist
+        }else{
+
+            //By calling this method and empty database will be created into the default system path
+               //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+    }
+
+    //Check if the database already exist to avoid re-copying the file each time you open the application.
+    //@return true if it exists, false if it doesn't
+
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+        }catch(SQLiteException e){
+
+            //database doesn't exist yet.
+
+        }
+
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+
+
+
+    //Copies your database from your local assets-folder to the just created empty database in the
+    //system folder, from where it can be accessed and handled.
+    //This is done by transfering bytestream.
+
+    private void copyDataBase() throws IOException{
+
+        //Open your local db as the input stream
+        InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DB_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public void openDataBase() throws SQLException{
+        //Open the database
+        String myPath = DB_PATH + DB_NAME;
+        myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }
+
+    @Override
+    public synchronized void close() {
+            if(myDataBase != null)
+                myDataBase.close();
+            super.close();
+    }
+
+        // Add your public helper methods to access and get content from the database.
+       // You could return cursors by doing "return myDataBase.query(....)" so it'd be easy
+       // to you to create adapters for your views.
+
+}
+
+public DrinkDbAdapter(Context ctx) {
+    this.mCtx = ctx;
+}
+
+public DrinkDbAdapter openToRead() throws android.database.SQLException {
+    myDbHelper = new DatabaseHelper(mCtx);
+    myDbDrinks = myDbHelper.getReadableDatabase();
+    return this;
+}
+
+public DrinkDbAdapter openToWrite() throws android.database.SQLException {
+    myDbHelper = new DatabaseHelper(mCtx);
+    myDbDrinks = myDbHelper.getWritableDatabase();
+    return this;
+}
+
+public void close() {
+    myDbHelper.close();
+}
+
+public Cursor getTitle(long rowId, String table) throws SQLException {
+    Cursor mCursor =myDbDrinks.query(true, table, new String[] {KEY_ROWID, KEY_DRINK, KEY_LIQUID, KEY_LIQUID_AMOUNT,
+    KEY_POWDER, KEY_POWDER_AMOUNT, KEY_SHOTS, KEY_ADDITIVE1, KEY_ADDITIVE1_AMOUNT, KEY_ADDITIVE2, KEY_ADDITIVE2_AMOUNT},
+    KEY_ROWID + "=" + rowId, null, null, null, null, null);
+        if (mCursor != null) {
+            mCursor.moveToFirst();
+        }
+        return mCursor;
+    }
+
+public Cursor getHotTitles() {
+    return myDbDrinks.query(DATABASE_TABLE_HOT, new String[] {KEY_ROWID, KEY_DRINK}, null, null, null, null, null);
+}
+
+}
+</code></pre>
+
+<p>hot_espresso.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" 
+    android:orientation="vertical">
+    <ListView android:id="@+id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#e9ddc8"
+        android:divider="#44059f"
+        android:dividerHeight="1dp"
+        android:cacheColorHint="#e9ddc8" />
+        <TextView android:id="@+id/android:empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+</LinearLayout>
+</code></pre>
+
+<p>hot_espresso_list.xml</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<TextView
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/hot_espresso_row"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:padding="10dp"
+android:textColor="#44059f" />
+</code></pre>
+
+<p>Any ideas or suggestions would be greatly appreciated.</p>

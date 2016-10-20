@@ -1,0 +1,518 @@
+<p>I have written the following code to plot a graph but it is not plotting and i haven't got any errors.</p>
+
+<p>Please tell me what i am doing wrong. I am trying to create a bar chart by taking the values from a database.</p>
+
+<pre><code>package flu.solutions.travelsense;
+
+
+import org.achartengine.ChartFactory;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.model.TimeSeries;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
+
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Color;
+public class ChartActivity<BMICalculatorDB> extends Activity{
+
+    public ChartActivity() {
+        super();
+    }
+        //public ChartActivity(Context context, String name, CursorFactory factory,
+            //int version, DatabaseErrorHandler errorHandler) {
+        //super();
+        // TODO Auto-generated constructor stub
+    //}
+
+
+        public static final String KEY_BMIID = "bmi_id";
+        public static final String KEY_BMIDATA = "bmi_data";
+        public static final String KEY_BMIDATE = "bmi_date";
+
+        private static final String DATABASE_NAME = "Jayant";
+        private static final String DATABASE_TABLE = "android_metadata";
+        private static final int DATABASE_VERSION = 2;
+
+        private DBHelper ourHelper;
+        private static Context ourContext;
+        private SQLiteDatabase ourDatabase;
+
+        private static class DBHelper extends SQLiteOpenHelper{
+
+            public DBHelper(Context context) {
+                super(context, DATABASE_NAME, null, DATABASE_VERSION);
+                // TODO Auto-generated constructor stub
+            }
+
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                // TODO Auto-generated method stub
+                db.execSQL( "CREATE TABLE " + DATABASE_TABLE + " (" +
+                KEY_BMIID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        KEY_BMIDATA + " TEXT NOT NULL, " +
+                        KEY_BMIDATE + " TEXT NOT NULL );"
+                        );
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                // TODO Auto-generated method stub
+                db.execSQL( "DROP TABLE IF EXISTS " + DATABASE_TABLE );
+                onCreate(db);
+            }
+
+        }
+
+        public void BMICalculatorDB(Context c){
+            ourContext = c;
+        }
+
+        @SuppressWarnings("unchecked")
+        public BMICalculatorDB open(){
+            ourHelper = new DBHelper(ourContext);
+            ourDatabase = ourHelper.getWritableDatabase();
+            return (BMICalculatorDB) this;
+        }
+
+        public void close(){
+            ourHelper.close();
+        }
+
+        public long createEntry( String data, String date ) {
+            //, String date 
+            // TODO Auto-generated method stub
+            ContentValues cv = new ContentValues();
+            cv.put(KEY_BMIDATA, data);
+            cv.put(KEY_BMIDATE, date);
+            return ourDatabase.insert(DATABASE_TABLE, null, cv);
+        }
+
+        public String getBMIID() {
+            // TODO Auto-generated method stub
+            String[] column =
+                    new String[]{ KEY_BMIID };
+            Cursor c = 
+                    ourDatabase.query(DATABASE_TABLE, column, null, null, null, null, null);
+
+            String result = "";
+            int iID = c.getColumnIndex(KEY_BMIID);
+
+            for ( c.moveToFirst(); ! c.isAfterLast(); c.moveToNext() ){
+                result = result + c.getString(iID);
+            }
+
+            return result;
+        }
+
+        public String getBMIDataData(){
+
+            String[] column =
+                        new String[]{ KEY_BMIDATA };
+                Cursor c = 
+                        ourDatabase.query( DATABASE_TABLE, column, null, null, null, null, null );
+
+                String result = "";
+                int iData = c.getColumnIndex( KEY_BMIDATA );
+
+                for ( c.moveToFirst(); ! c.isAfterLast(); c.moveToNext() ){
+                    result = result + c.getString( iData );
+                }
+
+
+            return result;
+        }
+
+        public String getBMIDateData(){
+            String[] column =
+                    new String[]{ KEY_BMIDATE };
+            Cursor c = 
+                    ourDatabase.query( DATABASE_TABLE, column, null, null, null, null, null );
+
+            String result = "";
+            int iDate = c.getColumnIndex( KEY_BMIDATE);
+
+            for ( c.moveToFirst(); ! c.isAfterLast(); c.moveToNext() ){
+                result = result + c.getString( iDate );
+            }
+
+
+        return result;
+        }
+
+        public void updateEntry( long lId, String mData, String mDate ) {
+            // TODO Auto-generated method stub
+            ContentValues cvUpdate = new ContentValues();
+
+            cvUpdate.put( KEY_BMIDATA, mData );
+            cvUpdate.put( KEY_BMIDATE, mDate );
+            ourDatabase.update( DATABASE_TABLE, cvUpdate, KEY_BMIID + " = lId", null );
+        }
+
+        public String getData(long l) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        public String getDate(long l) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        public XYMultipleSeriesDataset getDemoDataset(String title) {
+
+            String[] column =
+                    new String[]{ KEY_BMIDATA };
+            Cursor c = ourHelper.getWritableDatabase().query( DATABASE_TABLE, column, null, null, null, null, null );
+
+            XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+
+            TimeSeries series = new TimeSeries("Bar1");
+            TimeSeries series2 = new TimeSeries(title);
+
+            getBMIDataData();
+
+            while (!c.isAfterLast()) {
+                int date = c.getInt((Integer) c.getColumnIndexOrThrow("DAYS"));
+                int weight = c.getInt((Integer) c.getColumnIndexOrThrow("TOP 10"));
+                series2.add(weight, date);
+                c.moveToNext();
+            }
+
+            c.close();
+
+            dataset.addSeries(series);
+            dataset.addSeries(series2);
+
+            return dataset;
+        }
+
+
+        public Intent getIntent(Context context) {
+
+            //Lager TimeSeries for den første linja
+            XYMultipleSeriesDataset dataset = getDemoDataset("Bar1");
+
+            //Kode for render
+            XYMultipleSeriesRenderer mRenderer = new XYMultipleSeriesRenderer();
+
+            //Optimalisering linje1
+            XYSeriesRenderer renderer = new XYSeriesRenderer();
+            renderer.setColor(Color.YELLOW);
+            renderer.setPointStyle(PointStyle.CIRCLE);
+            renderer.setFillPoints(true);
+
+            // Optimalisering linje2 husk rekke følgen
+            XYSeriesRenderer renderer2 = new XYSeriesRenderer();
+            renderer2.setColor(Color.BLUE);
+            renderer2.setPointStyle(PointStyle.SQUARE);
+            renderer2.setFillPoints(true);
+
+            //Legger til render seriene
+            mRenderer.addSeriesRenderer(renderer);
+
+            //Optimalisering grafen
+            mRenderer.setChartTitle("Test");
+            mRenderer.setZoomEnabled(true);
+            mRenderer.setZoomButtonsVisible(true);
+            mRenderer.setBackgroundColor(Color.BLACK);
+            mRenderer.setApplyBackgroundColor(true);
+            mRenderer.setXTitle("Dager");
+            mRenderer.setShowGrid(true);
+
+            mRenderer.addSeriesRenderer(renderer2);
+
+
+            Intent intent = ChartFactory.getLineChartIntent(context, dataset, 
+                    mRenderer, "Bar Graph Title");
+
+            return intent;
+
+        }
+
+        public void onCreate(SQLiteDatabase db) {
+            // TODO Auto-generated method stub
+
+        }
+
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+</code></pre>
+
+<p>Edited code.</p>
+
+<pre><code>package flu.solutions.travelsense;
+
+import java.util.List;
+
+import org.achartengine.ChartFactory;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.chart.BarChart.Type;
+import org.achartengine.model.CategorySeries;
+import org.achartengine.model.TimeSeries;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.renderer.SimpleSeriesRenderer;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
+import org.achartengine.renderer.XYMultipleSeriesRenderer.Orientation;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Color;
+import android.view.Menu;
+
+public class DBHelper extends SQLiteOpenHelper{
+
+    public static final String KEY_Primary1 = "pri_id";
+    public static final String KEY_Primary2 = "pri_data";
+
+    private static final String DATABASE_NAME = "Jayant";
+    private static final String DATABASE_TABLE = "android_data";
+    private static final int DATABASE_VERSION = 1;
+
+    String[] titles = new String[] { "Average Booking Value of Transactions Across Time", " " };
+
+
+    private DBHelper ourHelper;
+    @SuppressWarnings("unused")
+    private Context ourContext;
+    private SQLiteDatabase ourDatabase;
+
+    public DBHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        // TODO Auto-generated constructor stub
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // TODO Auto-generated method stub
+        db.execSQL( "CREATE TABLE " + DATABASE_TABLE + " (" +
+                KEY_Primary1 + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                KEY_Primary2 + " TEXT NOT NULL, "                 
+                );
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO Auto-generated method stub
+        db.execSQL( "DROP TABLE IF EXISTS " + DATABASE_TABLE );
+        onCreate(db);
+    }
+
+    public void open() {
+        ourDatabase = getWritableDatabase();
+    }
+
+    public long createEntry( String data, String date ) {
+        //, String date 
+        // TODO Auto-generated method stub
+        ContentValues cv = new ContentValues();
+        cv.put(KEY_Primary2, data);
+        return ourDatabase.insert(DATABASE_TABLE, null, cv);
+    }
+
+    public String getBMIID() {
+        // TODO Auto-generated method stub
+        String[] column =
+                new String[]{ KEY_Primary1 };
+        Cursor c = 
+                ourDatabase.query(DATABASE_TABLE, column, null, null, null, null, null);
+
+        String result = "";
+        int iID = c.getColumnIndex(KEY_Primary1);
+
+        for ( c.moveToFirst(); ! c.isAfterLast(); c.moveToNext() ){
+            result = result + c.getString(iID);
+        }
+
+        return result;
+    }
+
+    public String getBMIDataData(){
+
+        String[] column =
+                new String[]{ KEY_Primary2 };
+        Cursor c = 
+                ourDatabase.query( DATABASE_TABLE, column, null, null, null, null, null );
+
+        String result = "";
+        int iData = c.getColumnIndex( KEY_Primary2 );
+
+        for ( c.moveToFirst(); ! c.isAfterLast(); c.moveToNext() ){
+            result = result + c.getString( iData );
+        }
+        return result;
+    }
+
+
+
+    public void updateEntry( long lId, String mData, String mDate ) {
+        // TODO Auto-generated method stub
+        ContentValues cvUpdate = new ContentValues();
+
+        cvUpdate.put( KEY_Primary2, mData );
+        ourDatabase.update( DATABASE_TABLE, cvUpdate, KEY_Primary1 + " = lId", null );
+    }
+
+    public String getData(long l) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getDate(long l) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public XYMultipleSeriesDataset getDemoDataset(String title) {
+
+        String[] column =
+                new String[]{ KEY_Primary2 };
+        Cursor c = ourHelper.getWritableDatabase().query( DATABASE_TABLE, column, null, null, null, null, null );
+
+        XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+
+        TimeSeries series = new TimeSeries("Bar1");
+        TimeSeries series2 = new TimeSeries(title);
+
+        getBMIDataData();
+
+        while (!c.isAfterLast()) {
+            int date = c.getInt((Integer) c.getColumnIndexOrThrow("DAYS"));
+            int weight = c.getInt((Integer) c.getColumnIndexOrThrow("TOP 10"));
+            series2.add(weight, date);
+            c.moveToNext();
+        }
+
+        c.close();
+
+        dataset.addSeries(series);
+        dataset.addSeries(series2);
+
+        return dataset;
+    }
+
+    public Intent getIntent(Context context) {
+
+         int[] colors = new int[] { Color.RED, Color.BLACK};
+
+            XYMultipleSeriesRenderer renderer = buildBarRenderer(colors);
+            renderer.setOrientation(Orientation.HORIZONTAL);
+
+            setChartSettings(renderer, "Average Booking Value of Transactions Across Time", " ", " ", 0,10, 0,10, Color.GRAY, Color.LTGRAY);
+
+            renderer.setXLabels(1);
+            renderer.setYLabels(10);
+
+            int length = renderer.getSeriesRendererCount();
+            for (int i = 0; i < length; i++) 
+            {
+              SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+              seriesRenderer.setDisplayChartValues(false);
+              }
+
+            return ChartFactory.getBarChartIntent(this, buildBarDataset(titles, DATABASE_TABLE), renderer,Type.DEFAULT);
+            }
+
+            protected XYMultipleSeriesRenderer buildBarRenderer(int[] colors) 
+            {
+
+            // creates a SeriesRenderer and initializes it with useful default values as well as colors
+
+                XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+
+                renderer.setAxisTitleTextSize(16);
+
+                renderer.setChartTitleTextSize(20);
+
+                renderer.setLabelsTextSize(15);
+
+                renderer.setLegendTextSize(15);
+
+                int length = colors.length;
+
+                for (int i = 0; i < length; i++) 
+                {
+                  SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+                  r.setColor(colors[i]);
+                  renderer.addSeriesRenderer(r);
+                }
+                return renderer;
+              }
+
+               protected void setChartSettings(XYMultipleSeriesRenderer renderer, String title, String xTitle,
+               String yTitle, double xMin, double xMax, double yMin, double yMax, int axesColor,int labelsColor) 
+              {
+
+              // sets lots of default values for this renderer
+
+               renderer.setChartTitle(title);
+
+               renderer.setXTitle(xTitle);
+               renderer.setYTitle(yTitle);
+
+               renderer.setXAxisMin(xMin);
+               renderer.setXAxisMax(xMax);
+
+               renderer.setYAxisMin(yMin);
+               renderer.setYAxisMax(yMax);
+
+               renderer.setAxesColor(axesColor);
+               renderer.setLabelsColor(labelsColor);
+
+               renderer.setApplyBackgroundColor(true);
+               renderer.setBackgroundColor(Color.BLACK);
+
+               renderer.setBarSpacing(0.5f);
+
+            }
+
+            protected XYMultipleSeriesDataset buildBarDataset(String[] titles, String databaseTable) 
+            {
+
+                // adds the axis titles and values into the dataset
+
+                XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+                int length = titles.length;
+
+                for (int i = 0; i < length; i++) 
+                {
+                  CategorySeries series = new CategorySeries(titles[i]);
+                  double[] v = databaseTable.get(i);
+                  int seriesLength = v.length;
+                  for (int k = 0; k < seriesLength; k++) 
+                  {
+                    series.add(v[k]);
+                  }
+
+                  dataset.addSeries(series.toXYSeries());
+                 }
+                return dataset;
+                }
+
+            public boolean onCreateOptionsMenu(Menu menu) {
+                // Inflate the menu; this adds items to the action bar if it is present.
+                getMenuInflater().inflate(R.menu.activity_chart, menu);
+                return true;
+            }
+
+
+
+        //Lager TimeSeries for den første linja
+        }
+</code></pre>
+
+<p>Hi i have edited the above code but i am still facing errors can anyone please tell me what i am doing wrong here.</p>

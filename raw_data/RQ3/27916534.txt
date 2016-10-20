@@ -1,0 +1,280 @@
+<p>here is my dbhelper.java. the error shows that it could not find the database . can anyone help me see why that it could not find the database table?
+database name= crmate
+database table = user</p>
+
+<pre><code>package com.webileapps.navdrawer;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
+
+public class DbHelper extends SQLiteOpenHelper{
+
+public static final String DATABASE_NAME="crmate";
+public static final String DATABASE_TABLES="user";
+public static final int DATABASE_VERSION=1;
+public static String path ="/data/data/com.webileapps.navdrawer/databases/";
+
+public static String KEY_ROWID="User_ID";
+public static String KEY_USERNAME="User_Name";
+public static String KEY_AGE="Age";
+public static String KEY_ClINIC="Clinic";
+public static String KEY_PHONE="Phone";
+public static String KEY_EMAIL="Email";
+public static String KEY_DATESIGNUP="Date_Signup";
+public static String KEY_CONDITIONID="Condition_ID";
+public static String KEY_DOCTORID="Doctor_ID";
+public static String KEY_LOGINID="Login_ID";
+public static String KEY_ACTIVITYNAME="Activity_Name";
+public static String KEY_NOTIFICATIONNAME="Notification_Name";
+public static String KEY_GROUPNAME="Group_Name";
+public static String KEY_APPROVED="Approved";
+
+private final Context ourContext;
+private DbHelper ourhelper;
+private static SQLiteDatabase ourdatabase; 
+public static Context context;
+
+public DbHelper(Context context){
+    //super(context,DATABASE_NAME,null,DATABASE_VERSION);
+    super(context, DATABASE_NAME, null, 1);
+    this.ourContext = context;
+
+}
+
+public void createDataBase() throws IOException{
+    //check if the database exists
+    boolean databaseExist = checkDataBase();
+
+    if(databaseExist){
+        // Do Nothing.
+    }else{
+        this.getWritableDatabase();         
+        copyDataBase(); 
+    }// end if else dbExist
+}
+
+public boolean checkDataBase(){
+    SQLiteDatabase checkDB = null;
+
+    try{
+        String myPath = path + DATABASE_NAME;
+        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+    }catch(SQLiteException e){
+
+        //database does't exist yet.
+
+    }
+
+    if(checkDB != null){
+
+        checkDB.close();
+
+    }
+
+    return checkDB != null ? true : false;
+}
+
+private void copyDataBase() throws IOException{ 
+
+    //Open your local db as the input stream
+    InputStream myInput = context.getAssets().open(DATABASE_NAME); 
+
+    // Path to the just created empty db
+    String outFileName = path + DATABASE_NAME; 
+
+    //Open the empty db as the output stream
+
+    OutputStream myOutput = new FileOutputStream(outFileName); 
+     //transfer bytes from the input file to the output file
+
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close(); 
+}
+
+public void openDataBase() throws SQLException{      
+    //Open the database
+    String myPath =path + DATABASE_NAME;
+    ourdatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);  
+}
+
+
+@Override
+public synchronized void close() { 
+    if(ourdatabase != null)
+        ourdatabase.close(); 
+    super.close(); 
+}
+
+    @Override
+
+    public void onCreate(SQLiteDatabase db) {
+    // TODO Auto-generated method stub
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    // TODO Auto-generated method stub
+    //db.execSQL("DROP TABLE IF EXISTS"+DATABASE_TABLES);
+     //onCreate(db);
+}
+
+
+public String getUserNameFromDB(){
+    String query = "select User_First_Name From "+DATABASE_NAME;
+    Cursor cursor = ourdatabase.rawQuery(query, null);
+    String userName = null;
+    if(cursor.getCount()>0){
+        if(cursor.moveToFirst()){
+    do{
+                userName = cursor.getString(0);
+            }while (cursor.moveToNext());
+        }
+    }
+    return userName;
+}
+
+
+
+public  String [] getDataarray(){
+
+    String[] profilearray = new String[]{ KEY_USERNAME,KEY_AGE,KEY_ClINIC,KEY_PHONE,KEY_EMAIL,KEY_DATESIGNUP
+            ,KEY_CONDITIONID,KEY_DOCTORID,KEY_LOGINID,KEY_ACTIVITYNAME,KEY_NOTIFICATIONNAME,KEY_GROUPNAME,KEY_APPROVED
+            };
+
+    SQLiteQueryBuilder querybuilder=new SQLiteQueryBuilder();
+    querybuilder.setTables(DATABASE_TABLES);
+
+  String [] columns= new String[]{ KEY_ROWID,KEY_USERNAME,KEY_AGE,KEY_ClINIC,KEY_PHONE,KEY_EMAIL,KEY_DATESIGNUP
+            ,KEY_CONDITIONID,KEY_DOCTORID,KEY_LOGINID,KEY_ACTIVITYNAME,KEY_NOTIFICATIONNAME,KEY_GROUPNAME,KEY_APPROVED
+            };
+
+    Cursor c= ourdatabase.query(DATABASE_TABLES, columns, null,null, null, null, null);
+
+
+    if(c.moveToFirst()) {
+
+        int iUserName=c.getColumnIndex(KEY_USERNAME);
+        int iAge=c.getColumnIndex(KEY_AGE);
+        int iClinic=c.getColumnIndex(KEY_ClINIC);
+        int iPhone=c.getColumnIndex(KEY_PHONE);
+        int iEmail=c.getColumnIndex(KEY_EMAIL);
+        int iDateSignup=c.getColumnIndex(KEY_DATESIGNUP);
+        int iConditionID=c.getColumnIndex(KEY_CONDITIONID);
+        int iDoctorID=c.getColumnIndex(KEY_DOCTORID);
+        int iLoginID=c.getColumnIndex(KEY_LOGINID);
+        int iActivityName=c.getColumnIndex(KEY_ACTIVITYNAME);
+        int iNotificationName=c.getColumnIndex(KEY_NOTIFICATIONNAME);
+        int iGroupName=c.getColumnIndex(KEY_GROUPNAME);
+        int iApproved=c.getColumnIndex(KEY_APPROVED);
+
+        profilearray[0] = c.getString(iUserName);
+        profilearray[1] = c.getString(iAge);
+        profilearray[2] = c.getString(iClinic);
+        profilearray[3] = c.getString(iPhone);
+        profilearray[4] = c.getString(iEmail);
+        profilearray[5] = c.getString(iDateSignup);
+        profilearray[6] = c.getString(iConditionID);
+        profilearray[7] = c.getString(iDoctorID);
+        profilearray[8] = c.getString(iLoginID);
+        profilearray[9] = c.getString(iActivityName);
+        profilearray[10] = c.getString(iNotificationName);
+        profilearray[11] = c.getString(iGroupName);
+        profilearray[12] = c.getString(iApproved);
+    }
+
+
+     return profilearray;
+
+
+
+}
+
+}
+</code></pre>
+
+<p>this is the page where i display it out . </p>
+
+<pre><code>public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+    View rootview = inflater.inflate(R.layout.user,container,false);
+    Resources res=getResources();
+    Profile=res.getStringArray(R.array.Profile);
+
+    //condition=res.getStringArray(R.array.Profile_values);
+    DbHelper myDbHelper = new DbHelper(getActivity().getApplicationContext());
+
+    try {
+
+            myDbHelper.createDataBase();
+
+    } catch (IOException ioe) {
+
+        throw new Error("Unable to create database");
+
+    }
+
+    try {
+
+        myDbHelper.openDataBase();
+
+
+        condition=myDbHelper.getDataarray();
+
+        myDbHelper.close();
+
+    }catch(SQLException sqle){
+
+        throw sqle;
+
+    }
+
+
+    list=(ListView)rootview.findViewById(R.id.listView1);
+
+
+    VivzAdapter adapter = new VivzAdapter (getActivity(),Profile);
+    list.setAdapter(adapter);
+    return  rootview;
+
+    }
+
+
+
+
+}
+
+public View getView( int position ,View convertView,ViewGroup parent){
+
+    LayoutInflater inflater= (LayoutInflater) context.getSystemService(android.content.Context.LAYOUT_INFLATER_SERVICE);
+    View row =inflater.inflate(R.layout.profile_list,parent,false);
+
+    TextView myProfile=(TextView)row.findViewById(R.id.Profile);
+    TextView myCondition=(TextView)row.findViewById(R.id.condition);
+
+    myProfile.setText(ProfileArray[position]);
+    myCondition.setText(resultarray[position]);
+    return row;
+</code></pre>

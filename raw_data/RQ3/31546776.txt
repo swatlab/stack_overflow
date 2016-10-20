@@ -1,0 +1,193 @@
+<p><strong>Requirements:</strong> accommodate multiple authors using one of the components from the Java Collection Framework.  Requires one book with an isbn and a Collection of authors. JUnit: Guidance for testValidate: Test for at least two cases (one case where the book properties hold the correct data types and are not empty nor hold a null value, one where they do not). Guidance for testEquals: Test for at least two cases (one case where authors and isbn match, one where they do not). Test for at least two authors. My teacher told me: testEquals you need to add isbn and two authors. Create an ArrayList. Add two authors to it. Create a Book object and add the ArrayList instance and the isbn. I think that's what I have done, the authors are printing, but the ISBNs are not. I am a total newbie and I am at a loss! Can anyone help?</p>
+
+<p><strong>EDIT/ADDITION</strong> I got the ISBN to print, but it is only printing the second isbn I have. What do I need to change to get both of them to print? Or does it matter? </p>
+
+<p><strong>Here is the output:</strong></p>
+
+<pre><code>Testsuite: library.domain.BookTest
+equals
+Author List: [Bob Smith, Jane Doe]
+ISBN: 67890
+validate
+Author List: [Bob Smith, Jane Doe]
+ISBN: 67890
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.23 sec
+
+------------- Standard Output ---------------
+equals
+Author List: [Bob Smith, Jane Doe]
+ISBN: 67890
+validate
+Author List: [Bob Smith, Jane Doe]
+ISBN: 67890
+------------- ---------------- ---------------
+test:
+Deleting: /var/folders/k7/wpgy3lw91171qxlzt4pj0cfh0000gn/T/TEST-library.domain.BookTest.xml
+BUILD SUCCESSFUL (total time: 1 second)
+</code></pre>
+
+<p>Here is my new page:</p>
+
+<p><strong>NEW BookTest.java</strong></p>
+
+<pre><code>package library.domain;
+
+import java.util.ArrayList;
+import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+
+public class BookTest {
+
+    private ArrayList<String> authorList = new ArrayList<>();
+
+    @Test
+    public void testEquals()                //test Equals() for accuracy
+    {
+        System.out.println("equals");
+        authorList.add("Bob Smith");
+        Book book = new Book("12345", authorList);
+        assertEquals("expected true", true, book.equals(book));
+        authorList.add("Jane Doe");
+        book = new Book("67890", authorList);
+        assertEquals("expected true", true, book.equals(book));
+        System.out.println("Author List: " + authorList);
+        System.out.println("ISBN: " + book.getIsbn());
+    }
+
+    @Test
+    public void testValidate()          //test Validate() for accuracy
+    {
+        System.out.println("validate");
+        authorList.add("Bob Smith");
+        Book book = new Book("12345", authorList);
+        assertEquals("expected true", true, book.validate());
+        authorList.add("Jane Doe");
+        book = new Book("67890", authorList);
+        assertEquals("expected true", true, book.validate());
+        System.out.println("Author List: " + authorList);
+        System.out.println("ISBN: " + book.getIsbn());
+    }
+}
+</code></pre>
+
+<p><strong>Book.java</strong></p>
+
+<pre><code>package library.domain;
+
+import java.util.ArrayList;
+import java.util.Objects;
+
+public class Book {
+
+    private String isbn;
+    private ArrayList<String> authorList;
+
+    public Book(String isbn, ArrayList<String> authorList)
+    {
+        this.isbn = isbn;
+        this.authorList = authorList;
+    }
+
+    public String getIsbn()             //access to isbn and manages  next value
+    {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn)            //assigns the input isbn to the data member isbn
+    {
+        this.isbn = isbn;
+    }
+//assigns the input author to the data member author
+
+    public ArrayList<String> getAuthorList()
+    {
+        return authorList;
+    }
+
+    public void setAuthorList(ArrayList<String> authorList)
+    {
+        this.authorList = authorList;
+    }
+
+    @Override
+    public boolean equals(Object obj)           //checks  equality of two objects - true if same, false if different
+    {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Book)) {
+            return false;
+        }
+
+        Book book = (Book) obj;
+        if (!this.isbn.equals(book.isbn)) {
+            return false;
+        }
+        if (!this.authorList.equals(book.authorList)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode()           //override hash
+    {
+        int hash = 7;
+        hash = 97 * hash + Objects.hashCode(this.authorList);
+        hash = 97 * hash + Objects.hashCode(this.isbn);
+        return hash;
+    }
+
+    public boolean validate()           //validate isbn and author not null
+    {
+        if (isbn == null || isbn.equals("")) {
+            return false;
+        }
+        if (authorList == null || authorList.equals("")) {
+            return false;
+        }
+        {
+            return true;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>BookTest.java</strong></p>
+
+<pre><code>package library.domain;
+
+import java.util.ArrayList;
+import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+
+public class BookTest {
+
+    private ArrayList<String> authorList = new ArrayList<>();
+    private String isbn;
+
+    @Test
+    public void testEquals()                //test Equals() for accuracy
+    {
+        System.out.println("equals");
+        authorList.add("Bob Smith");
+        authorList.add("Jane Doe");
+        Book book = new Book("12345", authorList);
+        assertEquals("expected true", true, book.equals(book));
+        System.out.println("Author List: " + authorList);
+        System.out.println("ISBN: " + isbn);
+    }
+
+    @Test
+    public void testValidate()          //test Validate() for accuracy
+    {
+        System.out.println("validate");
+        authorList.add("Bob Smith");
+        authorList.add("Jane Doe");
+        Book book = new Book("12345", authorList);
+        assertEquals("expected true", true, book.validate());
+        System.out.println("Author List: " + authorList);
+        System.out.println("ISBN: " + isbn);
+    }
+}
+</code></pre>

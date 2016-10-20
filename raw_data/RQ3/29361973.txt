@@ -1,0 +1,599 @@
+<p>I am trying to get my video taken with my app (that goes to the phone's camera, then returns with a video) to display correctly in my <code>VideoView</code> when it returns from camera. However, if I take a landscape video, it auto-rotates to be "face-up" like the image below. However, this plays badly in <code>VideoView</code>, as it shows all that extra space, which I cannot change (don't know how) the widget's orientation if the video does come back as a landscape video. So the route I am taking is to try to rotate the video itself, when it comes back into the <code>VideoView</code>. </p>
+
+<p>I am trying this suggestion <a href="http://stackoverflow.com/questions/9118380/android-portait-video-orientation-wrong-in-videoview">here</a>, but having 2 problems with this. First, I cannot run the methods suggested until after my video is trying to be saved, since that is the only time I get a correct path for the video (or is there another way to get its path?). Second, if I try to implement the code while saving (instead of when the video returns to the <code>VideoView</code>) my file won't save due to an IllegalArgumentException. Basically it does not like this line: <code>mediaMetadataRetriever.setDataSource(this, Uri.parse(videoPath));</code>, or more specifically it does not accept <code>videoPath</code> as an argument. I have tried to log <code>videoPath</code>, and I get a correct path to where my video will save: <code>/storage/emulated/0/Movies/Cute Videos/Video94.mp4</code>. So if this is my correct path, then why is it giving me the exception? I don't know what to do with that. Should I not try to use this sample code when saving?</p>
+
+<p>Thanks if you can explain what's wrong, I may be implementing the sample code incorrectly.</p>
+
+<p>Here is the code I'm trying to integrate:</p>
+
+<pre><code>getVideoAspectRatio();
+        if (isVideoLandscaped()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+</code></pre>
+
+<p>And this:</p>
+
+<pre><code>videoView.setMediaController(new MediaController(this));
+</code></pre>
+
+<p>and 2 methods:</p>
+
+<pre><code>private void getVideoAspectRatio() {
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(this, Uri.parse(videoUrl));
+        String height = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+        String width = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+        videoWidth = Integer.parseInt(width);
+        videoHeight = Integer.parseInt(height);
+    }
+
+    private boolean isVideoLandscaped() {
+        if (videoWidth > videoHeight) {
+            return true;
+        } else return false;
+    }
+</code></pre>
+
+<p><img src="http://i.stack.imgur.com/helGm.png" alt="enter image description here"></p>
+
+<p><strong>MakePhotoVideo.java</strong></p>
+
+<pre><code>package org.azurespot.makecute;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.MediaController;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.VideoView;
+
+import org.azurespot.R;
+import org.azurespot.cutecollection.CuteCollection;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+public class MakePhotoVideo extends ActionBarActivity {
+
+    private static final int ACTION_TAKE_PHOTO = 1;
+    private static final int ACTION_TAKE_VIDEO = 2;
+    private static final String BITMAP_STORAGE_KEY = "viewbitmap";
+    private static final String IMAGEVIEW_VISIBILITY_STORAGE_KEY = "imageviewvisibility";
+    private ImageView mImageView;
+    private Bitmap mImageBitmap;
+
+    private static final String VIDEO_STORAGE_KEY = "viewvideo";
+    private static final String VIDEOVIEW_VISIBILITY_STORAGE_KEY = "videoviewvisibility";
+    private VideoView mVideoView;
+    private Uri mVideoUri;
+    File fileVideo;
+
+    private String mCurrentPhotoPath;
+    String videoPath;
+
+    int videoWidth;
+    int videoHeight;
+
+    private static final String JPEG_FILE_PREFIX = "IMG_";
+    private static final String JPEG_FILE_SUFFIX = ".jpg";
+
+    private PhotoStorageDirFactory mPhotoStorageDirFactory = null;
+
+    /* Photo album for this application */
+    private String getAlbumName() {
+        return getString(R.string.album_name);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_make_photo_video);
+
+        mImageView = (ImageView) findViewById(R.id.taken_photo);
+        mVideoView = (VideoView) findViewById(R.id.video_view);
+        mVideoView.setVisibility(View.INVISIBLE);
+        mImageBitmap = null;
+        mVideoUri = null;
+
+
+        Button photoBtn = (Button) findViewById(R.id.click);
+        setBtnListenerOrDisable(
+                photoBtn,
+                mTakePicOnClickListener,
+                MediaStore.ACTION_IMAGE_CAPTURE
+        );
+
+        Button videoBtn = (Button) findViewById(R.id.record_video);
+        setBtnListenerOrDisable(
+                videoBtn,
+                mTakeVidOnClickListener,
+                MediaStore.ACTION_VIDEO_CAPTURE
+        );
+
+        mPhotoStorageDirFactory = new BasePhotoDirFactory();
+
+        // Shows the up carat near app icon in ActionBar
+        getSupportActionBar().setDisplayUseLogoEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+    }
+
+    public void viewCollection(View v){
+
+        // finishes/restarts the activity so the unsaved video does not corrupt
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
+
+        // goes to Cute Collection activity
+        Intent i = new Intent(this, CuteCollection.class);
+        startActivity(i);
+    }
+
+    private File getAlbumDir() {
+        File storageDir = null;
+
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+
+            storageDir = mPhotoStorageDirFactory.getAlbumStorageDir(getAlbumName());
+
+            if (storageDir != null) {
+                if (! storageDir.mkdirs()) {
+                    if (! storageDir.exists()){
+                        Log.d("Camera", "failed to create directory");
+                        return null;
+                    }
+                }
+            }
+
+        } else {
+            Log.v(getString(R.string.app_name), "External storage is not mounted READ/WRITE.");
+        }
+
+        return storageDir;
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = JPEG_FILE_PREFIX + timeStamp + "_";
+        File albumF = getAlbumDir();
+        File imageF = File.createTempFile(imageFileName, JPEG_FILE_SUFFIX, albumF);
+        return imageF;
+    }
+
+    private File setUpPhotoFile() throws IOException {
+
+        File f = createImageFile();
+        mCurrentPhotoPath = f.getAbsolutePath();
+
+        return f;
+    }
+
+    private void setPic() {
+
+        /* There isn't enough memory to open up more than a couple camera photos */
+        /* So pre-scale the target bitmap into which the file is decoded */
+
+        /* Get the size of the ImageView */
+        int targetW = mImageView.getWidth();
+        int targetH = mImageView.getHeight();
+
+        /* Get the size of the image */
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+
+        /* Figure out which way needs to be reduced less */
+        int scaleFactor = 1;
+        if ((targetW > 0) || (targetH > 0)) {
+            scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+        }
+
+        /* Set bitmap options to scale the image decode target */
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        /* Decode the JPEG file into a Bitmap */
+        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+
+        bitmap = rotateBitmap(bitmap, 90);
+
+        savePhoto(bitmap);
+
+        /* Associate the Bitmap to the ImageView, make sure the VideoView
+         * is cleared to replace with ImageView */
+        mImageView.setImageBitmap(bitmap);
+        mVideoUri = null;
+        mImageView.setVisibility(View.VISIBLE);
+        mVideoView.setVisibility(View.INVISIBLE);
+
+    }
+
+    // save your photo to SD card
+    private void savePhoto(final Bitmap bitmapPhoto){
+        // set OnClickListener to save the photo
+        mImageView.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                boolean success = false;
+
+                File photoDir = new File(Environment.getExternalStoragePublicDirectory
+                        (Environment.DIRECTORY_PICTURES) + "/Cute Photos");
+                photoDir.mkdirs();
+                Random generator = new Random();
+                int n = 10000;
+                n = generator.nextInt(n);
+                String photoName = "Photo"+ n +".jpg";
+                File filePhoto = new File (photoDir, photoName);
+//                if (filePhoto.exists ()) filePhoto.delete ();
+                try {
+                    FileOutputStream out = new FileOutputStream(filePhoto);
+                    bitmapPhoto.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    out.flush();
+                    out.close();
+                    success = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                if (success) {
+                    Toast toast = Toast.makeText(getApplicationContext(), "Cute photo saved!",
+                            Toast.LENGTH_LONG);
+                    LinearLayout toastLayout = (LinearLayout) toast.getView();
+                    toastLayout.setBackgroundColor(getResources().getColor(R.color.toast_color));
+                    TextView toastTV = (TextView) toastLayout.getChildAt(0);
+                    toastTV.setTextSize(30);
+                    toast.setGravity(Gravity.CENTER_VERTICAL, 0, 80);
+                    toast.show();
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Error during image saving", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        });
+    }
+
+    // save your video to SD card
+    protected void saveVideo(final Uri uriVideo){
+
+        // click the video to save it
+        mVideoView.setOnTouchListener(new View.OnTouchListener() {
+
+            public boolean onTouch(View v, MotionEvent event) {
+
+                boolean success = false;
+
+                if(event.getAction() == MotionEvent.ACTION_UP) {
+
+                    try {
+                        // make the directory
+                        File vidDir = new File(android.os.Environment.getExternalStoragePublicDirectory
+                                (Environment.DIRECTORY_MOVIES) + File.separator + "Cute Videos");
+                        vidDir.mkdirs();
+
+                        // create unique identifier
+                        Random generator = new Random();
+                        int n = 100;
+                        n = generator.nextInt(n);
+                        // create file name
+                        String videoName = "Video" + n + ".mp4";
+
+                        fileVideo = new File(vidDir.getAbsolutePath(), videoName);
+
+                        videoPath = fileVideo.getAbsolutePath();
+
+                        Log.d("TAG", "Value of videoPath:" + videoPath);
+
+                        fileVideo.setWritable(true, false);
+
+                        getVideoAspectRatio();
+                        if (isVideoLandscaped()) {
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                        }
+
+                        OutputStream out = new FileOutputStream(fileVideo);
+                        InputStream in = getContentResolver().openInputStream(uriVideo);
+
+                        byte buffer[] = new byte[1024];
+                        int length = 0;
+                        while ((length = in.read(buffer)) > 0) {
+                            out.write(buffer, 0, length);
+                        }
+
+                        out.close();
+                        in.close();
+
+                        success = true;
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (success) {
+                        Toast toast = Toast.makeText(getApplicationContext(), "Cute video saved!",
+                                Toast.LENGTH_SHORT);
+                        LinearLayout toastLayout = (LinearLayout) toast.getView();
+                        toastLayout.setBackgroundColor(getResources().getColor(R.color.toast_color));
+                        TextView toastTV = (TextView) toastLayout.getChildAt(0);
+                        toastTV.setTextSize(30);
+                        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 80);
+                        toast.show();
+                    } else {
+                        Toast.makeText(getApplicationContext(),
+                                "Error during video saving", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                return true;
+            }
+        });
+    }
+
+
+    public Bitmap rotateBitmap(Bitmap source, int angle)
+    {
+        Matrix matrix = new Matrix();
+        matrix.set(matrix);
+        matrix.setRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(),
+                source.getHeight(), matrix, false);
+    }
+
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent("android.intent.action.MEDIA_SCANNER_SCAN_FILE");
+        File f = new File(mCurrentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
+    private void dispatchTakePictureIntent(int actionCode) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        switch(actionCode) {
+            case ACTION_TAKE_PHOTO:
+                File f;
+
+                try {
+                    f = setUpPhotoFile();
+                    mCurrentPhotoPath = f.getAbsolutePath();
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    f = null;
+                    mCurrentPhotoPath = null;
+                }
+                break;
+
+            default:
+                break;
+        } // switch
+
+        startActivityForResult(takePictureIntent, actionCode);
+    }
+
+    // Captures video from Android camera component
+    protected void dispatchTakeVideoIntent() {
+        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
+            // set the video image quality to high
+            takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+            startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
+        }
+    }
+
+    private void handleCameraPhoto() {
+
+        if (mCurrentPhotoPath != null) {
+            setPic();
+            galleryAddPic();
+            mCurrentPhotoPath = null;
+        }
+
+    }
+    // Post recorded video into VideoView
+    private void handleCameraVideo(Intent intent) {
+        mVideoUri = intent.getData();
+        mVideoView.setMediaController(new MediaController(this));
+        mVideoView.setVideoURI(mVideoUri);
+        mImageBitmap = null;
+        mVideoView.setVisibility(View.VISIBLE);
+        mImageView.setVisibility(View.INVISIBLE);
+        mVideoView.start();
+        // saves video to file
+        saveVideo(mVideoUri);
+
+    }
+
+    Button.OnClickListener mTakePicOnClickListener =
+            new Button.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dispatchTakePictureIntent(ACTION_TAKE_PHOTO);
+                }
+            };
+    Button.OnClickListener mTakeVidOnClickListener =
+            new Button.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dispatchTakeVideoIntent();
+                }
+            };
+
+
+    private void getVideoAspectRatio() {
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(this, Uri.parse(videoPath));
+        String height = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+        String width = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+        videoWidth = Integer.parseInt(width);
+        videoHeight = Integer.parseInt(height);
+    }
+
+    private boolean isVideoLandscaped() {
+        if (videoWidth > videoHeight) {
+            return true;
+        } else return false;
+    }
+
+
+    // Intent data is how the photo and video transfer into their views
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case ACTION_TAKE_PHOTO: {
+                if (resultCode == RESULT_OK) {
+                    handleCameraPhoto();
+                }
+                break;
+            } // ACTION_TAKE_PHOTO
+
+            case ACTION_TAKE_VIDEO: {
+                if (resultCode == RESULT_OK) {
+                    handleCameraVideo(data);
+                }
+                break;
+            } // ACTION_TAKE_VIDEO
+        } // switch
+    }
+
+    // Some lifecycle callbacks so that the image can survive orientation change
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(BITMAP_STORAGE_KEY, mImageBitmap);
+        outState.putParcelable(VIDEO_STORAGE_KEY, mVideoUri);
+        outState.putBoolean(IMAGEVIEW_VISIBILITY_STORAGE_KEY, (mImageBitmap != null) );
+        outState.putBoolean(VIDEOVIEW_VISIBILITY_STORAGE_KEY, (mVideoUri != null) );
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mImageBitmap = savedInstanceState.getParcelable(BITMAP_STORAGE_KEY);
+        mVideoUri = savedInstanceState.getParcelable(VIDEO_STORAGE_KEY);
+        mImageView.setImageBitmap(mImageBitmap);
+        mImageView.setVisibility(
+                savedInstanceState.getBoolean(IMAGEVIEW_VISIBILITY_STORAGE_KEY) ?
+                        ImageView.VISIBLE : ImageView.INVISIBLE
+        );
+        mVideoView.setVideoURI(mVideoUri);
+        mVideoView.setVisibility(
+                savedInstanceState.getBoolean(VIDEOVIEW_VISIBILITY_STORAGE_KEY) ?
+                        ImageView.VISIBLE : ImageView.INVISIBLE
+        );
+    }
+
+    /**
+     * Indicates whether the specified action can be used as an intent. This
+     * method queries the package manager for installed packages that can
+     * respond to an intent with the specified action. If no suitable package is
+     * found, this method returns false.
+     * http://android-developers.blogspot.com/2009/01/can-i-use-this-intent.html
+     *
+     * @param context The application's environment.
+     * @param action The Intent action to check for availability.
+     *
+     * @return True if an Intent with the specified action can be sent and
+     *         responded to, false otherwise.
+     */
+    public static boolean isIntentAvailable(Context context, String action) {
+        final PackageManager packageManager = context.getPackageManager();
+        final Intent intent = new Intent(action);
+        List<ResolveInfo> list =
+                packageManager.queryIntentActivities(intent,
+                        PackageManager.MATCH_DEFAULT_ONLY);
+        return list.size() > 0;
+    }
+
+    private void setBtnListenerOrDisable(
+            Button btn,
+            Button.OnClickListener onClickListener,
+            String intentName
+    ) {
+        if (isIntentAvailable(this, intentName)) {
+            btn.setOnClickListener(onClickListener);
+        } else {
+            btn.setText(
+                    getText(R.string.cannot).toString() + " " + btn.getText());
+            btn.setClickable(false);
+        }
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Makes the UP caret go back to the previous fragment MakeCuteFragment
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                android.app.FragmentManager fm= getFragmentManager();
+                fm.popBackStack();
+                finish();
+
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+}
+</code></pre>
+
+<p><strong>Logcat</strong></p>
+
+<pre><code>03-30 23:09:36.580  17940-17940/org.azurespot W/System.err﹕ java.lang.IllegalArgumentException
+03-30 23:09:36.580  17940-17940/org.azurespot W/System.err﹕ at android.media.MediaMetadataRetriever.setDataSource(MediaMetadataRetriever.java:72)
+03-30 23:09:36.580  17940-17940/org.azurespot W/System.err﹕ at android.media.MediaMetadataRetriever.setDataSource(MediaMetadataRetriever.java:159)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at org.azurespot.makecute.MakePhotoVideo.getVideoAspectRatio(MakePhotoVideo.java:417)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at org.azurespot.makecute.MakePhotoVideo.access$000(MakePhotoVideo.java:43)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at org.azurespot.makecute.MakePhotoVideo$2.onTouch(MakePhotoVideo.java:280)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.View.dispatchTouchEvent(View.java:8276)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2477)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2209)
+03-30 23:09:36.590  17940-17940/org.azurespot W/System.err﹕ at com.android.internal.policy.impl.PhoneWindow$DecorView.superDispatchTouchEvent(PhoneWindow.java:2332)
+</code></pre>

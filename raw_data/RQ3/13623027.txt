@@ -1,0 +1,170 @@
+<p>I am working on an Android application in which on app start-up I copy the database from RES folder to local database making an SQLite database for the app. Its working fine in every other device and in all OS version except HTC Google Nexus One device.
+I am asking this issue second time because I am trying to discover the solution by a different way.
+ I am using the below code for copying the database to local db.</p>
+
+<pre><code>public class ECatalogueDatabase {
+
+    private static final String DB_PATH = "/data/data/com.weg.ecatalogue/databases/";
+    public static final String DATABASE_NAME = "ECatalogue";
+    public static final String DATABASE_TABLE = "T_Electrical";
+    public static final int DATABASE_VERSION = 1;
+
+    public static final String KEY_ROWID="id";
+    public static final String KEY_PRODUCT_LINE="productline";
+
+    public static final String KEY_VOLTAGE="voltage";
+    public static final String KEY_OUTPUTHP="outputhp";
+
+    public static final String KEY_FRAME="frame";
+    public static final String KEY_RPM="rpm";
+
+    private Context context=null;
+    private DatabaseHelper DBHelper;
+    private SQLiteDatabase db;
+
+    private static final String CREAT_DATABASE="Create Table if not exists "+ DATABASE_TABLE+"("+ KEY_ROWID +" INTEGER PRIMARY KEY NOT NULL,"
+    +KEY_PRODUCT_LINE +" nvarchar ,"+ KEY_OUTPUTHP+" numeric ,"+ KEY_RPM +" nvarchar ,"+KEY_VOLTAGE +" nvarchar ," +KEY_FRAME +" nvarchar"+")";
+
+    /**
+     * Constructor - takes the context to allow the database to be
+     * opened/created
+     *
+     * @param ctx the Context within which to work
+     */
+    public ECatalogueDatabase(Context ctx) {
+        this.context = ctx;
+        DBHelper = new DatabaseHelper(context);
+    }
+    //Helper class
+    private static class DatabaseHelper extends SQLiteOpenHelper
+    {
+        public DatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL(CREAT_DATABASE);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            db.execSQL("DROP TABLE IF EXISTS titles");
+            onCreate(db);
+        }
+
+    }
+
+    public ECatalogueDatabase open() //throws SQLException
+    {
+        try
+        {
+            db=DBHelper.getWritableDatabase();
+
+        }catch(Exception exception)
+        {
+            exception.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public void close()
+    {
+        DBHelper.close();
+    }
+
+    /**
+     * Creates a empty database on the system and rewrites it with your own database.
+     * */
+    public void createDataBase() throws IOException{
+
+        @SuppressWarnings("unused")
+        boolean dbExist = checkDataBase();
+
+        /**
+        * CHANGES DONE BY SHAILESH SHARMA TO SOLVE THE PROBLEM OF 2.2 HTC DESIRE IN CLIENT'S WIFE DEVICE :(
+        */
+        SQLiteDatabase db_Read = null;
+        if(dbExist){
+        //DO NOTHING IN THIS CASE
+        }else{
+
+        db_Read = DBHelper.getReadableDatabase();
+        db_Read.close();
+        }
+        //=================================
+
+        try {
+
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+
+    }
+    /**
+     * Check if the database already exist to avoid re-copying the file each time you open the application.
+     * @return true if it exists, false if it doesn't
+     */
+    private boolean checkDataBase(){
+        try{
+            String myPath = DB_PATH + DATABASE_NAME;
+            //db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+            db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+
+        }
+
+        if(db != null){
+
+            db.close();
+
+        }
+
+        return db != null ? true : false;
+    }
+    /**
+     * Copies your database from your local assets-folder to the just created empty database in the
+     * system folder, from where it can be accessed and handled.
+     * This is done by transfering bytestream.
+     * */
+    private void copyDataBase() throws IOException{
+
+
+        InputStream myInput = context.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DATABASE_NAME;
+
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    public int getDatabaseCount(){
+        int count = 0;
+        Cursor cursor = db.rawQuery("Select * from " + DATABASE_TABLE, null);
+        if(cursor!=null){
+            count = cursor.getCount();
+        }
+        cursor.deactivate();
+        cursor.close();
+        return count;
+    }
+}
+</code></pre>

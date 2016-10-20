@@ -1,0 +1,684 @@
+<p>I am trying to reskin Q-Municate and i am stuck with the Navigation Drawer Reskin task</p>
+
+<p>My current Navigation Drawer looks like this
+<a href="http://i.stack.imgur.com/M4A0j.png" rel="nofollow"><img src="http://i.stack.imgur.com/M4A0j.png" alt="enter image description here"></a></p>
+
+<p>And i want my navigation Drawer as per request design  like this
+<a href="http://i.stack.imgur.com/5HldG.png" rel="nofollow"><img src="http://i.stack.imgur.com/5HldG.png" alt="enter image description here"></a></p>
+
+<p>I have already gone through each and every possible solutions given over StackOverFlow regarding this task, i have also followed a working tutorial given over <a href="https://github.com/lemycanh/DrawerOnTopActionBar" rel="nofollow">here</a> but could not find it working</p>
+
+<p>My Code is attached here </p>
+
+<p><strong>activity_main.xml</strong></p>
+
+<pre><code><android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="com.valyr.qalam.MainActivity">
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <fragment
+        android:id="@+id/navigation_drawer"
+        android:name="com.valyr.qalam.ui.main.NavigationDrawerFragment"
+        android:layout_width="@dimen/navigation_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start" />
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p><strong>MainActivity.Java</strong></p>
+
+<pre><code>public class MainActivity extends BaseLogeableActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+
+    public static final int ID_CHATS_LIST_FRAGMENT = 0;
+    public static final int ID_CONTACTS_LIST_FRAGMENT = 1;
+    public static final int ID_INVITE_FRIENDS_FRAGMENT = 2;
+    public static final int ID_SETTINGS_FRAGMENT = 3;
+    public static final int ID_FEEDBACK_FRAGMENT = 4;
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+
+    private NavigationDrawerFragment navigationDrawerFragment;
+    private FacebookHelper facebookHelper;
+    private ImportFriends importFriends;
+    private GSMHelper gsmHelper;
+    private boolean isNeedToOpenDialog;
+    private Set<ConnectivityListener> connectivityListeners;
+
+    public static void start(Context context) {
+
+        PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_PUSH_NOTIFICATIONS_ON_LOGOUT, false);
+
+        Intent intent = new Intent(context, MainActivity.class);
+        context.startActivity(intent);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (navigationDrawerFragment != null) {
+            prepareMenu(menu);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (currentFragment instanceof InviteFriendsFragment) {
+            currentFragment.onActivityResult(requestCode, resultCode, data);
+        } else if (facebookHelper != null) {
+            facebookHelper.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void prepareMenu(Menu menu) {
+        for (int i = 0; i < menu.size(); i++) {
+            menu.getItem(i).setVisible(!NavigationDrawerFragment.isDrawerOpen());
+            menu.getItem(i).collapseActionView();
+        }
+    }
+
+    @Override
+    public void onNavigationDrawerItemSelected(int position) {
+        Fragment fragment = null;
+        switch (position) {
+            case ID_CHATS_LIST_FRAGMENT:
+                fragment = DialogsFragment.newInstance();
+                break;
+            case ID_CONTACTS_LIST_FRAGMENT:
+                fragment = FriendsListFragment.newInstance();
+                break;
+            case ID_INVITE_FRIENDS_FRAGMENT:
+                fragment = InviteFriendsFragment.newInstance();
+                break;
+            case ID_SETTINGS_FRAGMENT:
+                fragment = SettingsFragment.newInstance();
+                break;
+            case ID_FEEDBACK_FRAGMENT:
+                fragment = FeedbackFragment.newInstance();
+                break;
+        }
+
+        if (fragment instanceof ConnectivityListener) {
+            connectivityListeners.add((ConnectivityListener) fragment);
+        }
+
+        setCurrentFragment(fragment);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_main);
+
+        useDoubleBackPressed = true;
+        connectivityListeners = new HashSet<>();
+        gsmHelper = new GSMHelper(this);
+
+        initNavigationDrawer();
+
+        if (!isImportInitialized()) {
+            showProgress();
+            facebookHelper = new FacebookHelper(this, savedInstanceState,
+                    new FacebookSessionStatusCallback());
+            importFriends = new ImportFriends(MainActivity.this, facebookHelper);
+            PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_SIGN_UP_INITIALIZED, false);
+        }
+
+        initBroadcastActionList();
+        checkGCMRegistration();
+        loadFriendsList();
+
+        initVideoChat();
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        connectivityListeners.clear();
+    }
+
+    public void removeConnectivityListener(ConnectivityListener listener) {
+        connectivityListeners.remove(listener);
+    }
+
+    private void initVideoChat() {
+        QBInitVideoChatCommand.start(this, CallActivity.class);
+    }
+
+    private boolean isImportInitialized() {
+        PrefsHelper prefsHelper = PrefsHelper.getPrefsHelper();
+        return prefsHelper.getPref(PrefsHelper.PREF_IMPORT_INITIALIZED, false);
+    }
+
+    private void initBroadcastActionList() {
+        addAction(QBServiceConsts.LOAD_CHATS_DIALOGS_SUCCESS_ACTION, new LoadDialogsSuccessAction());
+        addAction(QBServiceConsts.LOAD_FRIENDS_SUCCESS_ACTION, new LoadFriendsSuccessAction());
+        addAction(QBServiceConsts.LOAD_FRIENDS_FAIL_ACTION, failAction);
+        addAction(QBServiceConsts.LOAD_CHATS_DIALOGS_FAIL_ACTION, failAction);
+        addAction(QBServiceConsts.IMPORT_FRIENDS_SUCCESS_ACTION, new ImportFriendsSuccessAction());
+        addAction(QBServiceConsts.IMPORT_FRIENDS_FAIL_ACTION, new ImportFriendsFailAction());
+        addAction(QBServiceConsts.LOGIN_AND_JOIN_CHATS_SUCCESS_ACTION, new LoginAndJoinChatsSuccessAction());
+    }
+
+    private void initNavigationDrawer() {
+        navigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager().findFragmentById(
+                R.id.navigation_drawer);
+        navigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(
+                R.id.drawer_layout));
+    }
+
+    private void checkGCMRegistration() {
+        if (gsmHelper.checkPlayServices()) {
+            if (!gsmHelper.isDeviceRegisteredWithUser(AppSession.getSession().getUser())) {
+                gsmHelper.registerInBackground();
+            }
+        } else {
+            Log.i(TAG, "No valid Google Play Services APK found.");
+        }
+    }
+
+    private void loadFriendsList() {
+        QBLoadFriendListCommand.start(this);
+    }
+
+    private void loadChatsDialogs() {
+        QBLoadDialogsCommand.start(MainActivity.this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        gsmHelper.checkPlayServices();
+        showActionBarProgress();
+        checkVisibilityProgressBars();
+    }
+
+    @Override
+    protected void onFailAction(String action) {
+        hideActionBarProgress();
+        hideProgress();
+        if (QBServiceConsts.LOAD_FRIENDS_FAIL_ACTION.equals(action)) {
+            loadChatsDialogs();
+        }
+    }
+
+    private void checkVisibilityProgressBars() {
+        isNeedToOpenDialog = PrefsHelper.getPrefsHelper().getPref(
+                PrefsHelper.PREF_PUSH_MESSAGE_NEED_TO_OPEN_DIALOG, false);
+        if (isJoinedToDialogs()) {
+            hideActionBarProgress();
+        }
+        if (isNeedToOpenDialog && !isJoinedToDialogs()) {
+            hideActionBarProgress();
+            showProgress();
+        }
+    }
+
+    private boolean isJoinedToDialogs() {
+        PrefsHelper prefsHelper = PrefsHelper.getPrefsHelper();
+        return prefsHelper.getPref(PrefsHelper.PREF_JOINED_TO_ALL_DIALOGS, false);
+    }
+
+    private void startDialog() {
+        PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_PUSH_MESSAGE_NEED_TO_OPEN_DIALOG, false);
+        String dialogId = PrefsHelper.getPrefsHelper().getPref(PrefsHelper.PREF_PUSH_MESSAGE_DIALOG_ID, null);
+        long userId = PrefsHelper.getPrefsHelper().getPref(PrefsHelper.PREF_PUSH_MESSAGE_USER_ID,
+                ConstsCore.NOT_INITIALIZED_VALUE);
+        QBDialog dialog = ChatDatabaseManager.getDialogByDialogId(this, dialogId);
+        if (dialog.getType() == QBDialogType.PRIVATE) {
+            startPrivateChatActivity(dialog, userId);
+        } else {
+            startGroupChatActivity(dialog);
+        }
+    }
+
+    private void startPrivateChatActivity(QBDialog dialog, long userId) {
+        User occupantUser = UsersDatabaseManager.getUserById(this, userId);
+        if (occupantUser != null && userId != ConstsCore.ZERO_INT_VALUE) {
+            PrivateDialogActivity.start(this, occupantUser, dialog);
+        }
+    }
+
+    private void importFriendsFinished() {
+        PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_IMPORT_INITIALIZED, true);
+        hideProgress();
+    }
+
+    private void startGroupChatActivity(QBDialog dialog) {
+        GroupDialogActivity.start(this, dialog);
+    }
+
+    @Override
+    public void onConnectionChange(boolean isConnected) {
+        super.onConnectionChange(isConnected);
+        for (ConnectivityListener listener : connectivityListeners) {
+            listener.onConnectionChange(isConnected);
+        }
+
+        if (currentFragment instanceof FriendsListFragment) {
+            invalidateOptionsMenu();
+        }
+    }
+
+    private class LoadDialogsSuccessAction implements Command {
+
+        @Override
+        public void execute(Bundle bundle) {
+            hideActionBarProgress();
+            hideProgress();
+
+            if (isNeedToOpenDialog) {
+                startDialog();
+            }
+        }
+    }
+
+    private class FacebookSessionStatusCallback implements Session.StatusCallback {
+
+        @Override
+        public void call(Session session, SessionState state, Exception exception) {
+            if (session.isOpened()) {
+                importFriends.startGetFriendsListTask(true);
+            } else if (!(!session.isOpened() && !session.isClosed()) && !isImportInitialized()) {
+                importFriends.startGetFriendsListTask(false);
+                hideProgress();
+            }
+        }
+    }
+
+    private class LoginAndJoinChatsSuccessAction implements Command {
+
+        @Override
+        public void execute(Bundle bundle) {
+            loadChatsDialogs();
+        }
+    }
+
+    private class LoadFriendsSuccessAction implements Command {
+
+        @Override
+        public void execute(Bundle bundle) throws Exception {
+            loadChatsDialogs();
+        }
+    }
+
+    private class ImportFriendsSuccessAction implements Command {
+
+        @Override
+        public void execute(Bundle bundle) {
+            importFriendsFinished();
+        }
+    }
+
+    private class ImportFriendsFailAction implements Command {
+
+        @Override
+        public void execute(Bundle bundle) {
+            importFriendsFinished();
+        }
+    }
+}
+</code></pre>
+
+<p><strong>NavigationDrawerFragment.Java</strong></p>
+
+<pre><code>public class NavigationDrawerFragment extends BaseFragment {
+    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+    private static DrawerLayout drawerLayout;
+    private static View fragmentContainerView;
+    private Resources resources;
+    private ListView drawerListView;
+    private TextView fullNameTextView;
+    private ImageButton logoutButton;
+
+    private NavigationDrawerCallbacks navigationDrawerCallbacks;
+    private NavigationDrawerCounterListener navigationDrawerCounterListener;
+    private ActionBarDrawerToggle drawerToggle;
+    private int currentSelectedPosition = 0;
+    private boolean fromSavedInstanceState;
+    private boolean userLearnedDrawer;
+    private NavigationDrawerAdapter navigationDrawerAdapter;
+    private BroadcastReceiver countUnreadDialogsBroadcastReceiver;
+
+    public static boolean isDrawerOpen() {
+        return drawerLayout != null && drawerLayout.isDrawerOpen(fragmentContainerView);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        resources = getResources();
+
+        initPrefValues();
+
+        if (savedInstanceState != null) {
+            currentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+            fromSavedInstanceState = true;
+        }
+
+        selectItem(currentSelectedPosition);
+
+        initLocalBroadcastManagers();
+    }
+
+    private void initLocalBroadcastManagers() {
+        countUnreadDialogsBroadcastReceiver = new CountUnreadDialogsBroadcastReceiver();
+
+        LocalBroadcastManager.getInstance(baseActivity).registerReceiver(countUnreadDialogsBroadcastReceiver,
+                new IntentFilter(QBServiceConsts.GOT_CHAT_MESSAGE));
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+
+        initUI(rootView);
+        initListeners();
+        initNavigationAdapter();
+
+        drawerListView.setItemChecked(currentSelectedPosition, true);
+
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        navigationDrawerCallbacks = (NavigationDrawerCallbacks) activity;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+        baseActivity.getActionBar().setDisplayShowHomeEnabled(true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        QBUser user = AppSession.getSession().getUser();
+        if (user != null) {
+            fullNameTextView.setText(user.getFullName());
+        }
+        addActions();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_SELECTED_POSITION, currentSelectedPosition);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        navigationDrawerCallbacks = null;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return drawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
+    }
+
+    public void setUp(int fragmentId, final DrawerLayout drawerLayout) {
+        fragmentContainerView = baseActivity.findViewById(fragmentId);
+        NavigationDrawerFragment.drawerLayout = drawerLayout;
+
+        drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+
+        ActionBar actionBar = baseActivity.getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
+
+        drawerToggle = new QMActionBarDrawerToggle(baseActivity, drawerLayout, R.drawable.ic_drawer,
+                R.string.nvd_open, R.string.nvd_close);
+
+        if (!userLearnedDrawer && !fromSavedInstanceState) {
+            drawerLayout.openDrawer(fragmentContainerView);
+        }
+
+        drawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                drawerToggle.syncState();
+            }
+        });
+
+        drawerLayout.setDrawerListener(drawerToggle);
+    }
+
+    private void initPrefValues() {
+        PrefsHelper prefsHelper = PrefsHelper.getPrefsHelper();
+        userLearnedDrawer = prefsHelper.getPref(PrefsHelper.PREF_USER_LEARNED_DRAWER, false);
+
+        // Set base value of droverLayout as opposite to userLearnerDrawer
+        // Made it for next behaviour: if drawer will be opened then we shouldn't show croutons
+        prefsHelper.savePref(PrefsHelper.PREF_CROUTONS_DISABLED, !userLearnedDrawer);
+    }
+
+    private void selectItem(int position) {
+        currentSelectedPosition = position;
+        if (drawerListView != null) {
+            drawerListView.setItemChecked(position, true);
+        }
+        if (drawerLayout != null) {
+            drawerLayout.closeDrawer(fragmentContainerView);
+        }
+        if (navigationDrawerCallbacks != null) {
+            navigationDrawerCallbacks.onNavigationDrawerItemSelected(position);
+        }
+    }
+
+    private void initNavigationAdapter() {
+        navigationDrawerAdapter = new NavigationDrawerAdapter(baseActivity, getNavigationDrawerItems());
+        drawerListView.setAdapter(navigationDrawerAdapter);
+        navigationDrawerCounterListener = navigationDrawerAdapter;
+    }
+
+    private void initUI(View rootView) {
+        drawerListView = (ListView) rootView.findViewById(R.id.navigation_listview);
+        logoutButton = (ImageButton) rootView.findViewById(R.id.logout_imagebutton);
+        fullNameTextView = (TextView) rootView.findViewById(R.id.fullname_textview);
+
+    }
+
+    private void initListeners() {
+        drawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, final View view, final int position, long id) {
+                selectItem(position);
+            }
+        });
+
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logout();
+            }
+        });
+    }
+
+
+    private List<String> getNavigationDrawerItems() {
+        String[] itemsArray = resources.getStringArray(R.array.nvd_items_array);
+        return Arrays.asList(itemsArray);
+    }
+
+    private void logout() {
+        ConfirmDialog dialog = ConfirmDialog.newInstance(R.string.dlg_logout, R.string.dlg_confirm);
+        dialog.setPositiveButton(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                // Stop porcess push notifications after logout
+                PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_PUSH_NOTIFICATIONS_ON_LOGOUT, true);
+
+                // Start clear messages that was not sent
+                ChatDatabaseManager.deleteAllNotSendMessages(getActivity().getApplicationContext());
+
+                baseActivity.showProgress();
+                FacebookHelper.logout();
+
+                // Clear crouton queue
+                Crouton.cancelAllCroutons();
+
+                QBLogoutCommand.start(baseActivity);
+            }
+        });
+        dialog.show(getFragmentManager(), null);
+    }
+
+    private void addActions() {
+        baseActivity.addAction(QBServiceConsts.LOGOUT_SUCCESS_ACTION, new LogoutSuccessAction());
+        baseActivity.addAction(QBServiceConsts.LOGOUT_FAIL_ACTION, failAction);
+        baseActivity.updateBroadcastActionList();
+    }
+
+    private void saveUserLearnedDrawer() {
+        PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_USER_LEARNED_DRAWER, true);
+    }
+
+    private int getCountUnreadDialogs() {
+        return ChatDatabaseManager.getCountUnreadDialogs(baseActivity);
+    }
+
+    public interface NavigationDrawerCallbacks {
+
+        void onNavigationDrawerItemSelected(int position);
+    }
+
+    public interface NavigationDrawerCounterListener {
+
+        void onUpdateCountUnreadDialogs(int count);
+    }
+
+    private class CountUnreadDialogsBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            if (extras != null) {
+                navigationDrawerCounterListener.onUpdateCountUnreadDialogs(getCountUnreadDialogs());
+            }
+        }
+    }
+
+    private class QMActionBarDrawerToggle extends ActionBarDrawerToggle {
+
+        public QMActionBarDrawerToggle(Activity activity, DrawerLayout drawerLayout, int drawerImageRes,
+                                       int openDrawerContentDescRes, int closeDrawerContentDescRes) {
+            super(activity, drawerLayout, drawerImageRes, openDrawerContentDescRes,
+                    closeDrawerContentDescRes);
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+
+            // Clear croutons
+            PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_CROUTONS_DISABLED, true);
+            Crouton.clearCroutonsForActivity(getActivity());
+
+            baseActivity.invalidateOptionsMenu();
+
+            if (!userLearnedDrawer) {
+                userLearnedDrawer = true;
+                saveUserLearnedDrawer();
+            }
+
+            navigationDrawerCounterListener.onUpdateCountUnreadDialogs(getCountUnreadDialogs());
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            baseActivity.invalidateOptionsMenu();
+            PrefsHelper.getPrefsHelper().savePref(PrefsHelper.PREF_CROUTONS_DISABLED, false);
+        }
+    }
+
+    private class LogoutSuccessAction implements Command {
+
+        @Override
+        public void execute(Bundle bundle) {
+            LandingActivity.start(baseActivity);
+            baseActivity.finish();
+        }
+    }
+}
+</code></pre>
+
+<p><strong>fragment_navigation_drawer.xml</strong></p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:clickable="true"
+    android:focusable="false">
+
+    <ListView
+        android:id="@+id/navigation_listview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/footer_linearlayout"
+        android:layout_alignParentTop="true"
+        android:background="@null"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp"
+        tools:context="com.sample.app.NavigationDrawerFragment" />
+
+    <LinearLayout
+        android:id="@id/footer_linearlayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:padding="5dp">
+
+        <com.valyr.qalam.utils.ArabicTextView
+            android:id="@+id/fullname_textview"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="1"
+            android:textColor="@color/link_text_color"
+            android:textSize="@dimen/text_size_small" />
+
+        <ImageButton
+            android:id="@+id/logout_imagebutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:background="@drawable/button_general_selector"
+            android:padding="10dp"
+            android:src="@drawable/ic_logout" />
+    </LinearLayout>
+</RelativeLayout>
+</code></pre>
+
+<p>The theme , and actionbar are closely attached with everything, so i cant touch anything from styles, but i really need a trick to make it done. Please help</p>
+
+<p><strong>NOTE:</strong> This question is not at all possible duplicate becuase all the solutions given here are using AppCompact and Toolbar, Please read the question thoroughly before downvoting</p>

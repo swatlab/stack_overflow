@@ -1,0 +1,347 @@
+<p>I am a bit new to Android so forgive for any shortcomings. </p>
+
+<p>I have a FloatingActionButton in the <code>activity_main.xml</code> and whenever it is clicked I want it to take me to a new activity with two EditText fields and there is another FAB there.<br>
+What I want to do is that whenever text is input and the FAB in the <code>activity_new_goal.xml</code> is pressed it should create a RecyclerView with the text in the <code>@+id/edit_goalTitle</code> text.<br>
+It is showing me error of incompatible types in <code>return data;</code> and showing cannot resolve method <code>getData()</code> in the <code>MainActivity.java</code> </p>
+
+<p>I have tried my best to try and achieve what I want to get done and I am new to this so bare with me if the code is completely wrong because I am unsure too. </p>
+
+<p>Here's my code:</p>
+
+<p><code>MainActivity.java</code>:</p>
+
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+private Toolbar toolbar;
+private RVAdapter adapter;
+private RecyclerView recyclerView;
+private EditText editGoalTitle;
+private String stringGoalTitle;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    toolbar = (Toolbar) findViewById(R.id.app_bar);
+    setSupportActionBar(toolbar);
+
+    getSupportActionBar().setDisplayShowHomeEnabled(true);
+    NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
+    drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), (Toolbar) findViewById(R.id.app_bar));
+
+    recyclerView = (RecyclerView) findViewById(R.id.goalList);
+    recyclerView.setHasFixedSize(true);
+    adapter = new RVAdapter(getApplicationContext(), getData());
+    recyclerView.setAdapter(adapter);
+    recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+
+
+
+}
+
+public RVData mSetRecyclerGoalTitle(View view) {
+
+    editGoalTitle = (EditText) findViewById(R.id.edit_goalTitle);
+    editGoalTitle.setText(R.string.dummyTxt);
+    stringGoalTitle = editGoalTitle.getText().toString();
+
+
+    public List<RVData> getData () {
+        List<RVData> data = new ArrayList<>();
+        String[] titles = {};
+        if (stringGoalTitle != null) {
+            titles = new String[]{stringGoalTitle};
+        } else {
+            titles = new String[]{"DummyText1"};
+        }
+        for (int i = 0; i <= titles.length; i++) {
+            RVData current = new RVData();
+            current.goalTitle = titles[i];
+            data.add(current);
+        }
+        return data;
+    }
+}
+
+public void newGoal(View view) {
+    Intent intent = new Intent(MainActivity.this, NewGoal.class);
+    startActivity(intent);
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_main, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p><code>RVData.java</code>:</p>
+
+<pre><code>import android.widget.CheckBox;
+
+public class RVData {
+CheckBox checkBox;
+String goalTitle;
+
+}
+</code></pre>
+
+<p><code>RVAdapter.java</code>:</p>
+
+<pre><code>public class RVAdapter extends RecyclerView.Adapter<RVAdapter.myViewHolder> {
+
+List<RVData> data = Collections.emptyList();
+private LayoutInflater inflater;
+
+public RVAdapter(Context context, List<RVData> data) {
+    inflater = LayoutInflater.from(context);
+    this.data = data;
+}
+
+@Override
+public myViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+    View view = inflater.inflate(R.layout.goal_row, viewGroup, false);
+    myViewHolder holder = new myViewHolder(view);
+    return holder;
+}
+
+@Override
+public void onBindViewHolder(myViewHolder viewHolder, int position) {
+    RVData current = data.get(position);
+    viewHolder.title.setText(current.goalTitle);
+
+}
+
+@Override
+public int getItemCount() {
+    return data.size();
+}
+
+class myViewHolder extends RecyclerView.ViewHolder {
+    //@Bind(R.id.goalRowTitle)
+    TextView title;
+    //@Bind(R.id.goalRowCB)
+    CheckBox checkBox;
+
+    public myViewHolder(View itemView) {
+        super(itemView);
+        title = (TextView) itemView.findViewById(R.id.goalRowTitle);
+        checkBox = (CheckBox) itemView.findViewById(R.id.goalRowCB);
+    }
+}
+}
+</code></pre>
+
+<p><code>activity_main.xml</code>:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+style="@style/DefaultLayoutStyle"
+tools:context=".MainActivity">
+
+<include
+    android:id="@+id/app_bar"
+    layout="@layout/app_bar" />
+
+
+<android.support.design.widget.FloatingActionButton
+    android:id="@+id/fab"
+    style="@style/FABStyle"
+    android:onClick="newGoal"
+    android:src="@drawable/ic_add"
+    app:borderWidth="0dp" />
+
+<android.support.v4.widget.DrawerLayout
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@id/app_bar">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/goalList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"></android.support.v7.widget.RecyclerView>
+    </RelativeLayout>
+
+    <fragment
+        android:id="@+id/fragment_navigation_drawer"
+        android:name="com.kellarapps.zeal.NavigationDrawerFragment"
+        android:layout_width="@dimen/nav_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:layout="@layout/fragment_navigation_drawer"
+        tools:layout="@layout/fragment_navigation_drawer" />
+
+</android.support.v4.widget.DrawerLayout>
+</code></pre>
+
+<p></p>
+
+<p><code>activity_new_goal.xml</code>:</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+style="@style/DefaultLayoutStyle"
+tools:context="com.kellarapps.zeal.NewGoal">
+
+<include
+    android:id="@+id/app_bar"
+    layout="@layout/app_bar" />
+
+<LinearLayout
+    android:id="@+id/goalTitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/app_bar"
+    android:layout_marginTop="10dp"
+    android:orientation="horizontal"
+    android:paddingEnd="5dp"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp"
+
+    android:paddingStart="5dp">
+
+    <TextView
+        style="@style/DefaultTVStyle"
+        android:text="@string/goal" />
+
+    <EditText
+        android:id="@+id/edit_goalTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/goalHint" />
+</LinearLayout>
+
+<LinearLayout
+    android:id="@+id/goalDescription"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/goalTitle"
+    android:layout_marginTop="10dp"
+    android:orientation="horizontal"
+    android:paddingEnd="5dp"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp"
+    android:paddingStart="5dp">
+
+    <TextView
+        style="@style/DefaultTVStyle"
+        android:text="@string/goalDescription" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/description"
+        android:maxLines="3" />
+
+</LinearLayout>
+
+<android.support.design.widget.FloatingActionButton
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fab2"
+    style="@style/FABStyle"
+    android:onClick="mSetRecyclerGoalTitle"
+    android:src="@drawable/ic_action_done"
+    app:borderWidth="0dp"/>
+</code></pre>
+
+<p></p>
+
+<p><code>NewGoal.java</code>:</p>
+
+<pre><code>public class NewGoal extends AppCompatActivity {
+
+private Toolbar toolbar;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_new_goal);
+
+    toolbar = (Toolbar) findViewById(R.id.app_bar);
+    setSupportActionBar(toolbar);
+
+    getSupportActionBar().setHomeButtonEnabled(true);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+}
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    getMenuInflater().inflate(R.menu.menu_new_goal, menu);
+    return true;
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == R.id.action_settings) {
+        return true;
+    }
+
+    if(id == android.R.id.home)
+    {
+        NavUtils.navigateUpFromSameTask(this);
+    }
+    return super.onOptionsItemSelected(item);
+}
+}
+</code></pre>
+
+<p><code>goal_row.xml</code>:</p>
+
+<pre><code><?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="horizontal"
+android:paddingLeft="10dp"
+android:paddingStart="10dp">
+
+<CheckBox
+    android:id="@+id/goalRowCB"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" />
+
+<TextView
+    android:id="@+id/goalRowTitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:gravity="center_horizontal"
+    android:text="@string/dummyTxt"
+    android:textColor="@color/TextColor"
+    android:textSize="17sp" />
+</code></pre>
+
+<p></p>

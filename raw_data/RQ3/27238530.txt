@@ -1,0 +1,373 @@
+<p>Ok.. this might be hard to follow..</p>
+
+<p>App saves Contacts to a SQLite database named CONTACTS. </p>
+
+<p>ContactActivity should load in the SQLite database and create a custom ListView that allows for the selection of multiple Contacts via a Toggle button. </p>
+
+<p>The example I was following to create the custom LV allowing multiple selections has a local Contact class. I am running into problems converting from the external DAO Contact class to the local Contact class.</p>
+
+<p>Contact.java DAO class:</p>
+
+<pre><code>package dto;
+
+/**
+ * This DTO describes a Contact that can create and respond to a Survey
+ * @author Barnitek, Bosticsa
+ *
+ */
+
+public class Contact {
+
+private int id;
+private String firstName;
+private String lastName;
+private String phoneNumber;
+
+public Contact(){
+
+}
+
+public Contact(int id, String firstName, String lastName, String phoneNumber){
+    this.id = id;
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.phoneNumber = phoneNumber;
+}
+
+public Contact(String firstName, String lastName, String phoneNumber){
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.phoneNumber = phoneNumber;
+}
+
+public int getID(){
+    return id;
+}
+
+public void setID(int id){
+    this.id = id;
+}
+
+public String getFirstName() {
+    return firstName;
+}
+public void setFirstName(String firstName) {
+    this.firstName = firstName;
+}
+public String getLastName() {
+    return lastName;
+}
+public void setLastName(String lastName) {
+    this.lastName = lastName;
+}
+public String getPhoneNumber() {
+    return phoneNumber;
+}
+public void setPhoneNumber(String phoneNumber) {
+    this.phoneNumber = phoneNumber;
+}
+}
+</code></pre>
+
+<p>The ContactActivity class:</p>
+
+<pre><code>package edu.uc.pollyo;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.ListView;
+import android.widget.TextView;
+import dao.PollyoBaseDAO;
+
+/**
+ * 
+ * @author Barnitek
+ * 
+ *         This activity builds a custom list view that lists an array of names
+ *         and phone numbers with checkable boxes. When a box is checks the
+ *         name+number from that row is added to a string that will then be
+ *         returned to the MainActivity and placed in the contacts text view.
+ * 
+ */
+
+public class ContactActivity extends MainActivity {
+private ListView mainListView;
+private ArrayAdapter<Contact> listAdapter;
+private List<Contact> contactList;
+private ArrayList<dto.Contact> contactArrayList;
+
+public static String listContacts = "";
+PollyoBaseDAO mydb;
+
+
+// when activity is created
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_contact);
+
+    //contactList = new ArrayList<dto.Contact>();
+    mydb = new PollyoBaseDAO(this);
+    contactArrayList = mydb.getAllContacts();
+
+
+    //**************PROBBLEM HERE***************
+    // The problem is: Type mismatch: cannot convert from ArrayList<Contact> to
+   //  List<ContactActivity.Contact>
+    contactList = contactArrayList;
+
+    // Set our custom array adapter as the ListView's adapter.
+    listAdapter = new ContactArrayAdapter( getApplicationContext(), contactList);
+    // Find the ListView resource.
+    mainListView = (ListView) findViewById(R.id.lvContactView);
+    mainListView.setAdapter(listAdapter);
+
+    // When item is tapped, toggle checked properties of CheckBox and
+    // Contact.
+    mainListView
+            .setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View item,
+                        int position, long id) {
+                    Contact contact = listAdapter.getItem(position);
+                    contact.toggleChecked();
+                    ContactViewHolder viewHolder = (ContactViewHolder) item
+                            .getTag();
+                    viewHolder.getCheckBox()
+                            .setChecked(contact.isChecked());
+
+                    // build a string of selected contacts when one is
+                    // checked
+                    listContacts += contact.getFirstName() + " " + contact.getLastName() + " | ";
+                    System.out.println("listContacts: (ContactActivity) "
+                            + listContacts);
+
+                }
+            });
+
+    mainListView.setAdapter(listAdapter);
+}
+
+// Holds contact data
+private static class Contact {
+    private String firstName = "";
+    private String lastName = "";
+
+    private boolean checked = false;
+
+    public Contact(){};
+
+    public Contact(String firstName, String lastName){
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+    public Contact (String firstName, String lastName, boolean checked){
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.checked = checked;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName(){
+        return lastName;
+    }
+
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void setChecked(boolean checked) {
+        this.checked = checked;
+    }
+
+    public String toString() {
+        return firstName;
+    }
+
+    public void toggleChecked() {
+        checked = !checked;
+    }
+}
+
+// Holds child views for each row
+private static class ContactViewHolder {
+    private CheckBox checkBox;
+    private TextView textView;
+
+    public ContactViewHolder(){};
+
+    public ContactViewHolder(TextView textView, CheckBox checkBox) {
+        this.checkBox = checkBox;
+        this.textView = textView;
+    }
+
+    public CheckBox getCheckBox() {
+        return checkBox;
+    }
+
+    public TextView getTextView() {
+        return textView;
+    }
+
+    public void setTextView(TextView textView){
+        this.textView = textView;
+    }
+}
+
+/** Custom adapter for displaying an array of Contact objects. */
+private static class ContactArrayAdapter extends ArrayAdapter<Contact> {
+
+    private LayoutInflater inflater;
+
+    public ContactArrayAdapter(Context context, List<Contact> contactList) {
+        super(context, R.layout.simplerow, R.id.rowTextView, contactList);
+        // Cache the LayoutInflate to avoid asking for a new one each time.
+        inflater = LayoutInflater.from(context);
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // contact to display
+        Contact contact = (Contact) this.getItem(position);
+
+        // The child views in each row.
+        CheckBox checkBox;
+        TextView textView;
+
+        // Create a new row view
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.simplerow, parent);
+
+            // Find the child views.
+            textView = (TextView) convertView
+                    .findViewById(R.id.rowTextView);
+            checkBox = (CheckBox) convertView.findViewById(R.id.CheckBox01);
+
+            // Optimization: Tag the row with it's child views, so we don't
+            // have to
+            // call findViewById() later when we reuse the row.
+            convertView.setTag(new ContactViewHolder(textView, checkBox));
+
+            // If CheckBox is toggled, update the contact it is tagged with.
+            checkBox.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    CheckBox cb = (CheckBox) v;
+                    Contact contact = (Contact) cb.getTag();
+                    contact.setChecked(cb.isChecked());
+                }
+            });
+        }
+        // Reuse existing row view
+        else {
+            // Because we use a ViewHolder, we avoid having to call
+            // findViewById().
+            ContactViewHolder viewHolder = (ContactViewHolder) convertView
+                    .getTag();
+            checkBox = viewHolder.getCheckBox();
+            textView = viewHolder.getTextView();
+        }
+
+        // Tag the CheckBox with the Contact it is displaying, so that we
+        // can
+        // access the contact in onClick() when the CheckBox is toggled.
+        checkBox.setTag(contact);
+
+        // Display contact data
+        checkBox.setChecked(contact.isChecked());
+        textView.setText(contact.getFirstName() + " " + contact.getLastName());
+
+        return convertView;
+    }
+}
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle item selection
+    switch (item.getItemId()) {
+    case R.id.help:
+        showHelp();
+        return true;
+    case R.id.about:
+        showAbout();
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+
+// launch the about activity
+private void showAbout() {
+    Intent about = new Intent(this, AboutActivity.class);
+    startActivity(about);
+}
+
+// launch the help activity
+private void showHelp() {
+    Intent help = new Intent(this, HelpActivity.class);
+    startActivity(help);
+}
+
+// when the user clicks OK, send the list of selected contacts back
+public void onOkClicked(View v) {
+    Intent output = new Intent();
+    output.putExtra("selectedContacts", listContacts);
+    setResult(Activity.RESULT_OK, output);
+    finish();
+}
+
+// when the user clicks New Contact, start a new activity to add a new
+// contact to the list
+public void onNewContactClicked(View v) {
+    Intent newContact = new Intent(this, AddContactActivity.class);
+    startActivity(newContact);
+
+}
+}
+</code></pre>
+
+<p>The getAllContacts() method, incase it is needed:</p>
+
+<pre><code>public ArrayList<Contact> getAllContacts()
+       {
+          ArrayList<Contact> array_list = new ArrayList<Contact>();
+
+          String selectQuery = "SELECT * FROM " + CONTACTS;
+
+          SQLiteDatabase db = this.getWritableDatabase();
+
+          Cursor res =  db.rawQuery( selectQuery, null );
+
+          if (res.moveToFirst()) {
+                do {
+                    Contact contact = new Contact();
+                    contact.setID(Integer.parseInt(res.getString(0)));
+                    contact.setFirstName(res.getString(1));
+                    contact.setLastName(res.getString(2));
+                    contact.setPhoneNumber(res.getString(3));
+                    // Adding contact to list
+                    array_list.add(contact);
+                } while (res.moveToNext());
+            }
+
+            // return contact list
+            return array_list;
+       }
+</code></pre>
+
+<p>Does anyone have an idea on a way to do this? Or an easier way to read in a SQLite database and select multiple objects from it?</p>

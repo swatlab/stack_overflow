@@ -1,0 +1,76 @@
+<p>I have ViewPager in my layout with ViewPager holding three fragments . And i am using gridview for one of the fragment with each grid consisting of images (6 images).When i make transitions between fragment with gridview and fragment with plane text ,the swipe is really very slow .</p>
+
+<p>I have initialised the gridview and layout inflater in OnCreateView() of the fragment which is responding slow .
+Should i be using <strong>FragmentStatePagerAdapter</strong> ? But number of fragments i am using is only 3 .How can i make smooth transition between different tabs ?</p>
+
+<p><strong>code for fragment class with gridview</strong></p>
+
+<pre><code>public class MainTourism extends Fragment {
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        ViewGroup rootView = (ViewGroup) inflater.inflate(
+                R.layout.fragment_tourism, null);
+        GridView gridview = (GridView) rootView.findViewById(R.id.gridview);
+        gridview.setAdapter(new TourismImageAdapter(getActivity()));
+
+        return rootView;
+    }
+
+}
+</code></pre>
+
+<p><strong>code for adapter class</strong></p>
+
+<pre><code>public class TourismImageAdapter extends BaseAdapter    {
+
+private Integer[] mThumbIds = {
+        R.drawable.a,
+        R.drawable.b,
+        R.drawable.c,
+        R.drawable.d};
+
+private Context mContext;
+public TourismImageAdapter(Context c){
+    mContext = c;
+}
+
+@Override
+public int getCount() {
+    // TODO Auto-generated method stub
+    return mThumbIds.length;
+}
+
+@Override
+public Object getItem(int position) {
+    // TODO Auto-generated method stub
+    return null;
+}
+
+@Override
+public long getItemId(int position) {
+    // TODO Auto-generated method stub
+    return 0;
+}
+
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    // TODO Auto-generated method stub
+    ImageView imageView;
+    if (convertView == null) {  // if it's not recycled, initialize some attributes
+        imageView = new ImageView(mContext);
+        imageView.setLayoutParams(new GridView.LayoutParams(150, 150));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setPadding(8, 8, 8, 8);
+    } else {
+        imageView = (ImageView) convertView;
+    }
+
+    imageView.setImageResource(mThumbIds[position]);
+    return imageView;
+}
+
+}
+</code></pre>

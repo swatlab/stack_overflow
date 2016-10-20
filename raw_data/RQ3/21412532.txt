@@ -1,0 +1,580 @@
+<p>I have three fragments.<br>
+Fragment1: A list fragment displaying a list of data, 
+Fragment2: displaying a list of data sources
+Fragment3: displays the details of a data source.</p>
+
+<p>To switch to a new display of data in Fragment1, I use startActivityForResult which brings up Fragment2, I choose a new source of data by clicking, it returns a result with an intent that contains a string and this works successfully, Fragment1 opens the new data source and displays it.</p>
+
+<p>However, if I go from fragment1 to fragment2 and before selecting a new data source, I navigate to fragment3 to look at the details of the data source, then navigate back to fragment2, when fragment2 returns its result, I get the following error:</p>
+
+<pre><code>01-28 10:29:38.818: E/AndroidRuntime(1409): FATAL EXCEPTION: main
+01-28 10:29:38.818: E/AndroidRuntime(1409): Process: aston.cs3040.rssitemfragment, PID: 1409
+01-28 10:29:38.818: E/AndroidRuntime(1409): java.lang.RuntimeException: Failure delivering result ResultInfo{who=null, request=65537, result=0, data=null} to activity {aston.cs3040.rssitemfragment/aston.cs3040.rssfeedfragment.RssListActivity}: java.lang.NullPointerException
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.ActivityThread.deliverResults(ActivityThread.java:3346)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.ActivityThread.handleSendResult(ActivityThread.java:3389)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.ActivityThread.access$1200(ActivityThread.java:135)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1445)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.os.Handler.dispatchMessage(Handler.java:102)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.os.Looper.loop(Looper.java:137)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.ActivityThread.main(ActivityThread.java:4998)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at java.lang.reflect.Method.invokeNative(Native Method)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at java.lang.reflect.Method.invoke(Method.java:515)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:777)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:593)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at dalvik.system.NativeStart.main(Native Method)
+01-28 10:29:38.818: E/AndroidRuntime(1409): Caused by: java.lang.NullPointerException
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at aston.cs3040.rssfeedfragment.RssListFragment.onActivityResult(RssListFragment.java:71)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.support.v4.app.FragmentActivity.onActivityResult(FragmentActivity.java:166)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.Activity.dispatchActivityResult(Activity.java:5435)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     at android.app.ActivityThread.deliverResults(ActivityThread.java:3342)
+01-28 10:29:38.818: E/AndroidRuntime(1409):     ... 11 more
+</code></pre>
+
+<p>Here is my code:</p>
+
+<p>For moving between Fragment1 and Fragment2 (a fragment inside a class called RssFeedManagerActivity) I have in Fragment1:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case R.id.menu_add_feed:
+        Intent intent = new Intent(getActivity(),
+                RssFeedManagerActivity.class);
+        startActivityForResult(intent, MANAGE_FEED);
+        // see end of chapter 10 for how to wire this up
+        return true;
+    default:
+        return super.onOptionsItemSelected(item);
+    }
+}
+
+@Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (requestCode == MANAGE_FEED  && data != null) {
+        // handle the result
+        String link = data.getStringExtra("URL"); // this is RssListFragment.java:71 
+        Log.i(RssItemActivity.TAG, "Load: " + link);
+        loadFeed(link);
+    }
+}
+</code></pre>
+
+<p>In Fragment2 I have the following code to return to Fragment1</p>
+
+<pre><code>Intent i = new Intent();
+i.putExtra("URL", command[1]);
+Log.i(RssItemActivity.TAG, "finish and load..." + command[1]);
+// load the feed finish this fragment
+getActivity().setResult(Activity.RESULT_OK, i);
+getActivity().finish();
+</code></pre>
+
+<p>If I want to go from Fragment2 to Fragment3 the code is:</p>
+
+<pre><code>@Override
+public void onListItemClick(ListView l, View v, int position, long id) {
+    FeedDetails details = ((FeedMgrListAdapter)getListAdapter()).getItem(position); // (FeedDetails) l.getItemAtPosition(position);
+    Log.i(RssItemActivity.TAG, "Clicked " + details.getTitle());
+    Intent intent = new Intent(getActivity(), FeedDetailsFormActivity.class);
+    intent.putExtra("POSITION", position);
+    Log.i(RssItemActivity.TAG, "Click tag: " + ((String)v.getTag()));
+    if (position == TheNews.getInstance().getFeeds().size()-1) {
+        TheNews.getInstance().getFeeds().add(position, new FeedDetails("http://","category", "Feed Title"));
+    }   
+    startActivity(intent);
+}
+</code></pre>
+
+<p>And from Fragment3 back to Fragment2 I have:</p>
+
+<pre><code>@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case android.R.id.home:
+        if (NavUtils.getParentActivityName(getActivity()) != null) {
+            NavUtils.navigateUpFromSameTask(getActivity());
+        }
+        return true;
+</code></pre>
+
+<p>Why does Fragment1 to Fragment2 and Back correctly work but Fragment1 to Fragment2 to Fragment3 and back to 1 again not work?  The Log message printed out when returning from Fragment2 to Fragment1 indicates that the intent has the correct string added in its extras.
+My if statement in onActivityResult checks that data is not equal to null and yet on the next line there seems to be a null pointer exception.</p>
+
+<p>Here is the full code:</p>
+
+<p>Fragment1 is this:</p>
+
+<pre><code>public class RssListFragment extends ListFragment {
+
+    private TheNews theNews;
+    public static final int MANAGE_FEED = 1;
+    public boolean reportingBack=false;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        theNews = TheNews.getInstance();
+        this.setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.feed_list_mgr, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.menu_add_feed:
+            Intent intent = new Intent(getActivity(),
+                    RssFeedManagerActivity.class);
+            startActivityForResult(intent, MANAGE_FEED);
+            // see end of chapter 10 for how to wire this up
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == MANAGE_FEED  && data != null) {
+            // handle the result
+            String link = data.getStringExtra("URL");
+            Log.i(RssItemActivity.TAG, "Load: " + link);
+            /* TheNews.getTheNews(getActivity(), this).*/ loadFeed(link);
+        }
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        RssItem item = (RssItem) l.getItemAtPosition(position);
+        CheckBox c = (CheckBox) v.findViewById(R.id.read_or_not);
+        Log.i(RssItemActivity.TAG,
+                "Click id " + id + " title " + item.getTitle()
+                        + " checkbox is " + (c.isChecked() ? "" : " not ")
+                        + "checked");
+        Intent intent = new Intent(getActivity(), RssItemPagerActivity.class);
+        intent.putExtra("POSITION", position);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (theNews == null) {
+            Log.i(RssItemActivity.TAG, "OnResume: Get the news");
+            // create the news singleton and wait for callback
+            theNews = TheNews.getTheNews(getActivity(), this);
+            loadFeed(theNews.getFeeds().get(0).getUri());
+        } else {
+            // singleton previously constructed so we have the data already
+            if (!reportingBack) {
+                Log.i(RssItemActivity.TAG, "Report Back onResume ");
+                if (getListAdapter() == null) {
+                    Log.i(RssItemActivity.TAG, "Creating list adapter");
+                    setListAdapter(new RssItemListAdapter(this.getActivity(), theNews.getFeed().getItems()));
+                }
+                //((RssItemListAdapter) getListAdapter()).notifyDataSetChanged();
+                //reportBack(theNews.getFeed());
+            } else {
+                reportingBack = false;
+                Log.i(RssItemActivity.TAG, "OnResume: I reported back");
+                //((RssItemListAdapter) getListAdapter()).notifyDataSetChanged();
+                //Log.i(RssItemActivity.TAG, "Report Back Invalidate View ");
+                //this.getView().invalidate();
+            }
+        }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        //reportingBack = false;
+    }
+
+    public void reportBack(RssFeed completeFeed) {
+        reportingBack = true;
+        //Log.i(RssItemActivity.TAG, "Report Back: " + completeFeed);
+        if (completeFeed != null) {
+            // if (getListAdapter() == null) {
+                Log.i(RssItemActivity.TAG, "Creating list adapter");
+                setListAdapter(new RssItemListAdapter(this.getActivity(), completeFeed.getItems()));
+                /* 
+            } else {
+                Log.i(RssItemActivity.TAG, "Finished AsyncTask: list changed");
+                this.getView().invalidate();
+                ((RssItemListAdapter) getListAdapter()).notifyDataSetChanged();
+                // this.getView().invalidate();
+            }
+            */
+        } else {
+            // No Network? No Feed?
+            Toast.makeText(this.getActivity(),
+                    "Could not connect to feed.  Is your network connected?",
+                    Toast.LENGTH_LONG).show();
+            getActivity().finish();
+        }
+    }
+
+    private class RssItemListAdapter extends ArrayAdapter<RssItem> {
+
+        public RssItemListAdapter(Activity a, List<RssItem> items) {
+            super(a, 0, items);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = getActivity().getLayoutInflater().inflate(
+                        R.layout.list_layout_rss_item, null);
+            }
+            RssItem item = theNews.getItem(position);
+            Log.i(RssItemActivity.TAG, "Get View in List Adapter, ITEM: "
+                    + item.getTitle());
+            TextView titleTextView = (TextView) convertView
+                    .findViewById(R.id.rss_item_titleTextView);
+            titleTextView.setText(item.getTitle());
+            TextView dateTextView = (TextView) convertView
+                    .findViewById(R.id.rss_item_date);
+            dateTextView.setText(item.getDate());
+            CheckBox readCheckBox = (CheckBox) convertView
+                    .findViewById(R.id.read_or_not);
+            readCheckBox.setChecked(item.isRead());
+            return convertView;
+        }
+    }
+    private class RssReadFeed extends AsyncTask<String, Void, RssFeed> {
+        //private final ProgressDialog dialog = new ProgressDialog(mAppContext);
+
+        @Override
+        protected RssFeed doInBackground(String... urls) {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SaxRssHandler handler = new SaxRssHandler();
+            try {
+                URL url = new URL(urls[0]);
+                SAXParser parser = factory.newSAXParser();
+                Log.i(RssItemActivity.TAG, "loading new feed... " + url);
+                InputStream is = url.openConnection().getInputStream();
+                Log.i(RssItemActivity.TAG, "Now parse the input");
+                parser.parse(is, handler);
+                Log.i(RssItemActivity.TAG, "Parsing done");
+
+                return handler.getFeed();
+            } catch (Exception e) {
+                Log.i(RssItemActivity.TAG, e.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            //this.dialog.setMessage("Processing..."); 
+            //this.dialog.show();
+        }
+
+        @Override
+        protected void onPostExecute(RssFeed completeFeed) {
+            // may report back null if is wasn't possible to download the data
+            //theFeed = completeFeed;
+            theNews.setFeed(completeFeed);
+            Log.i(RssItemActivity.TAG, "Updated new feed with " + completeFeed.getItems().size() + " items");
+            reportBack(completeFeed);
+            //this.dialog.dismiss();
+        }
+    }
+
+    public void loadFeed(String uri) {
+        String[] urlToRssFeed = { uri };
+        RssReadFeed process = new RssReadFeed();
+        process.execute(urlToRssFeed);
+    }
+
+}
+</code></pre>
+
+<p>Fragment2 is:</p>
+
+<pre><code>public class RssFeedManagerFragment extends ListFragment implements OnClickListener {
+
+    private TheNews theNews;
+
+    @SuppressLint("NewApi")
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        theNews = TheNews.getInstance();
+        Log.i(RssItemActivity.TAG, "Setting list adapter for a list of length "
+                + theNews.getFeeds().size());
+        FeedMgrListAdapter adapter = new FeedMgrListAdapter(theNews.getFeeds(), this);
+        this.setListAdapter(adapter);
+        this.setHasOptionsMenu(true);
+        getActivity().setTitle(R.string.feed_mgr_title);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            if (NavUtils.getParentActivityName(getActivity()) != null) {
+                NavUtils.navigateUpFromSameTask(getActivity());
+            }
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        FeedDetails details = ((FeedMgrListAdapter)getListAdapter()).getItem(position); // (FeedDetails) l.getItemAtPosition(position);
+        Log.i(RssItemActivity.TAG, "Clicked " + details.getTitle());
+        Intent intent = new Intent(getActivity(), FeedDetailsFormActivity.class);
+        intent.putExtra("POSITION", position);
+        Log.i(RssItemActivity.TAG, "Click tag: " + ((String)v.getTag()));
+        if (position == TheNews.getInstance().getFeeds().size()-1) {
+            TheNews.getInstance().getFeeds().add(position, new FeedDetails("http://","category", "Feed Title"));
+        }
+
+        startActivity(intent);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getListAdapter() != null) {
+            FeedMgrListAdapter arrayAdapter = (FeedMgrListAdapter) getListAdapter();
+            arrayAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private class FeedMgrListAdapter extends ArrayAdapter<FeedDetails> {
+        private List<FeedDetails> items;
+        private RssFeedManagerFragment fragment;
+
+        public FeedMgrListAdapter(List<FeedDetails> items, RssFeedManagerFragment fragment) {
+            super(getActivity(), 0, items);
+            this.items = items;
+            this.fragment = fragment;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            TextView titleTextView = null;
+            if (convertView == null) {
+                convertView = getActivity().getLayoutInflater().inflate(
+                        // R.layout.normal_list_item, null);
+                        R.layout.feed_list_layout, null);
+            }
+            titleTextView = (TextView) convertView
+                    .findViewById(R.id.title_text_view);
+            FeedDetails item = items.get(position);
+            if (position == items.size() - 1) {
+                titleTextView.setTextColor(0xffcccccc);
+                ((ImageButton)convertView.findViewById(R.id.load_button)).setClickable(false);
+                ((ImageButton)convertView.findViewById(R.id.delete_button)).setClickable(false);
+            } else {
+                titleTextView.setTextColor(0xff0000ff);
+                ((ImageButton)convertView.findViewById(R.id.load_button)).setTag("Load!" + items.get(position).getUri());
+                ((ImageButton)convertView.findViewById(R.id.load_button)).setOnClickListener(fragment);
+                ((ImageButton)convertView.findViewById(R.id.delete_button)).setTag("Delete!" + position);
+                ((ImageButton)convertView.findViewById(R.id.delete_button)).setOnClickListener(fragment);
+            }
+            Log.i(RssItemActivity.TAG, "Pos " + position + " title: " + item.getTitle());
+            titleTextView.setText(item.getTitle());
+            return convertView;
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+        Log.i(RssItemActivity.TAG, "Click tag: " + ((String)v.getTag()));
+        String[] command = ((String)v.getTag()).split("!");
+        if (command.length == 2) {
+            if (command[0].equalsIgnoreCase("delete")) {
+                TheNews.getInstance().deleteFeed(Integer.parseInt(command[1]));
+                ((FeedMgrListAdapter)this.getListAdapter()).notifyDataSetChanged();
+            }
+            if (command[0].equalsIgnoreCase("load")) {
+                Intent i = new Intent();
+                i.putExtra("URL", command[1]);
+                Log.i(RssItemActivity.TAG, "finish and load..." + command[1]);
+                // load the feed finish this fragment
+                //theNews.getFeed().clear();
+                getActivity().setResult(Activity.RESULT_OK, i);
+                getActivity().finish();
+            }
+        }
+
+    }
+
+}
+</code></pre>
+
+<p>Fragment3 is:</p>
+
+<pre><code>public class FeedDetailsFormFragment extends Fragment {
+    private FeedDetails feed;
+    private static final String DIALOG_DATE = "date";
+    private static final int REQUEST_DATE = 0;
+    private Button dateButton;
+
+    public FeedDetailsFormFragment() {
+        super();
+    }
+
+    @SuppressLint("NewApi")
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        int position = getArguments().getInt("POSITION");
+        feed = TheNews.getInstance().getFeeds().get(position);
+        this.setHasOptionsMenu(true);
+        getActivity().setTitle(R.string.new_feed_title);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            if (NavUtils.getParentActivityName(getActivity()) != null) {
+                NavUtils.navigateUpFromSameTask(getActivity());
+            }
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public static FeedDetailsFormFragment newInstance(int position) {
+        Bundle args = new Bundle();
+        args.putInt("POSITION", position);
+        FeedDetailsFormFragment fragment = new FeedDetailsFormFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup parent,
+            Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.feed_details_form, parent, false);
+        getActivity().setTitle(R.string.new_feed_title);
+        EditText title = (EditText) v.findViewById(R.id.feedTitle);
+        title.setText(feed.getTitle());
+        title.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                    int after) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                    int count) {
+                feed.setTitle(s.toString());
+
+            }
+        });
+        EditText uri = (EditText) v.findViewById(R.id.feedUri);
+        uri.setText(feed.getUri());
+        uri.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                    int after) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                    int count) {
+                feed.setUri(s.toString());
+
+            }
+        });
+
+        EditText cat = (EditText) v.findViewById(R.id.feedCategory);
+        cat.setText(feed.getCategory());
+        cat.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                    int after) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                    int count) {
+                feed.setCategory(s.toString());
+
+            }
+        });
+        dateButton = (Button) v.findViewById(R.id.feedDate);
+        updateDate();
+        dateButton.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                FragmentManager fm = getActivity().getSupportFragmentManager();
+                DatePickerFragment dialog = DatePickerFragment.newInstance(feed
+                        .getDate());
+                dialog.setTargetFragment(FeedDetailsFormFragment.this,
+                        REQUEST_DATE);
+                dialog.show(fm, DIALOG_DATE);
+            }
+
+        });
+        return v;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_DATE) {
+            Date date = (Date) data
+                    .getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+            Log.i(RssItemActivity.TAG,
+                    "Setting date of feed " + date.toString());
+            feed.setDate(date);
+            updateDate();
+        }
+    }
+
+    private void updateDate() {
+        Log.i(RssItemActivity.TAG,
+                "Setting date button " + feed.getDateAsString());
+        dateButton.setText(feed.getDateAsString());
+    }
+
+}
+</code></pre>

@@ -1,0 +1,277 @@
+<p>I am following the Google API Library for the ActionBar and am not able to get it to navigate back home. There is nothing caught by LogCat....so no errors, but the syntax doesn't allow the navigation.</p>
+
+<p>I will also admit that i don't have much experiences with Actionbar as well.</p>
+
+<p>I don't understand why this is not working and much help is greatly appreciated.</p>
+
+<p>Here is my Activity code here:</p>
+
+<pre><code> @SuppressLint("NewApi")
+public class MoveContactsActivity extends ListActivity {
+
+    @SuppressLint("NewApi")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_move_contacts);
+//      getActionBar().setHomeButtonEnabled(true);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setTitle("My Relocation");
+        actionBar.setIcon(R.drawable.menu_ic_launcher);
+        Bundle bundle = getIntent().getExtras();
+        final TextView welcomeText = (TextView) findViewById(R.id.WelcomeText);
+        final TextView relocationId = (TextView) findViewById(R.id.relocationID);
+        final TextView addressOne = (TextView) findViewById(R.id.addressOne);
+        final TextView addressTwo = (TextView) findViewById(R.id.addressTwo);
+        final String RelocationId = bundle.getString("UID1");
+        relocationId.setText("Your Relocation: #" + RelocationId);
+        new contentCall().execute("");
+
+        findViewById(R.id.WebAddressTwo).setOnClickListener(new OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                Uri uri = Uri.parse("http://www.Relocationmw.com");
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
+            }
+
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_move_contacts, menu);
+        return true;
+    }
+
+    private class contentCall extends AsyncTask<String, Void, String> {
+        ProgressDialog dialog = new ProgressDialog(MoveContactsActivity.this);
+
+        @Override
+        protected void onPreExecute() {
+            if (checkNullState() == false) {
+                showMyDialog();
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String xml = null;
+            String calling = "https://demo.relocationmw.com/ws_docmgmt/mobile.asmx/GetRelocationMoveContactsTrim?UserID=";
+            Bundle bundle = getIntent().getExtras();
+            // String UID = bundle.getString("UID");
+            String UID = "801";
+            String URL = calling + UID;
+            DefaultHttpClient client = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(URL);
+            HttpResponse httpResponse;
+            try {
+                httpResponse = client.execute(httpGet);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                xml = EntityUtils.toString(httpEntity);
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            return xml;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            String xml = result;
+            String KEY_ITEM = "Contact";
+            String KEY_CONTACTTITLE = "ContactTitle";
+            String KEY_NAME = "Name";
+            String KEY_MAINPHONE = "Phone";
+            String KEY_CELLPHONE = "Cell";
+            String KEY_FAX = "Fax";
+            String KEY_EMAIL = "Email";
+            ArrayList<HashMap<String, String>> menuItems = new ArrayList<HashMap<String, String>>();
+
+            Document doc = getDomElement(xml);
+            if (xml != null) {
+                {
+                    NodeList nl = doc.getElementsByTagName(KEY_ITEM);
+                    for (int i = 0; i < nl.getLength(); i++) {
+                        HashMap<String, String> map = new HashMap<String, String>();
+                        Element e = (Element) nl.item(i);
+                            map.put(KEY_CONTACTTITLE, getValue(e, KEY_CONTACTTITLE));
+                            map.put(KEY_NAME, getValue(e, KEY_NAME));
+                            map.put(KEY_MAINPHONE, getValue(e, KEY_MAINPHONE));
+                            map.put(KEY_CELLPHONE, getValue(e, KEY_CELLPHONE));
+                            map.put(KEY_FAX, getValue(e, KEY_FAX));
+                            map.put(KEY_EMAIL, getValue(e, KEY_EMAIL));
+                        menuItems.add(map);
+                    }
+
+                    String[] hashMapObjects = { KEY_CONTACTTITLE, KEY_NAME,
+                            KEY_MAINPHONE, KEY_CELLPHONE, KEY_FAX, KEY_EMAIL };
+                    int[] listItemObjects = { R.id.ContactTitle, R.id.Name,
+                            R.id.MainPhone, R.id.Cell, R.id.Fax, R.id.Email };
+//              ContactListAdapter adapter = new ContactListAdapter(MoveContactsActivity.this, 0, menuItems);
+                    SimpleAdapter adapter = new SimpleAdapter (MoveContactsActivity.this,menuItems,R.layout.listed_contacts,hashMapObjects, listItemObjects);
+                    SimpleAdapter.ViewBinder binder = new SimpleAdapter.ViewBinder() {
+
+                        @Override
+                        public boolean setViewValue(View view, Object object,
+                                String value) {
+                            if(!(view instanceof TextView)){
+                                return false;
+                            }
+                            final TextView text = (TextView) view;
+                            text.setVisibility(TextUtils.isEmpty(value) ? View.GONE : View.VISIBLE);
+                            text.setText(value);
+                            return true;
+                        }
+                    };
+                    adapter.setViewBinder(binder);
+                     setListAdapter(adapter);
+                }
+                if (checkNullState() == true) {
+                    dismissMyDialog();
+                }
+            }
+        }
+    }
+
+    protected void onProgressUpdate(Map... values) {
+    }
+
+    // XML Parsing Start
+    public Document getDomElement(String xml) {
+        Document doc = null;
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+
+            DocumentBuilder db = dbf.newDocumentBuilder();
+
+            InputSource is = new InputSource();
+            is.setCharacterStream(new StringReader(xml));
+            doc = db.parse(is);
+
+        } catch (ParserConfigurationException e) {
+            Log.e("Error: ", e.getMessage());
+            return null;
+        } catch (SAXException e) {
+            Log.e("Error: ", e.getMessage());
+            return null;
+        } catch (IOException e) {
+            Log.e("Error: ", e.getMessage());
+            return null;
+        }
+        // return DOM
+        return doc;
+    }
+
+    public String getValue(Element item, String str) {
+        NodeList n = item.getElementsByTagName(str);
+        return getElementValue(n.item(0));
+    }
+
+    public final String getElementValue(Node elem) {
+        Node child;
+        if (elem != null) {
+            if (elem.hasChildNodes()) {
+                for (child = elem.getFirstChild(); child != null; child = child
+                        .getNextSibling()) {
+                    if (child.getNodeType() == Node.TEXT_NODE) {
+                        return child.getNodeValue();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // XML Parsing Stop
+
+    // ProgressDialog Tracking
+    private ProgressDialog pd1;
+    private boolean isMyDialogShowing;
+
+    boolean checkNullState() {
+        boolean test;
+        if (pd1 != null) {
+            test = true;
+        } else {
+            test = false;
+        }
+        return test;
+    }
+
+    void showMyDialog() {
+        isMyDialogShowing = true;
+        pd1 = new ProgressDialog(MoveContactsActivity.this);
+        pd1.setTitle("Contacts");
+        pd1.setMessage("Loading Contacts....");
+        pd1.show();
+    }
+
+    void dismissMyDialog() {
+        pd1.dismiss();
+        isMyDialogShowing = false;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch(item.getItemId()){
+        case R.id.menu_settings:
+            Intent intent = new Intent(this, HomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+}
+</code></pre>
+
+<p>Here is the Menu XML.....This is where i think the issue is but like i said i am not great with ActionBar yet.</p>
+
+<pre><code><menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/menu_settings"/>
+
+</menu
+</code></pre>
+
+<p>></p>
+
+<p>This is the LogCat Error when i change case to</p>
+
+<pre><code>case android.R.id.home:
+</code></pre>
+
+<p>LogCat:</p>
+
+<pre><code>03-26 13:45:40.666: E/AndroidRuntime(19152): FATAL EXCEPTION: main
+03-26 13:45:40.666: E/AndroidRuntime(19152): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.testingapp/com.testingapp.HomeActivity}: java.lang.NullPointerException
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2100)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2125)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.ActivityThread.access$600(ActivityThread.java:140)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1227)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.os.Handler.dispatchMessage(Handler.java:99)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.os.Looper.loop(Looper.java:137)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.ActivityThread.main(ActivityThread.java:4898)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at java.lang.reflect.Method.invokeNative(Native Method)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at java.lang.reflect.Method.invoke(Method.java:511)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:1008)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:775)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at dalvik.system.NativeStart.main(Native Method)
+03-26 13:45:40.666: E/AndroidRuntime(19152): Caused by: java.lang.NullPointerException
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at com.testingapp.HomeActivity.onCreate(HomeActivity.java:50)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.Activity.performCreate(Activity.java:5206)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1094)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2064)
+03-26 13:45:40.666: E/AndroidRuntime(19152):    ... 11 more
+</code></pre>

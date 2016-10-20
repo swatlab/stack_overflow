@@ -1,0 +1,244 @@
+<p>So I am having trouble extending the <code>MultiAutoCompleteTextView</code> and backing it with a <code>CursorLoader</code>, while simultaneously using a custom <code>Tokenizer</code>. The issue rises specifically with the <code>mAdapter.setCursorToStringConverter();</code> call. The <code>convertToString()</code> method which has a Cursor as an argument has a valid and unclosed cursor upon the first call to this method. However subsequent calls result in either a null cursor or a closed cursor. I am guessing this has something to do with how the <code>LoaderManager</code> manages the <code>CursorLoader</code>.      </p>
+
+<p>If I comment the <code>setCursorToStringConverter()</code> method out, then I do see a list of available choices based on the text I entered into this view.  However, since there is no <code>convertToString()</code> method implemented, then the <code>terminateToken()</code> method of the custom <code>Tokenizer</code> does not receive the string that I intend it to be, but rather a representative string of the cursor object, since the cursor has not been used to get the current string value of a desired column in the resulting query.        </p>
+
+<p>Has anyone been able to implement the combination of the three classes (<code>CursorLoader/LoaderManger</code>, <code>MultiAutoCompleteTextView</code>, and <code>Tokenizer</code>) ?</p>
+
+<p>Am I going in the right direction with this, or is this simply not possible?</p>
+
+<p>I have been able to implement a custom <code>MultiAutoCompleteTextView</code> backed by a <code>SimpleCursorAdapter</code> along with a custom <code>Tokenizer</code>. I was just wondering if its possible to implement this using a <code>CursorLoader</code> instead, since Strict Mode complains about the cursor in <code>MultiAutoCompleteTextView</code> not being explicitly closed. </p>
+
+<p>Any help would be greatly appreciated.</p>
+
+<pre><code>public class CustomMultiAutoCompleteTextView extends MultiAutoCompleteTextView
+  implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    private final String DEBUG_TAG = getClass().getSimpleName().toString();
+    private Messenger2 mContext;
+    private RecipientsCursorAdapter mAdapter;
+    private ContentResolver mContentResolver;
+    private final char delimiter = ' ';
+    private CustomMultiAutoCompleteTextView mView;
+
+    // If non-null, this is the current filter the user has provided.
+    private String mCurFilter;
+
+    // These are the Contacts rows that we will retrieve.
+    final String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
+        ContactsContract.Contacts._ID,
+        ContactsContract.Contacts.DISPLAY_NAME };
+
+    public CustomMultiAutoCompleteTextView(Context c) {
+        super(c);
+        init(c);
+    }
+
+    public CustomMultiAutoCompleteTextView(Context c, AttributeSet attrs) {
+        super(c, attrs);
+        init(c);
+    }
+
+    private void init(Context context) {
+        mContext = (Messenger2) context;
+        mContentResolver = mContext.getContentResolver();
+        mView = this; 
+
+        mAdapter = new RecipientsCursorAdapter(mContext, 0, null, new String[0], new int[0], mContext);
+
+        mAdapter.setCursorToStringConverter(new CursorToStringConverter() {
+            @Override
+            public CharSequence convertToString(Cursor c) {
+                String contactName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
+                return contactName;
+            }
+        });
+
+        addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                Log.d(DEBUG_TAG, "onTextChanged()");
+                if (!s.equals(""))
+                    mCurFilter = s.toString();
+                else
+                    mCurFilter = "";
+
+                mContext.getLoaderManager().restartLoader(0, null, mView);
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        setAdapter(mAdapter);
+        setTokenizer(new SpaceTokenizer());
+
+        mContext.getLoaderManager().initLoader(0, null, this);
+
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        // This is called when a new Loader needs to be created. This
+        // sample only has one Loader, so we don't care about the ID.
+        // First, pick the base URI to use depending on whether we are
+        // currently filtering.
+        Log.d(DEBUG_TAG, "onCreateLoader()");
+        Uri baseUri;
+        if (mCurFilter != null) {
+            baseUri = Uri.withAppendedPath( ContactsContract.Contacts.CONTENT_FILTER_URI,Uri.encode(mCurFilter));
+        } else {
+            baseUri = ContactsContract.Contacts.CONTENT_URI;
+        }
+
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+        String selection = "((" + ContactsContract.Contacts.DISPLAY_NAME
+                + " NOTNULL) AND ("
+                + ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1) AND ("
+                + ContactsContract.Contacts.DISPLAY_NAME + " != '' ))";
+        String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
+                + " COLLATE LOCALIZED ASC";
+
+        return new CursorLoader(mContext, baseUri, CONTACTS_SUMMARY_PROJECTION,
+                selection, null, sortOrder);
+    }
+
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        // Swap the new cursor in. (The framework will take care of closing
+        // the old cursor once we return.)
+        Log.d(DEBUG_TAG, "onLoadFinished()");
+        mAdapter.swapCursor(data);
+
+    }
+
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // This is called when the last Cursor provided to onLoadFinished()
+        // above is about to be closed. We need to make sure we are no
+        // longer using it.
+        Log.d(DEBUG_TAG, "onLoaderReset()");
+        mAdapter.swapCursor(null);
+    }
+
+    private class SpaceTokenizer implements Tokenizer {
+
+        public int findTokenStart(CharSequence text, int cursor) {
+            int i = cursor;
+
+            while (i > 0 && text.charAt(i - 1) != delimiter) {
+                i--;
+            }
+            while (i < cursor && text.charAt(i) == delimiter) {
+                i++;
+            }
+
+            return i;
+        }
+
+        public int findTokenEnd(CharSequence text, int cursor) {
+            int i = cursor;
+            int len = text.length();
+
+            while (i < len) {
+                if (text.charAt(i) == delimiter) {
+                    return i;
+                } else {
+                    i++;
+                }
+            }
+
+            return len;
+        }
+
+        public CharSequence terminateToken(CharSequence text) {
+            Log.d(DEBUG_TAG, "terminateToken()");
+            int i = text.length();
+            while (i > 0 && text.charAt(i - 1) == delimiter) {
+                i--;
+            }
+
+            if (i > 0 && text.charAt(i - 1) == delimiter) {
+                return text;
+            } else {
+
+                CharSequence contactName = createContactBubble(text);
+
+                return contactName;
+            }
+        }
+
+    }
+
+}
+</code></pre>
+
+<p><strong>UPDATE 1</strong>  </p>
+
+<p>I am now calling the <code>setStringConversionColumn()</code> method instead of the <code>setCursorToStringConverter()</code> as @Olaf suggested.  I have set this in the <code>onLoadFinished()</code> since this is the only time the <code>Cursor</code> is available as this is implementing a <code>LoaderManger</code>.</p>
+
+<pre><code>public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    // Swap the new cursor in. (The framework will take care of closing
+    // the old cursor once we return.)
+    Log.d(DEBUG_TAG, "onLoadFinished()");   
+    mAdapter.setStringConversionColumn(data.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME)); 
+    mAdapter.swapCursor(data);
+}
+</code></pre>
+
+<p>This works in selecting one item for the <code>MultiAutoCompleteTextView</code>, but will not allow multiple items to be selected in the <code>MultiAutoCompleteTextView</code>.</p>
+
+<p>I am guessing there is some issue with the <code>onTextChanged()</code> method since it calls <code>restartLoader()</code>.  This works for the first entry in this view but not for subsequent entries.  I'm not too sure at this point what is wrong.</p>
+
+<p><strong>UPDATE 2</strong></p>
+
+<p>So I have identified the issue.  The problem is the TextWatcher's <code>onTextChanged()</code> method.  After making the selection to terminate the first token ( let's say the token was "Joe Johnson" ), then entering more characters into this <code>MultiAutoCompleteTextView</code> ( such as <code>al</code> ) the value of the arg <code>s</code> that gets passed into the <code>onTextChanged()</code> method now contains not only the additionally added characters but also the characters from the token which has previously been terminated ( the value of <code>s</code> at this point is <code>Joe Johnson al</code> ).  Now the value of <code>mCursor</code> gets set to <code>Joe Johnson al</code> which subsequently gets passed into the query in <code>onCreateLoader()</code> which will obviously return no results.  Are there any ways around this situation?  I am open to any suggestions.</p>
+
+<p><strong>UPDATE 3</strong></p>
+
+<p>When I implemented a custom <code>MultiAutoCompleteTextView</code> backed by a <code>SimpleCursorAdapter</code> along with a custom <code>Tokenizer</code> I set a <code>FilterQueryProvider</code> like this:</p>
+
+<pre><code>mAdapter.setFilterQueryProvider(new FilterQueryProvider() {
+    @Override
+    public Cursor runQuery(CharSequence constraint) {
+    Log.d(DEBUG_TAG, "runQuery() : constraint " + constraint);
+        Uri baseUri;
+        if (constraint != null) {
+            baseUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_FILTER_URI,
+                Uri.encode(constraint.toString()));
+        } else {
+            baseUri = ContactsContract.Contacts.CONTENT_URI;
+            }
+
+        String selection = "((" + ContactsContract.Contacts.DISPLAY_NAME
+            + " NOTNULL) AND ("
+            + ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1) AND ("
+            + ContactsContract.Contacts.DISPLAY_NAME + " != '' ))";
+
+        final String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
+            ContactsContract.Contacts._ID,
+            ContactsContract.Contacts.DISPLAY_NAME};
+        String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
+            + " COLLATE LOCALIZED ASC";
+
+        Cursor c = mContentResolver.query(baseUri,
+    CONTACTS_SUMMARY_PROJECTION, selection, null, sortOrder);
+        return c;
+    }
+});
+</code></pre>
+
+<p>And for some reason the <code>runQuery()</code> method gets called twice from the TextWatcher's <code>onTextChanged()</code> method:</p>
+
+<pre><code>public void onTextChanged(CharSequence s, int start, int before,
+                int count) {
+    Log.d(DEBUG_TAG, "onTextChanged()  : s " + s);
+    mAdapter.getFilterQueryProvider().runQuery(s);
+}
+</code></pre>
+
+<p>So in my previous example, the <code>constraint</code> variable that gets passed into the <code>runQuery()</code> method the first time is <code>Joe Johnson al</code>.  Then the second time <code>runQuery()</code> method is called the value of the <code>constraint</code> variable is <code>al</code>.  I don't know why the <code>runQuery()</code> method runs twice when its only called once in the <code>onTextChanged()</code> method.     </p>

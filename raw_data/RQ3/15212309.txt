@@ -1,0 +1,232 @@
+<p>I must be missing something but I cannot remove a fragment from my <code>ViewPager</code>. I store the page titles in an <code>ArrayList</code>:</p>
+
+<p>Part of <code>ViewPagerActivity.java</code> (which is a <code>FragmentActivity</code>, the main activity):</p>
+
+<pre><code>public static ArrayList<String> mEntries = new ArrayList<String>();
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate( savedInstanceState );
+    setContentView( R.layout.main );
+    context=this;
+
+    mEntries.add("   111");
+    mEntries.add("   222");
+    mEntries.add("   333");
+    mEntries.add("   444");
+    mEntries.add("   555");
+    mEntries.add("   666");
+
+    List<String> fragments = new Vector<String>();
+
+    fragments.add(111.class.getName());
+    fragments.add(222.class.getName());
+    fragments.add(333.class.getName());
+    fragments.add(444.class.getName());
+    fragments.add(555.class.getName());
+    fragments.add(666.class.getName());
+
+    this.mPagerAdapter = new PagerAdapter1(super.getSupportFragmentManager(), fragments);
+    pager = (ViewPager)super.findViewById(R.id.viewpager);
+    pager.setAdapter(this.mPagerAdapter);
+    // ...
+</code></pre>
+
+<p>I have a fragment (<code>111</code>) where I would like to remove the <code>555</code> fragment by clicking a button in <code>111</code>. (Since it starts with <code>0</code>, <code>555</code> is the 4th fragment).</p>
+
+<p>Part of <code>fragment111.java</code> (which is a <code>Fragment</code>):</p>
+
+<pre><code>     button.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+           ViewPagerActivity.mEntries.remove(5);
+     ViewPagerActivity.mPagerAdapter.removeX(5);
+    ViewPagerActivity.mPagerAdapter.removeX2(5);
+    ViewPagerActivity.pager.setAdapter( ViewPagerActivity.mPagerAdapter);
+    ViewPagerActivity.pager.getAdapter().notifyDataSetChanged();    
+   }
+        });
+</code></pre>
+
+<p>I have the <code>POSITION_NONE</code> thing that some people miss by overriding the <code>getItemPosition()</code> method.</p>
+
+<p>my adapter class:</p>
+
+<pre><code>  public class PagerAdapter1 extends FragmentStatePagerAdapter {
+
+    private List<String> fragments;
+       private static final String TAG = "FragmentPagerAdapter";
+        private static final boolean DEBUG = true;
+        private Fragment mCurrentPrimaryItem = null;
+        private final FragmentManager mFragmentManager;
+        private FragmentTransaction mCurTransaction = null;
+
+    /**
+     * @param fm
+     * @param fragments2
+     */
+    public PagerAdapter1(FragmentManager fm, List<String> fragments2) {
+        super(fm);
+        mFragmentManager=fm;
+        this.fragments = fragments2;
+    }
+    /* (non-Javadoc)
+     * @see android.support.v4.app.FragmentPagerAdapter#getItem(int)
+     */
+    @Override
+    public Fragment getItem(int position) {
+        //return this.fragments.get(position);
+        return Fragment.instantiate(ViewPagerActivity.context, fragments.get(position));
+
+    }
+
+    /* (non-Javadoc)
+     * @see android.support.v4.view.PagerAdapter#getCount()
+     */
+    @Override
+    public int getCount() {
+        return this.fragments.size();
+    }
+
+
+
+      /**
+     * Return the Fragment associated with a specified position.
+     */
+
+
+    @Override
+    public void startUpdate(ViewGroup container) {
+    }
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position) {
+
+        if (mCurTransaction == null) {
+            mCurTransaction = mFragmentManager.beginTransaction();
+        }
+
+        final long itemId = getItemId(position);
+
+        // Do we already have this fragment?
+        String name = makeFragmentName(container.getId(), itemId);
+
+        Fragment fragment = mFragmentManager.findFragmentByTag(name);
+        if (fragment != null) {
+            if (DEBUG) Log.v(TAG, "Attaching item #" + itemId + ": f=" + fragment);
+                mCurTransaction.attach(fragment);
+
+        } else {
+
+            fragment = getItem(position);
+
+            if (DEBUG) Log.v(TAG, "Adding item #" + itemId + ": f=" + fragment);
+            mCurTransaction.add(container.getId(), fragment,
+                    makeFragmentName(container.getId(), itemId));
+
+        }
+
+        if (fragment != mCurrentPrimaryItem) {
+            fragment.setMenuVisibility(false);
+            fragment.setUserVisibleHint(false);
+        }
+
+
+        return fragment;
+    }
+
+
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        if (mCurTransaction == null) {
+            mCurTransaction = mFragmentManager.beginTransaction();
+        }
+        if (DEBUG) Log.v(TAG, "Detaching item #" + getItemId(position) + ": f=" + object
+                + " v=" + ((Fragment)object).getView());
+        mCurTransaction.detach((Fragment)object);
+    }
+
+    @Override
+    public void setPrimaryItem(ViewGroup container, int position, Object object) {
+        Fragment fragment = (Fragment)object;
+        if (fragment != mCurrentPrimaryItem) {
+            if (mCurrentPrimaryItem != null) {
+                mCurrentPrimaryItem.setMenuVisibility(false);
+                mCurrentPrimaryItem.setUserVisibleHint(false);
+            }
+            if (fragment != null) {
+                fragment.setMenuVisibility(true);
+                fragment.setUserVisibleHint(true);
+            }
+            mCurrentPrimaryItem = fragment;
+        }
+
+
+    }
+
+    @Override
+    public void finishUpdate(ViewGroup container) {
+        if (mCurTransaction != null) {
+            mCurTransaction.commitAllowingStateLoss();
+            mCurTransaction = null;
+            mFragmentManager.executePendingTransactions();
+        }
+
+    }
+
+    @Override
+    public boolean isViewFromObject(View view, Object object) {
+        return ((Fragment)object).getView() == view;
+    }
+
+    @Override
+    public Parcelable saveState() {
+        return null;
+    }
+
+    @Override
+    public void restoreState(Parcelable state, ClassLoader loader) {
+    }
+
+    /**
+     * Return a unique identifier for the item at the given position.
+     *
+     * <p>The default implementation returns the given position.
+     * Subclasses should override this method if the positions of items can change.</p>
+     *
+     * @param position Position within this adapter
+     * @return Unique identifier for the item at position
+     */
+    public long getItemId(int position) {
+        return position;
+    }
+
+    private static String makeFragmentName(int viewId, long id) {
+        return "android:switcher:" + viewId + ":" + id;
+    }
+
+    @Override
+    public int getItemPosition(Object object) {
+        return POSITION_NONE;
+    }
+
+
+   public void removeX(int position){
+        fragments.remove(5);
+}        
+
+
+public void removeX2(int position){
+
+    Fragment ff =  getItem(position);
+    mFragmentManager.beginTransaction().remove(ff).commit();
+    notifyDataSetChanged();
+}
+
+}
+</code></pre>
+
+<p>I am using <code>FragmentStatePagerAdapter</code> and the <code>notifyDataSetChanged()</code> works well (I update state of a <code>CheckBox</code> and I see it works). How can I remove this fragment from the <code>ViewPager</code>?</p>
+
+<p>Thanks in advance!</p>

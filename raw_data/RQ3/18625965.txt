@@ -1,0 +1,261 @@
+<p>I'm trying implement a TabHost FragmentActivity, but when i run the app  occurs ClassCastException: cannot be cast to android.support.v4.app.Fragment.</p>
+
+<p>My project have the supportev4 library configurated, but not work.</p>
+
+<p>My Activity extend from FragmentActivity, but not work.</p>
+
+<p>What this problem?</p>
+
+<pre><code>package br.com.teste.activity;
+
+import java.util.HashMap;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
+import android.widget.TabHost.TabSpec;
+import br.com.teste.R;
+
+
+public class MainFragmentActivity extends FragmentActivity implements TabHost.OnTabChangeListener {
+
+private TabHost mTabHost;
+private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, TabInfo>();
+private TabInfo mLastTab = null;
+
+
+private class TabInfo {
+    private String tag;
+    private Class clss;
+    private Bundle args;
+    private Fragment fragment;
+
+    TabInfo(String tag, Class clazz, Bundle args) {
+        this.tag = tag;
+        this.clss = clazz;
+        this.args = args;
+    }
+}
+
+class TabFactory implements TabContentFactory {
+
+    private final Context mContext;
+
+    /**
+     * 
+     * @param context
+     */
+
+    public TabFactory(Context context) {
+        mContext = context;
+    }
+
+    /**
+     * (non-Javadoc)
+     * 
+     * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
+     */
+
+    public View createTabContent(String tag) {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+    }
+}
+
+
+@Override
+protected void onCreate(Bundle savedInstance)
+{
+    super.onCreate(savedInstance);
+    setContentView(R.layout.maintabhost);
+
+    initializeTabHost(savedInstance);
+
+    if(savedInstance != null)
+        mTabHost.setCurrentTabByTag(savedInstance.getString("tab"));
+
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState)
+{
+    outState.putString("tab", mTabHost.getCurrentTabTag()); 
+    super.onSaveInstanceState(outState);
+}
+
+/**
+ * Inicializa as tabs
+ * @param args
+ */
+private void initializeTabHost(Bundle args)
+{
+    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+    TabInfo tabInfo = null;
+    String tagTabDefaul = "pesquisar";
+    String tagTab;
+    TabSpec tabSpecLocal = null;
+
+    //Add tab1
+    tagTab = "pesquisar";
+    tabSpecLocal = this.mTabHost.newTabSpec(tagTab);
+    View viewPesquisa = LayoutInflater.from(this).inflate(
+            R.layout.tab_layout_view, null);
+    LinearLayout lPesquisa = (LinearLayout)viewPesquisa.findViewById(R.id.tabsLayout);
+
+        lPesquisa.setBackgroundDrawable(getResources().getDrawable(R.drawable.tab_pesquisa_background_selector));
+
+
+    tabSpecLocal.setIndicator(viewPesquisa);
+    tabInfo = new TabInfo(tagTab, MainActivity.class, args);
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    addTab(this, this.mTabHost, tabSpecLocal, tabInfo);
+
+    tagTab = "lines";
+    tabSpecLocal = this.mTabHost.newTabSpec(tagTab);
+    View viewLines = LayoutInflater.from(this).inflate(
+            R.layout.tab_layout_view, null);
+    LinearLayout lLines = (LinearLayout)viewLines.findViewById(R.id.tabsLayout);
+        lLinhas.setBackgroundDrawable(getResources().getDrawable(R.drawable.tab_lines_background_selector));
+
+
+
+    tabSpecLocal.setIndicator(viewLines);
+    tabInfo = new TabInfo(tagTab, ListLinesActivity.class, args);
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    addTab(this, this.mTabHost, tabSpecLocal, tabInfo);
+
+    //Adiciona tab de Fields
+    tagTab = "fields";
+    tabSpecLocal = this.mTabHost.newTabSpec(tagTab);
+    View viewFields = LayoutInflater.from(this).inflate(
+            R.layout.tab_layout_view, null);
+    LinearLayout lFields = (LinearLayout)viewFields.findViewById(R.id.tabsLayout);
+
+        lFields.setBackgroundDrawable(getResources().getDrawable(R.drawable.tab_fields_background_selector));
+
+
+    tabSpecLocal.setIndicator(viewFields);
+    tabInfo = new TabInfo(tagTab, ListFieldsActivity.class, args);
+    this.mapTabInfo.put(tabInfo.tag, tabInfo);
+    addTab(this, this.mTabHost, tabSpecLocal, tabInfo);
+
+    //Seta a tab default
+    this.onTabChanged(tagTabDefaul);
+
+    mTabHost.setOnTabChangedListener(this);
+}
+
+/**
+ * Adiciona as tab's
+ * @param activity
+ * @param tabHost
+ * @param tabSpec
+ * @param tabInfo
+ */
+private static void addTab(MainFragmentActivity activity, TabHost tabHost, TabSpec tabSpec, TabInfo tabInfo)
+{
+    //Attach a tab view factory to ths spec     
+    tabSpec.setContent(activity.new TabFactory(activity));
+    String tag = tabSpec.getTag();
+
+    //Verifica se já existe um fragmento para esta tab, provavelmente de uma ação anterior
+    //Se tiver, desativa o fragmento, porque seu estado inicial é para não apresentar
+    tabInfo.fragment = activity.getSupportFragmentManager().findFragmentByTag(tag);
+    if((tabInfo.fragment != null) && (tabInfo.fragment.isDetached()))
+    {
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.detach(tabInfo.fragment);
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+    }
+    tabHost.addTab(tabSpec);
+}
+
+
+public void onTabChanged(String tag)
+{
+    TabInfo newTab = this.mapTabInfo.get(tag);
+    if(mLastTab != newTab)
+    {
+        FragmentTransaction ft = this.getSupportFragmentManager().beginTransaction();
+        if(mLastTab != null)
+        {
+            if(mLastTab.fragment != null)
+            {
+                ft.detach(mLastTab.fragment);
+            }
+        }
+        if(newTab != null)
+        {
+            if(newTab.fragment == null)
+            {
+                newTab.fragment = Fragment.instantiate(this, newTab.clss.getName(), newTab.args);
+                ft.add(R.id.realtabcontent, newTab.fragment, newTab.tag);
+            }
+            else
+            {
+                ft.attach(newTab.fragment);
+            }
+        }
+        mLastTab = newTab;
+        ft.commit();
+        this.getSupportFragmentManager().executePendingTransactions();
+    }
+}
+
+
+//Cria a tab com personalização de layout
+/*
+private static View createTabView(final Context context, final String text) {
+    View view = LayoutInflater.from(context).inflate(
+            R.layout.tab_layout_view, null);
+    TextView tv = (TextView) view.findViewById(R.id.tabsText);
+    tv.setText(text);
+    return view;
+}
+*/
+}
+</code></pre>
+
+<p><strong>UPDATED</strong></p>
+
+<p>My logCat</p>
+
+<pre><code>09-05 01:57:07.655: D/dalvikvm(727): GC_CONCURRENT freed 347K, 5% free 9061K/9479K, paused 91ms+6ms, total 192ms
+09-05 01:57:07.655: D/dalvikvm(727): WAIT_FOR_CONCURRENT_GC blocked 56ms
+09-05 01:57:07.695: D/AndroidRuntime(727): Shutting down VM
+09-05 01:57:07.705: W/dalvikvm(727): threadid=1: thread exiting with uncaught exception (group=0x40a13300)
+09-05 01:57:07.745: E/AndroidRuntime(727): FATAL EXCEPTION: main
+09-05 01:57:07.745: E/AndroidRuntime(727): java.lang.RuntimeException: Unable to start activity ComponentInfo{br.com.teste/br.com.teste.activity.MainFragmentActivity}: java.lang.ClassCastException: br.com.teste.activity.MainActivity cannot be cast to android.support.v4.app.Fragment
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2059)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2084)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.ActivityThread.access$600(ActivityThread.java:130)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1195)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.os.Handler.dispatchMessage(Handler.java:99)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.os.Looper.loop(Looper.java:137)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.ActivityThread.main(ActivityThread.java:4745)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at java.lang.reflect.Method.invokeNative(Native Method)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at java.lang.reflect.Method.invoke(Method.java:511)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:786)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:553)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at dalvik.system.NativeStart.main(Native Method)
+09-05 01:57:07.745: E/AndroidRuntime(727): Caused by: java.lang.ClassCastException: br.com.teste.activity.MainActivity cannot be cast to android.support.v4.app.Fragment
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.support.v4.app.Fragment.instantiate(Fragment.java:402)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at br.com.teste.activity.MainFragmentActivity.onTabChanged(MainFragmentActivity.java:208)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at br.com.teste.activity.MainFragmentActivity.initializeTabHost(MainFragmentActivity.java:159)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at br.com.teste.activity.MainFragmentActivity.onCreate(MainFragmentActivity.java:75)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.Activity.performCreate(Activity.java:5008)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1079)
+09-05 01:57:07.745: E/AndroidRuntime(727):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2023)
+09-05 01:57:07.745: E/AndroidRuntime(727):  ... 11 more
+</code></pre>

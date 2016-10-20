@@ -1,0 +1,86 @@
+<p>I'm trying to get the new TabLayout in the android design library working.</p>
+
+<p>I'm following this post: </p>
+
+<p><a href="http://android-developers.blogspot.com/2015/05/android-design-support-library.html">http://android-developers.blogspot.com/2015/05/android-design-support-library.html</a></p>
+
+<p>and the documentation: </p>
+
+<p><a href="http://developer.android.com/reference/android/support/design/widget/TabLayout.html">http://developer.android.com/reference/android/support/design/widget/TabLayout.html</a></p>
+
+<p>And have come up with the following code in my activity but the tablayout isn't showing up when I run the activity.</p>
+
+<p>I tried adding   in the activity layout file, but it says it can't find that xml tag.</p>
+
+<pre><code>public class TabActivity extends BaseActivity {
+
+    SectionPagerAdapter mSectionsPagerAdapter;
+    ViewPager mViewPager;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_tab);
+
+        LinearLayout v = (LinearLayout)findViewById(R.id.tabContainer);
+
+        TabLayout tabLayout = new TabLayout(this);
+        tabLayout.addTab(tabLayout.newTab().setText("Tab 1"));
+        tabLayout.addTab(tabLayout.newTab().setText("Tab 2"));
+        tabLayout.addTab(tabLayout.newTab().setText("Tab 3"));
+
+        tabLayout.setLayoutParams(new LinearLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 50));
+
+        v.addView(tabLayout);
+
+        mSectionsPagerAdapter = new SectionPagerAdapter(getFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        tabLayout.setupWithViewPager(mViewPager);
+        mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+
+    }
+
+    public class SectionPagerAdapter extends FragmentPagerAdapter {
+
+        private String TAG = "SectionPagerAdapter";
+
+        public SectionPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position)
+        {
+            return new Fragment();
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return "test";
+                case 1:
+                    return "test";
+                case 2:
+            }
+            return null;
+        }
+    }
+}
+</code></pre>
+
+<p>Added the following to my gradle file</p>
+
+<pre><code> compile 'com.android.support:design:22.2.0'
+</code></pre>

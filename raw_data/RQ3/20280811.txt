@@ -1,0 +1,226 @@
+<p>I'm writing an application that has 2 Tabs in its <code>MainActivity</code>. I created the Activity Template with the Android Plugin for Eclipse and adapted it.
+Anyway when I resume the Application after a while the Fragments will be null.</p>
+
+<p>Here is the code of my Activity (I removed "unimportant" parts)</p>
+
+<pre><code>public class MainActivity extends FragmentActivity implements
+    ActionBar.TabListener {
+
+/**
+ * The {@link android.support.v4.view.PagerAdapter} that will provide
+ * fragments for each of the sections. We use a
+ * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+ * will keep every loaded fragment in memory. If this becomes too memory
+ * intensive, it may be best to switch to a
+ * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+ */
+SectionsPagerAdapter mSectionsPagerAdapter;
+
+private static final String ARG_SECTION_NUMBER = "section_number";
+
+/**
+ * Fragment to display markets on a {@link GoogleMap}.
+ */
+private GluehweinMapFragment mGluehweinMapFragment;
+
+/**
+ * Fragment to display available markets as list.
+ */
+private GluehweinListFragment mGluehweinListFragment;
+
+
+/**
+ * The {@link ViewPager} that will host the section contents.
+ */
+ViewPager mViewPager;
+
+
+
+/*
+ * (non-Javadoc)
+ * 
+ * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+ */
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+
+    setContentView(R.layout.activity_main);
+
+
+    initSectionsPagerAdapter();
+//[...]
+
+}
+
+private void initSectionsPagerAdapter() {
+    if (mSectionsPagerAdapter == null || mViewPager == null) {
+        final ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        // Create the adapter that will return a fragment for each of the
+        // three
+        // primary sections of the app.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        // When swiping between different sections, select the corresponding
+        // tab. We can also use ActionBar.Tab#select() to do this if we have
+        // a reference to the Tab.
+        mViewPager
+                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        switch (position) {
+                        case 0:
+                            break;
+
+                        }
+                        refreshFragments();
+                        actionBar.setSelectedNavigationItem(position);
+                    }
+                });
+        actionBar.getSelectedNavigationIndex();
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            // Create a tab with text corresponding to the page title
+            // defined by
+            // the adapter. Also specify this Activity object, which
+            // implements
+            // the TabListener interface, as the callback (listener) for
+            // when
+            // this tab is selected.
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mSectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+    }
+}
+
+
+
+/**
+ * Hides or shows the closed markets on the list and map
+ */
+private void updateVisibility() {
+    if (this.mGluehweinMapFragment != null) {
+        mGluehweinMapFragment.updateVisibility();
+    }
+    if (this.mGluehweinListFragment != null) {
+        mGluehweinListFragment.updateVisibility();
+    }
+}
+
+@Override
+public void onTabSelected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+
+    mViewPager.setCurrentItem(tab.getPosition());
+    invalidateOptionsMenu();
+}
+
+@Override
+public void onTabUnselected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+}
+
+@Override
+public void onTabReselected(ActionBar.Tab tab,
+        FragmentTransaction fragmentTransaction) {
+}
+
+/**
+ * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * one of the sections/tabs/pages.
+ */
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        // getItem is called to instantiate the fragment for the given page.
+        // Return a DummySectionFragment (defined as a static inner class
+        // below) with the page number as its lone argument.
+        Fragment fragment = null;
+
+        Bundle args = new Bundle();
+        args.putInt(ARG_SECTION_NUMBER, position + 1);
+
+        switch (position) {
+        case 0:
+            // position 0 is the Map
+            if (mGluehweinMapFragment == null) {
+                mGluehweinMapFragment = new GluehweinMapFragment();
+            }
+            fragment = mGluehweinMapFragment;
+            break;
+        case 1:
+            // position 1 is the List
+            if (mGluehweinListFragment == null) {
+                mGluehweinListFragment = new GluehweinListFragment();
+            }
+            fragment = mGluehweinListFragment;
+            break;
+        }
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public int getCount() {
+        return 2;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        Locale l = Locale.getDefault();
+        switch (position) {
+        case 0:
+            return getString(R.string.tab_map).toUpperCase(l);
+        case 1:
+            return getString(R.string.tab_list).toUpperCase(l);
+        }
+        return null;
+    }
+
+}
+
+@Override
+protected void onResume() {
+    // on resume, restart requesting location updates
+    super.onResume();
+    //[..]
+    initSectionsPagerAdapter();
+    //some calls on the fragments which are null here!!!
+    refreshFragments();
+}
+
+
+
+/**
+ * Notifies the Fragments in the Tabs that data has changed
+ */
+private void refreshFragments() {
+    if (this.mGluehweinMapFragment != null) {
+        mGluehweinMapFragment.updateVisibility();
+    }
+    if (this.mGluehweinListFragment != null) {
+        mGluehweinListFragment.updateVisibility();
+    }
+}   
+
+ }
+</code></pre>
+
+<p>I asked a colleague and he said me that its not good to keep the two Fragments as members in my <code>Activity</code>, because Android eventually would create a new instance of the Fragments <code>onResume</code> and this is why my references are null. But he could not tell me how to fix my problem. 
+I was thinking about writing a <code>getFragment()</code> method that would use a <code>FragmentManager</code> to get the fragments, but I don't know how to get my fragments in a state, where I can read them with a <code>FragmentManager</code>.</p>
+
+<p>Thank you in advance!</p>

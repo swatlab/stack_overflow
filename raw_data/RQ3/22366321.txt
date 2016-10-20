@@ -1,0 +1,194 @@
+<p>I know that this has been asked a million times. However, I do not find a way to call <code>onUpgrade()</code> within my <code>subclass</code></p>
+
+<p>I have an <code>SQLite DataBase</code> already built in a <code>SQLite Manager</code> which works properly. I would like the user to create an additional table within the app. So, as far as I have read, I have to do it in <code>onUpgrade</code></p>
+
+<p>Here is my code:</p>
+
+<pre><code>String DB_PATH =null;
+
+private static String DB_NAME = "CompositionFoodTable_LatinAmerica";
+
+private SQLiteDatabase myDataBase; 
+
+private final Context myContext;
+
+public FoodDataBaseHelper(Context context) {
+
+    super(context, DB_NAME, null, 2); //Constructor with newer version
+    //However I am not sure about this because when I run a query within the manager
+    //to check the version, it throws 0
+    this.myContext = context;
+    DB_PATH = context.getApplicationInfo().dataDir + "/databases/";
+    // I am not calling getReadableDatabase() or getWriteable(). They destroy my
+    //current version 
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    //NOT BEING CALLED
+    // Drop older plates table if existed
+    String CREATE_PRODUCT_TABLE = null;
+    try {
+        db.beginTransaction();
+        for (int i = oldVersion + 1; i <= newVersion; i++) {
+
+
+            CREATE_PRODUCT_TABLE = "CREATE TABLE IF NOT EXISTS PRODUCTS ( " +
+                    "ID INTEGER PRIMARY KEY AUTOINCREMENT, " + 
+                    "NAME TEXT, " + 
+                    "DATE TEXT, " +
+                    "SERVING_SIZE_G TEXT, " +
+
+                    "H20_PERC TEXT, " +
+                    "ENERGY_KCAL TEXT, " +
+                    "PROTEIN_G TEXT, " + 
+                    "TOTAL_FAT_G TEXT, " +
+
+                    "CARBS_G TEXT, " +
+                    "TOT_DIET_FIBER_G TEXT, " +
+                    "ASH_G TEXT, " +
+                    "CALCIUM_MG TEXT, " +
+
+                    "PHOSPHORUS_MG TEXT, " +
+                    "IRON_MG TEXT, " +
+                    "THIAMINE_MG TEXT, " +
+                    "RIBOFLAVIN_MG TEXT, " +
+
+                    "NIACIN_MG TEXT, " +
+                    "VIT_C_MG TEXT, " +
+                    "VIT_A_EQUIV_RETINOL_MCG TEXT, " +
+                    "MUFA_G TEXT, " +
+
+                    "PUFA_G TEXT, " +
+                    "SATURATED_FATTY_ACIDS_G TEXT, " +
+                    "CHOLESTEROL_MG TEXT, " +
+                    "POTASSIUM_MG TEXT, " +
+
+                    "SODIUM_MG TEXT, " +
+                    "ZINC_MG TEXT, " +
+                    "MAGNESIUM_MG TEXT, " +
+                    "VIT_B6_MG TEXT, " +
+
+                    "VIT_B12_MCG TEXT, " +
+                    "FOLIC_AC_MCG TEXT, " +
+                    "FOLATE_EQUIV_FD_MCG TEXT, " +
+                    "EDIBLE_FRACTION_PERC TEXT)";
+
+            db.execSQL(CREATE_PRODUCT_TABLE);
+
+            // create plates table
+            db.setTransactionSuccessful();
+        }
+        } finally{
+
+            db.endTransaction();
+        }
+            // Future schema changes has to go into this loop
+
+
+}
+</code></pre>
+
+<p>Rest of my methods:</p>
+
+<pre><code> /**
+ * Creates a empty database on the system and rewrites it with your own database.
+ * */
+public void createDataBase() throws IOException{
+
+    boolean dbExist = checkDataBase();
+
+    if(dbExist){
+        //do nothing - database already exist
+    }else{
+
+        //By calling this method and empty database will be created into the default system path
+           //of your application so we are going to be able to overwrite that database with our database.
+        this.getReadableDatabase();
+
+        try {
+            copyDataBase();
+
+        } catch (IOException e) {
+
+            throw new Error("Error copying database");
+
+        }
+    }
+
+}
+
+/**
+ * Check if the database already exist to avoid re-copying the file each time you open the application.
+ * @return true if it exists, false if it doesn't
+ */
+private boolean checkDataBase(){
+    boolean checkdb = false;
+    try{
+        String myPath = myContext.getFilesDir().getAbsolutePath().replace("files", "databases")+File.separator + DB_NAME;
+        File dbfile = new File(myPath);                
+        checkdb = dbfile.exists();
+    }
+    catch(SQLiteException e){
+        System.out.println("Database doesn't exist");
+    }
+
+    return checkdb;
+}
+
+/**
+ * Copies your database from your local assets-folder to the just created empty database in the
+ * system folder, from where it can be accessed and handled.
+ * This is done by transferring bytestream.
+ * */
+private void copyDataBase() throws IOException{
+
+    //Open your local db as the input stream
+    InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+    // Path to the just created empty db
+    String outFileName = DB_PATH + DB_NAME;
+
+    //Open the empty db as the output stream
+    OutputStream myOutput = new FileOutputStream(outFileName);
+
+    //transfer bytes from the inputfile to the outputfile
+    byte[] buffer = new byte[1024];
+    int length;
+    while ((length = myInput.read(buffer))>0){
+        myOutput.write(buffer, 0, length);
+    }
+
+    //Close the streams
+    myOutput.flush();
+    myOutput.close();
+    myInput.close();
+
+}
+
+public void openDataBase() throws SQLException{
+
+    //Open the database
+    String myPath = DB_PATH + DB_NAME;
+    myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+}
+
+@Override
+public synchronized void close() {
+
+        if(myDataBase != null)
+            myDataBase.close();
+
+        super.close();
+
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+    // SQL statement to create plate table
+
+}
+</code></pre>

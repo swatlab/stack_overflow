@@ -1,0 +1,138 @@
+<p>I want to design Evernote like sliding menu for my Android App that includes Gridview and Listview of content in the Sliding Menu.</p>
+
+<p><img src="http://i.stack.imgur.com/TCeyJ.png" alt="Evernote For Android Showing sliding menu"></p>
+
+<p>I have implemented two frameLayouts in the slidingMenu layout file, one for the Gridview and other for the Listview. Here is the xml file of it.</p>
+
+<p>menu_frame.xml</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+
+    <FrameLayout 
+    android:id="@+id/grid_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+
+    <FrameLayout 
+    android:id="@+id/menu_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:layout_below="@+id/grid_frame"/>
+</RelativeLayout>
+</code></pre>
+
+<p>List View Framelayout xml file for id:menu_frame</p>
+
+<pre><code><ListView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/list"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/list_padding"
+    android:paddingRight="@dimen/list_padding" />
+</code></pre>
+
+<p>Gridview Framelayout xml file for id:grid_frame</p>
+
+<pre><code><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:paddingLeft="@dimen/list_padding"
+    android:paddingRight="@dimen/list_padding">
+    <!-- android:id="@+id/grid_list" -->
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="51dp"
+        android:layout_marginTop="81dp"
+        android:text="Grid Layout"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</RelativeLayout>
+</code></pre>
+
+<p>And Finaly here is java code for slidingmenu:
+SlideMenuBaseActivity.java</p>
+
+<pre><code>public class SlideMenuBaseActivity extends SlidingFragmentActivity{
+
+    private int mTitleRes;
+    protected SherlockListFragment mFrag;
+
+    protected SherlockFragment mFragGrid;
+
+    public SlideMenuBaseActivity(int titleRes) {
+        // TODO Auto-generated constructor stub
+        mTitleRes = titleRes;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+
+        setTitle(mTitleRes);
+
+        setBehindContentView(R.layout.menu_frame);
+        if (savedInstanceState == null) {
+            FragmentTransaction t = this.getSupportFragmentManager().beginTransaction();
+            mFrag = new SlidingMenuFragment();
+            mFragGrid = new SlidingGridFragment();
+
+            FragmentTransaction t2 = this.getSupportFragmentManager().beginTransaction();
+            t2.replace(R.id.grid_frame, mFragGrid);
+            t2.commit();
+            t.replace(R.id.menu_frame, mFrag);
+            //t.replace(R.id.grid_frame, mFragGrid);
+            t.commit();
+        } else {
+            mFrag = (SherlockListFragment)this.getSupportFragmentManager().findFragmentById(R.id.menu_frame);
+            mFragGrid = (SherlockFragment)this.getSupportFragmentManager().findFragmentById(R.id.grid_frame);
+        }
+
+        // customize the SlidingMenu
+                SlidingMenu sm = getSlidingMenu();
+                sm.setShadowWidthRes(R.dimen.shadow_width);
+                sm.setShadowDrawable(R.drawable.shadow);
+                sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
+                sm.setFadeDegree(0.35f);
+                sm.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setDisplayShowCustomEnabled(true);
+                 getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // TODO Auto-generated method stub
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // TODO Auto-generated method stub
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            toggle();
+            return true;
+
+        default:
+            break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+}
+</code></pre>
+
+<p>I have implemented code as above but only grid_view content is visible on the slidingMenu but not List_view content.
+Can any one please suggest me a solution to get complete view like evernote sliding menu using fragments for my app.....</p>
+
+<p>Thanks</p>

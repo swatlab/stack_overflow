@@ -1,0 +1,318 @@
+<p>I am having this out of memory error I had a viewpager using activity not fragments and imageview then when I got this error I changed it to fragments... but this error keeps showing I tried lots of solutions none of it worked... </p>
+
+<p>my code:</p>
+
+<pre><code>public class ScreenSlidePageFragment extends Fragment {
+
+    public static final String ARG_PAGE = "page";
+    private int mPageNumber;
+    private int[] pics = {R.drawable.intro1, R.drawable.intro2,R.drawable.intro3,R.drawable.intro4,R.drawable.intro5,R.drawable.intro6,R.drawable.intro7,R.drawable.intro8,
+            R.drawable.intro9,R.drawable.intro10,R.drawable.intro11,R.drawable.intro12,R.drawable.intro13,R.drawable.intro14,R.drawable.intro15,R.drawable.intro16,R.drawable.intro17,R.drawable.intro18,
+            R.drawable.intro19,R.drawable.intro20,R.drawable.intro21,R.drawable.intro22,R.drawable.intro23,R.drawable.intro24,R.drawable.intro25,R.drawable.intro26,R.drawable.intro27,R.drawable.intro28,R.drawable.intro29,R.drawable.intro30,
+            R.drawable.intro31,R.drawable.intro32,R.drawable.intro33,R.drawable.intro34,R.drawable.intro35,R.drawable.intro36,R.drawable.intro37,R.drawable.intro38,R.drawable.intro39,R.drawable.intro40,R.drawable.intro41,R.drawable.intro42,
+            R.drawable.intro43,R.drawable.intro44,R.drawable.intro45,R.drawable.intro46,R.drawable.intro47,R.drawable.intro48,R.drawable.intro49,R.drawable.intro50,R.drawable.intro51,R.drawable.intro52,R.drawable.intro53,R.drawable.intro54,
+            R.drawable.intro55,R.drawable.intro56,R.drawable.intro57,R.drawable.intro58,R.drawable.intro59,R.drawable.intro60,R.drawable.intro61,R.drawable.intro62,R.drawable.intro63,R.drawable.intro64,R.drawable.intro65,R.drawable.intro66,
+            R.drawable.intro67,R.drawable.intro68,R.drawable.intro69,R.drawable.intro70,R.drawable.intro71,R.drawable.intro72,R.drawable.intro73};
+    int count=72;//it's the number of the images-1;
+
+
+
+    public static ScreenSlidePageFragment create(int pageNumber) {
+        ScreenSlidePageFragment fragment = new ScreenSlidePageFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_PAGE, pageNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public ScreenSlidePageFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mPageNumber = getArguments().getInt(ARG_PAGE);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {       
+
+        ViewGroup rootView = (ViewGroup) inflater
+                .inflate(R.layout.image_view_layout, container, false);
+
+        ImageView img=(ImageView) rootView.findViewById(R.id.img_pager);
+        img.setImageResource(pics[count-mPageNumber]);
+
+        return rootView;
+    }
+
+
+    public int getPageNumber() {
+        return mPageNumber;
+    }
+
+
+}
+</code></pre>
+
+<p>then the activity is:</p>
+
+<pre><code>public class Introduction_Activity extends FragmentActivity {
+     private static final int NUM_PAGES = 73;
+
+    private ViewPager mPager;
+
+
+    private PagerAdapter mPagerAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_introduction);
+
+
+        // Instantiate a ViewPager and a PagerAdapter.
+        mPager = (ViewPager) findViewById(R.id.imgs_viewpager);
+        mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+        mPager.setAdapter(mPagerAdapter);
+        mPager.setCurrentItem(NUM_PAGES-1);    
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.introduction_, menu);
+        return true;
+    }
+
+
+    static class ViewHolder {
+          ImageView img_view;
+
+        }
+
+    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
+        public ScreenSlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+
+            return ScreenSlidePageFragment.create(position);
+
+            }
+
+        @Override
+        public int getCount() {
+            return NUM_PAGES;
+        }
+    }
+
+
+
+
+}
+</code></pre>
+
+<p>that's my logcat:</p>
+
+<pre><code>10-01 14:44:49.224: E/AndroidRuntime(4770): FATAL EXCEPTION: main
+10-01 14:44:49.224: E/AndroidRuntime(4770): java.lang.OutOfMemoryError
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.Bitmap.nativeCreate(Native Method)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.Bitmap.createBitmap(Bitmap.java:605)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.Bitmap.createBitmap(Bitmap.java:551)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.Bitmap.createScaledBitmap(Bitmap.java:437)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.BitmapFactory.finishDecode(BitmapFactory.java:618)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:593)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.BitmapFactory.decodeResourceStream(BitmapFactory.java:445)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.graphics.drawable.Drawable.createFromResourceStream(Drawable.java:775)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.content.res.Resources.loadDrawable(Resources.java:1968)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.content.res.Resources.getDrawable(Resources.java:677)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.widget.ImageView.resolveUri(ImageView.java:542)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.widget.ImageView.setImageResource(ImageView.java:315)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at packagename.ScreenSlidePageFragment.onCreateView(ScreenSlidePageFragment.java:60)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.Fragment.performCreateView(Fragment.java:1460)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:911)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.FragmentManagerImpl.moveToState(FragmentManager.java:1088)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.BackStackRecord.run(BackStackRecord.java:682)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.FragmentManagerImpl.execPendingActions(FragmentManager.java:1444)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.FragmentManagerImpl.executePendingTransactions(FragmentManager.java:461)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.app.FragmentStatePagerAdapter.finishUpdate(FragmentStatePagerAdapter.java:163)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.view.ViewPager.populate(ViewPager.java:1064)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.view.ViewPager.populate(ViewPager.java:911)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.support.v4.view.ViewPager$3.run(ViewPager.java:242)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.os.Handler.handleCallback(Handler.java:605)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.os.Handler.dispatchMessage(Handler.java:92)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.os.Looper.loop(Looper.java:137)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at android.app.ActivityThread.main(ActivityThread.java:4514)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at java.lang.reflect.Method.invokeNative(Native Method)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at java.lang.reflect.Method.invoke(Method.java:511)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:993)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:760)
+10-01 14:44:49.224: E/AndroidRuntime(4770):     at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>I even added:</p>
+
+<pre><code>@Override
+    public void onDetach(){
+         super.onDetach();
+        //img.setImageResource(0);
+
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.remove(this).commit();
+        Log.d("was detached","yes");
+    }
+</code></pre>
+
+<p>to my fragment and it's still getting me the error;</p>
+
+<p><strong>EDIT</strong>
+I resized my images with a code and recycled the unneeded bitmaps and got this error again:</p>
+
+<pre><code>import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+
+
+public class ScreenSlidePageFragment extends Fragment {
+    /**
+     * The argument key for the page number this fragment represents.
+     */
+    public static final String ARG_PAGE = "page";
+
+    /**
+     * The fragment's page number, which is set to the argument value for {@link #ARG_PAGE}.
+     */
+    ImageView img;
+    int height;
+    int width;
+    private int mPageNumber;
+    private int[] pics = {R.drawable.intro1, R.drawable.intro2,R.drawable.intro3,R.drawable.intro4,R.drawable.intro5,R.drawable.intro6,R.drawable.intro7,R.drawable.intro8,
+            R.drawable.intro9,R.drawable.intro10,R.drawable.intro11,R.drawable.intro12,R.drawable.intro13,R.drawable.intro14,R.drawable.intro15,R.drawable.intro16,R.drawable.intro17,R.drawable.intro18,
+            R.drawable.intro19,R.drawable.intro20,R.drawable.intro21,R.drawable.intro22,R.drawable.intro23,R.drawable.intro24,R.drawable.intro25,R.drawable.intro26,R.drawable.intro27,R.drawable.intro28,R.drawable.intro29,R.drawable.intro30,
+            R.drawable.intro31,R.drawable.intro32,R.drawable.intro33,R.drawable.intro34,R.drawable.intro35,R.drawable.intro36,R.drawable.intro37,R.drawable.intro38,R.drawable.intro39,R.drawable.intro40,R.drawable.intro41,R.drawable.intro42,
+            R.drawable.intro43,R.drawable.intro44,R.drawable.intro45,R.drawable.intro46,R.drawable.intro47,R.drawable.intro48,R.drawable.intro49,R.drawable.intro50,R.drawable.intro51,R.drawable.intro52,R.drawable.intro53,R.drawable.intro54,
+            R.drawable.intro55,R.drawable.intro56,R.drawable.intro57,R.drawable.intro58,R.drawable.intro59,R.drawable.intro60,R.drawable.intro61,R.drawable.intro62,R.drawable.intro63,R.drawable.intro64,R.drawable.intro65,R.drawable.intro66,
+            R.drawable.intro67,R.drawable.intro68,R.drawable.intro69,R.drawable.intro70,R.drawable.intro71,R.drawable.intro72,R.drawable.intro73};
+    int count=72;//it's the number of the images-1;
+
+
+    /**
+     * Factory method for this fragment class. Constructs a new fragment for the given page number.
+     */
+    public static ScreenSlidePageFragment create(int pageNumber) {
+        ScreenSlidePageFragment fragment = new ScreenSlidePageFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_PAGE, pageNumber);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public ScreenSlidePageFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        height = displaymetrics.heightPixels;
+        width = displaymetrics.widthPixels;
+        Log.d("width", ""+width);
+        Log.d("height", ""+height);
+        mPageNumber = getArguments().getInt(ARG_PAGE);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {       
+        Resources res = getResources() ;
+        ViewGroup rootView = (ViewGroup) inflater
+                .inflate(R.layout.image_view_layout, container, false);
+        Bitmap btm=decodeSampledBitmapFromResource(res,pics[count-mPageNumber],600,600);
+        img=(ImageView) rootView.findViewById(R.id.img_pager);
+        img.setImageBitmap(btm);
+
+        return rootView;
+    }
+
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+            int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
+
+
+    @Override
+    public void onDetach(){
+        super.onDetach();
+        Bitmap bitmap = ((BitmapDrawable)img.getDrawable()).getBitmap();
+        bitmap.recycle();       
+
+        //FragmentManager fragmentManager = getFragmentManager();
+        //FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        //fragmentTransaction.remove(this).commit();
+
+    }
+
+
+    /**
+     * Returns the page number represented by this fragment object.
+     */
+    public int getPageNumber() {
+        return mPageNumber;
+    }
+
+
+}
+</code></pre>
+
+<p>I can swipe more than before but the problem is still there...
+Is there a way to view the free space of the memory of my app? and please does someone have a solution...</p>

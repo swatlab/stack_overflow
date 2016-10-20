@@ -1,0 +1,346 @@
+<p>I'm trying to use a Django database in my android application and I used this example: <a href="https://github.com/bfil/android-ormlite-sample" rel="nofollow">github project</a>
+Here are my files(I'm really sorry for the large amount of code):</p>
+
+<p><strong>DatabaseManager.java</strong></p>
+
+<pre><code>package antoni4040.barufakis;
+import android.content.Context;
+
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
+
+public class DatabaseManager<H extends OrmLiteSqliteOpenHelper> {
+
+    private H helper;
+
+    @SuppressWarnings("unchecked")
+    public H getHelper(Context context)
+    {
+        if(helper == null)
+        {
+            helper = (H) OpenHelperManager.getHelper(context, DatabaseHelper.class);
+        }
+        return helper;
+    }
+
+    public void releaseHelper(H helper)
+    {
+        if (helper != null) {
+            OpenHelperManager.releaseHelper();
+            helper = null;
+        }
+    }
+
+}
+</code></pre>
+
+<p><strong>DatabaseInitializer.java:</strong></p>
+
+<pre><code>package antoni4040.barufakis;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class DatabaseInitializer extends SQLiteOpenHelper{
+
+    private static String DB_PATH = "/data/data/antoni4040.barufakis/databases/";
+    private static String DB_NAME = "joke.sqlite3";
+
+    private SQLiteDatabase database;
+    private final Context context;
+
+
+    public DatabaseInitializer(Context context) {
+        super(context, DB_NAME, null, 1);
+        this.context = context;
+    }
+
+    public void createDatabase() throws IOException{
+
+        boolean dbExist = checkDatabase();
+
+        if(!dbExist){
+            this.getReadableDatabase();
+            try {
+                copyDatabase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+
+    }
+    private boolean checkDatabase(){
+
+        SQLiteDatabase checkDB = null;
+
+        try{
+            String myPath = DB_PATH + DB_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+        }
+
+        if(checkDB != null){
+            checkDB.close();
+        }
+
+        return checkDB != null ? true : false;
+    }
+    private void copyDatabase() throws IOException{
+
+        InputStream myInput = context.getAssets().open(DB_NAME);
+
+        String outFileName = DB_PATH + DB_NAME;
+
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+
+    }
+
+    @Override
+    public synchronized void close() {
+        if(database != null)
+            database.close();
+
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    }
+
+}
+</code></pre>
+
+<p><strong>DatabaseHelper.java:</strong></p>
+
+<pre><code>package antoni4040.barufakis;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
+
+import java.io.IOException;
+import java.sql.SQLException;
+
+public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
+
+    private static final String DATABASE_NAME = "joke.sqlite3";
+    private static final int DATABASE_VERSION = 1;
+
+    private Dao<Joke, String> jokeDao = null;
+
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
+       DatabaseInitializer initializer = new DatabaseInitializer(context);
+        try {
+            initializer.createDatabase();
+            initializer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    @Override
+    public void onCreate(SQLiteDatabase db, ConnectionSource connectionSource) {
+        try {
+            Log.i(DatabaseHelper.class.getName(), "onCreate");
+
+            TableUtils.createTable(connectionSource, Joke.class);
+
+        } catch (SQLException e) {
+            Log.e(DatabaseHelper.class.getName(), "Can't create database", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource, int oldVersion, int newVersion) {
+        try {
+            Log.i(DatabaseHelper.class.getName(), "onUpgrade");
+
+            TableUtils.dropTable(connectionSource, Joke.class, true);
+
+            onCreate(db);
+        } catch (SQLException e) {
+            Log.e(DatabaseHelper.class.getName(), "Can't drop databases", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public Dao<Joke, String> getJokeDao() throws SQLException {
+        if (jokeDao == null) {
+            jokeDao = DaoManager.createDao(getConnectionSource(), Joke.class);
+        }
+        return jokeDao;
+    }
+
+
+
+    @Override
+    public void close() {
+        super.close();
+        jokeDao = null;
+    }
+}
+</code></pre>
+
+<p><strong>Repo.java:</strong></p>
+
+<pre><code>package antoni4040.barufakis;
+import android.content.Context;
+
+public class Repo {
+
+    DatabaseHelper db;
+
+    public RepoJoke Joke;
+
+    public Repo(Context context)
+    {
+        DatabaseManager<DatabaseHelper> manager = new DatabaseManager<DatabaseHelper>();
+        db = manager.getHelper(context);
+
+        Joke = new RepoJoke(db);
+
+    }
+
+}
+</code></pre>
+
+<p><strong>RepoJoke.java:</strong></p>
+
+<pre><code>package antoni4040.barufakis;
+
+
+import com.j256.ormlite.dao.Dao;
+
+import java.sql.SQLException;
+import java.util.List;
+
+public class RepoJoke {
+
+    Dao<Joke, String> jokeDao;
+
+    public RepoJoke(DatabaseHelper db)
+    {
+        try {
+            jokeDao = db.getJokeDao();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int create(Joke joke)
+    {
+        try {
+            return jokeDao.create(joke);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    public int update(Joke joke)
+    {
+        try {
+            return jokeDao.update(joke);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    public int delete(Joke joke)
+    {
+        try {
+            return jokeDao.delete(joke);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    public List<Joke> getAll()
+    {
+        try {
+            return jokeDao.queryForAll();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+}
+</code></pre>
+
+<p>All this ends up here:</p>
+
+<p><strong>Joke_textFragment.java:</strong></p>
+
+<pre><code>package antoni4040.barufakis;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import java.util.List;
+
+
+public class Joke_textFragment extends Fragment {
+
+    Repo repo;
+
+    public Joke_textFragment() {
+    }
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_joke_text, container, false);
+        TextView title = (TextView) rootView.findViewById(R.id.joke_title);
+        TextView text = (TextView) rootView.findViewById(R.id.text);
+        repo = new Repo(rootView.getContext());
+        List<Joke> jokes = repo.Joke.getAll();
+        for(Joke element : jokes){
+            Log.v("Element:", String.valueOf(element.getEnd()));
+        }
+        title.setText(jokes.get(6).getText());
+        return rootView;
+    }
+}
+</code></pre>
+
+<p>Finally, I can't access the 6th element as the array seems to have size 0, while there are 160 rows in my Django database.</p>
