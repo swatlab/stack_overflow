@@ -28,7 +28,7 @@
 
 ###Data source
 - Inconsistent files: http://swat.polymtl.ca/data/SANER16/AndroidAppsDataONF-DroidJanv2015.7z
-- Stack Exchange data dump: https://archive.org/details/stackexchange (All content retrieved from Stack Overflow is licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Stack Exchange data dump: https://archive.org/details/stackexchange (All content retrieved from Stack Overflow is licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)).
 - NiCad tool: http://www.txl.ca/nicaddownload.html
 
 ###How to user the analytic scripts
