@@ -8,7 +8,7 @@
 - RQ1: Do developers release apps with code copied from Stack Overflow?
 - RQ2: Do developers respect the copyright terms of code reused from Stack Overflow?
 - RQ3: Do Stack Overflow users respect copyright terms when publishing code snippets on Stack Overflow?
-- RQ4: How long does a Stack Overflow code remains in released versions of an app?
+- RQ4: How long does a Stack Overflow code snippet remains in released versions of an app?
 
 ###File description
 - **data_mining_scripts** folder contains the scripts to mine raw data.
