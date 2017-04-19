@@ -27,18 +27,18 @@
 - **data** folder contains clone detection results and some intermediate data for analyses.
 - **presentation_slides.pdf** shows the presentation slides for SANER 2017.
 
-###Data source###
+### Data source
 - Inconsistent files: http://swat.polymtl.ca/data/SANER16/AndroidAppsDataONF-DroidJanv2015.7z
 - Stack Exchange data dump: https://archive.org/details/stackexchange (All content retrieved from Stack Overflow is licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)).
 - NiCad tool: http://www.txl.ca/nicaddownload.html
 
-###How to user the analytic scripts###
+### How to user the analytic scripts
 1. Download the Stack Exchange data dump and inconsistent files.
 2. Run **extract2json.py**, **write_snippets.py**, and **run_nicad** consecutively to obtain the clone code pairs between Stack Overflow posts and Android inconsistent files.
 3. Use the scripts in **analytic_scripts** and **match_names** to obtain results of the four research questions.
 
-###Reference###
+### Reference
 1. Ons Mlouki, Foutse Khomh and Giuliano Antoniol, On the Detection of Licenses Violations in Android Ecosystem, in _Proceedings of the 23rd IEEE International Conference on Software Analysis, Evolution, and Reengineering (SANER)_.
 
-###For any questions###
+### For any questions
 Please send email to le.an@polymtl.ca
