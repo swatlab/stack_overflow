@@ -1,16 +1,16 @@
-#Stack Overflow: A Code Laundering Platform?#
+# Stack Overflow: A Code Laundering Platform?
 
-###Requirements###
+### Requirements
 - Python 2.7 or newer
 - NiCad clone detection tool
 
-###Research questions###
+### Research questions
 - RQ1: Do developers release apps with code copied from Stack Overflow?
 - RQ2: Do developers respect the copyright terms of code reused from Stack Overflow?
 - RQ3: Do Stack Overflow users respect copyright terms when publishing code snippets on Stack Overflow?
 - RQ4: How long does a Stack Overflow code snippet remains in released versions of an app?
 
-###File description###
+### File description
 - **data_mining_scripts** folder contains the scripts to mine raw data.
 	- **extract2json.py**: extract Java and Android related code snippets from the Stack Exchange dump (please set Posts.xml's path in line 45).
     - **write_snippets.py**: extract the results of **extract2json.py** (in JSON) into separate Java files (please set the input path in line 10).
