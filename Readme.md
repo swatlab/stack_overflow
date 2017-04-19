@@ -25,6 +25,7 @@
 - **match_names** folder cotains scripts and data for matching developer names between the studied Android apps and Stack Overflow posts.
 - **raw_data** folder contains Android snippets' creation date and raw data of RQ2 & RQ3.
 - **data** folder contains clone detection results and some intermediate data for analyses.
+- **presentation_slides.pdf_** shows the presentation slides for SANER 2017.
 
 ###Data source
 - Inconsistent files: http://swat.polymtl.ca/data/SANER16/AndroidAppsDataONF-DroidJanv2015.7z
